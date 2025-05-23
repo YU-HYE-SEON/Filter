@@ -54,7 +54,7 @@
         android:id="@+id/photoPreview"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#EAEAEA"
+        android:background="#BDBDBD"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toTopOf="@+id/bottomArea"
         app:layout_constraintEnd_toEndOf="parent"
@@ -79,7 +79,7 @@
             android:layout_margin="20dp"
             android:fillViewport="true"
             android:scrollbars="none"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -410,13 +410,13 @@
 
         <!-- 자르기 외 나머지 선택 ~ -->
         <LinearLayout
-            android:id="@+id/Choice"
+            android:id="@+id/seekbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
             android:orientation="vertical"
-            android:visibility="visible">
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -425,23 +425,11 @@
                 android:layout_marginRight="30dp"
                 android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/seekbarValueText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginBottom="15dp"
-                    android:text="0"
-                    android:textAlignment="center"
-                    android:textSize="20sp" />
-
-                <SeekBar
-                    android:id="@+id/seekbar"
+                <com.example.filter.CustomSeekbar
+                    android:id="@+id/customSeekbar"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:max="100"
-                    android:progress="0"
-                    android:thumbTint="#C8C8C8" />
+                    android:layout_height="60dp"
+                    android:layout_margin="8dp"/>
 
             </LinearLayout>
 
