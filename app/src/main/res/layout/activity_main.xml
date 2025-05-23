@@ -13,6 +13,7 @@
         android:id="@+id/topArea"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:visibility="visible"
         tools:ignore="MissingConstraints">
 
         <ImageButton
@@ -71,7 +72,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <!-- 기능 선택 ~ -->
+        <!-- 필터 선택 ~ -->
         <HorizontalScrollView
             android:id="@+id/scrollView"
             android:layout_width="match_parent"
@@ -228,9 +229,9 @@
             </LinearLayout>
 
         </HorizontalScrollView>
-        <!-- ~ 기능 선택 -->
+        <!-- ~ 필터 선택 -->
 
-        <!-- 자르기 선택 ~ -->
+        <!-- 조절 선택 ~ -->
         <LinearLayout
             android:id="@+id/cropChoice"
             android:layout_width="match_parent"
@@ -406,9 +407,9 @@
             </LinearLayout>
 
         </LinearLayout>
-        <!-- ~ 자르기 선택 -->
+        <!-- ~ 조절 선택 -->
 
-        <!-- 자르기 외 나머지 선택 ~ -->
+        <!-- 조절 외 선택 ~ -->
         <LinearLayout
             android:id="@+id/seekbar"
             android:layout_width="match_parent"
@@ -429,7 +430,7 @@
                     android:id="@+id/customSeekbar"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
-                    android:layout_margin="8dp"/>
+                    android:layout_margin="8dp" />
 
             </LinearLayout>
 
@@ -470,7 +471,7 @@
             </LinearLayout>
 
         </LinearLayout>
-        <!-- ~ 자르기 외 나머지 선택 -->
+        <!-- ~ 조절 외 선택 -->
 
     </LinearLayout>
     <!-- ~ 하단부 -->
