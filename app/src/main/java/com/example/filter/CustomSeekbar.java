@@ -17,7 +17,7 @@ public class CustomSeekbar extends View {
     private Paint thumbPaint;   //조작 버튼
     private Paint progressText; //현재값 텍스트
     private int textOffset = 80; //seekbar와 텍스트 사이 간격
-    private int textSitze = 50; //텍스트 크기
+    private int textSize = 50; //텍스트 크기
     private int thumbRadius = 25;   //버튼 반지름 → 크기
     private int barStroke = 10; //seekbar 굵기
 
@@ -52,7 +52,7 @@ public class CustomSeekbar extends View {
         //현재값 텍스트 설정
         progressText = new Paint();
         progressText.setColor(Color.BLACK);
-        progressText.setTextSize(textSitze);
+        progressText.setTextSize(textSize);
         progressText.setTextAlign(Paint.Align.CENTER);
     }
 

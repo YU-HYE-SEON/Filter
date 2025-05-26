@@ -51,11 +51,10 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 사진 이미지 -->
-    <ImageView
+    <android.opengl.GLSurfaceView
         android:id="@+id/photoPreview"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#BDBDBD"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toTopOf="@+id/bottomArea"
         app:layout_constraintEnd_toEndOf="parent"

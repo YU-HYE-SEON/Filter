@@ -1,13 +1,16 @@
 package com.example.filter;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -53,7 +56,10 @@ public class FilterActivity extends AppCompatActivity {
     private View topArea;  //상단바
     private ImageButton backButton; //뒤로가기 버튼 → 기존 사진앱 열어서 photoPreview 위치에 사진 이미지 불러오기
 
-    private ImageView photoPreview; //사진을 띄울 위치
+    //사진 이미지 부분
+    //GLSurfaceView.Renderer (어떻게 그릴지에 대한 정보) + GLSurfaceView (그릴 화면 또는 공간 (사진 이미지)) → (사진과 openGL 연동)
+    private GLSurfaceView glSurfaceView;    //사진 이미지 (openGL과 연동)
+    private GLRenderer renderer;    //GLSurfaceView에 어떻게 그릴지에 대한 정보를 담고있는 객체
     private ActivityResultLauncher<Intent> galleryLauncher; //사진 앱 호출 및 이미지 가져오기
 
     private Animation slideUp;   //상단부&하단부 올라가는 애니메이션
@@ -66,12 +72,13 @@ public class FilterActivity extends AppCompatActivity {
     private int saturationValue = 0;    //채도 필터값
     private int selectFilterId = -1; // 현재 선택한 필터 ID, -1 → 아무것도 선택 안 함
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_filter);
 
-        bottomArea=findViewById(R.id.bottomArea);
+        bottomArea = findViewById(R.id.bottomArea);
 
         scrollView = findViewById(R.id.scrollView);
         crop = findViewById(R.id.crop);
@@ -94,7 +101,11 @@ public class FilterActivity extends AppCompatActivity {
         topArea = findViewById(R.id.topArea);
         backButton = findViewById(R.id.backButton);
 
-        photoPreview = findViewById(R.id.photoPreview);
+        glSurfaceView = findViewById(R.id.photoPreview);
+        glSurfaceView.setEGLContextClientVersion(2);    //openGL 버전 2.0 사용
+        renderer = new GLRenderer(this, glSurfaceView); //현재 불러온 사진 이미지 전달
+        glSurfaceView.setRenderer(renderer);    //glSurfaceView에 renderer 정보대로 이미지 그리기 (필터값대로 그려짐)
+        glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);   //RENDERMODE_WHEN_DIRTY : 수동 렌더링 모드, requestRender() 호출요청할 때만 실행
 
         slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up);
         slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down);
@@ -144,8 +155,8 @@ public class FilterActivity extends AppCompatActivity {
                                     bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                                 }
 
-                                //photoPreview 위치에 사진 띄우기
-                                photoPreview.setImageBitmap(bitmap);
+                                //사진 이미지 화면에 그리기 메서드 호출
+                                loadBitmapToRenderer(bitmap);
 
                                 //사진 새롭게 불러올 때마다 필터값 초기화
                                 brightnessValue = 0;
@@ -273,5 +284,23 @@ public class FilterActivity extends AppCompatActivity {
         checkButton.setOnClickListener(listener);
         closeButton2.setOnClickListener(listener);
         checkButton2.setOnClickListener(listener);
+
+        customSeekBar.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
+                int progress = customSeekBar.getProgress();
+                float normalized = progress / 100f;
+                renderer.setBrightness(normalized); //밝기 값을 renderer에 전달
+                glSurfaceView.requestRender();  //그리기 요청 메서드
+            }
+            return false;
+        });
+    }
+
+    //사진 이미지 화면에 그리기
+    private void loadBitmapToRenderer(Bitmap bitmap) {
+        if (renderer != null) {
+            renderer.setBitmap(bitmap); //renderer에 현재 띄운 사진 이미지 전달
+            glSurfaceView.requestRender();  //그리기 요청 메서드
+        }
     }
 }
