@@ -62,7 +62,7 @@ public class CustomSeekbar extends View {
         super.onDraw(canvas);
 
         //seekbar 위치
-        int centerY = getHeight() -25;
+        int centerY = getHeight() - 25;
         int centerX = getWidth() / 2;
 
         //seekbar 배경색 그리기
@@ -84,7 +84,7 @@ public class CustomSeekbar extends View {
         canvas.drawCircle(thumbX, centerY, thumbRadius, thumbPaint);
 
         //현재값 텍스트 그리기
-        canvas.drawText(String.valueOf(progress), centerX, centerY-textOffset, progressText);
+        canvas.drawText(String.valueOf(progress), centerX, centerY - textOffset, progressText);
     }
 
     //버튼 조작 시 이동하게 해주는 메서드
@@ -110,5 +110,6 @@ public class CustomSeekbar extends View {
     public void setProgress(int progress) {
         this.progress = Math.max(min, Math.min(max, progress));
         invalidate();
+
     }
 }

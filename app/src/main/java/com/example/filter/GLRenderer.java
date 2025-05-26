@@ -31,7 +31,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     private final FloatBuffer vertexBuffer; //버텍스 위치 데이터를 GPU에 전달할 때 사용하는 버퍼
     private final FloatBuffer texCoordBuffer;   //텍스쳐 좌표 데이터를 GPU에 전달할 때 사용하는 버퍼
     private float imageAspectRatio; //사진 이미지 비율
-    private float brightness = 0f;  //밝기 조절값
+    private float currentBrightness = 0f;  //최종 적용할 밝기 조절값
+    private float tempBrightness = 0f;  //최종 적용 전 실시간 미리보기로 볼 밝기 조절값 (onDrawFrame에서 사용)
 
     //화면(사각형)을 그릴 정점 좌표 (x,y)
     //openGL의 정점 좌표는 가운데가 (0,0) / 왼쪽 아래가 (-1,-1) / 오른쪽 위가 (1,1)
@@ -226,8 +227,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             //텍스쳐 샘플러의 핸들, 0 : 텍스쳐 슬롯 0 찾아서 거기에 바인딩된 텍스쳐를 사용하겠다
             GLES20.glUniform1i(textureHandle, 0);
             //glUniform1f : 유니폼 변수에 실수값(1개)을 넣는 메서드
-            //밝기값 핸들에 밝기 값 전달
-            GLES20.glUniform1f(brightnessHandle, brightness);
+            //밝기값 핸들에 밝기 값 전달, 최종 적용이 아니기 때문에 실시간 미리보기용 변수를 넣음
+            GLES20.glUniform1f(brightnessHandle, tempBrightness);
 
             //실제 화면에 그래픽 요소를 그리는 메서드
             //정점 4개를 삼각형 형태로 그리기 → 삼각형 2개의 사각형
@@ -255,23 +256,23 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         if (imageAspectRatio > 0) {
             //사진 비율이 뷰 비율보다 크면 (사진이 뷰보다 가로가 긴 경우)
             if (imageAspectRatio > viewAspectRatio) {
-                //뷰포트 높이와 사진 높이 같게 설정
-                viewportHeight = height;
-                //뷰포트 너비를 사진 비율에 맞게 계산
-                viewportWidth = (int) (height * imageAspectRatio);
-                //가운데 오도록 x좌표 계산
-                viewportX = (width - viewportWidth) / 2;
-                //높이는 같게 맞춰서 가운데 정렬할 필요없음
-                viewportY = 0;
-            } else {    //사진 비율이 뷰 비율보다 작거나 같으면 (사진이 뷰보다 세로가 긴 경우)
                 //뷰포트 너비와 사진 너비 같게 설정
                 viewportWidth = width;
                 //뷰포트 높이를 사진 비율에 맞게 계산
                 viewportHeight = (int) (width / imageAspectRatio);
-                //가운데 오도록 y좌표 계산
+                //사진이 가운데 오도록 y좌표 계산
                 viewportY = (height - viewportHeight) / 2;
-                //너비는 같게 맞춰서 가운데 정렬할 필요없음
+                //너비는 같게 맞춰서 가운데 정렬할 필요없음, 0으로 유지
                 viewportX = 0;
+            } else {    //사진 비율이 뷰 비율보다 작거나 같으면 (사진이 뷰보다 세로가 긴 경우)
+                //뷰포트 높이와 사진 높이 같게 설정
+                viewportHeight = height;
+                //뷰포트 너비를 사진 비율에 맞게 계산
+                viewportWidth = (int) (height * imageAspectRatio);
+                //사진이 가운데 오도록 x좌표 계산
+                viewportX = (width - viewportWidth) / 2;
+                //높이는 같게 맞춰서 가운데 정렬할 필요없음, 0으로 유지
+                viewportY = 0;
             }
         }
         //계산된 값으로 뷰포트 설정
@@ -301,9 +302,32 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         return shader;
     }
 
-    //밝기값 조절한 만큼 반영해서 렌더링 요청
-    public void setBrightness(float value) {
-        this.brightness = value;
+    //밝기값 실시간 미리보기 설정
+    public void setTempBrightness(float value) {
+        tempBrightness = value;
+
+        if (glSurfaceView != null) glSurfaceView.requestRender();
+    }
+
+    //밝기값 최종 적용 설정
+    public void applyBrightness(float value) {
+        currentBrightness = value;
+        tempBrightness = value;    //최종 적용하면 실시간 미리보기용 변수 데이터 결과도 업데이트
+
+        if (glSurfaceView != null) glSurfaceView.requestRender();
+    }
+
+    //밝기값 한번 변경한 상태에서 다시 설정하려고 값 조절했다가 취소한 경우
+    public void resetBrightness() {
+        tempBrightness = currentBrightness;
+
+        if (glSurfaceView != null) glSurfaceView.requestRender();
+    }
+
+    //모든 필터값 초기화, 이미지를 새로 불러올 때
+    public void resetFilter() {
+        currentBrightness = 0f;
+        tempBrightness = 0f;
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
