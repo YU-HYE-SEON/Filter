@@ -28,11 +28,25 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     private int texCoordHandle; //버텍스 쉐이더(vertexShaderCode)의 변수 aTexCoord ID 참조용 핸들
     private int textureHandle;  //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uTexture ID 참조용 핸들
     private int brightnessHandle;   //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uBrightness ID 참조용 핸들
+    private int contrastHandle;  //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uContrast ID 참조용 핸들
+    private int sharpnessHandle;  //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uSharpness ID 참조용 핸들
+    private int resolutionHandle; //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uResolution ID 참조용 핸들
+    private int saturationHandle;   //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uSaturation ID 참조용 핸들
     private final FloatBuffer vertexBuffer; //버텍스 위치 데이터를 GPU에 전달할 때 사용하는 버퍼
     private final FloatBuffer texCoordBuffer;   //텍스쳐 좌표 데이터를 GPU에 전달할 때 사용하는 버퍼
     private float imageAspectRatio; //사진 이미지 비율
-    private float currentBrightness = 0f;  //최종 적용할 밝기 조절값
-    private float tempBrightness = 0f;  //최종 적용 전 실시간 미리보기로 볼 밝기 조절값 (onDrawFrame에서 사용)
+
+    //최종 적용 조절값
+    private float currentBrightness = 0f;
+    private float currentContrast = 1.0f;
+    private float currentSharpness = 0f;
+    private float currentSaturation = 1.0f;
+
+    //최종 적용 전 실시간 미리보기용 조절값 (onDrawFrame에서 사용)
+    private float tempBrightness = 0f;
+    private float tempContrast = 1.0f;
+    private float tempSharpness = 0f;
+    private float tempSaturation = 1.0f;
 
     //화면(사각형)을 그릴 정점 좌표 (x,y)
     //openGL의 정점 좌표는 가운데가 (0,0) / 왼쪽 아래가 (-1,-1) / 오른쪽 위가 (1,1)
@@ -161,8 +175,12 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
         //프래그먼트 쉐이더 코드 속 변수 uTexture(텍스쳐 샘플러)의 ID를 얻어서 textureHandle에 저장
         textureHandle = GLES20.glGetUniformLocation(program, "uTexture");
-        //프래그먼트 쉐이더 코드 속 변수 uBrightness(밝기값)의 ID를 얻어서 brightnessHandle에 저장
+        //프래그먼트 쉐이더 코드 속 변수(각 필터값 or 화면 해상도)의 ID를 얻어서 각 Handle에 저장
         brightnessHandle = GLES20.glGetUniformLocation(program, "uBrightness");
+        contrastHandle = GLES20.glGetUniformLocation(program, "uContrast");
+        sharpnessHandle = GLES20.glGetUniformLocation(program, "uSharpness");
+        resolutionHandle = GLES20.glGetUniformLocation(program, "uResolution");
+        saturationHandle = GLES20.glGetUniformLocation(program, "uSaturation");
     }
 
     //매 프레임마다 호출, 비트맵 이미지를 openGL 텍스쳐로 변환, 필터 효과 적용, 이미지 그리기
@@ -227,8 +245,12 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             //텍스쳐 샘플러의 핸들, 0 : 텍스쳐 슬롯 0 찾아서 거기에 바인딩된 텍스쳐를 사용하겠다
             GLES20.glUniform1i(textureHandle, 0);
             //glUniform1f : 유니폼 변수에 실수값(1개)을 넣는 메서드
-            //밝기값 핸들에 밝기 값 전달, 최종 적용이 아니기 때문에 실시간 미리보기용 변수를 넣음
+            //각 필터값 핸들에 조절 값 전달, 최종 적용이 아니기 때문에 실시간 미리보기용 변수를 넣음
             GLES20.glUniform1f(brightnessHandle, tempBrightness);
+            GLES20.glUniform1f(contrastHandle, tempContrast);
+            GLES20.glUniform1f(sharpnessHandle, tempSharpness);
+            GLES20.glUniform2f(resolutionHandle, bitmap.getWidth(), bitmap.getHeight());
+            GLES20.glUniform1f(saturationHandle, tempSaturation);
 
             //실제 화면에 그래픽 요소를 그리는 메서드
             //정점 4개를 삼각형 형태로 그리기 → 삼각형 2개의 사각형
@@ -302,32 +324,87 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         return shader;
     }
 
-    //밝기값 실시간 미리보기 설정
-    public void setTempBrightness(float value) {
-        tempBrightness = value;
+    //실시간 미리보기 설정
+    public void setTempValue(FilterActivity.Type type, float value) {
+        switch (type) {
+            case BRIGHTNESS:
+                tempBrightness = value / 100f;
+                break;
+            case CONTRAST:
+                tempContrast = (value / 100f) + 1.0f;
+                tempContrast = Math.max(0.1f, tempContrast);    //-100일 때 완전 회색이 되는 것을 막기 위해 설정함
+                break;
+            case SHARPNESS:
+                tempSharpness = value / 100f;
+                break;
+            case SATURATION:
+                tempSaturation = (value / 100f) + 1.0f;
+                tempSaturation = Math.max(0.0f, tempSaturation);
+                break;
+        }
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
-    //밝기값 최종 적용 설정
-    public void applyBrightness(float value) {
-        currentBrightness = value;
-        tempBrightness = value;    //최종 적용하면 실시간 미리보기용 변수 데이터 결과도 업데이트
+    //최종 적용 설정
+    public void applyValue(FilterActivity.Type type, float value) {
+        switch (type) {
+            case BRIGHTNESS:
+                currentBrightness = value / 100f;
+                tempBrightness = currentBrightness;    //최종 적용하면 실시간 미리보기용 변수 데이터 결과도 업데이트
+                break;
+            case CONTRAST:
+                currentContrast = (value / 100f) + 1.0f;
+                currentContrast = Math.max(0.1f, currentContrast);  //-100일 때 완전 회색이 되는 것을 막기 위해 설정함
+                tempContrast = currentContrast;
+                break;
+            case SHARPNESS:
+                currentSharpness = value / 100f;
+                tempSharpness = currentSharpness;
+                break;
+            case SATURATION:
+                currentSaturation = (value / 100f) + 1.0f;
+                currentSaturation = Math.max(0.0f, currentSaturation);
+                tempSaturation = currentSaturation;
+                break;
+        }
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
-    //밝기값 한번 변경한 상태에서 다시 설정하려고 값 조절했다가 취소한 경우
-    public void resetBrightness() {
-        tempBrightness = currentBrightness;
+    //조절 취소한 경우
+    public void cancelValue(FilterActivity.Type type) {
+        switch (type) {
+            case BRIGHTNESS:
+                tempBrightness = currentBrightness;
+                break;
+            case CONTRAST:
+                tempContrast = currentContrast;
+                break;
+            case SHARPNESS:
+                tempSharpness = currentSharpness;
+                break;
+            case SATURATION:
+                tempSaturation = currentSaturation;
+                break;
+        }
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
     //모든 필터값 초기화, 이미지를 새로 불러올 때
-    public void resetFilter() {
+    public void resetAllFilter() {
         currentBrightness = 0f;
         tempBrightness = 0f;
+
+        currentContrast = 1.0f;
+        tempContrast = 1.0f;
+
+        currentSharpness = 0f;
+        tempSharpness = 0f;
+
+        currentSaturation = 1.0f;
+        tempSaturation = 1.0f;
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }

@@ -18,7 +18,6 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,21 +34,21 @@ public class FilterActivity extends AppCompatActivity {
     //하단부1 - 필터 선택
     private HorizontalScrollView scrollView;  //조절, 밝기 등 아이콘 있는 스크롤 뷰
     private ImageView crop; //조절 아이콘
-    private ImageView brightness; //밝기 아이콘
-    private ImageView exposure; //노출 아이콘
-    private ImageView contrast; //대비 아이콘
-    private ImageView sharpness; //선명하게 아이콘
-    private ImageView saturation; //채도 아이콘
+    private ImageView brightnessIcon; //밝기 아이콘
+    private ImageView exposureIcon; //노출 아이콘
+    private ImageView contrastIcon; //대비 아이콘
+    private ImageView sharpnessIcon; //선명하게 아이콘
+    private ImageView saturationIcon; //채도 아이콘
 
     //하단부2 - 조절 선택
     private LinearLayout cropChoice;    //조절 선택 시 나오는 하단부
-    private ImageButton closeButton;    //조절 선택 하단부 닫기 버튼
+    private ImageButton cancelButton;    //조절 선택 하단부 취소 버튼
     private ImageButton checkButton;    //조절 선택 하단부 완료 버튼
 
     //하단부3 - 조절 외 선택
     private LinearLayout seekbar;   //조절 외 선택 시 나오는 하단부 (seekbar 나오는)
     private CustomSeekbar customSeekBar;    //custom seekbar 자체
-    private ImageButton closeButton2;    //seekbar 닫기 버튼
+    private ImageButton cancelButton2;    //seekbar 취소 버튼
     private ImageButton checkButton2;    //seekbar 완료 버튼
     private TextView filterText;    //조절 외 선택한 기능 이름
 
@@ -74,6 +73,12 @@ public class FilterActivity extends AppCompatActivity {
     private int selectFilterId = -1; // 현재 선택한 필터 ID, -1 → 아무것도 선택 안 함
     private int tempSeekbarValue = 0;   //seekbar 조절한 값 임시 저장 변수 (실시간 미리보기용 o, 최종 적용x)
 
+    public enum Type {
+        BRIGHTNESS, EXPOSURE, CONTRAST, SHARPNESS, SATURATION
+    }
+
+    public static Type type;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,19 +89,19 @@ public class FilterActivity extends AppCompatActivity {
 
         scrollView = findViewById(R.id.scrollView);
         crop = findViewById(R.id.crop);
-        brightness = findViewById(R.id.brightness);
-        exposure = findViewById(R.id.exposure);
-        contrast = findViewById(R.id.contrast);
-        sharpness = findViewById(R.id.sharpness);
-        saturation = findViewById(R.id.saturation);
+        brightnessIcon = findViewById(R.id.brightness);
+        exposureIcon = findViewById(R.id.exposure);
+        contrastIcon = findViewById(R.id.contrast);
+        sharpnessIcon = findViewById(R.id.sharpness);
+        saturationIcon = findViewById(R.id.saturation);
 
         cropChoice = findViewById(R.id.cropChoice);
-        closeButton = findViewById(R.id.closeButton);
+        cancelButton = findViewById(R.id.cancelButton);
         checkButton = findViewById(R.id.checkButton);
 
         seekbar = findViewById(R.id.seekbar);
         customSeekBar = findViewById(R.id.customSeekbar);
-        closeButton2 = findViewById(R.id.closeButton2);
+        cancelButton2 = findViewById(R.id.cancelButton2);
         checkButton2 = findViewById(R.id.checkButton2);
         filterText = findViewById(R.id.filterText);
 
@@ -161,7 +166,7 @@ public class FilterActivity extends AppCompatActivity {
                                 loadBitmapToRenderer(bitmap);
 
                                 //사진 새롭게 불러올 때마다 필터값 초기화
-                                renderer.resetFilter();
+                                renderer.resetAllFilter();
                                 brightnessValue = 0;
                                 exposureValue = 0;
                                 contrastValue = 0;
@@ -195,9 +200,7 @@ public class FilterActivity extends AppCompatActivity {
 
                     topArea.startAnimation(slideUp);
                     topArea.setVisibility(View.GONE);
-                }
-
-                if (id == R.id.brightness || id == R.id.exposure || id == R.id.contrast || id == R.id.sharpness || id == R.id.saturation) {
+                } else if (id == R.id.brightness || id == R.id.exposure || id == R.id.contrast || id == R.id.sharpness || id == R.id.saturation) {
                     scrollView.setVisibility(View.GONE);
                     cropChoice.setVisibility(View.GONE);
                     bottomArea.startAnimation(slideDown);
@@ -205,32 +208,40 @@ public class FilterActivity extends AppCompatActivity {
                     selectFilterId = id;
 
                     if (v.getId() == R.id.brightness) {
+                        type = Type.BRIGHTNESS;
                         filterText.setText("밝기");
                         customSeekBar.setProgress(brightnessValue);
                         tempSeekbarValue = brightnessValue;
-                        renderer.setTempBrightness(tempSeekbarValue / 100f);  //미리보기 위해 임시값으로 렌더링
                     } else if (v.getId() == R.id.exposure) {
+                        type = Type.EXPOSURE;
                         filterText.setText("노출");
                         customSeekBar.setProgress(exposureValue);
+                        tempSeekbarValue = exposureValue;
                     } else if (v.getId() == R.id.contrast) {
+                        type = Type.CONTRAST;
                         filterText.setText("대비");
                         customSeekBar.setProgress(contrastValue);
+                        tempSeekbarValue = contrastValue;
                     } else if (v.getId() == R.id.sharpness) {
+                        type = Type.SHARPNESS;
                         filterText.setText("선명하게");
                         customSeekBar.setProgress(sharpnessValue);
+                        tempSeekbarValue = sharpnessValue;
                     } else if (v.getId() == R.id.saturation) {
+                        type = Type.SATURATION;
                         filterText.setText("채도");
                         customSeekBar.setProgress(saturationValue);
+                        tempSeekbarValue = saturationValue;
                     }
+
+                    customSeekBar.setMinZero(type);
 
                     seekbar.setVisibility(View.VISIBLE);
                     bottomArea.startAnimation(slideUp);
 
                     topArea.startAnimation(slideUp);
                     topArea.setVisibility(View.GONE);
-                }
-
-                if (id == R.id.closeButton) {
+                } else if (id == R.id.cancelButton) {
                     cropChoice.setVisibility(View.GONE);
                     bottomArea.startAnimation(slideDown);
 
@@ -239,13 +250,14 @@ public class FilterActivity extends AppCompatActivity {
 
                     topArea.setVisibility(View.VISIBLE);
                     topArea.startAnimation(slideDown);
-                }
+                } else if (id == R.id.cancelButton2) {
+                    if (type != null) renderer.cancelValue(type);
 
-                if (id == R.id.closeButton2) {
-                    if (selectFilterId == R.id.brightness) {
-                        customSeekBar.setProgress(brightnessValue);
-                        renderer.resetBrightness();
-                    }
+                    if (type == Type.BRIGHTNESS) customSeekBar.setProgress(brightnessValue);
+                    else if (type == Type.EXPOSURE) customSeekBar.setProgress(exposureValue);
+                    else if (type == Type.CONTRAST) customSeekBar.setProgress(contrastValue);
+                    else if (type == Type.SHARPNESS) customSeekBar.setProgress(sharpnessValue);
+                    else if (type == Type.SATURATION) customSeekBar.setProgress(saturationValue);
 
                     seekbar.setVisibility(View.GONE);
                     bottomArea.startAnimation(slideDown);
@@ -257,23 +269,17 @@ public class FilterActivity extends AppCompatActivity {
                     topArea.startAnimation(slideDown);
 
                     selectFilterId = -1;
-                }
-
-                if (id == R.id.checkButton2) {
+                    type = null;
+                } else if (id == R.id.checkButton2) {
                     int currentValue = customSeekBar.getProgress();
 
-                    if (selectFilterId == R.id.brightness) {
-                        brightnessValue = currentValue;
-                        renderer.applyBrightness(brightnessValue / 100f);
-                    } else if (selectFilterId == R.id.exposure) {
-                        exposureValue = currentValue;
-                    } else if (selectFilterId == R.id.contrast) {
-                        contrastValue = currentValue;
-                    } else if (selectFilterId == R.id.sharpness) {
-                        sharpnessValue = currentValue;
-                    } else if (selectFilterId == R.id.saturation) {
-                        saturationValue = currentValue;
-                    }
+                    if (type != null) renderer.applyValue(type, currentValue);
+
+                    if (type == Type.BRIGHTNESS) brightnessValue = currentValue;
+                    else if (type == Type.EXPOSURE) exposureValue = currentValue;
+                    else if (type == Type.CONTRAST) contrastValue = currentValue;
+                    else if (type == Type.SHARPNESS) sharpnessValue = currentValue;
+                    else if (type == Type.SATURATION) saturationValue = currentValue;
 
                     seekbar.setVisibility(View.GONE);
                     bottomArea.startAnimation(slideDown);
@@ -285,6 +291,7 @@ public class FilterActivity extends AppCompatActivity {
                     topArea.startAnimation(slideDown);
 
                     selectFilterId = -1;
+                    type = null;
                 }
             }
         };
@@ -296,24 +303,23 @@ public class FilterActivity extends AppCompatActivity {
         });
 
         crop.setOnClickListener(listener);
-        brightness.setOnClickListener(listener);
-        exposure.setOnClickListener(listener);
-        contrast.setOnClickListener(listener);
-        sharpness.setOnClickListener(listener);
-        saturation.setOnClickListener(listener);
-        closeButton.setOnClickListener(listener);
+        brightnessIcon.setOnClickListener(listener);
+        exposureIcon.setOnClickListener(listener);
+        contrastIcon.setOnClickListener(listener);
+        sharpnessIcon.setOnClickListener(listener);
+        saturationIcon.setOnClickListener(listener);
+        cancelButton.setOnClickListener(listener);
         checkButton.setOnClickListener(listener);
-        closeButton2.setOnClickListener(listener);
+        cancelButton2.setOnClickListener(listener);
         checkButton2.setOnClickListener(listener);
 
+        //customSeekBar의 progress값대로 실시간 미리보기 적용
         customSeekBar.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_MOVE ) {
+            if (event.getAction() == MotionEvent.ACTION_MOVE) {
                 int progress = customSeekBar.getProgress();
                 tempSeekbarValue = progress;
 
-                if (selectFilterId == R.id.brightness) {
-                    renderer.setTempBrightness(tempSeekbarValue / 100f);
-                }
+                if (type != null) renderer.setTempValue(type, tempSeekbarValue);
 
                 glSurfaceView.requestRender();
             }

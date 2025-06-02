@@ -73,9 +73,8 @@ public class CustomSeekbar extends View {
         float ratio = (float) (progress - min) / (max - min);
         int thumbX = (int) (thumbRadius + ratio * (getWidth() - 2 * thumbRadius));
 
-        //현재값이 음수면 왼쪽 이동 → 조작 버튼 기준 왼쪽 색상 변경, 양수면 오른쪽 이동 → 조작 버튼 기준 오른쪽 색상 변경
-        if (progress < 0) {
-            canvas.drawLine(thumbX, centerY, centerX, centerY, progressPaint);
+        if (FilterActivity.type == FilterActivity.Type.SHARPNESS) {
+            canvas.drawLine(0, centerY, thumbX, centerY, progressPaint);
         } else {
             canvas.drawLine(centerX, centerY, thumbX, centerY, progressPaint);
         }
@@ -110,6 +109,13 @@ public class CustomSeekbar extends View {
     public void setProgress(int progress) {
         this.progress = Math.max(min, Math.min(max, progress));
         invalidate();
+    }
 
+    public void setMinZero(FilterActivity.Type type) {
+        if (type == FilterActivity.Type.SHARPNESS) this.min = 0;
+        else this.min = -100;
+
+        this.progress = Math.max(min, Math.min(max, progress));
+        invalidate();
     }
 }
