@@ -21,7 +21,16 @@ public class CustomSeekbar extends View {
     private int thumbRadius = 25;   //버튼 반지름 → 크기
     private int barStroke = 10; //seekbar 굵기
 
-    //생성자
+    private OnProgressChangeListener onProgressChangeListener;
+
+    public interface OnProgressChangeListener {
+        void onProgressChanged(CustomSeekbar customSeekbar, int progress);
+    }
+
+    public void setOnProgressChangeListener(OnProgressChangeListener listener) {
+        this.onProgressChangeListener = listener;
+    }
+
     public CustomSeekbar(Context context) {
         super(context);
         init();
@@ -32,88 +41,91 @@ public class CustomSeekbar extends View {
         init();
     }
 
-    //처음 시작 시 한번만 실행, 초기화
     private void init() {
-        //배경색 (옅게) 설정
         backgroundPaint = new Paint();
         backgroundPaint.setColor(Color.parseColor("#DEDEDE"));
         backgroundPaint.setStrokeWidth(barStroke);
 
-        //움직인 만큼 채워질 색 (진하게) 설정
         progressPaint = new Paint();
         progressPaint.setColor(Color.parseColor("#838383"));
         progressPaint.setStrokeWidth(barStroke);
 
-        //조작 버튼 설정
         thumbPaint = new Paint();
         thumbPaint.setColor(Color.parseColor("#BDBDBD"));
         thumbPaint.setStyle(Paint.Style.FILL);
 
-        //현재값 텍스트 설정
         progressText = new Paint();
         progressText.setColor(Color.BLACK);
         progressText.setTextSize(textSize);
         progressText.setTextAlign(Paint.Align.CENTER);
     }
 
-    //seekbar 그리기
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        //seekbar 위치
         int centerY = getHeight() - 25;
         int centerX = getWidth() / 2;
 
-        //seekbar 배경색 그리기
         canvas.drawLine(thumbRadius, centerY, getWidth() - thumbRadius, centerY, backgroundPaint);
 
-        //seekbar 조작 버튼 움직인 만큼 위치 이동
-        //ex.현재값이 -50이면 (-50-(-100))/(100-(-100))=50/200 (4분의 1 지점)
         float ratio = (float) (progress - min) / (max - min);
         int thumbX = (int) (thumbRadius + ratio * (getWidth() - 2 * thumbRadius));
 
-        if (FilterActivity.type == FilterActivity.Type.SHARPNESS) {
+        if (min == 0) {
             canvas.drawLine(0, centerY, thumbX, centerY, progressPaint);
         } else {
-            canvas.drawLine(centerX, centerY, thumbX, centerY, progressPaint);
+            float zeroRatio = (float) (0 - min) / (max - min);
+            int zeroX = (int) (thumbRadius + zeroRatio * (getWidth() - 2 * thumbRadius));
+
+            if (progress >= 0) {
+                canvas.drawLine(zeroX, centerY, thumbX, centerY, progressPaint);
+            } else {
+                canvas.drawLine(thumbX, centerY, zeroX, centerY, progressPaint);
+            }
         }
-
-        //조작 버튼 그리기
         canvas.drawCircle(thumbX, centerY, thumbRadius, thumbPaint);
-
-        //현재값 텍스트 그리기
         canvas.drawText(String.valueOf(progress), centerX, centerY - textOffset, progressText);
     }
 
-    //버튼 조작 시 이동하게 해주는 메서드
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
             float x = event.getX();
             int width = getWidth() - 2 * thumbRadius;
             float ratio = Math.max(0, Math.min(1, (x - thumbRadius) / width));
-            progress = (int) (min + ratio * (max - min));
-            invalidate();
+            int newProgress = (int) (min + ratio * (max - min));
+            if (newProgress != this.progress) {
+                this.progress = newProgress;
+                invalidate();
+                if (onProgressChangeListener != null) {
+                    onProgressChangeListener.onProgressChanged(this, this.progress);
+                }
+            }
             return true;
         }
         return super.onTouchEvent(event);
     }
 
-    //현재값 불러오기
     public int getProgress() {
         return progress;
     }
 
-    //현재값 설정하기
     public void setProgress(int progress) {
-        this.progress = Math.max(min, Math.min(max, progress));
-        invalidate();
+        int clampedProgress = Math.max(min, Math.min(max, progress));
+        if (clampedProgress != this.progress) {
+            this.progress = clampedProgress;
+            invalidate();
+        }
     }
 
-    public void setMinZero(FilterActivity.Type type) {
-        if (type == FilterActivity.Type.SHARPNESS) this.min = 0;
-        else this.min = -100;
+    public void setMinZero(String filterType) {
+        if (filterType == "선명하게") {
+            this.min = 0;
+            if (this.progress < 0) {
+                this.progress = 0;
+            }
+        } else this.min = -100;
 
         this.progress = Math.max(min, Math.min(max, progress));
         invalidate();

@@ -32,7 +32,7 @@ android {
 }
 
 dependencies {
-
+    implementation("com.google.mlkit:face-detection:16.1.5")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
