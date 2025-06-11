@@ -1,7 +1,6 @@
 precision mediump float;
-uniform sampler2D uTexture;
 varying vec2 vTexCoord;
-
+uniform sampler2D uTexture;
 uniform float uBrightness;
 uniform float uExposure;
 uniform float uContrast;
@@ -10,8 +9,7 @@ uniform vec2 uResolution;
 uniform float uSaturation;
 
 void main() {
-    vec4 texColor = texture2D(uTexture, vTexCoord);
-    vec4 color = texColor;
+    vec4 color = texture2D(uTexture, vTexCoord);
 
     float brightnessFactor = 1.0 + uBrightness * 0.8;
     color.rgb = pow(color.rgb, vec3(1.0 / brightnessFactor));

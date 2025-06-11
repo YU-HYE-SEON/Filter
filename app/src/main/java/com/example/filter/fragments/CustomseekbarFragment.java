@@ -12,11 +12,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.example.filter.CustomSeekbar;
-import com.example.filter.FilterActivity;
+import com.example.filter.etc.CustomSeekbar;
+import com.example.filter.activities.FilterActivity;
 import com.example.filter.R;
 
-public class ColorsSeekbarFragment extends Fragment {
+public class CustomseekbarFragment extends Fragment {
     private TextView filterText;
     private ImageButton cancelBtn;
     private ImageButton checkBtn;
@@ -32,7 +32,8 @@ public class ColorsSeekbarFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.colors_seekbar_fragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_customseekbar, container, false);
+
         filterText = view.findViewById(R.id.filterText);
         Bundle bundle = getArguments();
 
@@ -101,17 +102,19 @@ public class ColorsSeekbarFragment extends Fragment {
 
     private void showPreviousFagement() {
         if (previousFragment != null) {
+            //((FilterActivity) requireActivity()).animTADown();
+
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
-                    .remove(ColorsSeekbarFragment.this)
+                    .remove(CustomseekbarFragment.this)
                     .show(previousFragment)
                     .commit();
         } else {
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea, new FilterColorsFragment())
+                    .replace(R.id.bottomArea, new ColorsFragment())
                     .commit();
         }
     }

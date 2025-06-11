@@ -1,18 +1,12 @@
-package com.example.filter;
+package com.example.filter.etc;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.PointF;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
-import android.opengl.Matrix;
-import android.util.Log;
 
-import com.google.mlkit.vision.face.Face;
-import com.google.mlkit.vision.face.FaceLandmark;
+import com.example.filter.R;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,45 +15,11 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class GLRenderer implements GLSurfaceView.Renderer {
-    // 스티커 관련 변수
-    private Bitmap stickerBitmap;
-    private int stickerTextureId = 0;
-    private int stickerProgram;
-
-    private int stickerPositionHandle;
-    private int stickerTexCoordHandle;
-    private int stickerTextureHandle;
-    private int stickerMVPMatrixHandle; // 스티커의 위치, 크기, 회전을 위한 MVP 행렬 핸들
-    // 스티커 필터링을 위한 uniform 핸들 추가
-    private int stickerBrightnessHandle;
-    private int stickerContrastHandle;
-    private int stickerSharpnessHandle;
-    private int stickerResolutionHandle;
-    private int stickerSaturationHandle;
-    private float[] stickerVertices = {
-            -1.0f, -1.0f,
-            1.0f, -1.0f,
-            -1.0f, 1.0f,
-            1.0f, 1.0f
-    };
-    private FloatBuffer stickerVertexBuffer;
-    private FloatBuffer stickerTexCoordBuffer;
-
-    // 감지된 얼굴 정보 (FilterActivity에서 받아옴)
-    private List<Face> detectedFaces;
-    private float[] projectionMatrix = new float[16];
-    private float[] viewMatrix = new float[16];
-    private float[] modelMatrix = new float[16];
-    private float[] mvpMatrix = new float[16];
-    private float currentProjectionLeft = -1f, currentProjectionRight = 1f;
-    private float currentProjectionBottom = -1f, currentProjectionTop = 1f;
-
+public class FGLRenderer implements GLSurfaceView.Renderer {
     private final Context context;  //리소스 접근 위해 사용
     private GLSurfaceView glSurfaceView;    //화면에 그려지는 OpenGL의 뷰 (현재 불러온 사진 이미지 + 필터 적용)
     private Bitmap bitmap;  //렌더링할 이미지, openGL의 텍스쳐로 변환
@@ -110,7 +70,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             1.0f, 0.0f      //오른쪽 아래 → 오른쪽 위
     };
 
-    public GLRenderer(Context context, GLSurfaceView glSurfaceView) {
+    public FGLRenderer(Context context, GLSurfaceView glSurfaceView) {
         this.context = context;
         this.glSurfaceView = glSurfaceView;
 
@@ -125,18 +85,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         texCoordBuffer = cc.asFloatBuffer();
         texCoordBuffer.put(texCoords);
         texCoordBuffer.position(0);
-
-        ByteBuffer stickerBb = ByteBuffer.allocateDirect(stickerVertices.length * 4);
-        stickerBb.order(ByteOrder.nativeOrder());
-        stickerVertexBuffer = stickerBb.asFloatBuffer();
-        stickerVertexBuffer.put(stickerVertices);
-        stickerVertexBuffer.position(0);
-
-        ByteBuffer stickerCc = ByteBuffer.allocateDirect(texCoords.length * 4);
-        stickerCc.order(ByteOrder.nativeOrder());
-        stickerTexCoordBuffer = stickerCc.asFloatBuffer();
-        stickerTexCoordBuffer.put(texCoords);
-        stickerTexCoordBuffer.position(0);
     }
 
     private String loadShaderCodeFromRawResource(int resourceId) {
@@ -168,20 +116,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         }
     }
 
-    public void setStickerBitmap(Bitmap stickerBitmap) {
-        this.stickerBitmap = stickerBitmap;
-        if (stickerTextureId != 0) {
-            GLES20.glDeleteTextures(1, new int[]{stickerTextureId}, 0);
-            stickerTextureId = 0;
-        }
-        glSurfaceView.requestRender();
-    }
-
-    public void setDetectedFace(List<Face> faces) {
-        this.detectedFaces = faces;
-        glSurfaceView.requestRender();
-    }
-
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
         GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -204,34 +138,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             GLES20.glDeleteProgram(program);
             program = 0;
         }
-
-        String stickerVertexShaderCode = loadShaderCodeFromRawResource(R.raw.sticker_vertex_shader);
-        String stickerFragmentShaderCode = loadShaderCodeFromRawResource(R.raw.sticker_fragment_shader);
-
-        int stickerVertexShader = loadShader(GLES20.GL_VERTEX_SHADER, stickerVertexShaderCode);
-        int stickerFragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, stickerFragmentShaderCode);
-
-        stickerProgram = GLES20.glCreateProgram();
-        GLES20.glAttachShader(stickerProgram, stickerVertexShader);
-        GLES20.glAttachShader(stickerProgram, stickerFragmentShader);
-        GLES20.glLinkProgram(stickerProgram);
-
-        final int[] stickerLinkStatus = new int[1];
-        GLES20.glGetProgramiv(stickerProgram, GLES20.GL_LINK_STATUS, stickerLinkStatus, 0);
-        if (stickerLinkStatus[0] == 0) {
-            GLES20.glDeleteProgram(stickerProgram);
-            stickerProgram = 0;
-        }
-
-        stickerPositionHandle = GLES20.glGetAttribLocation(stickerProgram, "aPosition");
-        stickerTexCoordHandle = GLES20.glGetAttribLocation(stickerProgram, "aTexCoord");
-        stickerTextureHandle = GLES20.glGetUniformLocation(stickerProgram, "uTexture");
-        stickerMVPMatrixHandle = GLES20.glGetUniformLocation(stickerProgram, "uMVPMatrix");
-        stickerBrightnessHandle = GLES20.glGetUniformLocation(stickerProgram, "uBrightness");
-        stickerContrastHandle = GLES20.glGetUniformLocation(stickerProgram, "uContrast");
-        stickerSharpnessHandle = GLES20.glGetUniformLocation(stickerProgram, "uSharpness");
-        stickerResolutionHandle = GLES20.glGetUniformLocation(stickerProgram, "uResolution");
-        stickerSaturationHandle = GLES20.glGetUniformLocation(stickerProgram, "uSaturation");
 
         positionHandle = GLES20.glGetAttribLocation(program, "aPosition");
         texCoordHandle = GLES20.glGetAttribLocation(program, "aTexCoord");
@@ -289,56 +195,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             GLES20.glDisableVertexAttribArray(positionHandle);
             GLES20.glDisableVertexAttribArray(texCoordHandle);
         }
-
-        if (stickerBitmap != null && stickerProgram != 0 && detectedFaces != null && !detectedFaces.isEmpty()) {
-            if (stickerTextureId == 0) {
-                int[] textures = new int[1];
-                GLES20.glGenTextures(1, textures, 0);
-                stickerTextureId = textures[0];
-
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, stickerTextureId);
-                GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-                GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-                GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, stickerBitmap, 0);
-            }
-
-            GLES20.glEnable(GLES20.GL_BLEND);
-            GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-
-            GLES20.glUseProgram(stickerProgram);
-
-            GLES20.glEnableVertexAttribArray(stickerPositionHandle);
-            GLES20.glVertexAttribPointer(stickerPositionHandle, 2, GLES20.GL_FLOAT, false, 0, stickerVertexBuffer);
-            GLES20.glEnableVertexAttribArray(stickerTexCoordHandle);
-            GLES20.glVertexAttribPointer(stickerTexCoordHandle, 2, GLES20.GL_FLOAT, false, 0, stickerTexCoordBuffer);
-
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, stickerTextureId);
-            GLES20.glUniform1i(stickerTextureHandle, 1);
-
-            GLES20.glUniform1f(stickerBrightnessHandle, tempBrightness);
-            GLES20.glUniform1f(stickerContrastHandle, tempContrast);
-            GLES20.glUniform1f(stickerSharpnessHandle, tempSharpness);
-            GLES20.glUniform2f(stickerResolutionHandle, bitmap.getWidth(), bitmap.getHeight());
-            GLES20.glUniform1f(stickerSaturationHandle, tempSaturation);
-
-            for (Face face : detectedFaces) {
-                float[] mvpMatrix = calculateStickerMVPMatrix(face);
-                GLES20.glUniformMatrix4fv(stickerMVPMatrixHandle, 1, false, mvpMatrix, 0);
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-            }
-
-            GLES20.glDisableVertexAttribArray(stickerPositionHandle);
-            GLES20.glDisableVertexAttribArray(stickerTexCoordHandle);
-            GLES20.glDisable(GLES20.GL_BLEND);
-        } else {
-            if (stickerTextureId != 0) {
-                GLES20.glDeleteTextures(1, new int[]{stickerTextureId}, 0);
-                stickerTextureId = 0;
-            }
-        }
     }
 
     @Override
@@ -355,109 +211,17 @@ public class GLRenderer implements GLSurfaceView.Renderer {
                 viewportHeight = (int) (width / imageAspectRatio);
                 viewportY = (height - viewportHeight) / 2;
                 viewportX = 0;
-
-                currentProjectionLeft = -1f;
-                currentProjectionRight = 1f;
-                currentProjectionTop = 1f / (imageAspectRatio / viewAspectRatio);
-                currentProjectionBottom = -currentProjectionTop;
-                Matrix.orthoM(projectionMatrix, 0, currentProjectionLeft, currentProjectionRight,
-                        currentProjectionBottom, currentProjectionTop, -1f, 1f);
             } else {
                 viewportHeight = height;
                 viewportWidth = (int) (height * imageAspectRatio);
                 viewportX = (width - viewportWidth) / 2;
                 viewportY = 0;
-
-                currentProjectionBottom = -1f;
-                currentProjectionTop = 1f;
-                currentProjectionRight = 1f / (viewAspectRatio / imageAspectRatio);
-                currentProjectionLeft = -currentProjectionRight;
-                Matrix.orthoM(projectionMatrix, 0, currentProjectionLeft, currentProjectionRight,
-                        currentProjectionBottom, currentProjectionTop, -1f, 1f);
             }
-        } else {
-            currentProjectionLeft = -1f;
-            currentProjectionRight = 1f;
-            currentProjectionBottom = -1f;
-            currentProjectionTop = 1f;
-            Matrix.orthoM(projectionMatrix, 0, -1f, 1f, -1f, 1f, -1f, 1f);
         }
 
         GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
 
-        Matrix.setIdentityM(viewMatrix, 0);
-    }
-
-    private float[] calculateStickerMVPMatrix(Face face) {
-        Matrix.setIdentityM(modelMatrix, 0);
-
-        FaceLandmark leftEyeLandmark = face.getLandmark(FaceLandmark.LEFT_EYE);
-        FaceLandmark rightEyeLandmark = face.getLandmark(FaceLandmark.RIGHT_EYE);
-
-        if (leftEyeLandmark != null && rightEyeLandmark != null) {
-            PointF leftEye = leftEyeLandmark.getPosition();
-            PointF rightEye = rightEyeLandmark.getPosition();
-
-            Rect faceRect = face.getBoundingBox();
-            RectF boundingBox = new RectF(faceRect);
-
-            float imageWidth = bitmap.getWidth();
-            float imageHeight = bitmap.getHeight();
-
-            float centerX = (leftEye.x + rightEye.x) / 2f;
-            float centerY = (leftEye.y + rightEye.y) / 2f;
-
-            float offsetX = boundingBox.width() * 0.2f;
-            float offsetY = boundingBox.height() * 0.5f;
-
-            float stickerCenterX = centerX + offsetX;
-            float stickerCenterY = centerY - offsetY;
-
-            float normalizedX = stickerCenterX / imageWidth;
-            float normalizedY = stickerCenterY / imageHeight;
-
-            float ndcX = currentProjectionLeft + normalizedX * (currentProjectionRight - currentProjectionLeft);
-            float ndcY = currentProjectionTop - normalizedY * (currentProjectionTop - currentProjectionBottom);
-
-            float stickerWidth = face.getBoundingBox().width() * 0.2f;
-            float stickerHeight = stickerWidth * ((float) stickerBitmap.getHeight() / stickerBitmap.getWidth());
-            float ndcWidth = (stickerWidth / imageWidth) * (currentProjectionRight - currentProjectionLeft);
-            float ndcHeight = (stickerHeight / imageHeight) * (currentProjectionTop - currentProjectionBottom);
-
-            float deltaX = rightEye.x - leftEye.x;
-            float deltaY = rightEye.y - leftEye.y;
-            float roll = (float) Math.toDegrees(Math.atan2(deltaY, deltaX));
-
-            Matrix.setIdentityM(modelMatrix, 0);
-            Matrix.translateM(modelMatrix, 0, ndcX, ndcY, 0f);
-            Matrix.rotateM(modelMatrix, 0, roll, 0f, 0f, 1f);
-            Matrix.scaleM(modelMatrix, 0, ndcWidth, ndcHeight, 1f);
-            Matrix.multiplyMM(mvpMatrix, 0, viewMatrix, 0, modelMatrix, 0);
-            Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, mvpMatrix, 0);
-
-            Log.d("Sticker", "X: " + stickerCenterX + ", Y: " + stickerCenterY);
-            Log.d("Sticker", "Roll angle: " + roll + " degrees");
-
-            float[] vmMatrix = new float[16];
-            Matrix.multiplyMM(vmMatrix, 0, viewMatrix, 0, modelMatrix, 0);
-            Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, vmMatrix, 0);
-
-        } else {
-            Matrix.translateM(modelMatrix, 0, 100f, 100f, 0.0f);
-            Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, modelMatrix, 0);
-        }
-
-        return mvpMatrix;
-    }
-
-    public void clearSticker() {
-        this.detectedFaces = null;
-        this.stickerBitmap = null;
-        if (stickerTextureId != 0) {
-            GLES20.glDeleteTextures(1, new int[]{stickerTextureId}, 0);
-            stickerTextureId = 0;
-        }
-        glSurfaceView.requestRender();
+        if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
     private int loadShader(int type, String shaderCode) {
@@ -479,7 +243,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             case "밝기":
                 return Math.round(tempBrightness * 100);
             case "대비":
-                return Math.round((tempContrast - 1.0f) * 100);
+                return Math.round(tempContrast * 100);
             case "선명하게":
                 return Math.round(tempSharpness * 100);
             case "채도":
@@ -494,8 +258,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
                 tempBrightness = value / 100f;
                 break;
             case "대비":
-                tempContrast = (value / 100f) + 1.0f;
-                tempContrast = Math.max(0.1f, tempContrast);
+                tempContrast = (value / 100f);
+                tempContrast = Math.max(-0.8f, tempContrast);
                 break;
             case "선명하게":
                 tempSharpness = value / 100f;
@@ -516,8 +280,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
                 tempBrightness = updateBrightness;
                 break;
             case "대비":
-                updateContrast = (value / 100f) + 1.0f;
-                updateContrast = Math.max(0.1f, updateContrast);
+                updateContrast = (value / 100f);
+                updateContrast = Math.max(-0.8f, updateContrast);
                 tempContrast = updateContrast;
                 break;
             case "선명하게":
@@ -557,8 +321,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         updateBrightness = 0f;
         tempBrightness = 0f;
 
-        updateContrast = 1.0f;
-        tempContrast = 1.0f;
+        updateContrast = 0f;
+        tempContrast = 0f;
 
         updateSharpness = 0f;
         tempSharpness = 0f;

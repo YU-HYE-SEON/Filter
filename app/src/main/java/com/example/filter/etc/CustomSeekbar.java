@@ -1,4 +1,4 @@
-package com.example.filter;
+package com.example.filter.etc;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -21,11 +21,12 @@ public class CustomSeekbar extends View {
     private int thumbRadius = 25;   //버튼 반지름 → 크기
     private int barStroke = 10; //seekbar 굵기
 
-    private OnProgressChangeListener onProgressChangeListener;
-
     public interface OnProgressChangeListener {
+
         void onProgressChanged(CustomSeekbar customSeekbar, int progress);
     }
+
+    private OnProgressChangeListener onProgressChangeListener;
 
     public void setOnProgressChangeListener(OnProgressChangeListener listener) {
         this.onProgressChangeListener = listener;

@@ -12,8 +12,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.dialogs.StickersDialog;
 
-public class FilterColorsFragment extends Fragment {
+public class ColorsFragment extends Fragment {
     private String filterType;
 
     private LinearLayout brightnessIcon;
@@ -25,7 +26,7 @@ public class FilterColorsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.filter_colors_fragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_colors, container, false);
 
         brightnessIcon = view.findViewById(R.id.brightnessIcon);
         contrastIcon = view.findViewById(R.id.contrastIcon);
@@ -35,6 +36,8 @@ public class FilterColorsFragment extends Fragment {
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //((FilterActivity) requireActivity()).animTAUp();
+
                 filterType = "";
                 int id = view.getId();
 
@@ -54,16 +57,16 @@ public class FilterColorsFragment extends Fragment {
                 }
 
                 if (!filterType.isEmpty()) {
-                    ColorsSeekbarFragment csf = new ColorsSeekbarFragment();
+                    CustomseekbarFragment csf = new CustomseekbarFragment();
                     Bundle bundle = new Bundle();
                     bundle.putString("filterType", filterType);
                     csf.setArguments(bundle);
-                    csf.setPreviousFragment(FilterColorsFragment.this);
+                    csf.setPreviousFragment(ColorsFragment.this);
 
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
-                            .setCustomAnimations(R.anim.slide_up, 0)
-                            .hide(FilterColorsFragment.this)
+                            .setCustomAnimations(R.anim.slide_up,0)
+                            .hide(ColorsFragment.this)
                             .add(R.id.bottomArea, csf)
                             .commit();
                 }
@@ -74,11 +77,21 @@ public class FilterColorsFragment extends Fragment {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                requireActivity().getSupportFragmentManager()
-                        .beginTransaction()
-                        .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new FilterColorsFragment())
-                        .commit();
+                new StickersDialog(requireContext(), new StickersDialog.StickersDialogListener() {
+                    @Override
+                    public void onKeep() {
+
+                    }
+
+                    @Override
+                    public void onChange() {
+                        requireActivity().getSupportFragmentManager()
+                                .beginTransaction()
+                                .setCustomAnimations(R.anim.slide_up,0)
+                                .replace(R.id.bottomArea, new StickersFragment())
+                                .commit();
+                    }
+                }).show();
             }
         });
 

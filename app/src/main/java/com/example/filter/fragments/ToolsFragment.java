@@ -13,23 +13,25 @@ import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
 
-public class FilterToolsFragment extends Fragment {
+public class ToolsFragment extends Fragment {
     private LinearLayout cropIcon;
     private ImageButton nextBtn;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.filter_tools_fragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_tools, container, false);
 
         cropIcon = view.findViewById(R.id.cropIcon);
         cropIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //((FilterActivity) requireActivity()).animTAUp();
+
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
-                        .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new ToolsCropFragment())
+                        .setCustomAnimations(R.anim.slide_up,0)
+                        .replace(R.id.bottomArea, new CropFragment())
                         .commit();
             }
         });
@@ -40,8 +42,8 @@ public class FilterToolsFragment extends Fragment {
             public void onClick(View view) {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
-                        .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new FilterColorsFragment())
+                        .setCustomAnimations(R.anim.slide_up,0)
+                        .replace(R.id.bottomArea, new ColorsFragment())
                         .commit();
             }
         });
