@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -30,6 +31,8 @@ public class FilterActivity extends AppCompatActivity {
     private GLSurfaceView photoPreview;
     private FGLRenderer renderer;
     private ImageButton backBtn;
+    private ImageButton saveBtn;
+    private TextView saveTxt;
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -108,6 +111,8 @@ public class FilterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_filter);
         topArea = findViewById(R.id.topArea);
         backBtn = findViewById(R.id.backBtn);
+        saveBtn = findViewById(R.id.saveBtn);
+        saveTxt = findViewById(R.id.saveTxt);
         photoPreview = findViewById(R.id.photoPreview);
         //renderer = photoPreview.getRenderer();
         photoPreview.setEGLContextClientVersion(2);
@@ -127,6 +132,8 @@ public class FilterActivity extends AppCompatActivity {
             intent.setType("image/*");
             galleryLauncher.launch(intent);
         });
+
+        //saveBtn.setEnabled(false);
 
 /*        getSupportFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
             @Override

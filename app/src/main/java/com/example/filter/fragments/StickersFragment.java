@@ -5,6 +5,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -18,11 +20,20 @@ public class StickersFragment extends Fragment {
     private LinearLayout AIStickerIcon;
     private FrameLayout fullScreenFragmentContainer;
     private ConstraintLayout filterActivity;
+    private ImageButton saveBtn;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_stickers, container, false);
+
+        saveBtn = requireActivity().findViewById(R.id.saveBtn);
+        saveBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
 
         AIStickerIcon = view.findViewById(R.id.AIStickerIcon);
         AIStickerIcon.setOnClickListener(new View.OnClickListener() {
