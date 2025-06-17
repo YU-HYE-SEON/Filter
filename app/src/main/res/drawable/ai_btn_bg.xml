@@ -2,7 +2,7 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#707070" />
+            <solid android:color="#AFFA52" />
             <corners android:radius="15dp" />
             <padding android:bottom="10dp" android:left="10dp" android:right="10dp" android:top="10dp" />
         </shape>
@@ -10,7 +10,7 @@
 
     <item android:state_enabled="false">
         <shape android:shape="rectangle">
-            <solid android:color="#DCDCDC" />
+            <solid android:color="#DFFFB4" />
             <corners android:radius="15dp" />
             <padding android:bottom="10dp" android:left="10dp" android:right="10dp" android:top="10dp" />
         </shape>
@@ -18,7 +18,7 @@
 
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#BDBDBD" />
+            <solid android:color="#C2FA7A" />
             <corners android:radius="15dp" />
             <padding android:bottom="10dp" android:left="10dp" android:right="10dp" android:top="10dp" />
         </shape>

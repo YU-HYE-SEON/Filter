@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -13,15 +14,15 @@ import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
 import com.example.filter.dialogs.StickersDialog;
+import com.example.filter.etc.ClickUtils;
 
 public class ColorsFragment extends Fragment {
     private String filterType;
-
-    private LinearLayout brightnessIcon;
-    private LinearLayout contrastIcon;
-    private LinearLayout sharpnessIcon;
-    private LinearLayout saturationIcon;
-    private ImageButton nextBtn;
+    private ImageView brightnessIcon;
+    private ImageView contrastIcon;
+    private ImageView sharpnessIcon;
+    private ImageView saturationIcon;
+    private ImageView nextBtn;
 
     @Nullable
     @Override
@@ -36,7 +37,7 @@ public class ColorsFragment extends Fragment {
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //((FilterActivity) requireActivity()).animTAUp();
+                if (ClickUtils.isFastClick(500)) return;
 
                 filterType = "";
                 int id = view.getId();
@@ -65,7 +66,7 @@ public class ColorsFragment extends Fragment {
 
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
-                            .setCustomAnimations(R.anim.slide_up,0)
+                            .setCustomAnimations(R.anim.slide_up, 0)
                             .hide(ColorsFragment.this)
                             .add(R.id.bottomArea, csf)
                             .commit();
@@ -77,6 +78,8 @@ public class ColorsFragment extends Fragment {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (ClickUtils.isFastClick(500)) return;
+
                 new StickersDialog(requireContext(), new StickersDialog.StickersDialogListener() {
                     @Override
                     public void onKeep() {
@@ -87,8 +90,9 @@ public class ColorsFragment extends Fragment {
                     public void onChange() {
                         requireActivity().getSupportFragmentManager()
                                 .beginTransaction()
-                                .setCustomAnimations(R.anim.slide_up,0)
+                                .setCustomAnimations(R.anim.slide_up, 0)
                                 .replace(R.id.bottomArea, new StickersFragment())
+                                .addToBackStack(null)
                                 .commit();
                     }
                 }).show();

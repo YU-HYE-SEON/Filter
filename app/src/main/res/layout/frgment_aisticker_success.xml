@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#007AFF">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/aiStickerSuccess"
@@ -10,29 +11,61 @@
         android:layout_height="match_parent">
 
         <TextView
+            android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
+            android:fontFamily="@font/gmarket_sans_ttf_bold"
             android:text="스티커 제작 완료!"
+            android:textColor="#C2FA7A"
             android:textSize="20sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/aiStickerImage"
+            app:layout_constraintBottom_toTopOf="@+id/aiResultBG"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="1.0" />
 
         <ImageView
-            android:id="@+id/aiStickerImage"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:background="#BDBDBD"
+            android:id="@+id/aiResultBG"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:src="@drawable/ai_result_bg_green"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
+            android:id="@+id/aiResultFG"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:src="@drawable/ai_result_fg_white"
+            app:layout_constraintBottom_toBottomOf="@+id/aiResultBG"
+            app:layout_constraintEnd_toEndOf="@+id/aiResultBG"
+            app:layout_constraintStart_toStartOf="@+id/aiResultBG"
+            app:layout_constraintTop_toTopOf="@+id/aiResultBG" />
+
+        <ImageView
+            android:id="@+id/aiStickerImage"
+            android:layout_width="170dp"
+            android:layout_height="170dp"
+            app:layout_constraintBottom_toBottomOf="@+id/aiResultFG"
+            app:layout_constraintEnd_toEndOf="@+id/aiResultFG"
+            app:layout_constraintStart_toStartOf="@+id/aiResultFG"
+            app:layout_constraintTop_toTopOf="@+id/aiResultFG" />
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AI 스티커\n결과 이미지가\n들어갑니다"
+            android:textAlignment="center"
+            app:layout_constraintBottom_toBottomOf="@+id/aiResultBG"
+            app:layout_constraintEnd_toEndOf="@+id/aiResultBG"
+            app:layout_constraintStart_toStartOf="@+id/aiResultBG"
+            app:layout_constraintTop_toTopOf="@+id/aiResultBG" />
+
+        <ImageButton
             android:id="@+id/retryBtn"
             android:layout_width="120dp"
             android:layout_height="30dp"
@@ -40,10 +73,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/aiStickerImage"
-            app:layout_constraintVertical_bias="0.1">
-
-        </ImageView>
+            app:layout_constraintTop_toBottomOf="@+id/aiResultBG"
+            app:layout_constraintVertical_bias="0.1"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -51,6 +82,7 @@
             android:text="다시 만들기"
             android:textAlignment="center"
             android:textColor="@color/black"
+            android:fontFamily="@font/pretendard_semibold"
             app:layout_constraintBottom_toBottomOf="@+id/retryBtn"
             app:layout_constraintEnd_toEndOf="@+id/retryBtn"
             app:layout_constraintStart_toStartOf="@+id/retryBtn"

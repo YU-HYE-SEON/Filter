@@ -8,6 +8,10 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import androidx.core.content.res.ResourcesCompat;
+
+import com.example.filter.R;
+
 public class CustomSeekbar extends View {
     private int max = 100;  //최대값
     private int min = -100; //최소값
@@ -17,7 +21,6 @@ public class CustomSeekbar extends View {
     private Paint thumbPaint;   //조작 버튼
     private Paint progressText; //현재값 텍스트
     private int textOffset = 80; //seekbar와 텍스트 사이 간격
-    private int textSize = 50; //텍스트 크기
     private int thumbRadius = 25;   //버튼 반지름 → 크기
     private int barStroke = 10; //seekbar 굵기
 
@@ -48,7 +51,7 @@ public class CustomSeekbar extends View {
         backgroundPaint.setStrokeWidth(barStroke);
 
         progressPaint = new Paint();
-        progressPaint.setColor(Color.parseColor("#838383"));
+        progressPaint.setColor(Color.parseColor("#BDBDBD"));
         progressPaint.setStrokeWidth(barStroke);
 
         thumbPaint = new Paint();
@@ -56,8 +59,9 @@ public class CustomSeekbar extends View {
         thumbPaint.setStyle(Paint.Style.FILL);
 
         progressText = new Paint();
-        progressText.setColor(Color.BLACK);
-        progressText.setTextSize(textSize);
+        progressText.setTypeface(ResourcesCompat.getFont(getContext(), R.font.roboto_bold));
+        progressText.setColor(Color.parseColor("#6B6B6B"));
+        progressText.setTextSize(spToPx(15));
         progressText.setTextAlign(Paint.Align.CENTER);
     }
 
@@ -79,22 +83,35 @@ public class CustomSeekbar extends View {
             float zeroRatio = (float) (0 - min) / (max - min);
             int zeroX = (int) (thumbRadius + zeroRatio * (getWidth() - 2 * thumbRadius));
 
-            if (progress >= 0) {
+            /*if (progress >= 0) {
                 canvas.drawLine(zeroX, centerY, thumbX, centerY, progressPaint);
             } else {
                 canvas.drawLine(thumbX, centerY, zeroX, centerY, progressPaint);
-            }
+            }*/
         }
+
+        if (progress==0) {
+            progressText.setColor(Color.parseColor("#6B6B6B"));
+        } else {
+            //폰트,
+            progressText.setColor(Color.parseColor("#C2FA7A"));
+        }
+
         canvas.drawCircle(thumbX, centerY, thumbRadius, thumbPaint);
-        canvas.drawText(String.valueOf(progress), centerX, centerY - textOffset, progressText);
+        canvas.drawText(String.valueOf(progress), thumbX, centerY - textOffset, progressText);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        float centerY = getHeight() - 25;
+        float touchX = event.getX();
+        float touchY = event.getY();
+        float thumbTouchPadding = thumbRadius * 1.2f;
+        if (Math.abs(touchY - centerY) > thumbTouchPadding) return false;
+
         if (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
-            float x = event.getX();
             int width = getWidth() - 2 * thumbRadius;
-            float ratio = Math.max(0, Math.min(1, (x - thumbRadius) / width));
+            float ratio = Math.max(0, Math.min(1, (touchX - thumbRadius) / width));
             int newProgress = (int) (min + ratio * (max - min));
             if (newProgress != this.progress) {
                 this.progress = newProgress;
@@ -130,5 +147,10 @@ public class CustomSeekbar extends View {
 
         this.progress = Math.max(min, Math.min(max, progress));
         invalidate();
+    }
+
+    private float spToPx(float sp) {
+        float scaledDensity = getResources().getDisplayMetrics().scaledDensity;
+        return sp * scaledDensity;
     }
 }

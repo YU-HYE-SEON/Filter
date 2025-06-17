@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#007AFF">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/aiStickerMake"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/img"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="20dp"
+            android:src="@drawable/robot"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@+id/txt"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <TextView
+            android:id="@+id/txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="어떤 스티커를 만들어 볼까요?"
+            android:textAlignment="center"
+            android:fontFamily="@font/gmarket_sans_ttf_bold"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toTopOf="@+id/warningTxt"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/img" />
+
+        <TextView
+            android:id="@+id/warningTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:text="현재 입력 텍스트가 너무 길어요"
+            android:textAlignment="center"
+            android:textColor="#FF0000"
+            android:textSize="10sp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/editText"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/txt" />
+
+        <EditText
+            android:id="@+id/editText"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="30dp"
+            android:background="@drawable/border1"
+            android:inputType="textMultiLine"
+            android:minLines="1"
+            android:paddingLeft="20dp"
+            android:fontFamily="@font/roboto_medium"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:paddingRight="14dp"
+            app:layout_constraintBottom_toTopOf="@+id/createBtn"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/warningTxt" />
+
+        <ImageButton
+            android:id="@+id/createBtn"
+            android:layout_width="110dp"
+            android:layout_height="30dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/ai_btn_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editText" />
+
+        <TextView
+            android:id="@+id/createTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="만들기"
+            android:textColor="#007BFF"
+            android:textSize="16sp"
+            android:visibility="invisible"
+            android:fontFamily="@font/pretendard_semibold"
+            app:layout_constraintBottom_toBottomOf="@+id/createBtn"
+            app:layout_constraintEnd_toEndOf="@+id/createBtn"
+            app:layout_constraintStart_toStartOf="@+id/createBtn"
+            app:layout_constraintTop_toTopOf="@+id/createBtn" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

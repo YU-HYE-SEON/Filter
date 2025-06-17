@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/studioItem"
+    android:layout_width="260dp"
+    android:layout_height="75dp"
+    android:layout_marginTop="15dp"
+    android:layout_marginRight="20dp"
+    android:orientation="horizontal"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="15dp"
+    app:cardElevation="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/studioCard"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/border_home_contents1"
+        android:padding="8dp">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/studioImageCard"
+            android:layout_width="58dp"
+            android:layout_height="58dp"
+            app:cardCornerRadius="15dp"
+            app:cardElevation="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/studioImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#BDBDBD"
+                android:contentDescription="Studio Main Image"
+                android:scaleType="centerCrop" />
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="58dp"
+            app:layout_constraintBottom_toBottomOf="@+id/studioImageCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/studioImageCard"
+            app:layout_constraintTop_toTopOf="@+id/studioImageCard">
+
+            <TextView
+                android:id="@+id/studioTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:fontFamily="@font/pretendard_bold"
+                android:text="스튜디오 이름"
+                android:textColor="#4D4D4D"
+                android:textSize="10sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/studioIntro"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:fontFamily="@font/pretendard_medium"
+                android:text="스튜디오 소개"
+                android:textColor="#666666"
+                android:textSize="10sp"
+                app:layout_constraintBottom_toTopOf="@+id/studioImgPreview"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/studioTitle"
+                app:layout_constraintVertical_bias="0.3" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/studioImgPreview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:orientation="horizontal"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:itemCount="5"
+                tools:listitem="@layout/item_studio_preview" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

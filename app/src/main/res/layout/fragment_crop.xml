@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +15,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="150dp"
-            android:background="@drawable/border"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -142,28 +142,31 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:background="@drawable/border"
             android:layout_height="match_parent"
             android:gravity="center">
 
             <ImageButton
                 android:id="@+id/cancelBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_marginLeft="16dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="12dp"
-                android:src="@drawable/close_button"
+                android:padding="17dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ai_close_btn"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
+                android:id="@+id/filterText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="자르기"
+                android:fontFamily="@font/pretendard_medium"
                 android:textAlignment="center"
-                android:textSize="18sp"
+                android:textSize="14sp"
+                android:textColor="@color/white"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
@@ -171,12 +174,14 @@
 
             <ImageButton
                 android:id="@+id/checkBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_marginRight="16dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
-                android:src="@drawable/check_button"
+                android:scaleType="fitCenter"
+                android:src="@drawable/customseekbar_check_no"
+                android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />

@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.etc.ClickUtils;
 
 public class CropFragment extends Fragment {
     private ImageButton cancelBtn;
@@ -24,7 +25,7 @@ public class CropFragment extends Fragment {
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //((FilterActivity) requireActivity()).animTADown();
+                if (ClickUtils.isFastClick(500)) return;
 
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()

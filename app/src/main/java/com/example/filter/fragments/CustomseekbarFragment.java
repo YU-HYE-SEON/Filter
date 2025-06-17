@@ -8,10 +8,12 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CustomSeekbar;
 import com.example.filter.activities.FilterActivity;
 import com.example.filter.R;
@@ -35,16 +37,15 @@ public class CustomseekbarFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_customseekbar, container, false);
 
         filterText = view.findViewById(R.id.filterText);
-        Bundle bundle = getArguments();
-
         customSeekbar = view.findViewById(R.id.customSeekbar);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
+        Bundle bundle = getArguments();
         if (bundle != null) {
             String filterType = bundle.getString("filterType", "");
 
-            if(filterType == "선명하게"){
+            if (filterType == "선명하게") {
                 customSeekbar.setMinZero(filterType);
             }
 
@@ -75,21 +76,17 @@ public class CustomseekbarFragment extends Fragment {
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (ClickUtils.isFastClick(500)) return;
+
                 int id = v.getId();
+                String filterType = getArguments().getString("filterType", "");
+                FilterActivity activity = (FilterActivity) getActivity();
                 if (id == R.id.cancelBtn) {
                     showPreviousFagement();
-
-                    if (getActivity() instanceof FilterActivity) {
-                        String filterType = getArguments().getString("filterType", "");
-                        ((FilterActivity) getActivity()).onCancelValue(filterType);
-                    }
+                    if (activity != null) activity.onCancelValue(filterType);
                 } else if (id == R.id.checkBtn) {
                     showPreviousFagement();
-
-                    if (getActivity() instanceof FilterActivity) {
-                        String filterType = getArguments().getString("filterType", "");
-                        ((FilterActivity) getActivity()).onUpdateValue(filterType, filterValue);
-                    }
+                    if (activity != null) activity.onUpdateValue(filterType, filterValue);
                 }
             }
         };
@@ -102,8 +99,6 @@ public class CustomseekbarFragment extends Fragment {
 
     private void showPreviousFagement() {
         if (previousFragment != null) {
-            //((FilterActivity) requireActivity()).animTADown();
-
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)

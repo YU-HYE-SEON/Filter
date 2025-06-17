@@ -15,14 +15,24 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class FGLRenderer implements GLSurfaceView.Renderer {
+    public interface OnBitmapCaptureListener {
+        void onBitmapCaptured(Bitmap bitmap);
+    }
+
+    private OnBitmapCaptureListener listener;
     private final Context context;  //리소스 접근 위해 사용
     private GLSurfaceView glSurfaceView;    //화면에 그려지는 OpenGL의 뷰 (현재 불러온 사진 이미지 + 필터 적용)
     private Bitmap bitmap;  //렌더링할 이미지, openGL의 텍스쳐로 변환
+    private int viewportX;
+    private int viewportY;
+    private int viewportWidth;
+    private int viewportHeight;
     private int textureId = 0;  //텍스쳐 객체 고유 ID 참조용, 0:생성한 텍스쳐 없음
     private int program;    //쉐이더 프로그램 ID, 쉐이더 프로그램 = (버텍스 쉐이더(정점 위치 계산) + 프래그먼트 쉐이더(픽셀 색상 계산))
     private int positionHandle; //버텍스 쉐이더(vertexShaderCode)의 변수 aPosition ID 참조용 핸들
@@ -118,7 +128,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
-        GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         String vertexShaderCode = loadShaderCodeFromRawResource(R.raw.filter_vertex_shader);
@@ -151,7 +161,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 unused) {
-        GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         if (bitmap == null || program == 0) {
@@ -218,10 +228,31 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                 viewportY = 0;
             }
         }
+        
+        this.viewportX = viewportX;
+        this.viewportY = viewportY;
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
 
         GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
+    }
+
+    public int getViewportX() {
+        return viewportX;
+    }
+
+    public int getViewportY() {
+        return viewportY;
+    }
+
+    public int getViewportWidth() {
+        return viewportWidth;
+    }
+
+    public int getViewportHeight() {
+        return viewportHeight;
     }
 
     private int loadShader(int type, String shaderCode) {
@@ -331,5 +362,45 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         tempSaturation = 1.0f;
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
+    }
+
+    public void setOnBitmapCaptureListener(OnBitmapCaptureListener listener) {
+        this.listener = listener;
+    }
+
+    public void captureBitmap() {
+        glSurfaceView.queueEvent(() -> {
+            Bitmap bitmap = createBitmapFromGLSurface(0, 0, glSurfaceView.getWidth(), glSurfaceView.getHeight());
+            if (listener != null) glSurfaceView.post(() -> listener.onBitmapCaptured(bitmap));
+        });
+    }
+
+    private Bitmap createBitmapFromGLSurface(int x, int y, int width, int height) {
+        int rgbaBuffer[] = new int[width * height];
+        int argbBuffer[] = new int[width * height];
+        IntBuffer ib = IntBuffer.wrap(rgbaBuffer);
+        ib.position(0);
+
+        GLES20.glReadPixels(x, y, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, ib);
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int index = i * width + j;
+                int pixel = rgbaBuffer[index];
+                int r = (pixel >> 0) & 0xff;
+                int g = (pixel >> 8) & 0xff;
+                int b = (pixel >> 16) & 0xff;
+                int a = (pixel >> 24) & 0xff;
+                int flippedIndex = (height - i - 1) * width + j;
+                argbBuffer[flippedIndex] = (a << 24) | (r << 16) | (g << 8) | b;
+            }
+        }
+        return Bitmap.createBitmap(argbBuffer, width, height, Bitmap.Config.ARGB_8888);
+    }
+
+    public Bitmap cropCenterRegion(Bitmap fullBitmap, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
+        int correctedY = fullBitmap.getHeight() - viewportY - viewportHeight;
+
+        return Bitmap.createBitmap(fullBitmap, viewportX, correctedY, viewportWidth, viewportHeight);
     }
 }

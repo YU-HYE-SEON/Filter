@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,7 +16,6 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="@drawable/border"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -25,27 +25,13 @@
                 android:layout_weight="1"
                 android:gravity="center">
 
-                <LinearLayout
-                    android:id="@+id/rotationIcon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:padding="5dp"
-                        android:src="@drawable/rotation" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="회전"
-                        android:textAlignment="center"
-                        android:textSize="14sp" />
-
-                </LinearLayout>
+                <ImageView
+                android:id="@+id/rotationIcon"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/rotation_icon_no" />
 
             </LinearLayout>
 
@@ -55,27 +41,13 @@
                 android:layout_weight="1"
                 android:gravity="center">
 
-                <LinearLayout
-                    android:id="@+id/cropIcon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:id="@+id/cropIcon"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
                         android:padding="5dp"
-                        android:src="@drawable/crop" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="자르기"
-                        android:textAlignment="center"
-                        android:textSize="14sp" />
-
-                </LinearLayout>
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/crop_icon_no" />
 
             </LinearLayout>
 
@@ -84,7 +56,6 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:background="@drawable/border"
             android:layout_weight="1"
             android:gravity="center">
 
@@ -92,9 +63,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="도구"
+                android:fontFamily="@font/pretendard_medium"
                 android:textAlignment="center"
-                android:textColor="#0000ff"
-                android:textSize="18sp"
+                android:textColor="#C2FA7A"
+                android:textSize="14sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
@@ -115,15 +87,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="조정"
+                    android:textColor="@color/white"
+                    android:fontFamily="@font/pretendard_bold"
                     android:textAlignment="center"
-                    android:textSize="18sp" />
+                    android:textSize="14sp" />
 
                 <ImageButton
                     android:id="@+id/nextBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/next_button" />
+                    android:src="@drawable/next_btn" />
 
             </LinearLayout>
 

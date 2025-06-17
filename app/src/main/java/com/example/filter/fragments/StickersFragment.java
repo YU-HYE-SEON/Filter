@@ -1,5 +1,6 @@
 package com.example.filter.fragments;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,41 +16,40 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.etc.ClickUtils;
 
 public class StickersFragment extends Fragment {
-    private LinearLayout AIStickerIcon;
+    private ImageView AIStickerIcon;
     private FrameLayout fullScreenFragmentContainer;
     private ConstraintLayout filterActivity;
-    private ImageButton saveBtn;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_stickers, container, false);
 
-        saveBtn = requireActivity().findViewById(R.id.saveBtn);
-        saveBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-            }
-        });
-
         AIStickerIcon = view.findViewById(R.id.AIStickerIcon);
         AIStickerIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (ClickUtils.isFastClick(500)) return;
+
                 fullScreenFragmentContainer = requireActivity().findViewById(R.id.fullScreenFragmentContainer);
                 filterActivity = requireActivity().findViewById(R.id.filterActivity);
+                ConstraintLayout main = requireActivity().findViewById(R.id.main);
+
                 fullScreenFragmentContainer.setVisibility(View.VISIBLE);
                 filterActivity.setVisibility(View.GONE);
+                main.setBackgroundColor(Color.parseColor("#007AFF"));
 
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
-                        .replace(R.id.fullScreenFragmentContainer, new AIStickerFragment())
+                        .replace(R.id.fullScreenFragmentContainer, new AIStickerViewFragment())
                         .commit();
             }
         });
+
+
 
         return view;
     }

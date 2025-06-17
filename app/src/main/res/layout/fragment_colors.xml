@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,14 +16,13 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="@drawable/border"
             android:orientation="vertical">
 
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginLeft="15dp"
-                android:layout_marginRight="15dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
                 android:fillViewport="true"
                 android:scrollbars="none">
 
@@ -31,186 +31,122 @@
                     android:layout_height="match_parent"
                     android:gravity="center">
 
-                    <LinearLayout
+                    <ImageView
                         android:id="@+id/brightnessIcon"
-                        android:layout_width="75dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="5dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/brightness_icon_no" />
 
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="5dp"
-                            android:src="@drawable/brightness" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="밝기"
-                            android:textAlignment="center"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <ImageView
                         android:id="@+id/exposureIcon"
-                        android:layout_width="75dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="5dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/exposure_icon_no" />
 
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="5dp"
-                            android:src="@drawable/exposure" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="노출"
-                            android:textAlignment="center"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <ImageView
                         android:id="@+id/contrastIcon"
-                        android:layout_width="75dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="5dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/contrast_icon_no" />
 
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="5dp"
-                            android:src="@drawable/contrast" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="대비"
-                            android:textAlignment="center"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <ImageView
                         android:id="@+id/highlightIcon"
-                        android:layout_width="75dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="5dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/highlight_icon_no" />
 
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="5dp"
-                            android:src="@drawable/sticker" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="하이라이트"
-                            android:textAlignment="center"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <ImageView
                         android:id="@+id/shadowIcon"
-                        android:layout_width="75dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="5dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/shadow_icon_no" />
 
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="5dp"
-                            android:src="@drawable/sticker" />
+                    <ImageView
+                        android:id="@+id/temperatureIcon"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/temperature_icon_no" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="그림자"
-                            android:textAlignment="center"
-                            android:textSize="12sp" />
+                    <ImageView
+                        android:id="@+id/hueIcon"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/hue_icon_no" />
 
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/sharpnessIcon"
-                        android:layout_width="75dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="5dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="5dp"
-                            android:src="@drawable/sharpness" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="선명하게"
-                            android:textAlignment="center"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <ImageView
                         android:id="@+id/saturationIcon"
-                        android:layout_width="75dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="5dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/saturation_icon_no" />
 
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="5dp"
-                            android:src="@drawable/saturation" />
+                    <ImageView
+                        android:id="@+id/sharpnessIcon"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/sharpness_icon_no" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="채도"
-                            android:textAlignment="center"
-                            android:textSize="12sp" />
+                    <ImageView
+                        android:id="@+id/blurIcon"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/blur_icon_no" />
 
-                    </LinearLayout>
+                    <ImageView
+                        android:id="@+id/vignetteIcon"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/vignette_icon_no" />
+
+                    <ImageView
+                        android:id="@+id/noiseIcon"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_margin="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/noise_icon_no" />
 
                 </LinearLayout>
 
             </HorizontalScrollView>
+
         </LinearLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="@drawable/border"
             android:gravity="center">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="조정"
                 android:textAlignment="center"
-                android:textColor="#0000ff"
-                android:textSize="18sp"
+                android:textColor="#C2FA7A"
+                android:textSize="14sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
@@ -230,16 +166,18 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_bold"
                     android:text="스티커"
                     android:textAlignment="center"
-                    android:textSize="18sp" />
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
 
                 <ImageButton
                     android:id="@+id/nextBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/next_button" />
+                    android:src="@drawable/next_btn" />
 
             </LinearLayout>
 
