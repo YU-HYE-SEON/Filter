@@ -21,7 +21,7 @@
             android:layout_height="60dp"
             android:background="@android:color/transparent"
             android:visibility="visible"
-            app:layout_constraintBottom_toTopOf="@+id/photoPreview"
+            app:layout_constraintBottom_toTopOf="@+id/photoPreviewContainer"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -61,17 +61,37 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+
         <!-- 사진 이미지 -->
-        <android.opengl.GLSurfaceView
-            android:id="@+id/photoPreview"
+        <FrameLayout
+            android:id="@+id/photoPreviewContainer"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:background="@android:color/transparent"
-            android:scaleType="fitCenter"
-            app:layout_constraintBottom_toTopOf="@+id/bottomArea"
+            app:layout_constraintBottom_toTopOf="@id/bottomArea"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/topArea" />
+            app:layout_constraintTop_toBottomOf="@id/topArea">
+
+            <android.opengl.GLSurfaceView
+                android:id="@+id/photoPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter" />
+
+            <ImageView
+                android:id="@+id/photoPreviewImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:visibility="gone" />
+
+            <FrameLayout
+                android:id="@+id/stickerOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </FrameLayout>
 
         <!-- 하단부 ~ -->
         <FrameLayout
@@ -81,8 +101,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/photoPreview" />
-        <!-- ~ 하단부 -->
+            app:layout_constraintTop_toBottomOf="@+id/photoPreviewContainer" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -22,20 +22,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
                 android:gravity="center">
 
                 <ImageView
-                    android:id="@+id/freeCutIcon"
+                    android:id="@+id/leftRotationIcon"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
-                    android:src="@drawable/rotation_icon_no" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="freeCutIcon"/>
+                    android:src="@drawable/rotation_icon_yes" />
 
             </LinearLayout>
 
@@ -43,20 +36,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
                 android:gravity="center">
 
                 <ImageView
-                    android:id="@+id/OTORatioIcon"
+                    android:id="@+id/rightRotationIcon"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
-                    android:src="@drawable/rotation_icon_no" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="OTORatioIcon"/>
+                    android:src="@drawable/rotation_icon_yes" />
 
             </LinearLayout>
 
@@ -64,20 +50,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
                 android:gravity="center">
 
                 <ImageView
-                    android:id="@+id/TTFRatioIcon"
+                    android:id="@+id/horizontalFlip"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
-                    android:src="@drawable/rotation_icon_no" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="TTFRatioIcon"/>
+                    android:src="@drawable/rotation_icon_yes" />
 
             </LinearLayout>
 
@@ -85,20 +64,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
                 android:gravity="center">
 
                 <ImageView
-                    android:id="@+id/NTSRatioIcon"
+                    android:id="@+id/verticalFlip"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
-                    android:src="@drawable/rotation_icon_no" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="NTSRatioIcon"/>
+                    android:src="@drawable/rotation_icon_yes" />
 
             </LinearLayout>
 
@@ -126,11 +98,11 @@
                 android:id="@+id/filterText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="자르기"
                 android:fontFamily="@font/pretendard_medium"
+                android:text="회전"
                 android:textAlignment="center"
-                android:textSize="14sp"
                 android:textColor="@color/white"
+                android:textSize="14sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"

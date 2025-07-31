@@ -118,10 +118,12 @@
 
             <Spinner
                 android:id="@+id/studioSpinner"
+                style="@style/Widget.AppCompat.Spinner"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="10dp"
-                android:background="@drawable/border6" />
+                android:background="@drawable/border6"
+                android:dropDownWidth="match_parent" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -326,19 +328,19 @@
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
                     android:background="@drawable/border4"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     android:enabled="true"
-                    android:fontFamily="@font/pretendard_semibold" />
+                    android:fontFamily="@font/pretendard_semibold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_semibold"
                     android:text="필터 등록"
                     android:textAlignment="center"
                     android:textColor="#007AFF"
-                    android:fontFamily="@font/pretendard_semibold"
                     android:textSize="15sp"
                     app:layout_constraintBottom_toBottomOf="@+id/registerBtn"
                     app:layout_constraintEnd_toEndOf="@+id/registerBtn"

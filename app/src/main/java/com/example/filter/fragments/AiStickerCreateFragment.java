@@ -28,7 +28,7 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 
 public class AiStickerCreateFragment extends Fragment {
-    private ConstraintLayout aiStickerMake;
+    private ConstraintLayout aiStickerCreate;
     private ImageView img;
     private TextView warningTxt;
     private EditText editText;
@@ -43,7 +43,7 @@ public class AiStickerCreateFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_aisticker_create, container, false);
-        aiStickerMake = view.findViewById(R.id.aiStickerMake);
+        aiStickerCreate = view.findViewById(R.id.aiStickerMake);
         img = view.findViewById(R.id.img);
         warningTxt = view.findViewById(R.id.warningTxt);
         editText = view.findViewById(R.id.editText);
@@ -124,7 +124,7 @@ public class AiStickerCreateFragment extends Fragment {
                             TypedValue.COMPLEX_UNIT_DIP, upView, view.getResources().getDisplayMetrics()
                     );
 
-                    ObjectAnimator animator = ObjectAnimator.ofFloat(aiStickerMake, "translationY", -px);
+                    ObjectAnimator animator = ObjectAnimator.ofFloat(aiStickerCreate, "translationY", -px);
                     animator.setDuration(animDuration).start();
 
                     img.animate()
@@ -156,7 +156,7 @@ public class AiStickerCreateFragment extends Fragment {
                 } else {
                     if (editText.hasFocus()) editText.clearFocus();
 
-                    ObjectAnimator animator = ObjectAnimator.ofFloat(aiStickerMake, "translationY", 0);
+                    ObjectAnimator animator = ObjectAnimator.ofFloat(aiStickerCreate, "translationY", 0);
                     animator.setDuration(animDuration).start();
 
                     if (img.getVisibility() == View.INVISIBLE) {

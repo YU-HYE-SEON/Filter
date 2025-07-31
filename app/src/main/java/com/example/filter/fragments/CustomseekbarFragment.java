@@ -45,7 +45,7 @@ public class CustomseekbarFragment extends Fragment {
         if (bundle != null) {
             String filterType = bundle.getString("filterType", "");
 
-            if (filterType == "선명하게") {
+            if (filterType == "선명하게" || filterType == "흐리게" || filterType == "비네트" || filterType == "노이즈") {
                 customSeekbar.setMinZero(filterType);
             }
 

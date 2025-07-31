@@ -1,0 +1,42 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/stickerWrapper"
+    android:layout_width="180dp"
+    android:layout_height="180dp"
+    android:layout_gravity="center"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:padding="20dp">
+
+    <ImageView
+        android:id="@+id/stickerEditFrame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/sticker_edit_frame" />
+
+    <ImageView
+        android:id="@+id/stickerImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:layout_margin="15dp"
+        android:layout_gravity="center" />
+
+    <ImageView
+        android:id="@+id/stickerDeleteIcon"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="top|start"
+        android:src="@drawable/sticker_delete_icon"
+        android:translationX="-15dp"
+        android:translationY="-15dp" />
+
+    <ImageView
+        android:id="@+id/stickerSizeController"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="bottom|end"
+        android:src="@drawable/sticker_size_controller"
+        android:translationX="15dp"
+        android:translationY="15dp" />
+
+</FrameLayout>

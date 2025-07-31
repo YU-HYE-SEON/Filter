@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -19,6 +20,7 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.ImageUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -38,10 +40,14 @@ public class SavePhotoActivity extends BaseActivity {
 
         String imagePath = getIntent().getStringExtra("saved_image");
         if (imagePath != null) {
-            Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
-            if (bitmap != null) {
-                photo.setImageBitmap(bitmap);
-                ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, bitmap);
+            File file = new File(imagePath);
+            if (file.exists()) {
+                Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+                if (bitmap != null) {
+                    photo.setImageBitmap(bitmap);
+                    //사진 저장 메서드 호출
+                    //ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, bitmap);
+                }
             }
         }
 
@@ -55,7 +61,7 @@ public class SavePhotoActivity extends BaseActivity {
         registerBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
 
-            Intent intent=new Intent(SavePhotoActivity.this, RegisterActivity.class);
+            Intent intent = new Intent(SavePhotoActivity.this, RegisterActivity.class);
             intent.putExtra("final_image", imagePath);
             startActivity(intent);
         });

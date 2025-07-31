@@ -21,43 +21,31 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class FGLRenderer implements GLSurfaceView.Renderer {
-    public interface OnBitmapCaptureListener {
-        void onBitmapCaptured(Bitmap bitmap);
-    }
-
-    private OnBitmapCaptureListener listener;
     private final Context context;  //리소스 접근 위해 사용
     private GLSurfaceView glSurfaceView;    //화면에 그려지는 OpenGL의 뷰 (현재 불러온 사진 이미지 + 필터 적용)
     private Bitmap bitmap;  //렌더링할 이미지, openGL의 텍스쳐로 변환
-    private int viewportX;
-    private int viewportY;
-    private int viewportWidth;
-    private int viewportHeight;
+    private int viewportX, viewportY, viewportWidth, viewportHeight;
     private int textureId = 0;  //텍스쳐 객체 고유 ID 참조용, 0:생성한 텍스쳐 없음
     private int program;    //쉐이더 프로그램 ID, 쉐이더 프로그램 = (버텍스 쉐이더(정점 위치 계산) + 프래그먼트 쉐이더(픽셀 색상 계산))
-    private int positionHandle; //버텍스 쉐이더(vertexShaderCode)의 변수 aPosition ID 참조용 핸들
-    private int texCoordHandle; //버텍스 쉐이더(vertexShaderCode)의 변수 aTexCoord ID 참조용 핸들
-    private int textureHandle;  //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uTexture ID 참조용 핸들
-    private int brightnessHandle;   //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uBrightness ID 참조용 핸들
-    private int contrastHandle;  //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uContrast ID 참조용 핸들
-    private int sharpnessHandle;  //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uSharpness ID 참조용 핸들
-    private int resolutionHandle; //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uResolution ID 참조용 핸들
-    private int saturationHandle;   //프래그먼트 쉐이더(fragmentShaderCode)의 변수 uSaturation ID 참조용 핸들
-    private final FloatBuffer vertexBuffer; //버텍스 위치 데이터를 GPU에 전달할 때 사용하는 버퍼
-    private final FloatBuffer texCoordBuffer;   //텍스쳐 좌표 데이터를 GPU에 전달할 때 사용하는 버퍼
+    private int positionHandle, texCoordHandle; //버텍스 쉐이더의 변수들 ID 참조용 핸들
+
+    //프래그먼트 쉐이더의 변수들 ID 참조용 핸들
+    private int textureHandle, brightnessHandle, exposureHandle, contrastHandle,
+            highlightHandle, shadowHandle, temperatureHandle, tintHandle,
+            saturationHandle, sharpnessHandle, blurHandle,
+            vignetteHandle, noiseHandle, resolutionHandle;
+    private final FloatBuffer vertexBuffer, texCoordBuffer; //버텍스 위치/텍스쳐 좌표 데이터를 GPU에 전달할 때 사용하는 버퍼
     private float imageAspectRatio; //사진 이미지 비율
 
     //최종 적용 조절값
-    private float updateBrightness = 0f;
-    private float updateContrast = 1.0f;
-    private float updateSharpness = 0f;
-    private float updateSaturation = 1.0f;
+    private float updateBrightness = 0f, updateExposure = 0f, updateContrast = 1.0f, updateHighlight = 0f,
+            updateShadow = 0f, updateTemperature = 0f, updateTint = 0f, updateSaturation = 1.0f,
+            updateSharpness = 0f, updateBlur = 0f, updateVignette = 0f, updateNoise = 0f;
 
     //최종 적용 전 실시간 미리보기용 조절값 (onDrawFrame에서 사용)
-    private float tempBrightness = 0f;
-    private float tempContrast = 1.0f;
-    private float tempSharpness = 0f;
-    private float tempSaturation = 1.0f;
+    private float tempBrightness = 0f, tempExposure = 0f, tempContrast = 1.0f, tempHighlight = 0f,
+            tempShadow = 0f, tempTemperature = 0f, tempTint = 0f, tempSaturation = 1.0f,
+            tempSharpness = 0f, tempBlur = 0f, tempVignette = 0f, tempNoise = 0f;
 
     //화면(사각형)을 그릴 정점 좌표 (x,y)
     //openGL의 정점 좌표는 가운데가 (0,0) / 왼쪽 아래가 (-1,-1) / 오른쪽 위가 (1,1)
@@ -79,6 +67,31 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             0.0f, 0.0f,     //왼쪽 아래 → 왼쪽 위
             1.0f, 0.0f      //오른쪽 아래 → 오른쪽 위
     };
+
+    private float translationX = 0f, translationY = 0f;  //사진 드래그 좌표
+
+    //사진 터치 드래그 좌표 계산
+    public void setTranslation(float x, float y) {
+        this.translationX = (x * 2f) / (float) viewportWidth;
+        this.translationY = (y * 2f) / (float) viewportHeight;
+    }
+
+    private float scaleFactor = 1.0f;   //사진 확대/축소 비율
+
+    //사진 확대/축소 비율 설정
+    public void setScaleFactor(float factor) {
+        this.scaleFactor = factor;
+    }
+
+    //사진 캡쳐를 위한 인터페이스
+    public interface OnBitmapCaptureListener {
+        void onBitmapCaptured(Bitmap bitmap);
+    }
+
+    //사진 캡쳐 리스너
+    private OnBitmapCaptureListener listener;
+    //사진 캡쳐 여부
+    private boolean shouldCapture = false;
 
     public FGLRenderer(Context context, GLSurfaceView glSurfaceView) {
         this.context = context;
@@ -122,8 +135,20 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         if (bitmap != null) {
             imageAspectRatio = (float) bitmap.getWidth() / bitmap.getHeight();
 
-            if (glSurfaceView != null) glSurfaceView.requestRender();
+            if (glSurfaceView != null) {
+                glSurfaceView.queueEvent(() -> {
+                    int w = glSurfaceView.getWidth();
+                    int h = glSurfaceView.getHeight();
+                    onSurfaceChanged(null, w, h);
+                });
+
+                glSurfaceView.requestRender();
+            }
         }
+    }
+
+    public Bitmap getCurrentBitmap() {
+        return this.bitmap;
     }
 
     @Override
@@ -153,10 +178,18 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         texCoordHandle = GLES20.glGetAttribLocation(program, "aTexCoord");
         textureHandle = GLES20.glGetUniformLocation(program, "uTexture");
         brightnessHandle = GLES20.glGetUniformLocation(program, "uBrightness");
+        exposureHandle = GLES20.glGetUniformLocation(program, "uExposure");
         contrastHandle = GLES20.glGetUniformLocation(program, "uContrast");
-        sharpnessHandle = GLES20.glGetUniformLocation(program, "uSharpness");
-        resolutionHandle = GLES20.glGetUniformLocation(program, "uResolution");
+        highlightHandle = GLES20.glGetUniformLocation(program, "uHighlight");
+        shadowHandle = GLES20.glGetUniformLocation(program, "uShadow");
+        temperatureHandle = GLES20.glGetUniformLocation(program, "uTemperature");
+        tintHandle = GLES20.glGetUniformLocation(program, "uTint");
         saturationHandle = GLES20.glGetUniformLocation(program, "uSaturation");
+        sharpnessHandle = GLES20.glGetUniformLocation(program, "uSharpness");
+        blurHandle = GLES20.glGetUniformLocation(program, "uBlur");
+        vignetteHandle = GLES20.glGetUniformLocation(program, "uVignette");
+        noiseHandle = GLES20.glGetUniformLocation(program, "uNoise");
+        resolutionHandle = GLES20.glGetUniformLocation(program, "uResolution");
     }
 
     @Override
@@ -185,6 +218,17 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         if (textureId != 0) {
             GLES20.glUseProgram(program);
 
+            float tx = translationX;
+            float ty = translationY;
+
+            float[] scaledVertices = new float[]{
+                    -1.0f * scaleFactor + tx, -1.0f * scaleFactor + ty,
+                    1.0f * scaleFactor + tx, -1.0f * scaleFactor + ty,
+                    -1.0f * scaleFactor + tx, 1.0f * scaleFactor + ty,
+                    1.0f * scaleFactor + tx, 1.0f * scaleFactor + ty
+            };
+            vertexBuffer.put(scaledVertices).position(0);
+
             GLES20.glEnableVertexAttribArray(positionHandle);
             GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer);
             GLES20.glEnableVertexAttribArray(texCoordHandle);
@@ -195,12 +239,29 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             GLES20.glUniform1i(textureHandle, 0);
 
             GLES20.glUniform1f(brightnessHandle, tempBrightness);
+            GLES20.glUniform1f(exposureHandle, tempExposure);
             GLES20.glUniform1f(contrastHandle, tempContrast);
-            GLES20.glUniform1f(sharpnessHandle, tempSharpness);
-            GLES20.glUniform2f(resolutionHandle, bitmap.getWidth(), bitmap.getHeight());
+            GLES20.glUniform1f(highlightHandle, tempHighlight);
+            GLES20.glUniform1f(shadowHandle, tempShadow);
+            GLES20.glUniform1f(temperatureHandle, tempTemperature);
+            GLES20.glUniform1f(tintHandle, tempTint);
             GLES20.glUniform1f(saturationHandle, tempSaturation);
+            GLES20.glUniform1f(sharpnessHandle, tempSharpness);
+            GLES20.glUniform1f(blurHandle, tempBlur);
+            GLES20.glUniform1f(vignetteHandle, tempVignette);
+            GLES20.glUniform1f(noiseHandle, tempNoise);
+            GLES20.glUniform2f(resolutionHandle, bitmap.getWidth(), bitmap.getHeight());
 
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+            //사진 저장하고자 할 때 현재 이미지를 비트맵으로 변환시키는 메서드 호출 및 전달
+            if (shouldCapture) {
+                shouldCapture = false;
+                Bitmap captured = createBitmapFromGLSurface(0, 0, glSurfaceView.getWidth(), glSurfaceView.getHeight());
+                if (listener != null) {
+                    glSurfaceView.post(() -> listener.onBitmapCaptured(captured));
+                }
+            }
 
             GLES20.glDisableVertexAttribArray(positionHandle);
             GLES20.glDisableVertexAttribArray(texCoordHandle);
@@ -228,7 +289,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                 viewportY = 0;
             }
         }
-        
+
         this.viewportX = viewportX;
         this.viewportY = viewportY;
         this.viewportWidth = viewportWidth;
@@ -262,6 +323,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
         final int[] compileStatus = new int[1];
         GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
+
         if (compileStatus[0] == 0) {
             GLES20.glDeleteShader(shader);
             throw new RuntimeException("Error compiling shader: " + GLES20.glGetShaderInfoLog(shader));
@@ -273,12 +335,28 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         switch (filterType) {
             case "밝기":
                 return Math.round(tempBrightness * 100);
+            case "노출":
+                return Math.round(tempExposure * 100);
             case "대비":
                 return Math.round(tempContrast * 100);
-            case "선명하게":
-                return Math.round(tempSharpness * 100);
+            case "하이라이트":
+                return Math.round(tempHighlight * 100);
+            case "그림자":
+                return Math.round(tempShadow * 100);
+            case "온도":
+                return Math.round(tempTemperature * 100);
+            case "색조":
+                return Math.round(tempTint * 100);
             case "채도":
                 return Math.round((tempSaturation - 1.0f) * 100);
+            case "선명하게":
+                return Math.round(tempSharpness * 100);
+            case "흐리게":
+                return Math.round(tempBlur * 100);
+            case "비네트":
+                return Math.round(tempVignette * 100);
+            case "노이즈":
+                return Math.round(tempNoise * 100);
         }
         return 0;
     }
@@ -288,16 +366,40 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             case "밝기":
                 tempBrightness = value / 100f;
                 break;
+            case "노출":
+                tempExposure = value / 100f;
+                break;
             case "대비":
                 tempContrast = (value / 100f);
                 tempContrast = Math.max(-0.8f, tempContrast);
                 break;
-            case "선명하게":
-                tempSharpness = value / 100f;
+            case "하이라이트":
+                tempHighlight = value / 100f;
+                break;
+            case "그림자":
+                tempShadow = value / 100f;
+                break;
+            case "온도":
+                tempTemperature = value / 100f;
+                break;
+            case "색조":
+                tempTint = value / 100f;
                 break;
             case "채도":
                 tempSaturation = (value / 100f) + 1.0f;
                 tempSaturation = Math.max(0.0f, tempSaturation);
+                break;
+            case "선명하게":
+                tempSharpness = value / 100f;
+                break;
+            case "흐리게":
+                tempBlur = value / 100f;
+                break;
+            case "비네트":
+                tempVignette = value / 100f;
+                break;
+            case "노이즈":
+                tempNoise = value / 100f;
                 break;
         }
 
@@ -310,19 +412,51 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                 updateBrightness = value / 100f;
                 tempBrightness = updateBrightness;
                 break;
+            case "노출":
+                updateExposure = value / 100f;
+                tempExposure = updateExposure;
+                break;
             case "대비":
                 updateContrast = (value / 100f);
                 updateContrast = Math.max(-0.8f, updateContrast);
                 tempContrast = updateContrast;
                 break;
-            case "선명하게":
-                updateSharpness = value / 100f;
-                tempSharpness = updateSharpness;
+            case "하이라이트":
+                updateHighlight = value / 100f;
+                tempHighlight = updateHighlight;
+                break;
+            case "그림자":
+                updateShadow = value / 100f;
+                tempShadow = updateShadow;
+                break;
+            case "온도":
+                updateTemperature = value / 100f;
+                tempTemperature = updateTemperature;
+                break;
+            case "색조":
+                updateTint = value / 100f;
+                tempTint = updateTint;
                 break;
             case "채도":
                 updateSaturation = (value / 100f) + 1.0f;
                 updateSaturation = Math.max(0.0f, updateSaturation);
                 tempSaturation = updateSaturation;
+                break;
+            case "선명하게":
+                updateSharpness = value / 100f;
+                tempSharpness = updateSharpness;
+                break;
+            case "흐리게":
+                updateBlur = value / 100f;
+                tempBlur = updateBlur;
+                break;
+            case "비네트":
+                updateVignette = value / 100f;
+                tempVignette = updateVignette;
+                break;
+            case "노이즈":
+                updateNoise = value / 100f;
+                tempNoise = updateNoise;
                 break;
         }
 
@@ -334,14 +468,38 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             case "밝기":
                 tempBrightness = updateBrightness;
                 break;
+            case "노출":
+                tempExposure = updateExposure;
+                break;
             case "대비":
                 tempContrast = updateContrast;
+                break;
+            case "하이라이트":
+                tempHighlight = updateHighlight;
+                break;
+            case "그림자":
+                tempShadow = updateShadow;
+                break;
+            case "온도":
+                tempTemperature = updateTemperature;
+                break;
+            case "색조":
+                tempTint = updateTint;
+                break;
+            case "채도":
+                tempSaturation = updateSaturation;
                 break;
             case "선명하게":
                 tempSharpness = updateSharpness;
                 break;
-            case "채도":
-                tempSaturation = updateSaturation;
+            case "흐리게":
+                tempBlur = updateBlur;
+                break;
+            case "비네트":
+                tempVignette = updateVignette;
+                break;
+            case "노이즈":
+                tempNoise = updateNoise;
                 break;
         }
 
@@ -352,32 +510,57 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         updateBrightness = 0f;
         tempBrightness = 0f;
 
+        updateExposure = 0f;
+        tempExposure = 0f;
+
         updateContrast = 0f;
         tempContrast = 0f;
 
-        updateSharpness = 0f;
-        tempSharpness = 0f;
+        updateHighlight = 0f;
+        tempHighlight = 0f;
+
+        updateShadow = 0f;
+        tempShadow = 0f;
+
+        updateTemperature = 0f;
+        tempTemperature = 0f;
+
+        updateTint = 0f;
+        tempTint = 0f;
 
         updateSaturation = 1.0f;
         tempSaturation = 1.0f;
 
+        updateSharpness = 0f;
+        tempSharpness = 0f;
+
+        updateBlur = 0f;
+        tempBlur = 0f;
+
+        updateVignette = 0f;
+        tempVignette = 0f;
+
+        updateNoise = 0f;
+        tempNoise = 0f;
+
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
+    //비트맵 캡쳐 후 리스너에 등록
     public void setOnBitmapCaptureListener(OnBitmapCaptureListener listener) {
         this.listener = listener;
     }
 
+    //비트맵 이미지 캡쳐 메서드, 캡쳐 여부 true로 -> onDraw에서 캡쳐되도록
     public void captureBitmap() {
-        glSurfaceView.queueEvent(() -> {
-            Bitmap bitmap = createBitmapFromGLSurface(0, 0, glSurfaceView.getWidth(), glSurfaceView.getHeight());
-            if (listener != null) glSurfaceView.post(() -> listener.onBitmapCaptured(bitmap));
-        });
+        shouldCapture = true;
+        if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
+    //openGL 픽셀 데이터를 Bitmap으로 변환하는 메서드
     private Bitmap createBitmapFromGLSurface(int x, int y, int width, int height) {
-        int rgbaBuffer[] = new int[width * height];
-        int argbBuffer[] = new int[width * height];
+        int rgbaBuffer[] = new int[width * height]; //openGL RGBA 픽셀 배열
+        int argbBuffer[] = new int[width * height]; //Bitmap ARGB 배열
         IntBuffer ib = IntBuffer.wrap(rgbaBuffer);
         ib.position(0);
 
@@ -398,6 +581,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         return Bitmap.createBitmap(argbBuffer, width, height, Bitmap.Config.ARGB_8888);
     }
 
+    //이미지 캡쳐할 때 뷰포트 여백 (가로사진->위아래 여백 / 세로사진->왼오 여백) 자르기
     public Bitmap cropCenterRegion(Bitmap fullBitmap, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
         int correctedY = fullBitmap.getHeight() - viewportY - viewportHeight;
 

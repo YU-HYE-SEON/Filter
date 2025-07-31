@@ -80,7 +80,7 @@
                         android:src="@drawable/temperature_icon_no" />
 
                     <ImageView
-                        android:id="@+id/hueIcon"
+                        android:id="@+id/tintIcon"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:layout_margin="15dp"

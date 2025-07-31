@@ -19,6 +19,7 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 
 public class StickersFragment extends Fragment {
+    private ImageView myStickerIcon;
     private ImageView AIStickerIcon;
     private FrameLayout fullScreenFragmentContainer;
     private ConstraintLayout filterActivity;
@@ -27,6 +28,20 @@ public class StickersFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_stickers, container, false);
+
+        myStickerIcon = view.findViewById(R.id.myStickerIcon);
+        myStickerIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (ClickUtils.isFastClick(500)) return;
+
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.slide_up, 0)
+                        .replace(R.id.bottomArea, new MyStickersFragment())
+                        .commit();
+            }
+        });
 
         AIStickerIcon = view.findViewById(R.id.AIStickerIcon);
         AIStickerIcon.setOnClickListener(new View.OnClickListener() {
