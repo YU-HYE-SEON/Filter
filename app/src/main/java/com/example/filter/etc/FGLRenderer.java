@@ -68,12 +68,12 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             1.0f, 0.0f      //오른쪽 아래 → 오른쪽 위
     };
 
-    private float translationX = 0f, translationY = 0f;  //사진 드래그 좌표
+    private float translateX = 0f, translateY = 0f;  //사진 드래그 좌표
 
     //사진 터치 드래그 좌표 계산
-    public void setTranslation(float x, float y) {
-        this.translationX = (x * 2f) / (float) viewportWidth;
-        this.translationY = (y * 2f) / (float) viewportHeight;
+    public void setTranslate(float x, float y) {
+        this.translateX = (x * 2f) / (float) viewportWidth;
+        this.translateY = (y * 2f) / (float) viewportHeight;
     }
 
     private float scaleFactor = 1.0f;   //사진 확대/축소 비율
@@ -218,8 +218,8 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         if (textureId != 0) {
             GLES20.glUseProgram(program);
 
-            float tx = translationX;
-            float ty = translationY;
+            float tx = translateX;
+            float ty = translateY;
 
             float[] scaledVertices = new float[]{
                     -1.0f * scaleFactor + tx, -1.0f * scaleFactor + ty,

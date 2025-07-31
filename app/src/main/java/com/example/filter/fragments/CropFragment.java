@@ -2,6 +2,7 @@ package com.example.filter.fragments;
 
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -97,7 +98,9 @@ public class CropFragment extends Fragment {
                 if (ClickUtils.isFastClick(500)) return;
 
                 activity.setCurrentCropMode(FilterActivity.CropMode.NONE);
+                activity.restoreCropBeforeState();
                 activity.hideCropOverlay();
+                activity.getPhotoPreview().requestRender();
                 activity.getSupportFragmentManager().popBackStack();
             }
         });
@@ -116,9 +119,19 @@ public class CropFragment extends Fragment {
                 Rect cropRect = overlay.getCropRect();
                 if (cropRect == null) return;
 
-                // 2. renderer에서 전체 bitmap capture
+                int vpX = activity.getRenderer().getViewportX();
+                int vpY = activity.getRenderer().getViewportY();
+                int vpW = activity.getRenderer().getViewportWidth();
+                int vpH = activity.getRenderer().getViewportHeight();
+
+                float lN = (cropRect.left   - vpX) / (float) vpW;
+                float tN = (cropRect.top    - vpY) / (float) vpH;
+                float rN = (cropRect.right  - vpX) / (float) vpW;
+                float bN = (cropRect.bottom - vpY) / (float) vpH;
+
+                activity.setLastCropRectNormalized(new RectF(lN, tN, rN, bN));
+
                 activity.getRenderer().setOnBitmapCaptureListener(fullBitmap -> {
-                    // 3. cropRect 기준으로 자르기 (cropRect는 viewport 기준이므로 그대로 사용 가능)
                     int x = cropRect.left;
                     int y = cropRect.top;
                     int width = cropRect.width();
@@ -131,17 +144,11 @@ public class CropFragment extends Fragment {
 
                     Bitmap cropped = Bitmap.createBitmap(fullBitmap, x, y, width, height);
 
-                    // 4. 잘라진 bitmap을 renderer에 반영
                     activity.getRenderer().setBitmap(cropped);
-
-                    // 5. 상태 업데이트 및 화면 다시 그리기
+                    activity.resetViewportTransform();
                     activity.hideCropOverlay();
                     activity.getPhotoPreview().requestRender();
-
-                    // 6. 자르기 완료 → transformedBitmap 업데이트
                     activity.commitTransformations();
-
-                    // 7. 프래그먼트 back
                     activity.getSupportFragmentManager().popBackStack();
                 });
 

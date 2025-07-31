@@ -4,19 +4,16 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -57,9 +54,10 @@ public class FilterActivity extends BaseActivity {
                     }
                 }
             });
-    private Bitmap originalBitmap, transformedBitmap, cropBeforeBitmap;
+    private Bitmap originalBitmap, transformedBitmap, cropBeforeBitmap,baseImageForCrop;
     private float rotationDegree = 0;
     private boolean flipHorizontal = false, flipVertical = false;
+    private RectF lastCropRectN = null;  // 마지막 크롭 영역(뷰포트 기준 정규화 [0..1])
     private CropBoxOverlayView cropOverlay;
     public enum CropMode {NONE, FREE, OTO, TTF, NTS}
     private CropMode currentCropMode = CropMode.NONE;
@@ -116,7 +114,7 @@ public class FilterActivity extends BaseActivity {
                 scaleFactor = Math.max(1.0f, Math.min(scaleFactor, 4.0f));
                 renderer.setScaleFactor(scaleFactor);
 
-                if (scaleFactor == 1.0f) {
+                /*if (scaleFactor == 1.0f) {
                     translateX = 0;
                     translateY = 0;
                 } else {
@@ -126,7 +124,25 @@ public class FilterActivity extends BaseActivity {
                     translateY = Math.max(-maxTy, Math.min(maxTy, translateY));
                 }
 
-                renderer.setTranslation(translateX, translateY);
+                renderer.setTranslate(translateX, translateY);
+                photoPreview.requestRender();
+                return true;
+            }*/
+                // ② 배율별 이동 한계 계산 (확대/축소 모두에서 동작)
+                float extra = Math.abs(scaleFactor - 1f); // 1에서 얼마나 벗어났는지
+                float maxTx = renderer.getViewportWidth()  * extra / 2f;
+                float maxTy = renderer.getViewportHeight() * extra / 2f;
+
+                // 배율이 1 이하이면 이동을 0으로 고정(전체 보기)
+                if (scaleFactor <= 1.0f) {
+                    translateX = 0f;
+                    translateY = 0f;
+                } else {
+                    translateX = Math.max(-maxTx, Math.min(maxTx, translateX));
+                    translateY = Math.max(-maxTy, Math.min(maxTy, translateY));
+                }
+
+                renderer.setTranslate(translateX, translateY);
                 photoPreview.requestRender();
                 return true;
             }
@@ -200,6 +216,9 @@ public class FilterActivity extends BaseActivity {
             }
 
             renderer.setBitmap(bitmap);
+
+            baseImageForCrop = bitmap.copy(bitmap.getConfig(), true);
+
             originalBitmap = bitmap.copy(bitmap.getConfig(), true);
             transformedBitmap = originalBitmap.copy(originalBitmap.getConfig(), true);
             photoPreview.requestRender();
@@ -214,6 +233,7 @@ public class FilterActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         if (cropOverlay != null) {
+            restoreCropBeforeState();
             hideCropOverlay();
             setCurrentCropMode(CropMode.NONE);
             return;
@@ -282,13 +302,18 @@ public class FilterActivity extends BaseActivity {
     }
 
     public void commitTransformations() {
-        if (transformedBitmap != null) {
-            originalBitmap = transformedBitmap.copy(transformedBitmap.getConfig(), true);
-
-            rotationDegree = 0;
-            flipHorizontal = false;
-            flipVertical = false;
+// 현재 렌더러의 비트맵을 기준으로 원본 갱신 (크롭 등 renderer에서 직접 바뀐 경우 포함)
+        Bitmap current = (renderer != null) ? renderer.getCurrentBitmap() : null;
+        if (current != null) {
+            originalBitmap = current.copy(current.getConfig(), true);
+            transformedBitmap = originalBitmap.copy(originalBitmap.getConfig(), true);
         }
+
+        rotationDegree = 0;
+        flipHorizontal = false;
+        flipVertical = false;
+
+        resetViewportTransform();
     }
 
     private void applyTransform() {
@@ -324,10 +349,8 @@ public class FilterActivity extends BaseActivity {
 
     public void restoreCropBeforeState() {
         if (cropBeforeBitmap != null) {
-            // 이미지 복원
             renderer.setBitmap(cropBeforeBitmap);
 
-            // 변환 상태 초기화
             scaleFactor = 1.0f;
             translateX = 0f;
             translateY = 0f;
@@ -336,7 +359,7 @@ public class FilterActivity extends BaseActivity {
             flipVertical = false;
 
             renderer.setScaleFactor(scaleFactor);
-            renderer.setTranslation(translateX, translateY);
+            renderer.setTranslate(translateX, translateY);
             photoPreview.requestRender();
         }
     }
@@ -351,6 +374,39 @@ public class FilterActivity extends BaseActivity {
 
         if (cropOverlay != null) {
             container.removeView(cropOverlay);
+        }
+
+        if (lastCropRectN != null && baseImageForCrop != null) {
+            renderer.setBitmap(baseImageForCrop);
+
+            int w = photoPreview.getWidth();
+            int h = photoPreview.getHeight();
+            renderer.onSurfaceChanged(null, w, h);
+
+            int vpW = renderer.getViewportWidth();
+            int vpH = renderer.getViewportHeight();
+
+            float rectW = lastCropRectN.width()  * vpW;
+            float rectH = lastCropRectN.height() * vpH;
+            float cx    = lastCropRectN.centerX() * vpW; // 뷰포트 내부 중심 x(px)
+            float cy    = lastCropRectN.centerY() * vpH; // 뷰포트 내부 중심 y(px)
+
+            float sW = vpW / rectW;
+            float sH = vpH / rectH;
+            float s  = Math.max(sW, sH);
+
+            float txPx = s * (vpW / 2f - cx);
+            float tyPx = s * (vpH / 2f - cy);
+
+            scaleFactor = s;
+            translateX  = txPx;
+            translateY  = tyPx;
+
+            renderer.setScaleFactor(scaleFactor);
+            renderer.setTranslate(translateX, translateY);
+            photoPreview.requestRender();
+        } else {
+            resetViewportTransform();
         }
 
         cropOverlay = new CropBoxOverlayView(this);
@@ -435,7 +491,7 @@ public class FilterActivity extends BaseActivity {
                         lastTouchX = x;
                         lastTouchY = y;
 
-                        renderer.setTranslation(translateX, translateY);
+                        renderer.setTranslate(translateX, translateY);
                         photoPreview.requestRender();
                     }
                 }
@@ -452,5 +508,21 @@ public class FilterActivity extends BaseActivity {
         }
 
         return true;
+    }
+
+    public void resetViewportTransform() {
+        scaleFactor = 1.0f;
+        translateX = 0f;
+        translateY = 0f;
+
+        if (renderer != null) {
+            renderer.setScaleFactor(1.0f);
+            renderer.setTranslate(0f, 0f);
+            photoPreview.requestRender();
+        }
+    }
+
+    public void setLastCropRectNormalized(RectF rectN) {
+        this.lastCropRectN = rectN;
     }
 }
