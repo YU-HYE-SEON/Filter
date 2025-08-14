@@ -3,7 +3,9 @@ package com.example.filter.activities;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -11,13 +13,12 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -32,41 +33,156 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class FilterActivity extends BaseActivity {
+    private ImageButton undoColor, redoColor, originalColor;
     private ConstraintLayout topArea;
     private GLSurfaceView photoPreview;
     private FGLRenderer renderer;
     private ImageButton backBtn, saveBtn;
     private TextView saveTxt;
-    private ActivityResultLauncher<Intent> galleryReSelectionLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    Uri photoUri = result.getData().getData();
-                    if (photoUri != null) {
-                        loadImageFromUri(photoUri);
-                        getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                        getSupportFragmentManager()
-                                .beginTransaction()
-                                .replace(R.id.bottomArea, new ToolsFragment())
-                                .commit();
-                    }
-                }
-            });
-    private Bitmap originalBitmap, transformedBitmap, cropBeforeBitmap,baseImageForCrop;
+    private Bitmap originalBitmap, transformedBitmap, cropBeforeBitmap, baseImageForCrop;
     private float rotationDegree = 0;
     private boolean flipHorizontal = false, flipVertical = false;
-    private RectF lastCropRectN = null;  // 마지막 크롭 영역(뷰포트 기준 정규화 [0..1])
+    private RectF lastCropRectN = null;
     private CropBoxOverlayView cropOverlay;
+
     public enum CropMode {NONE, FREE, OTO, TTF, NTS}
+
     private CropMode currentCropMode = CropMode.NONE;
+    private CropMode lastCropMode = CropMode.NONE;
+    private CropMode appliedCropMode = CropMode.NONE;
     private float scaleFactor = 1.0f;
     private ScaleGestureDetector scaleDetector;
     private float lastTouchX = 0f, lastTouchY = 0f;
     private boolean isTwoFingerGesture = false;
     private float translateX = 0f, translateY = 0f;
     private boolean suppressNextSingleFingerMove = false;
+    private float lastScale = 1f;
+    private float lastTxN = 0f, lastTyN = 0f;
+    private boolean needResetCropRectOnce = false;
+    private Bitmap cropSessionEntryBitmap = null;
+    private boolean isCropSessionLatched = false;
+    private boolean colorEdited = false;
+    private boolean beforePressed = false;
+
+    private static class ColorEdit {
+        final String filterType;
+        final int before, after;
+
+        ColorEdit(String t, int b, int a) {
+            this.filterType = t;
+            this.before = b;
+            this.after = a;
+        }
+    }
+
+    private final ArrayList<ColorEdit> colorHistory = new ArrayList<>();
+    private int colorCursor = -1;
+
+    public void recordColorEdit(String filterType, int before, int after) {
+        if (filterType == null) return;
+        if (before == after) return;
+
+        while (colorHistory.size() > colorCursor + 1) {
+            colorHistory.remove(colorHistory.size() - 1);
+        }
+        colorHistory.add(new ColorEdit(filterType, before, after));
+        colorCursor = colorHistory.size() - 1;
+
+        setColorEdited(true);
+    }
+
+    public boolean canUndoColor() {
+        return colorCursor >= 0;
+    }
+
+    public boolean canRedoColor() {
+        return colorCursor < colorHistory.size() - 1;
+    }
+
+    public void undoColor() {
+        if (!canUndoColor()) return;
+        ColorEdit e = colorHistory.get(colorCursor);
+        if (renderer != null) renderer.updateValue(e.filterType, e.before);
+        colorCursor--;
+        photoPreview.requestRender();
+        refreshOriginalColorButton();
+    }
+
+    public void redoColor() {
+        if (!canRedoColor()) return;
+        ColorEdit e = colorHistory.get(colorCursor + 1);
+        if (renderer != null) renderer.updateValue(e.filterType, e.after);
+        colorCursor++;
+        photoPreview.requestRender();
+        refreshOriginalColorButton();
+    }
+
+    private final String[] FILTER_KEYS = new String[]{
+            "밝기", "노출", "대비", "하이라이트", "그림자",
+            "온도", "색조", "채도", "선명하게", "흐리게", "비네트", "노이즈"
+    };
+
+    private final HashMap<String, Integer> savedFilterValues = new HashMap<>();
+    private boolean isPreviewingOriginalColors = false;
+
+    public void previewOriginalColors(boolean on) {
+        if (renderer == null) return;
+
+        if (on) {
+            if (isPreviewingOriginalColors) return;
+            savedFilterValues.clear();
+            for (String k : FILTER_KEYS) {
+                savedFilterValues.put(k, getCurrentValue(k));
+            }
+            renderer.resetAllFilter();
+            photoPreview.requestRender();
+            isPreviewingOriginalColors = true;
+        } else {
+            if (!savedFilterValues.isEmpty()) {
+                for (String k : FILTER_KEYS) {
+                    Integer v = savedFilterValues.get(k);
+                    if (v != null) renderer.updateValue(k, v);
+                }
+                savedFilterValues.clear();
+                photoPreview.requestRender();
+            }
+            isPreviewingOriginalColors = false;
+        }
+    }
+
+    public void setUndoRedoEnabled(boolean enabled) {
+        if (undoColor != null) {
+            undoColor.setEnabled(enabled);
+            undoColor.setAlpha(enabled ? 1f : 0.4f);
+        }
+        if (redoColor != null) {
+            redoColor.setEnabled(enabled);
+            redoColor.setAlpha(enabled ? 1f : 0.4f);
+        }
+    }
+
+    private final HashMap<String, Integer> baselineFilterValues = new HashMap<>();
+
+    private boolean isAtBaseline() {
+        for (String k : FILTER_KEYS) {
+            int cur = getCurrentValue(k);
+            int base = baselineFilterValues.containsKey(k) ? baselineFilterValues.get(k) : 0;
+            if (cur != base) return false;
+        }
+        return true;
+    }
+
+    public void refreshOriginalColorButton() {
+        boolean same = isAtBaseline();
+        if (originalColor != null) {
+            originalColor.setEnabled(!same);
+            originalColor.setAlpha(!same ? 1f : 0.4f);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +193,43 @@ public class FilterActivity extends BaseActivity {
         saveBtn = findViewById(R.id.saveBtn);
         saveTxt = findViewById(R.id.saveTxt);
         photoPreview = findViewById(R.id.photoPreview);
+
+        undoColor = findViewById(R.id.undoColor);
+        redoColor = findViewById(R.id.redoColor);
+        originalColor = findViewById(R.id.originalColor);
+
+        originalColor.setOnTouchListener((v, ev) -> {
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    if (undoColor != null) {
+                        undoColor.setEnabled(false);
+                        undoColor.setAlpha(0.4f);
+                    }
+                    if (redoColor != null) {
+                        redoColor.setEnabled(false);
+                        redoColor.setAlpha(0.4f);
+                    }
+                    previewOriginalColors(true);
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.setPressed(false);
+                    previewOriginalColors(false);
+                    if (undoColor != null) {
+                        boolean canUndo = canUndoColor();
+                        undoColor.setEnabled(canUndo);
+                        undoColor.setAlpha(canUndo ? 1f : 0.4f);
+                    }
+                    if (redoColor != null) {
+                        boolean canRedo = canRedoColor();
+                        redoColor.setEnabled(canRedo);
+                        redoColor.setAlpha(canRedo ? 1f : 0.4f);
+                    }
+                    return true;
+            }
+            return true;
+        });
 
         cropOverlay = null;
 
@@ -101,7 +254,7 @@ public class FilterActivity extends BaseActivity {
         if (savedInstanceState == null) {
             getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.bottomArea, new ToolsFragment())
+                    .replace(R.id.bottomArea2, new ToolsFragment())
                     .commit();
         }
 
@@ -114,26 +267,10 @@ public class FilterActivity extends BaseActivity {
                 scaleFactor = Math.max(1.0f, Math.min(scaleFactor, 4.0f));
                 renderer.setScaleFactor(scaleFactor);
 
-                /*if (scaleFactor == 1.0f) {
-                    translateX = 0;
-                    translateY = 0;
-                } else {
-                    float maxTx = renderer.getViewportWidth() * (scaleFactor - 1f) / 2f;
-                    float maxTy = renderer.getViewportHeight() * (scaleFactor - 1f) / 2f;
-                    translateX = Math.max(-maxTx, Math.min(maxTx, translateX));
-                    translateY = Math.max(-maxTy, Math.min(maxTy, translateY));
-                }
-
-                renderer.setTranslate(translateX, translateY);
-                photoPreview.requestRender();
-                return true;
-            }*/
-                // ② 배율별 이동 한계 계산 (확대/축소 모두에서 동작)
-                float extra = Math.abs(scaleFactor - 1f); // 1에서 얼마나 벗어났는지
-                float maxTx = renderer.getViewportWidth()  * extra / 2f;
+                float extra = Math.abs(scaleFactor - 1f);
+                float maxTx = renderer.getViewportWidth() * extra / 2f;
                 float maxTy = renderer.getViewportHeight() * extra / 2f;
 
-                // 배율이 1 이하이면 이동을 0으로 고정(전체 보기)
                 if (scaleFactor <= 1.0f) {
                     translateX = 0f;
                     translateY = 0f;
@@ -146,12 +283,6 @@ public class FilterActivity extends BaseActivity {
                 photoPreview.requestRender();
                 return true;
             }
-        });
-
-        backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
-
-            onBackPressed();
         });
 
         saveBtn.setOnClickListener(v -> {
@@ -175,6 +306,32 @@ public class FilterActivity extends BaseActivity {
                 startActivity(intent);
             });
             renderer.captureBitmap();
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleBack();
+            }
+        });
+
+        backBtn = findViewById(R.id.backBtn);
+        backBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(500)) return;
+            handleBack();
+        });
+
+        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+            FrameLayout full = findViewById(R.id.fullScreenFragmentContainer);
+            ConstraintLayout filter = findViewById(R.id.filterActivity);
+            ConstraintLayout main = findViewById(R.id.main);
+
+            Fragment f = getSupportFragmentManager().findFragmentById(R.id.fullScreenFragmentContainer);
+            if (f == null) {
+                full.setVisibility(View.GONE);
+                filter.setVisibility(View.VISIBLE);
+                main.setBackgroundColor(Color.BLACK);
+            }
         });
     }
 
@@ -224,14 +381,18 @@ public class FilterActivity extends BaseActivity {
             photoPreview.requestRender();
             if (renderer != null) {
                 renderer.resetAllFilter();
+                baselineFilterValues.clear();
+                for (String k : FILTER_KEYS) {
+                    baselineFilterValues.put(k, getCurrentValue(k));
+                }
+                refreshOriginalColorButton();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    public void onBackPressed() {
+    private void handleBack() {
         if (cropOverlay != null) {
             restoreCropBeforeState();
             hideCropOverlay();
@@ -239,19 +400,20 @@ public class FilterActivity extends BaseActivity {
             return;
         }
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        if (fragmentManager.getBackStackEntryCount() > 0) {
-            fragmentManager.popBackStack();
+        FragmentManager fm = getSupportFragmentManager();
+        if (fm.getBackStackEntryCount() > 0) {
+            fm.popBackStack();
+            return;
+        }
+
+        Fragment current = fm.findFragmentById(R.id.bottomArea2);
+        if (current instanceof ToolsFragment) {
+            Intent intent = new Intent(FilterActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
         } else {
-            Fragment currentFragment = fragmentManager.findFragmentById(R.id.bottomArea);
-            if (currentFragment instanceof ToolsFragment) {
-                Intent intent = new Intent(FilterActivity.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-                finish();
-            } else {
-                super.onBackPressed();
-            }
+            finish();
         }
     }
 
@@ -265,18 +427,21 @@ public class FilterActivity extends BaseActivity {
     public void onTempValue(String filterType, int value) {
         if (renderer != null && filterType != null) {
             renderer.setTempValue(filterType, value);
+            refreshOriginalColorButton();
         }
     }
 
     public void onUpdateValue(String filterType, int value) {
         if (filterType != null) {
             renderer.updateValue(filterType, value);
+            refreshOriginalColorButton();
         }
     }
 
     public void onCancelValue(String filterType) {
         if (renderer != null && filterType != null) {
             renderer.cancelValue(filterType);
+            refreshOriginalColorButton();
         }
     }
 
@@ -302,18 +467,140 @@ public class FilterActivity extends BaseActivity {
     }
 
     public void commitTransformations() {
-// 현재 렌더러의 비트맵을 기준으로 원본 갱신 (크롭 등 renderer에서 직접 바뀐 경우 포함)
+        commitTransformations(false);
+    }
+
+    public void commitTransformations(boolean imageGeometryChanged) {
         Bitmap current = (renderer != null) ? renderer.getCurrentBitmap() : null;
         if (current != null) {
             originalBitmap = current.copy(current.getConfig(), true);
             transformedBitmap = originalBitmap.copy(originalBitmap.getConfig(), true);
+            renderer.setBitmap(originalBitmap);
         }
 
-        rotationDegree = 0;
+        if (imageGeometryChanged && baseImageForCrop != null) {
+            Matrix m = new Matrix();
+            m.postRotate(rotationDegree);
+            float sx = flipHorizontal ? -1f : 1f;
+            float sy = flipVertical ? -1f : 1f;
+            m.postScale(sx, sy);
+            baseImageForCrop = Bitmap.createBitmap(
+                    baseImageForCrop, 0, 0,
+                    baseImageForCrop.getWidth(), baseImageForCrop.getHeight(),
+                    m, true
+            );
+
+            if (lastCropRectN != null) {
+                int rot = ((int) rotationDegree % 360 + 360) % 360;
+                lastCropRectN = mapRectN(lastCropRectN, rot, flipHorizontal, flipVertical);
+            } else {
+                needResetCropRectOnce = true;
+            }
+
+            float[] p = mapPanN(lastTxN, lastTyN, (int) rotationDegree, flipHorizontal, flipVertical);
+            lastTxN = p[0];
+            lastTyN = p[1];
+        }
+
+        rotationDegree = 0f;
         flipHorizontal = false;
         flipVertical = false;
-
         resetViewportTransform();
+    }
+
+    public void lockInCurrentCropMode() {
+        if (lastCropMode != CropMode.NONE) {
+            appliedCropMode = lastCropMode;
+        }
+    }
+
+    public void revertLastSelectionToApplied() {
+        lastCropMode = appliedCropMode;
+    }
+
+    public CropMode getAppliedCropMode() {
+        return appliedCropMode;
+    }
+
+    private Rect calcCenteredCropRect(int vpX, int vpY, int vpW, int vpH,
+                                      boolean fullSize, boolean fixed, int ratioX, int ratioY) {
+        final float factor = fullSize ? 1.0f : 0.9f;
+
+        if (!fixed || ratioX <= 0 || ratioY <= 0) {
+            int w = Math.round(vpW * factor);
+            int h = Math.round(vpH * factor);
+            int l = vpX + (vpW - w) / 2;
+            int t = vpY + (vpH - h) / 2;
+            return new Rect(l, t, l + w, t + h);
+        }
+
+        float target = (float) ratioX / (float) ratioY;
+        int cw, ch;
+
+        float vRatio = (float) vpW / (float) vpH;
+        if (vRatio > target) {
+            ch = Math.round(vpH * factor);
+            cw = Math.round(ch * target);
+        } else {
+            cw = Math.round(vpW * factor);
+            ch = Math.round(cw / target);
+        }
+
+        int left = vpX + (vpW - cw) / 2;
+        int top = vpY + (vpH - ch) / 2;
+        return new Rect(left, top, left + cw, top + ch);
+    }
+
+    private float[] mapPointN(float x, float y, int rotDeg, boolean flipH, boolean flipV) {
+        if (flipH) x = 1f - x;
+        if (flipV) y = 1f - y;
+
+        int r = ((rotDeg % 360) + 360) % 360;
+        switch (r) {
+            case 90:
+                return new float[]{1f - y, x};
+            case 180:
+                return new float[]{1f - x, 1f - y};
+            case 270:
+                return new float[]{y, 1f - x};
+            default:
+                return new float[]{x, y};
+        }
+    }
+
+    private RectF mapRectN(RectF src, int rotDeg, boolean flipH, boolean flipV) {
+        if (src == null) return null;
+        float[] lt = mapPointN(src.left, src.top, rotDeg, flipH, flipV);
+        float[] rb = mapPointN(src.right, src.bottom, rotDeg, flipH, flipV);
+        RectF out = new RectF(
+                Math.min(lt[0], rb[0]),
+                Math.min(lt[1], rb[1]),
+                Math.max(lt[0], rb[0]),
+                Math.max(lt[1], rb[1])
+        );
+
+        out.left = Math.max(0f, Math.min(1f, out.left));
+        out.top = Math.max(0f, Math.min(1f, out.top));
+        out.right = Math.max(0f, Math.min(1f, out.right));
+        out.bottom = Math.max(0f, Math.min(1f, out.bottom));
+        return out;
+    }
+
+    private float[] mapPanN(float txN, float tyN, int rotDeg, boolean flipH, boolean flipV) {
+        if (flipH) txN = -txN;
+        if (flipV) tyN = -tyN;
+
+        int r = ((rotDeg % 360) + 360) % 360;
+        switch (r) {
+            case 90:
+                return new float[]{tyN, -txN};
+            case 180:
+                return new float[]{-txN, -tyN};
+            case 270:
+                return new float[]{-tyN, txN};
+            default:
+                return new float[]{txN, tyN};
+        }
     }
 
     private void applyTransform() {
@@ -348,8 +635,12 @@ public class FilterActivity extends BaseActivity {
     }
 
     public void restoreCropBeforeState() {
-        if (cropBeforeBitmap != null) {
-            renderer.setBitmap(cropBeforeBitmap);
+        Bitmap restore = (isCropSessionLatched && cropSessionEntryBitmap != null)
+                ? cropSessionEntryBitmap
+                : cropBeforeBitmap;
+
+        if (restore != null) {
+            renderer.setBitmap(restore);
 
             scaleFactor = 1.0f;
             translateX = 0f;
@@ -364,67 +655,62 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
-    public void showCropOverlay(boolean fullSize, boolean fixed, int ratioX, int ratioY) {
-        //cropBeforeBitmap = transformedBitmap.copy(transformedBitmap.getConfig(), true);
+    public void showCropOverlay(boolean fullSize, boolean fixed, int ratioX, int ratioY, boolean restorePrevRect) {
+        if (!isCropSessionLatched && renderer != null && renderer.getCurrentBitmap() != null) {
+            Bitmap cur = renderer.getCurrentBitmap();
+            cropSessionEntryBitmap = cur.copy(cur.getConfig(), true);
+            isCropSessionLatched = true;
+        }
+
         if (renderer != null && renderer.getCurrentBitmap() != null) {
-            cropBeforeBitmap = renderer.getCurrentBitmap().copy(renderer.getCurrentBitmap().getConfig(), true);
+            cropBeforeBitmap = renderer.getCurrentBitmap()
+                    .copy(renderer.getCurrentBitmap().getConfig(), true);
         }
 
         FrameLayout container = findViewById(R.id.photoPreviewContainer);
+        if (cropOverlay != null) container.removeView(cropOverlay);
 
-        if (cropOverlay != null) {
-            container.removeView(cropOverlay);
-        }
-
-        if (lastCropRectN != null && baseImageForCrop != null) {
+        if (restorePrevRect && baseImageForCrop != null) {
             renderer.setBitmap(baseImageForCrop);
 
             int w = photoPreview.getWidth();
             int h = photoPreview.getHeight();
             renderer.onSurfaceChanged(null, w, h);
 
-            int vpW = renderer.getViewportWidth();
-            int vpH = renderer.getViewportHeight();
-
-            float rectW = lastCropRectN.width()  * vpW;
-            float rectH = lastCropRectN.height() * vpH;
-            float cx    = lastCropRectN.centerX() * vpW; // 뷰포트 내부 중심 x(px)
-            float cy    = lastCropRectN.centerY() * vpH; // 뷰포트 내부 중심 y(px)
-
-            float sW = vpW / rectW;
-            float sH = vpH / rectH;
-            float s  = Math.max(sW, sH);
-
-            float txPx = s * (vpW / 2f - cx);
-            float tyPx = s * (vpH / 2f - cy);
-
-            scaleFactor = s;
-            translateX  = txPx;
-            translateY  = tyPx;
-
-            renderer.setScaleFactor(scaleFactor);
-            renderer.setTranslate(translateX, translateY);
-            photoPreview.requestRender();
+            restoreViewTransformFromSnapshot();
         } else {
             resetViewportTransform();
         }
 
         cropOverlay = new CropBoxOverlayView(this);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+        container.addView(cropOverlay, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        );
-        container.addView(cropOverlay, params);
+                ViewGroup.LayoutParams.MATCH_PARENT));
 
-        int viewportX = renderer.getViewportX();
-        int viewportY = renderer.getViewportY();
-        int viewportWidth = renderer.getViewportWidth();
-        int viewportHeight = renderer.getViewportHeight();
+        int vpX = renderer.getViewportX();
+        int vpY = renderer.getViewportY();
+        int vpW = renderer.getViewportWidth();
+        int vpH = renderer.getViewportHeight();
 
         cropOverlay.setFixedAspectRatio(fixed);
         cropOverlay.setAspectRatio(ratioX, ratioY);
-        //cropOverlay.setScaleGestureDetector(scaleDetector);
-        cropOverlay.initializeCropBox(viewportX, viewportY, viewportWidth, viewportHeight, fullSize);
+        cropOverlay.setViewportInfo(vpX, vpY, vpW, vpH);
+
+        Rect prev = (restorePrevRect) ? getLastCropRectInViewportPx() : null;
+        if (prev != null) {
+            cropOverlay.setCropRect(prev);
+            needResetCropRectOnce = false;
+            return;
+        }
+
+        if (needResetCropRectOnce) {
+            Rect center = calcCenteredCropRect(vpX, vpY, vpW, vpH, fullSize, fixed, ratioX, ratioY);
+            cropOverlay.setCropRect(center);
+            needResetCropRectOnce = false;
+            return;
+        }
+
+        cropOverlay.initializeCropBox(vpX, vpY, vpW, vpH, fullSize);
     }
 
     public void hideCropOverlay() {
@@ -432,10 +718,35 @@ public class FilterActivity extends BaseActivity {
             ((ViewGroup) cropOverlay.getParent()).removeView(cropOverlay);
             cropOverlay = null;
         }
+
+        isCropSessionLatched = false;
+        cropSessionEntryBitmap = null;
     }
 
     public void setCurrentCropMode(CropMode mode) {
         this.currentCropMode = mode;
+
+        if (mode != CropMode.NONE) {
+            this.lastCropMode = mode;
+        }
+    }
+
+    public CropMode getLastCropMode() {
+        return lastCropMode;
+    }
+
+    private Rect getLastCropRectInViewportPx() {
+        if (lastCropRectN == null || renderer == null) return null;
+        int vpX = renderer.getViewportX();
+        int vpY = renderer.getViewportY();
+        int vpW = renderer.getViewportWidth();
+        int vpH = renderer.getViewportHeight();
+
+        int l = vpX + Math.round(lastCropRectN.left * vpW);
+        int t = vpY + Math.round(lastCropRectN.top * vpH);
+        int r = vpX + Math.round(lastCropRectN.right * vpW);
+        int b = vpY + Math.round(lastCropRectN.bottom * vpH);
+        return new Rect(l, t, r, b);
     }
 
     @Override
@@ -457,14 +768,14 @@ public class FilterActivity extends BaseActivity {
 
             case MotionEvent.ACTION_POINTER_UP:
                 if (event.getPointerCount() == 2) {
-                    // 두 손가락에서 하나 뗐을 때 → 다음 한 손가락 MOVE는 무시
+                    //두 손가락에서 하나 뗐을 때 → 다음 한 손가락 MOVE는 무시
                     suppressNextSingleFingerMove = true;
                 }
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 if (suppressNextSingleFingerMove) {
-                    suppressNextSingleFingerMove = false; // 한 번만 무시
+                    suppressNextSingleFingerMove = false;
                     break;
                 }
 
@@ -524,5 +835,44 @@ public class FilterActivity extends BaseActivity {
 
     public void setLastCropRectNormalized(RectF rectN) {
         this.lastCropRectN = rectN;
+    }
+
+    public void snapshotViewTransformForRestore() {
+        int vpW = renderer.getViewportWidth();
+        int vpH = renderer.getViewportHeight();
+        if (vpW <= 0 || vpH <= 0) return;
+
+        lastScale = scaleFactor;
+        lastTxN = translateX / (float) vpW;
+        lastTyN = translateY / (float) vpH;
+    }
+
+    private void restoreViewTransformFromSnapshot() {
+        int vpW = renderer.getViewportWidth();
+        int vpH = renderer.getViewportHeight();
+        scaleFactor = lastScale;
+        translateX = lastTxN * vpW;
+        translateY = lastTyN * vpH;
+        renderer.setScaleFactor(scaleFactor);
+        renderer.setTranslate(translateX, translateY);
+        photoPreview.requestRender();
+    }
+
+    public boolean isColorEdited() {
+        return colorEdited;
+    }
+
+    public void setColorEdited(boolean edited) {
+        this.colorEdited = edited;
+        refreshOriginalColorButton();
+        refreshOriginalColorButton();
+    }
+
+    public boolean isBeforePressed() {
+        return beforePressed;
+    }
+
+    public void setBeforePressed(boolean pressed) {
+        this.beforePressed = pressed;
     }
 }

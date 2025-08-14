@@ -18,6 +18,7 @@ public class ToolsFragment extends Fragment {
     private ImageView rotationIcon;
     private ImageView cropIcon;
     private ImageButton nextBtn;
+    private ImageButton undoColor, redoColor, originalColor;
 
     @Nullable
     @Override
@@ -27,6 +28,14 @@ public class ToolsFragment extends Fragment {
         rotationIcon=view.findViewById(R.id.rotationIcon);
         cropIcon = view.findViewById(R.id.cropIcon);
 
+        undoColor = requireActivity().findViewById(R.id.undoColor);
+        redoColor = requireActivity().findViewById(R.id.redoColor);
+        originalColor = requireActivity().findViewById(R.id.originalColor);
+
+        undoColor.setVisibility(View.INVISIBLE);
+        redoColor.setVisibility(View.INVISIBLE);
+        originalColor.setVisibility(View.INVISIBLE);
+
         rotationIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -35,7 +44,8 @@ public class ToolsFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new RotationFragment())
+                        .replace(R.id.bottomArea2, new RotationFragment())
+                        .addToBackStack(null)
                         .commit();
             }
         });
@@ -48,7 +58,7 @@ public class ToolsFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new CropFragment())
+                        .replace(R.id.bottomArea2, new CropFragment())
                         .addToBackStack(null)
                         .commit();
             }
@@ -63,7 +73,7 @@ public class ToolsFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new ColorsFragment())
+                        .replace(R.id.bottomArea2, new ColorsFragment())
                         .addToBackStack(null)
                         .commit();
             }

@@ -1,29 +1,17 @@
 package com.example.filter.activities;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.ImageUtils;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-
 
 public class SavePhotoActivity extends BaseActivity {
     private ImageView photo;

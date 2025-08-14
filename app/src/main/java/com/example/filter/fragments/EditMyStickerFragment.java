@@ -3,9 +3,7 @@ package com.example.filter.fragments;
 import android.graphics.Color;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -17,17 +15,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
-import com.example.filter.adapters.MyStickersAdapter;
 import com.example.filter.etc.ClickUtils;
-
-import org.w3c.dom.Text;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class EditMyStickerFragment extends Fragment {
     private ImageButton cancelBtn;
@@ -68,7 +58,8 @@ public class EditMyStickerFragment extends Fragment {
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea, new MyStickersFragment())
+                    .replace(R.id.bottomArea2, new MyStickersFragment())
+                    .addToBackStack(null)
                     .commit();
         });
 
@@ -91,7 +82,8 @@ public class EditMyStickerFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new MyStickersFragment())
+                        .replace(R.id.bottomArea2, new MyStickersFragment())
+                        .addToBackStack(null)
                         .commit();
             }
         });

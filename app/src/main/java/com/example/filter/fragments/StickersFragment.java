@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,11 +22,20 @@ public class StickersFragment extends Fragment {
     private ImageView AIStickerIcon;
     private FrameLayout fullScreenFragmentContainer;
     private ConstraintLayout filterActivity;
+    private ImageButton undoColor, redoColor, originalColor;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_stickers, container, false);
+
+        undoColor = requireActivity().findViewById(R.id.undoColor);
+        redoColor = requireActivity().findViewById(R.id.redoColor);
+        originalColor = requireActivity().findViewById(R.id.originalColor);
+
+        undoColor.setVisibility(View.INVISIBLE);
+        redoColor.setVisibility(View.INVISIBLE);
+        originalColor.setVisibility(View.INVISIBLE);
 
         myStickerIcon = view.findViewById(R.id.myStickerIcon);
         myStickerIcon.setOnClickListener(new View.OnClickListener() {
@@ -38,7 +46,8 @@ public class StickersFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new MyStickersFragment())
+                        .replace(R.id.bottomArea2, new MyStickersFragment())
+                        .addToBackStack(null)
                         .commit();
             }
         });
@@ -60,11 +69,10 @@ public class StickersFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.fullScreenFragmentContainer, new AIStickerViewFragment())
+                        .addToBackStack(null)
                         .commit();
             }
         });
-
-
 
         return view;
     }

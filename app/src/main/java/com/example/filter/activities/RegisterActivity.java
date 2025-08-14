@@ -7,12 +7,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -22,13 +17,11 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.filter.R;
 import com.example.filter.adapters.CustomSpinnerAdapter;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,8 +61,6 @@ public class RegisterActivity extends BaseActivity {
         registerBtn = findViewById(R.id.registerBtn);
         scrollView = findViewById(R.id.scrollView);
 
-        //이전 액티비티에서 전달한 사진 화면에 띄움 메서드
-        //에뮬레이터로 실행 시 문제 없으나 실제 디바이스로 실행한 경우 사진 전달이 안 되고 있음
         String imagePath = getIntent().getStringExtra("final_image");
         if (imagePath != null) {
             Bitmap bitmap = BitmapFactory.decodeFile(imagePath);

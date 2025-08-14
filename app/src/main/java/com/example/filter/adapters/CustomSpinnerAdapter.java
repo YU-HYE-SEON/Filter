@@ -1,14 +1,11 @@
 package com.example.filter.adapters;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,7 +13,6 @@ import androidx.annotation.Nullable;
 
 import com.example.filter.R;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class CustomSpinnerAdapter extends ArrayAdapter<String> {

@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -23,8 +22,12 @@ public class CustomseekbarFragment extends Fragment {
     private ImageButton cancelBtn;
     private ImageButton checkBtn;
     private CustomSeekbar customSeekbar;
-    private int filterValue = 0;
     private Fragment previousFragment;
+    private ImageButton undoColor, redoColor;
+    private String filterType = "";
+    private int startValue = 0;
+    private int filterValue = 0;
+    private boolean hasAdjusted = false;
 
     public void setPreviousFragment(Fragment fragment) {
         this.previousFragment = fragment;
@@ -41,11 +44,17 @@ public class CustomseekbarFragment extends Fragment {
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
+        undoColor = requireActivity().findViewById(R.id.undoColor);
+        redoColor = requireActivity().findViewById(R.id.redoColor);
+
+        undoColor.setVisibility(View.INVISIBLE);
+        redoColor.setVisibility(View.INVISIBLE);
+
         Bundle bundle = getArguments();
         if (bundle != null) {
-            String filterType = bundle.getString("filterType", "");
+            filterType = bundle.getString("filterType", "");
 
-            if (filterType == "선명하게" || filterType == "흐리게" || filterType == "비네트" || filterType == "노이즈") {
+            if ("선명하게".equals(filterType) || "흐리게".equals(filterType) || "비네트".equals(filterType) || "노이즈".equals(filterType)) {
                 customSeekbar.setMinZero(filterType);
             }
 
@@ -55,18 +64,28 @@ public class CustomseekbarFragment extends Fragment {
             if (getActivity() instanceof FilterActivity) {
                 currentValue = ((FilterActivity) getActivity()).getCurrentValue(filterType);
             }
-            customSeekbar.setProgress(currentValue);
+
+            startValue = currentValue;
             filterValue = currentValue;
+            hasAdjusted = false;
+
+            customSeekbar.setProgress(currentValue);
         } else {
             filterValue = customSeekbar.getProgress();
+            startValue = filterValue;
+            hasAdjusted = false;
         }
 
         customSeekbar.setOnProgressChangeListener(new CustomSeekbar.OnProgressChangeListener() {
             @Override
             public void onProgressChanged(CustomSeekbar customSeekbar, int progress) {
                 filterValue = progress;
+
+                if (progress != startValue) {
+                    hasAdjusted = true;
+                }
+
                 if (getActivity() instanceof FilterActivity) {
-                    String filterType = getArguments().getString("filterType", "");
                     ((FilterActivity) getActivity()).onTempValue(filterType, filterValue);
                 }
             }
@@ -78,15 +97,20 @@ public class CustomseekbarFragment extends Fragment {
             public void onClick(View v) {
                 if (ClickUtils.isFastClick(500)) return;
 
-                int id = v.getId();
-                String filterType = getArguments().getString("filterType", "");
                 FilterActivity activity = (FilterActivity) getActivity();
+
+                if (activity == null) return;
+                activity.previewOriginalColors(false);
+
+                int id = v.getId();
                 if (id == R.id.cancelBtn) {
+                    activity.onCancelValue(filterType);
+                    activity.onUpdateValue(filterType, startValue);
                     showPreviousFagement();
-                    if (activity != null) activity.onCancelValue(filterType);
                 } else if (id == R.id.checkBtn) {
+                    activity.onUpdateValue(filterType, filterValue);
+                    activity.recordColorEdit(filterType, startValue, filterValue);
                     showPreviousFagement();
-                    if (activity != null) activity.onUpdateValue(filterType, filterValue);
                 }
             }
         };
@@ -97,6 +121,12 @@ public class CustomseekbarFragment extends Fragment {
         return view;
     }
 
+    @Override public void onPause() {
+        super.onPause();
+        FilterActivity act = (FilterActivity) getActivity();
+        if (act != null) act.previewOriginalColors(false);
+    }
+
     private void showPreviousFagement() {
         if (previousFragment != null) {
             requireActivity().getSupportFragmentManager()
@@ -104,12 +134,14 @@ public class CustomseekbarFragment extends Fragment {
                     .setCustomAnimations(R.anim.slide_up, 0)
                     .remove(CustomseekbarFragment.this)
                     .show(previousFragment)
+                    .addToBackStack(null)
                     .commit();
         } else {
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea, new ColorsFragment())
+                    .replace(R.id.bottomArea2, new ColorsFragment())
+                    .addToBackStack(null)
                     .commit();
         }
     }

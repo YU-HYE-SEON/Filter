@@ -25,6 +25,8 @@ public class CustomSeekbar extends View {
     private int textOffset = 80; //seekbar와 텍스트 사이 간격
     private int thumbRadius = 25;   //버튼 반지름 → 크기
     private int barStroke = 10; //seekbar 굵기
+    private static final int START_COLOR = Color.parseColor("#007BFF"); //파랑
+    private static final int END_COLOR = Color.parseColor("#C2FA7A"); //초록
 
     public interface OnProgressChangeListener {
 
@@ -48,19 +50,17 @@ public class CustomSeekbar extends View {
     }
 
     private void init() {
-        backgroundPaint = new Paint();
-        backgroundPaint.setColor(Color.parseColor("#6B6B6B"));
+        backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         backgroundPaint.setStrokeWidth(barStroke);
 
-        progressPaint = new Paint();
+        progressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         progressPaint.setColor(Color.parseColor("#6B6B6B"));
         progressPaint.setStrokeWidth(barStroke);
 
-        thumbPaint = new Paint();
-        thumbPaint.setColor(Color.parseColor("#6B6B6B"));
+        thumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         thumbPaint.setStyle(Paint.Style.FILL);
 
-        progressText = new Paint();
+        progressText = new Paint(Paint.ANTI_ALIAS_FLAG);
         progressText.setTypeface(ResourcesCompat.getFont(getContext(), R.font.roboto_bold));
         progressText.setColor(Color.parseColor("#6B6B6B"));
         progressText.setTextSize(spToPx(15));
@@ -73,43 +73,32 @@ public class CustomSeekbar extends View {
         int centerY = getHeight() - 25;
         int centerX = getWidth() / 2;
         float ratio = (float) (progress - min) / (max - min);
+        ratio = Math.max(0f, Math.min(1f, ratio));
         int thumbX = (int) (thumbRadius + ratio * (getWidth() - 2 * thumbRadius));
 
-        /*if (min == 0) {
-            canvas.drawLine(0, centerY, thumbX, centerY, progressPaint);
-        } else {
-            float zeroRatio = (float) (0 - min) / (max - min);
-            int zeroX = (int) (thumbRadius + zeroRatio * (getWidth() - 2 * thumbRadius));
-
-            if (progress >= 0) {
-                canvas.drawLine(zeroX, centerY, thumbX, centerY, progressPaint);
-            } else {
-                canvas.drawLine(thumbX, centerY, zeroX, centerY, progressPaint);
-            }
-        }*/
-
-        if (progress == 0) {
-            progressText.setColor(Color.parseColor("#6B6B6B"));
-            thumbPaint.setColor(Color.parseColor("#6B6B6B"));
-
-            backgroundPaint.setShader(null);
-            backgroundPaint.setColor(Color.parseColor("#6B6B6B"));
-        } else {
-            progressText.setColor(Color.parseColor("#C2FA7A"));
-            thumbPaint.setColor(Color.parseColor("#C2FA7A"));
-
-            LinearGradient gradient = new LinearGradient(
-                    0, 0, getWidth(), 0,
-                    Color.parseColor("#007BFF"),
-                    Color.parseColor("#C2FA7A"),
-                    Shader.TileMode.CLAMP
-            );
-            backgroundPaint.setShader(gradient);
-        }
+        LinearGradient gradient = new LinearGradient(
+                thumbRadius, 0, getWidth() - thumbRadius, 0,
+                START_COLOR, END_COLOR, Shader.TileMode.CLAMP);
+        backgroundPaint.setShader(gradient);
+        int currentColor = interpolateColor(START_COLOR, END_COLOR, ratio);
+        thumbPaint.setColor(currentColor);
+        progressText.setColor(currentColor);
 
         canvas.drawLine(thumbRadius, centerY, getWidth() - thumbRadius, centerY, backgroundPaint);
         canvas.drawCircle(thumbX, centerY, thumbRadius, thumbPaint);
         canvas.drawText(String.valueOf(progress), centerX, centerY - textOffset, progressText);
+    }
+
+    //ARGB 보간
+    private int interpolateColor(int start, int end, float t) {
+        int sa = (start >> 24) & 0xFF, sr = (start >> 16) & 0xFF, sg = (start >> 8) & 0xFF, sb = start & 0xFF;
+        int ea = (end >> 24) & 0xFF, er = (end >> 16) & 0xFF, eg = (end >> 8) & 0xFF, eb = end & 0xFF;
+
+        int a = (int) (sa + (ea - sa) * t);
+        int r = (int) (sr + (er - sr) * t);
+        int g = (int) (sg + (eg - sg) * t);
+        int b = (int) (sb + (eb - sb) * t);
+        return Color.argb(a, r, g, b);
     }
 
     @Override
@@ -149,7 +138,8 @@ public class CustomSeekbar extends View {
     }
 
     public void setMinZero(String filterType) {
-        if (filterType == "선명하게" || filterType == "흐리게" || filterType == "비네트" || filterType == "노이즈") {
+        if ("선명하게".equals(filterType) || "흐리게".equals(filterType) ||
+                "비네트".equals(filterType) || "노이즈".equals(filterType)) {
             this.min = 0;
             if (this.progress < 0) {
                 this.progress = 0;

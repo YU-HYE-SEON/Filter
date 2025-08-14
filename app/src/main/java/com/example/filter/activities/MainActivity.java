@@ -23,13 +23,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.filter.R;
 import com.example.filter.adapters.RecommendFilterAdapter;
 import com.example.filter.adapters.RecommendStudioAdapter;
-import com.example.filter.adapters.StudioItem;
 import com.example.filter.etc.ClickUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 public class MainActivity extends BaseActivity {
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(

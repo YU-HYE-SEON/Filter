@@ -13,14 +13,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class RecommendStudioAdapter extends RecyclerView.Adapter<RecommendStudioAdapter.StudioViewHolder> {
     private List<String> studioTitles;
 
-    // 생성자
     public RecommendStudioAdapter(List<String> studioTitles) {
         this.studioTitles = studioTitles;
     }

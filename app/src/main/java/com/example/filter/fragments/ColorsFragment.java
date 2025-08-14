@@ -6,31 +6,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.activities.FilterActivity;
 import com.example.filter.dialogs.StickersDialog;
 import com.example.filter.etc.ClickUtils;
 
 public class ColorsFragment extends Fragment {
     private String filterType;
-    private ImageView brightnessIcon;
-    private ImageView exposureIcon;
-    private ImageView contrastIcon;
-    private ImageView highlightIcon;
-    private ImageView shadowIcon;
-    private ImageView temperatureIcon;
-    private ImageView tintIcon;
-    private ImageView saturationIcon;
-    private ImageView sharpnessIcon;
-    private ImageView blurIcon;
-    private ImageView vignetteIcon;
-    private ImageView noiseIcon;
+    private ImageView brightnessIcon, exposureIcon, contrastIcon,
+            highlightIcon, shadowIcon, temperatureIcon, tintIcon,
+            saturationIcon, sharpnessIcon, blurIcon, vignetteIcon, noiseIcon;
     private ImageView nextBtn;
+    private ImageButton undoColor, redoColor, originalColor;
 
     @Nullable
     @Override
@@ -50,6 +42,37 @@ public class ColorsFragment extends Fragment {
         vignetteIcon = view.findViewById(R.id.vignetteIcon);
         noiseIcon = view.findViewById(R.id.noiseIcon);
         nextBtn = view.findViewById(R.id.nextBtn);
+
+        undoColor = requireActivity().findViewById(R.id.undoColor);
+        redoColor = requireActivity().findViewById(R.id.redoColor);
+        originalColor = requireActivity().findViewById(R.id.originalColor);
+
+        undoColor.setEnabled(false);
+        redoColor.setEnabled(false);
+        undoColor.setVisibility(View.VISIBLE);
+        redoColor.setVisibility(View.VISIBLE);
+        originalColor.setVisibility(View.VISIBLE);
+
+        FilterActivity activity = (FilterActivity) getActivity();
+        if (activity != null) activity.refreshOriginalColorButton();
+
+        undoColor.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(500)) return;
+            if (activity != null) {
+                activity.previewOriginalColors(false);
+                activity.undoColor();
+            }
+            refreshColorButtons();
+        });
+
+        redoColor.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(500)) return;
+            if (activity != null) {
+                activity.previewOriginalColors(false);
+                activity.redoColor();
+            }
+            refreshColorButtons();
+        });
 
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
@@ -109,7 +132,8 @@ public class ColorsFragment extends Fragment {
                             .beginTransaction()
                             .setCustomAnimations(R.anim.slide_up, 0)
                             .hide(ColorsFragment.this)
-                            .add(R.id.bottomArea, csf)
+                            .add(R.id.bottomArea2, csf)
+                            .addToBackStack(null)
                             .commit();
                 }
             }
@@ -131,7 +155,7 @@ public class ColorsFragment extends Fragment {
                         requireActivity().getSupportFragmentManager()
                                 .beginTransaction()
                                 .setCustomAnimations(R.anim.slide_up, 0)
-                                .replace(R.id.bottomArea, new StickersFragment())
+                                .replace(R.id.bottomArea2, new StickersFragment())
                                 .addToBackStack(null)
                                 .commit();
                     }
@@ -153,5 +177,39 @@ public class ColorsFragment extends Fragment {
         noiseIcon.setOnClickListener(listener);
 
         return view;
+    }
+
+    private void refreshColorButtons() {
+        FilterActivity activity = (FilterActivity) getActivity();
+        if (activity == null) return;
+
+        undoColor.setVisibility(View.VISIBLE);
+        redoColor.setVisibility(View.VISIBLE);
+
+        boolean canUndo = activity.canUndoColor();
+        boolean canRedo = activity.canRedoColor();
+
+        undoColor.setEnabled(canUndo);
+        redoColor.setEnabled(canRedo);
+
+        undoColor.setAlpha(canUndo ? 1f : 0.4f);
+        redoColor.setAlpha(canRedo ? 1f : 0.4f);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshColorButtons();
+
+        FilterActivity activity = (FilterActivity) getActivity();
+        if (activity != null) activity.refreshOriginalColorButton();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) {
+            refreshColorButtons();
+        }
     }
 }

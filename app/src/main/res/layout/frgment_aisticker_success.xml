@@ -49,22 +49,11 @@
             android:id="@+id/aiStickerImage"
             android:layout_width="170dp"
             android:layout_height="170dp"
-            android:src="@drawable/sticker_hearts"
             android:scaleType="fitCenter"
             app:layout_constraintBottom_toBottomOf="@+id/aiResultFG"
             app:layout_constraintEnd_toEndOf="@+id/aiResultFG"
             app:layout_constraintStart_toStartOf="@+id/aiResultFG"
             app:layout_constraintTop_toTopOf="@+id/aiResultFG" />
-
-        <!--<TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="AI 스티커\n결과 이미지가\n들어갑니다"
-            android:textAlignment="center"
-            app:layout_constraintBottom_toBottomOf="@+id/aiResultBG"
-            app:layout_constraintEnd_toEndOf="@+id/aiResultBG"
-            app:layout_constraintStart_toStartOf="@+id/aiResultBG"
-            app:layout_constraintTop_toTopOf="@+id/aiResultBG" />-->
 
         <ImageButton
             android:id="@+id/retryBtn"

@@ -20,12 +20,8 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 
 public class CropFragment extends Fragment {
-    private ImageView freeCutIcon;
-    private ImageView OTORatioIcon;
-    private ImageView TTFRatioIcon;
-    private ImageView NTSRatioIcon;
-    private ImageButton cancelBtn;
-    private ImageButton checkBtn;
+    private ImageView freeCutIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
+    private ImageButton cancelBtn, checkBtn;
 
     @Nullable
     @Override
@@ -46,11 +42,9 @@ public class CropFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
 
-                //FilterActivity의 photoPreview 이미지 자르기
-                //기본으로 사진 전체 영역으로 잡기, 크기 자유롭게 조절 가능
-                // 필터 액티비티에 있는 cropOverlay 가져오기
                 activity.setCurrentCropMode(FilterActivity.CropMode.FREE);
-                activity.showCropOverlay(true, false, 0, 0);
+                updateIconUI(FilterActivity.CropMode.FREE);
+                activity.showCropOverlay(true, false, 0, 0, false);
             }
         });
 
@@ -59,11 +53,9 @@ public class CropFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
 
-                //FilterActivity의 photoPreview 이미지 자르기
-                //기본으로 사진의 정중앙에서 가로세로 1대1 비율로 잡기, 크기 조절은 1대1 비율 고정
-                // 필터 액티비티에 있는 cropOverlay 가져오기
                 activity.setCurrentCropMode(FilterActivity.CropMode.OTO);
-                activity.showCropOverlay(false, true, 1, 1);
+                updateIconUI(FilterActivity.CropMode.OTO);
+                activity.showCropOverlay(false, true, 1, 1, false);
             }
         });
 
@@ -72,11 +64,9 @@ public class CropFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
 
-                //FilterActivity의 photoPreview 이미지 자르기
-                //기본으로 사진의 정중앙에서 가로세로 3대4 비율로 잡기, 크기 조절은 3대4 비율 고정
-                // 필터 액티비티에 있는 cropOverlay 가져오기
                 activity.setCurrentCropMode(FilterActivity.CropMode.TTF);
-                activity.showCropOverlay(false, true, 3, 4);
+                updateIconUI(FilterActivity.CropMode.TTF);
+                activity.showCropOverlay(false, true, 3, 4, false);
             }
         });
 
@@ -85,12 +75,13 @@ public class CropFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
 
-                //FilterActivity의 photoPreview 이미지 자르기
-                //기본으로 사진의 정중앙에서 가로세로 9대16 비율로 잡기, 크기 조절은 9대16 비율 고정
                 activity.setCurrentCropMode(FilterActivity.CropMode.NTS);
-                activity.showCropOverlay(false, true, 9, 16);
+                updateIconUI(FilterActivity.CropMode.NTS);
+                activity.showCropOverlay(false, true, 9, 16, false);
             }
         });
+
+        restoreLastSelection(activity);
 
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -101,6 +92,9 @@ public class CropFragment extends Fragment {
                 activity.restoreCropBeforeState();
                 activity.hideCropOverlay();
                 activity.getPhotoPreview().requestRender();
+
+                activity.revertLastSelectionToApplied();
+
                 activity.getSupportFragmentManager().popBackStack();
             }
         });
@@ -110,7 +104,7 @@ public class CropFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
 
-                //FilterActivity의 photoPreview 이미지 자르기 작업 저장한 채로 ToolsFragment로 돌아감
+                activity.snapshotViewTransformForRestore();
                 activity.setCurrentCropMode(FilterActivity.CropMode.NONE);
 
                 CropBoxOverlayView overlay = activity.getCropOverlay();
@@ -124,12 +118,14 @@ public class CropFragment extends Fragment {
                 int vpW = activity.getRenderer().getViewportWidth();
                 int vpH = activity.getRenderer().getViewportHeight();
 
-                float lN = (cropRect.left   - vpX) / (float) vpW;
-                float tN = (cropRect.top    - vpY) / (float) vpH;
-                float rN = (cropRect.right  - vpX) / (float) vpW;
+                float lN = (cropRect.left - vpX) / (float) vpW;
+                float tN = (cropRect.top - vpY) / (float) vpH;
+                float rN = (cropRect.right - vpX) / (float) vpW;
                 float bN = (cropRect.bottom - vpY) / (float) vpH;
 
                 activity.setLastCropRectNormalized(new RectF(lN, tN, rN, bN));
+
+                activity.lockInCurrentCropMode();
 
                 activity.getRenderer().setOnBitmapCaptureListener(fullBitmap -> {
                     int x = cropRect.left;
@@ -137,7 +133,7 @@ public class CropFragment extends Fragment {
                     int width = cropRect.width();
                     int height = cropRect.height();
 
-                    // 유효 범위 체크
+                    //유효 범위 체크
                     if (x < 0 || y < 0 || x + width > fullBitmap.getWidth() || y + height > fullBitmap.getHeight()) {
                         return;
                     }
@@ -157,5 +153,50 @@ public class CropFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void restoreLastSelection(FilterActivity activity) {
+        FilterActivity.CropMode mode = activity.getLastCropMode();
+        if (mode == FilterActivity.CropMode.NONE) return;
+
+        activity.setCurrentCropMode(mode);
+        updateIconUI(mode);
+
+        switch (mode) {
+            case FREE:
+                activity.showCropOverlay(true, false, 0, 0, true);
+                break;
+            case OTO:
+                activity.showCropOverlay(false, true, 1, 1, true);
+                break;
+            case TTF:
+                activity.showCropOverlay(false, true, 3, 4, true);
+                break;
+            case NTS:
+                activity.showCropOverlay(false, true, 9, 16, true);
+                break;
+        }
+    }
+
+    private void updateIconUI(FilterActivity.CropMode mode) {
+        freeCutIcon.setImageResource(R.drawable.rotation_icon_no);
+        OTORatioIcon.setImageResource(R.drawable.rotation_icon_no);
+        TTFRatioIcon.setImageResource(R.drawable.rotation_icon_no);
+        NTSRatioIcon.setImageResource(R.drawable.rotation_icon_no);
+
+        switch (mode) {
+            case FREE:
+                freeCutIcon.setImageResource(R.drawable.rotation_icon_yes);
+                break;
+            case OTO:
+                OTORatioIcon.setImageResource(R.drawable.rotation_icon_yes);
+                break;
+            case TTF:
+                TTFRatioIcon.setImageResource(R.drawable.rotation_icon_yes);
+                break;
+            case NTS:
+                NTSRatioIcon.setImageResource(R.drawable.rotation_icon_yes);
+                break;
+        }
     }
 }

@@ -64,7 +64,8 @@ public class MyStickersFragment extends Fragment {
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
                             .setCustomAnimations(R.anim.slide_up, 0)
-                            .replace(R.id.bottomArea, new EditMyStickerFragment())
+                            .replace(R.id.bottomArea2, new EditMyStickerFragment())
+                            .addToBackStack(null)
                             .commit();
                     return true;
                 }
@@ -93,7 +94,8 @@ public class MyStickersFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new StickersFragment())
+                        .replace(R.id.bottomArea2, new StickersFragment())
+                        .addToBackStack(null)
                         .commit();
             }
         });
@@ -106,7 +108,8 @@ public class MyStickersFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea, new StickersFragment())
+                        .replace(R.id.bottomArea2, new StickersFragment())
+                        .addToBackStack(null)
                         .commit();
             }
         });
