@@ -26,7 +26,7 @@ public class RotationFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_rotation, container, false);
+        View view = inflater.inflate(R.layout.f_rotation, container, false);
 
         leftRotationIcon = view.findViewById(R.id.leftRotationIcon);
         rightRotationIcon = view.findViewById(R.id.rightRotationIcon);

@@ -33,7 +33,7 @@ public class EditMyStickerFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_edit_my_sticker, container, false);
+        View view = inflater.inflate(R.layout.f_edit_my_sticker, container, false);
 
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);

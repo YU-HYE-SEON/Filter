@@ -26,7 +26,7 @@ public class CropFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_crop, container, false);
+        View view = inflater.inflate(R.layout.f_crop, container, false);
 
         freeCutIcon = view.findViewById(R.id.freeCutIcon);
         OTORatioIcon = view.findViewById(R.id.OTORatioIcon);

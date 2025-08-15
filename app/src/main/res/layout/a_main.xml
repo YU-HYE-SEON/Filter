@@ -89,7 +89,7 @@
                     android:overScrollMode="never"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                     app:layout_constraintTop_toBottomOf="@+id/txt1"
-                    tools:listitem="@layout/item_filter" />
+                    tools:listitem="@layout/i_filter" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -135,7 +135,7 @@
                     app:spanCount="3"
                     tools:itemCount="6"
                     tools:layout_editor_absoluteX="10dp"
-                    tools:listitem="@layout/item_studio" />
+                    tools:listitem="@layout/i_studio" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -173,7 +173,7 @@
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                     app:layout_constraintTop_toBottomOf="@+id/txt3"
                     tools:layout_editor_absoluteX="0dp"
-                    tools:listitem="@layout/item_filter" />
+                    tools:listitem="@layout/i_filter" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -218,7 +218,7 @@
                     app:spanCount="3"
                     tools:itemCount="6"
                     tools:layout_editor_absoluteX="10dp"
-                    tools:listitem="@layout/item_studio" />
+                    tools:listitem="@layout/i_studio" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

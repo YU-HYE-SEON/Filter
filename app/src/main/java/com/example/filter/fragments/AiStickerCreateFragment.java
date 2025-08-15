@@ -6,7 +6,6 @@ import android.os.IBinder;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.TypedValue;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -53,7 +52,7 @@ public class AiStickerCreateFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_aisticker_create, container, false);
+        View view = inflater.inflate(R.layout.f_aisticker_create, container, false);
         aiStickerCreate = view.findViewById(R.id.aiStickerCreate);
         contentBox = view.findViewById(R.id.contentBox);
         img = view.findViewById(R.id.img);

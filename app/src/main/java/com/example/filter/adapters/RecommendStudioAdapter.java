@@ -26,7 +26,7 @@ public class RecommendStudioAdapter extends RecyclerView.Adapter<RecommendStudio
     @NonNull
     @Override
     public StudioViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_studio, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.i_studio, parent, false);
         return new StudioViewHolder(view);
     }
 

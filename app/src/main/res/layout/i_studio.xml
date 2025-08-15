@@ -83,7 +83,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 tools:itemCount="5"
-                tools:listitem="@layout/item_studio_preview" />
+                tools:listitem="@layout/i_studio_preview" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

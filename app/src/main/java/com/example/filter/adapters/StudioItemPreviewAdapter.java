@@ -22,7 +22,7 @@ public class StudioItemPreviewAdapter extends RecyclerView.Adapter<StudioItemPre
     @NonNull
     @Override
     public ImagePreviewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_studio_preview, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.i_studio_preview, parent, false);
         return new ImagePreviewViewHolder(view);
     }
 

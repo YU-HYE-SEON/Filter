@@ -42,7 +42,7 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
     @Override
     public MyStickersAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_mystickers, parent, false);
+                .inflate(R.layout.i_mystickers, parent, false);
         return new ViewHolder(view);
     }
 

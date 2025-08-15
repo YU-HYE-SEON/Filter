@@ -21,7 +21,7 @@ public class SavePhotoActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_save_photo);
+        setContentView(R.layout.a_save_photo);
         photo = findViewById(R.id.photo);
         backToHomeBtn = findViewById(R.id.backToHomeBtn);
         registerBtn = findViewById(R.id.registerBtn);

@@ -52,7 +52,7 @@ public class AiStickerSuccessFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.frgment_aisticker_success, container, false);
+        View view = inflater.inflate(R.layout.f_aisticker_success, container, false);
         aiStickerImage = view.findViewById(R.id.aiStickerImage);
         retryBtn = view.findViewById(R.id.retryBtn);
 

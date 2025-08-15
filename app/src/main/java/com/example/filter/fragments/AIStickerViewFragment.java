@@ -24,7 +24,7 @@ public class AIStickerViewFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_aisticker_view, container, false);
+        View view = inflater.inflate(R.layout.f_aisticker_view, container, false);
         aiStickerView = view.findViewById(R.id.aiStickerView);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);

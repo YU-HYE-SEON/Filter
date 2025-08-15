@@ -30,7 +30,7 @@ public class MyStickersFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_my_stickers, container, false);
+        View view = inflater.inflate(R.layout.f_my_stickers, container, false);
 
         myStickers = view.findViewById(R.id.myStickers);
         LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
@@ -42,7 +42,7 @@ public class MyStickersFragment extends Fragment {
         FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
 
         adapter.setOnStickerClickListener(stickerName -> {
-            View stickerLayout = inflater.inflate(R.layout.view_sticker_edit, stickerOverlay, false);
+            View stickerLayout = inflater.inflate(R.layout.v_sticker_edit, stickerOverlay, false);
 
             ImageView stickerImageView = stickerLayout.findViewById(R.id.stickerImage);
             int resId = getResources().getIdentifier(stickerName, "drawable", requireContext().getPackageName());

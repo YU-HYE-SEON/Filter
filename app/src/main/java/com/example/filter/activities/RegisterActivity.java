@@ -46,7 +46,7 @@ public class RegisterActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);
+        setContentView(R.layout.a_register);
         photo = findViewById(R.id.photo);
         titleEditText = findViewById(R.id.titleEditText);
         studioSpinner = findViewById(R.id.studioSpinner);

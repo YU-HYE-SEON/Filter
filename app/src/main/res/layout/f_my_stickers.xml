@@ -47,7 +47,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/deleteStickerIcon"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:listitem="@layout/item_mystickers" />
+                tools:listitem="@layout/i_mystickers" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

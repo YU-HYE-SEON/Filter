@@ -187,7 +187,7 @@ public class FilterActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_filter);
+        setContentView(R.layout.a_filter);
         topArea = findViewById(R.id.topArea);
         backBtn = findViewById(R.id.backBtn);
         saveBtn = findViewById(R.id.saveBtn);

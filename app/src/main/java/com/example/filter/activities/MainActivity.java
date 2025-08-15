@@ -57,7 +57,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.a_main);
 
         TextView txt2 = findViewById(R.id.txt2);
         txt2.post(() -> {

@@ -30,7 +30,7 @@ public class StickersDialog extends Dialog {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dialog_stickers);
+        setContentView(R.layout.d_stickers);
 
         setCancelable(false);
         setCanceledOnTouchOutside(false);

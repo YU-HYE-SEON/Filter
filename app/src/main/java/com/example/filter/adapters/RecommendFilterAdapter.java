@@ -39,7 +39,7 @@ public class RecommendFilterAdapter extends RecyclerView.Adapter<RecommendFilter
     @Override
     public RecommendFilterAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_filter, parent, false);
+                .inflate(R.layout.i_filter, parent, false);
         return new ViewHolder(view);
     }
 
