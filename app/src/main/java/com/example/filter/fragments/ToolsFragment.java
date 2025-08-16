@@ -45,7 +45,6 @@ public class ToolsFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new RotationFragment())
-                        .addToBackStack(null)
                         .commit();
             }
         });
@@ -59,7 +58,6 @@ public class ToolsFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new CropFragment())
-                        .addToBackStack(null)
                         .commit();
             }
         });
@@ -74,7 +72,6 @@ public class ToolsFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new ColorsFragment())
-                        .addToBackStack(null)
                         .commit();
             }
         });

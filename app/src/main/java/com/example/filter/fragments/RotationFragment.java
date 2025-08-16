@@ -95,7 +95,6 @@ public class RotationFragment extends Fragment {
                             .beginTransaction()
                             .setCustomAnimations(R.anim.slide_up, 0)
                             .replace(R.id.bottomArea2, new ToolsFragment())
-                            .addToBackStack(null)
                             .commit();
                 }
             }
@@ -113,7 +112,6 @@ public class RotationFragment extends Fragment {
                             .beginTransaction()
                             .setCustomAnimations(R.anim.slide_up, 0)
                             .replace(R.id.bottomArea2, new ToolsFragment())
-                            .addToBackStack(null)
                             .commit();
                 }
             }

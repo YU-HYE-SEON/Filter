@@ -67,7 +67,6 @@ public class AiStickerSuccessFragment extends Fragment {
                 Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
                 aiStickerImage.setImageBitmap(bmp);
             }
-            // 로딩은 이미 끝났으므로 retry 버튼 동작을 "다시 생성" 등으로 재정의하거나 숨겨도 됨.
             // retryBtn.setVisibility(View.GONE);
         }
 

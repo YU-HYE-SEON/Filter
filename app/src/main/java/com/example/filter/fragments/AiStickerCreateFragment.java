@@ -81,12 +81,12 @@ public class AiStickerCreateFragment extends Fragment {
             if (prompt.isEmpty()) return;
 
             //서버 재테스트할 때마다 변경해야 됨
-            String baseUrl = "https://dba58ce20ef5.ngrok-free.app/";
+            String baseUrl = "https://5aa1a95b8cc0.ngrok-free.app/";
 
             getParentFragmentManager()
                     .beginTransaction()
                     .replace(R.id.aiStickerView, AiStickerLoadingFragment.newInstance(baseUrl, prompt))
-                    .addToBackStack("sticker_flow")
+                    .addToBackStack(null)
                     .commit();
         });
 

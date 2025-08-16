@@ -47,7 +47,6 @@ public class StickersFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new MyStickersFragment())
-                        .addToBackStack(null)
                         .commit();
             }
         });
@@ -69,7 +68,6 @@ public class StickersFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.fullScreenFragmentContainer, new AIStickerViewFragment())
-                        .addToBackStack(null)
                         .commit();
             }
         });

@@ -79,17 +79,19 @@
                 android:background="@android:color/transparent"
                 android:scaleType="fitCenter" />
 
-            <ImageView
+            <!--<ImageView
                 android:id="@+id/photoPreviewImage"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="fitCenter"
-                android:visibility="gone" />
+                android:visibility="gone" />-->
 
             <FrameLayout
                 android:id="@+id/stickerOverlay"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false" />
 
         </FrameLayout>
 

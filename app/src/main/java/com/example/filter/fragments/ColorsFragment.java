@@ -133,7 +133,6 @@ public class ColorsFragment extends Fragment {
                             .setCustomAnimations(R.anim.slide_up, 0)
                             .hide(ColorsFragment.this)
                             .add(R.id.bottomArea2, csf)
-                            .addToBackStack(null)
                             .commit();
                 }
             }
@@ -156,7 +155,6 @@ public class ColorsFragment extends Fragment {
                                 .beginTransaction()
                                 .setCustomAnimations(R.anim.slide_up, 0)
                                 .replace(R.id.bottomArea2, new StickersFragment())
-                                .addToBackStack(null)
                                 .commit();
                     }
                 }).show();

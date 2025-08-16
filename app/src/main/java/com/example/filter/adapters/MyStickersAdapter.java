@@ -1,6 +1,6 @@
 package com.example.filter.adapters;
 
-import android.graphics.Color;
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,35 +15,39 @@ import java.util.List;
 
 public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.ViewHolder> {
     private List<String> items;
-    private OnStickerClickListener listener;
+    private OnStickerClickListener clickListener;
+    private OnStickerDeleteListener deleteListener;
+    private int selectedPos = RecyclerView.NO_POSITION;
 
     public interface OnStickerClickListener {
-        void onStickerClick(String stickerName);  // sticker_hearts 등 전달
+        void onStickerClick(int position, String stickerName);
+    }
+    public interface OnStickerDeleteListener {
+        void onDeleteRequested(int position, String stickerName);
     }
 
-    public void setOnStickerClickListener(OnStickerClickListener listener) {
-        this.listener = listener;
-    }
+    public void setOnStickerClickListener(OnStickerClickListener l) { this.clickListener = l; }
+    public void setOnStickerDeleteListener(OnStickerDeleteListener l) { this.deleteListener = l; }
 
-    public MyStickersAdapter(List<String> items) {
-        this.items = items;
-    }
+    public MyStickersAdapter(List<String> items) { this.items = items; }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public ImageView stickerImage;
-
-        public ViewHolder(View itemView) {
-            super(itemView);
-            stickerImage = itemView.findViewById(R.id.stickerImage);
+    public void removeAt(int position) {
+        if (position >= 0 && position < items.size()) {
+            items.remove(position);
+            notifyItemRemoved(position);
+            if (selectedPos == position) selectedPos = RecyclerView.NO_POSITION;
+            notifyItemRangeChanged(position, items.size() - position);
         }
     }
 
+    public int getSelectedPos() { return selectedPos; }
+    public String getItem(int pos){ return items.get(pos); }
+
     @NonNull
     @Override
-    public MyStickersAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.i_mystickers, parent, false);
-        return new ViewHolder(view);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent,int viewType){
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.i_mystickers,parent,false);
+        return new ViewHolder(v);
     }
 
     private final int[] stickerImages = {
@@ -52,34 +56,34 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
             R.drawable.sticker_cyanheart_no
     };
 
-    @NonNull
     @Override
-    public void onBindViewHolder(@NonNull MyStickersAdapter.ViewHolder holder, int position) {
-        if (position < stickerImages.length) {
-            holder.stickerImage.setImageResource(stickerImages[position]);
+    public void onBindViewHolder(@NonNull ViewHolder h, @SuppressLint("RecyclerView") int position) {
+        String name = items.get(position);
+        int noRes = h.itemView.getContext().getResources().getIdentifier(name + "_no","drawable",h.itemView.getContext().getPackageName());
+        int yesRes = h.itemView.getContext().getResources().getIdentifier(name + "_yes","drawable",h.itemView.getContext().getPackageName());
+        h.stickerImage.setImageResource(selectedPos == position && yesRes!=0 ? yesRes : (noRes!=0? noRes : stickerImages[Math.min(position, stickerImages.length-1)]));
 
-            // 클릭 시 yes 이미지로 바꾸고 callback 호출
-            holder.stickerImage.setOnClickListener(v -> {
-                // yes 버전 이미지 리소스 ID 가져오기
-                String name = items.get(position);  // ex: "sticker_hearts"
-                int yesResId = holder.itemView.getContext().getResources().getIdentifier(
-                        name + "_yes", "drawable", holder.itemView.getContext().getPackageName());
+        h.stickerImage.setOnClickListener(v -> {
+            int old = selectedPos;
+            selectedPos = position;
+            notifyItemChanged(old);
+            notifyItemChanged(selectedPos);
+            if (clickListener != null) clickListener.onStickerClick(position, name);
+        });
 
-                if (yesResId != 0) {
-                    holder.stickerImage.setImageResource(yesResId);
-                }
-
-                if (listener != null) {
-                    listener.onStickerClick(name); // sticker_hearts 등 전달
-                }
-            });
-        } else {
-            holder.stickerImage.setBackgroundColor(Color.parseColor("#BDBDBD"));
-        }
+        h.itemView.setOnLongClickListener(v -> {
+            if (deleteListener != null) deleteListener.onDeleteRequested(position, name);
+            return true;
+        });
     }
 
-    @Override
-    public int getItemCount() {
-        return items.size();
+    @Override public int getItemCount(){ return items.size(); }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        ImageView stickerImage;
+        public ViewHolder(View itemView){
+            super(itemView);
+            stickerImage = itemView.findViewById(R.id.stickerImage);
+        }
     }
 }

@@ -134,14 +134,12 @@ public class CustomseekbarFragment extends Fragment {
                     .setCustomAnimations(R.anim.slide_up, 0)
                     .remove(CustomseekbarFragment.this)
                     .show(previousFragment)
-                    .addToBackStack(null)
                     .commit();
         } else {
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
                     .replace(R.id.bottomArea2, new ColorsFragment())
-                    .addToBackStack(null)
                     .commit();
         }
     }
