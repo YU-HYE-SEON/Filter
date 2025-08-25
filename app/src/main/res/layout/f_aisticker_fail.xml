@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             android:fontFamily="@font/gmarket_sans_ttf_bold"
-            android:text="스티커 제작 완료!"
+            android:text="스티커 제작 실패"
             android:textColor="#C2FA7A"
             android:textSize="20sp"
             app:layout_constraintBottom_toTopOf="@+id/aiResultBG"
@@ -45,12 +45,15 @@
             app:layout_constraintStart_toStartOf="@+id/aiResultBG"
             app:layout_constraintTop_toTopOf="@+id/aiResultBG" />
 
-        <ImageView
-            android:id="@+id/aiStickerImage"
+        <TextView
             android:layout_width="185dp"
             android:layout_height="185dp"
+            android:fontFamily="@font/pretendard_semibold"
+            android:gravity="center"
+            android:lineSpacingExtra="5sp"
             android:padding="10dp"
-            android:scaleType="centerInside"
+            android:text="이미지를\n불러올 수\n없습니다"
+            android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="@+id/aiResultFG"
             app:layout_constraintEnd_toEndOf="@+id/aiResultFG"
             app:layout_constraintStart_toStartOf="@+id/aiResultFG"

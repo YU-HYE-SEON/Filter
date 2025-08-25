@@ -25,13 +25,14 @@
                 android:layout_weight="1"
                 android:gravity="center">
 
-                <ImageView
-                android:id="@+id/rotationIcon"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:padding="5dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/rotation_icon_no" />
+                <ImageButton
+                    android:id="@+id/rotationIcon"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:background="@android:color/transparent"
+                    android:padding="5dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/rotation_icon_no" />
 
             </LinearLayout>
 
@@ -41,13 +42,14 @@
                 android:layout_weight="1"
                 android:gravity="center">
 
-                    <ImageView
-                        android:id="@+id/cropIcon"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:padding="5dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/crop_icon_no" />
+                <ImageButton
+                    android:id="@+id/cropIcon"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:background="@android:color/transparent"
+                    android:padding="5dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/crop_icon_no" />
 
             </LinearLayout>
 
@@ -62,8 +64,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="도구"
                 android:fontFamily="@font/pretendard_medium"
+                android:text="도구"
                 android:textAlignment="center"
                 android:textColor="#C2FA7A"
                 android:textSize="14sp"
@@ -86,10 +88,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="조정"
-                    android:textColor="@color/white"
                     android:fontFamily="@font/pretendard_bold"
+                    android:text="조정"
                     android:textAlignment="center"
+                    android:textColor="@color/white"
                     android:textSize="14sp" />
 
                 <ImageButton

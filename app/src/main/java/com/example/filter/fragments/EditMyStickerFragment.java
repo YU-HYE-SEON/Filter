@@ -25,24 +25,22 @@ public class EditMyStickerFragment extends Fragment {
     private float origX, origY, origRotation;
     private int origW, origH;
     private float downRawX, downRawY, startX, startY;
-    private float rotStartWrapperDeg;
-    private final float ROT_MIN_RADIUS_DP = 24f;
-    private float rotLastAngleDeg;
-    private float rotAccumDeg;
+    private float rotStartWrapperDeg, rotLastAngleDeg, rotAccumDeg;
     private int startW, startH;
     private FrameLayout stickerOverlay;
     private static final int CTRL_BASE_DP = 30;
     private static final int CTRL_MIN_DP = 22;
     private static final int WRAPPER_MIN_DP = 100;
-    private float resStartCenterX, resStartCenterY;
-    private float resStartTouchX, resStartTouchY;
-    private float resStartRadius;
-    private float resDirX, resDirY;
+    private final float ROT_MIN_RADIUS_DP = 24f;
+    public static String sLastReturnOriginAction = null;
+    private boolean[] prevEnabledSnapshot;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.f_edit_my_sticker, container, false);
+        View view = inflater.inflate(R.layout.f_edit_my_sticker, container, false);
+
+        return view;
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -62,30 +60,27 @@ public class EditMyStickerFragment extends Fragment {
         }
         if (stickerWrapper == null) return;
 
-        if (stickerWrapper instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup) stickerWrapper;
-            vg.setClipChildren(false);
-            vg.setClipToPadding(false);
-        }
-
-        if (stickerOverlay != null) {
-            stickerOverlay.setClipChildren(false);
-            stickerOverlay.setClipToPadding(false);
-
-            ViewParent pp = stickerOverlay.getParent();
-            if (pp instanceof ViewGroup) {
-                ViewGroup vg2 = (ViewGroup) pp;
-                vg2.setClipChildren(false);
-                vg2.setClipToPadding(false);
-            }
-        }
-
         editFrame = stickerWrapper.findViewById(R.id.editFrame);
         stickerImage = stickerWrapper.findViewById(R.id.stickerImage);
         rotateController = stickerWrapper.findViewById(R.id.rotateController);
         sizeController = stickerWrapper.findViewById(R.id.sizeController);
 
+        if (stickerImage == null || editFrame == null || rotateController == null || sizeController == null) {
+            requireActivity().getSupportFragmentManager().popBackStack();
+            return;
+        }
+
+        if (editFrame != null) editFrame.setVisibility(View.VISIBLE);
+        if (rotateController != null) rotateController.setVisibility(View.VISIBLE);
+        if (sizeController != null) sizeController.setVisibility(View.VISIBLE);
+
         Bundle args = getArguments() != null ? getArguments() : new Bundle();
+        String origin = args.getString("origin", "mystickers");
+        prevEnabledSnapshot = args.getBooleanArray("prevEnabled");
+
+        final int sessionBaseline = args.getInt("sessionBaseline",
+                (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0);
+
         origX = args.getFloat("x", stickerWrapper.getX());
         origY = args.getFloat("y", stickerWrapper.getY());
         origW = args.getInt("w", stickerWrapper.getLayoutParams().width);
@@ -109,9 +104,14 @@ public class EditMyStickerFragment extends Fragment {
             positionControllers();
         });
 
+        stickerWrapper.setOnClickListener(null);
+        stickerWrapper.setClickable(false);
+
         updateControllersSizeAndAngle();
 
         View.OnTouchListener moveListener = (view, event) -> {
+            if (stickerWrapper == null) return false;
+
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     downRawX = event.getRawX();
@@ -127,24 +127,20 @@ public class EditMyStickerFragment extends Fragment {
             return false;
         };
         editFrame.setOnTouchListener(moveListener);
-        //stickerImage.setOnTouchListener(moveListener); //필요 시 활성화
 
-        rotateController.setOnTouchListener((view, event) -> {
+        rotateController.setOnTouchListener((view1, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN: {
-                    ViewParent p = view.getParent();
+                    ViewParent p = view1.getParent();
                     if (p != null) p.requestDisallowInterceptTouchEvent(true);
-
                     float[] c = getWrapperCenterInOverlay();
                     float[] t = getTouchInOverlay(event);
                     float r = dist(t[0], t[1], c[0], c[1]);
                     if (r < dp((int) ROT_MIN_RADIUS_DP)) return false;
-
                     rotStartWrapperDeg = stickerWrapper.getRotation();
                     rotLastAngleDeg = angleDeg(c[0], c[1], t[0], t[1]);
                     rotAccumDeg = 0f;
-
-                    view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+                    view1.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
                     return true;
                 }
                 case MotionEvent.ACTION_MOVE: {
@@ -152,76 +148,54 @@ public class EditMyStickerFragment extends Fragment {
                     float[] t = getTouchInOverlay(event);
                     float r = dist(t[0], t[1], c[0], c[1]);
                     if (r < dp((int) ROT_MIN_RADIUS_DP)) return true;
-
                     float cur = angleDeg(c[0], c[1], t[0], t[1]);
                     float step = shortestDeltaDeg(rotLastAngleDeg, cur);
-
                     if (Math.abs(step) > 60f) {
                         rotLastAngleDeg = cur;
                         return true;
                     }
-
                     rotAccumDeg += step;
                     rotLastAngleDeg = cur;
-
                     float target = rotStartWrapperDeg + rotAccumDeg;
                     stickerWrapper.setRotation(target);
-
                     updateControllerAngles();
-
                     return true;
                 }
             }
             return false;
         });
 
-        sizeController.setOnTouchListener((view, event) -> {
+        sizeController.setOnTouchListener((view12, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN: {
                     float[] c = getWrapperCenterInOverlay();
                     float[] t = getTouchInOverlay(event);
-
-                    resStartCenterX = c[0];
-                    resStartCenterY = c[1];
-                    resStartTouchX = t[0];
-                    resStartTouchY = t[1];
-
                     float vx = t[0] - c[0];
                     float vy = t[1] - c[1];
-                    resStartRadius = (float) Math.hypot(vx, vy);
-                    if (resStartRadius < 1f) return false;
-
-                    float inv = 1f / resStartRadius;
-                    resDirX = vx * inv;
-                    resDirY = vy * inv;
-
+                    float startRadius = (float) Math.hypot(vx, vy);
+                    if (startRadius < 1f) return false;
                     startW = Math.max(1, stickerWrapper.getLayoutParams().width);
                     startH = Math.max(1, stickerWrapper.getLayoutParams().height);
+                    view12.setTag(new float[]{c[0], c[1], vx / startRadius, vy / startRadius, startRadius});
                     return true;
                 }
                 case MotionEvent.ACTION_MOVE: {
-                    float[] c = new float[]{resStartCenterX, resStartCenterY};
+                    float[] tag = (float[]) view12.getTag();
+                    if (tag == null) return false;
+                    float cX = tag[0], cY = tag[1], dirX = tag[2], dirY = tag[3], startRadius = tag[4];
                     float[] t = getTouchInOverlay(event);
-
-                    float cx = t[0] - c[0];
-                    float cy = t[1] - c[1];
-
-                    float proj = cx * resDirX + cy * resDirY;
-                    float rawScale = proj / resStartRadius;
+                    float cx = t[0] - cX, cy = t[1] - cY;
+                    float proj = cx * dirX + cy * dirY;
+                    float rawScale = proj / startRadius;
 
                     int minSizePx = dp(WRAPPER_MIN_DP);
                     float minScaleW = (float) minSizePx / (float) startW;
                     float minScaleH = (float) minSizePx / (float) startH;
                     float minScale = Math.max(minScaleW, minScaleH);
-
                     if (rawScale < minScale) rawScale = minScale;
 
                     int newW = Math.max(minSizePx, Math.round(startW * rawScale));
                     int newH = Math.max(minSizePx, Math.round(startH * rawScale));
-
-                    if (startW <= minSizePx && startH <= minSizePx && newW == startW && newH == startH) {
-                        return true;
-                    }
 
                     float centerX = stickerWrapper.getX() + stickerWrapper.getWidth() / 2f;
                     float centerY = stickerWrapper.getY() + stickerWrapper.getHeight() / 2f;
@@ -229,10 +203,8 @@ public class EditMyStickerFragment extends Fragment {
                     stickerWrapper.getLayoutParams().width = newW;
                     stickerWrapper.getLayoutParams().height = newH;
                     stickerWrapper.requestLayout();
-
                     stickerWrapper.setPivotX(newW / 2f);
                     stickerWrapper.setPivotY(newH / 2f);
-
                     stickerWrapper.setX(centerX - newW / 2f);
                     stickerWrapper.setY(centerY - newH / 2f);
 
@@ -243,16 +215,87 @@ public class EditMyStickerFragment extends Fragment {
             return false;
         });
 
-        cancelBtn.setOnClickListener(v1 -> {
+        cancelBtn.setOnClickListener(x -> {
             if (ClickUtils.isFastClick(500)) return;
+
             removeStickerWrapper();
             hideControllers();
-            goBackToMyStickers();
+
+            if ("stickers".equals(origin)) {
+                if (stickerOverlay != null) {
+                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                        View child = stickerOverlay.getChildAt(i);
+                        MyStickersFragment.setStickerActive(child, true);
+                        child.setTag(R.id.tag_prev_enabled, null);
+                    }
+                }
+                goBackTo(new StickersFragment());
+            } else {
+                if (stickerOverlay != null) {
+                    if (prevEnabledSnapshot != null &&
+                            prevEnabledSnapshot.length == stickerOverlay.getChildCount()) {
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
+                            MyStickersFragment.setStickerActive(child, prevEnabledSnapshot[i]);
+                            child.setTag(R.id.tag_prev_enabled, null);
+                        }
+                    } else {
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
+                            Object prev = child.getTag(R.id.tag_prev_enabled);
+                            boolean prevEnabled = (prev instanceof Boolean) ? (Boolean) prev : true;
+                            MyStickersFragment.setStickerActive(child, prevEnabled);
+                            child.setTag(R.id.tag_prev_enabled, null);
+                        }
+                    }
+                }
+                sLastReturnOriginAction = "mystickers_cancel";
+                requireActivity().getSupportFragmentManager().popBackStack();
+            }
         });
-        checkBtn.setOnClickListener(v12 -> {
+
+        checkBtn.setOnClickListener(x -> {
             if (ClickUtils.isFastClick(500)) return;
+
+            if (stickerWrapper != null) {
+                MyStickersFragment.setStickerActive(stickerWrapper, true);
+                stickerWrapper.setTag("sessionAdded");
+            }
+
             hideControllers();
-            goBackToMyStickers();
+
+            if ("stickers".equals(origin)) {
+                if (stickerOverlay != null) {
+                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                        View child = stickerOverlay.getChildAt(i);
+                        MyStickersFragment.setStickerActive(child, true);
+                        child.setTag(R.id.tag_prev_enabled, null);
+                    }
+                }
+                goBackTo(new StickersFragment());
+            } else {
+                if (stickerOverlay != null) {
+                    if (prevEnabledSnapshot != null &&
+                            prevEnabledSnapshot.length == stickerOverlay.getChildCount()) {
+                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                        View child = stickerOverlay.getChildAt(i);
+                        MyStickersFragment.setStickerActive(child, prevEnabledSnapshot[i]);
+                        child.setTag(R.id.tag_prev_enabled, null);
+                    }
+                }
+                    else{
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
+                            Object prev = child.getTag(R.id.tag_prev_enabled);
+                            boolean prevEnabled = (prev instanceof Boolean) ? (Boolean) prev : true;
+                            MyStickersFragment.setStickerActive(child, prevEnabled);
+                            child.setTag(R.id.tag_prev_enabled, null);
+                        }
+                    }
+                }
+                sLastReturnOriginAction = "mystickers_check";
+                requireActivity().getSupportFragmentManager().popBackStack();
+            }
         });
     }
 
@@ -260,21 +303,14 @@ public class EditMyStickerFragment extends Fragment {
         if (stickerWrapper == null) return;
         float r = stickerWrapper.getRotation();
         if (rotateController != null) rotateController.setRotation(-r);
-        //if (sizeController != null) sizeController.setRotation(-r);
     }
 
     private void updateControllersSizeAndAngle() {
         if (stickerWrapper == null) return;
-
-        float w = Math.max(1f, stickerWrapper.getWidth());
-        float scale = w / Math.max(1f, (float) origW);
-
-        int ctrlPx = Math.max(dp(CTRL_MIN_DP), Math.round(dp(CTRL_BASE_DP) * scale));
+        int ctrlPx = Math.max(dp(CTRL_MIN_DP), dp(CTRL_BASE_DP));
         applySize(rotateController, ctrlPx, ctrlPx);
         applySize(sizeController, ctrlPx, ctrlPx);
-
         updateControllerAngles();
-
         stickerWrapper.post(this::positionControllers);
     }
 
@@ -292,8 +328,8 @@ public class EditMyStickerFragment extends Fragment {
     }
 
     private void positionControllers() {
-        if (stickerWrapper == null || editFrame == null ||
-                rotateController == null || sizeController == null) return;
+        if (stickerWrapper == null || editFrame == null || rotateController == null || sizeController == null)
+            return;
 
         float fx = editFrame.getX();
         float fy = editFrame.getY();
@@ -333,9 +369,7 @@ public class EditMyStickerFragment extends Fragment {
     private void removeStickerWrapper() {
         if (stickerWrapper == null) return;
         ViewGroup parent = (ViewGroup) stickerWrapper.getParent();
-        if (parent != null) {
-            parent.removeView(stickerWrapper);
-        }
+        if (parent != null) parent.removeView(stickerWrapper);
         stickerWrapper = null;
     }
 
@@ -346,11 +380,11 @@ public class EditMyStickerFragment extends Fragment {
         if (stickerWrapper != null) stickerWrapper.setTag(null);
     }
 
-    private void goBackToMyStickers() {
+    private void goBackTo(Fragment f) {
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .setCustomAnimations(R.anim.slide_up, 0)
-                .replace(R.id.bottomArea2, new MyStickersFragment())
+                .replace(R.id.bottomArea2, f)
                 .commit();
     }
 

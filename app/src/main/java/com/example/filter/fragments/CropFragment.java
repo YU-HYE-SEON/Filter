@@ -20,7 +20,7 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 
 public class CropFragment extends Fragment {
-    private ImageView freeCutIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
+    private ImageButton freeCutIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
     private ImageButton cancelBtn, checkBtn;
 
     @Nullable
@@ -95,7 +95,11 @@ public class CropFragment extends Fragment {
 
                 activity.revertLastSelectionToApplied();
 
-                activity.getSupportFragmentManager().popBackStack();
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.slide_up, 0)
+                        .replace(R.id.bottomArea2, new ToolsFragment())
+                        .commit();
             }
         });
 
@@ -117,6 +121,30 @@ public class CropFragment extends Fragment {
                 int vpY = activity.getRenderer().getViewportY();
                 int vpW = activity.getRenderer().getViewportWidth();
                 int vpH = activity.getRenderer().getViewportHeight();
+
+                int tol = 2;
+                boolean isFullViewport =
+                        nearly(cropRect.left, vpX, tol) &&
+                                nearly(cropRect.top, vpY, tol) &&
+                                nearly(cropRect.right, vpX + vpW, tol) &&
+                                nearly(cropRect.bottom, vpY + vpH, tol);
+
+                if (isFullViewport && activity.isViewportIdentity()) {
+                    activity.hideCropOverlay();
+                    activity.resetViewportTransform();
+                    activity.getPhotoPreview().requestRender();
+
+                    activity.setCropEdited(false);
+                    activity.revertLastSelectionToApplied();
+                    activity.commitTransformations(false);
+
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .setCustomAnimations(R.anim.slide_up, 0)
+                            .replace(R.id.bottomArea2, new ToolsFragment())
+                            .commit();
+                    return;
+                }
 
                 float lN = (cropRect.left - vpX) / (float) vpW;
                 float tN = (cropRect.top - vpY) / (float) vpH;
@@ -145,7 +173,14 @@ public class CropFragment extends Fragment {
                     activity.hideCropOverlay();
                     activity.getPhotoPreview().requestRender();
                     activity.commitTransformations();
-                    activity.getSupportFragmentManager().popBackStack();
+                    activity.setCropEdited(true);
+
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .setCustomAnimations(R.anim.slide_up, 0)
+                            .replace(R.id.bottomArea2, new ToolsFragment())
+                            .commit();
+
                 });
 
                 activity.getRenderer().captureBitmap();
@@ -198,5 +233,9 @@ public class CropFragment extends Fragment {
                 NTSRatioIcon.setImageResource(R.drawable.rotation_icon_yes);
                 break;
         }
+    }
+
+    private boolean nearly(int a, int b, int tolPx) {
+        return Math.abs(a - b) <= tolPx;
     }
 }

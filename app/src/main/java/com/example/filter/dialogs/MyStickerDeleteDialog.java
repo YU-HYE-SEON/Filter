@@ -14,11 +14,11 @@ import androidx.annotation.NonNull;
 
 import com.example.filter.R;
 
-public class StickersDialog extends Dialog {
+public class MyStickerDeleteDialog extends Dialog {
     public interface StickersDialogListener {
         void onKeep();
 
-        void onChange();
+        void onDelete();
     }
 
     private StickersDialogListener listener;
@@ -26,22 +26,22 @@ public class StickersDialog extends Dialog {
     private CharSequence button1Text = null;
     private CharSequence button2Text = null;
 
-    public StickersDialog(@NonNull Context context, StickersDialogListener listener) {
+    public MyStickerDeleteDialog(@NonNull Context context, StickersDialogListener listener) {
         super(context);
         this.listener = listener;
     }
 
-    public StickersDialog withMessage(CharSequence text) {
+    public MyStickerDeleteDialog withMessage(CharSequence text) {
         this.messageText = text;
         return this;
     }
 
-    public StickersDialog withButton1Text(CharSequence text) {
+    public MyStickerDeleteDialog withButton1Text(CharSequence text) {
         this.button1Text = text;
         return this;
     }
 
-    public StickersDialog withButton2Text(CharSequence text) {
+    public MyStickerDeleteDialog withButton2Text(CharSequence text) {
         this.button2Text = text;
         return this;
     }
@@ -67,11 +67,11 @@ public class StickersDialog extends Dialog {
         getWindow().setAttributes(lp);
 
         TextView textView = findViewById(R.id.message);
-        Button changeBtn = findViewById(R.id.button1);
+        Button deleteBtn = findViewById(R.id.button1);
         Button keepBtn = findViewById(R.id.button2);
 
         if (textView != null && messageText != null) textView.setText(messageText);
-        if (changeBtn != null && button1Text != null) changeBtn.setText(button1Text);
+        if (deleteBtn != null && button1Text != null) deleteBtn.setText(button1Text);
         if (keepBtn != null && button2Text != null) keepBtn.setText(button2Text);
 
         keepBtn.setOnClickListener(v -> {
@@ -79,9 +79,9 @@ public class StickersDialog extends Dialog {
             if (listener != null) listener.onKeep();
         });
 
-        changeBtn.setOnClickListener(v -> {
+        deleteBtn.setOnClickListener(v -> {
             dismiss();
-            if (listener != null) listener.onChange();
+            if (listener != null) listener.onDelete();
         });
     }
 }

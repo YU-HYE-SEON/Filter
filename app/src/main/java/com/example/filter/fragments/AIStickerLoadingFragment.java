@@ -33,7 +33,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class AiStickerLoadingFragment extends Fragment {
+public class AIStickerLoadingFragment extends Fragment {
     private static final String BASE_URL = "base_url";
     private static final String PROMPT = "prompt";
     private String baseUrl;
@@ -46,8 +46,8 @@ public class AiStickerLoadingFragment extends Fragment {
     private static final long STEP_MS = 400;
     private static final float AMPLITUDE_DP = 80;
 
-    public static AiStickerLoadingFragment newInstance(String baseUrl, String prompt) {
-        AiStickerLoadingFragment f = new AiStickerLoadingFragment();
+    public static AIStickerLoadingFragment newInstance(String baseUrl, String prompt) {
+        AIStickerLoadingFragment f = new AIStickerLoadingFragment();
         Bundle b = new Bundle();
         b.putString(BASE_URL, baseUrl);
         b.putString(PROMPT, prompt);
@@ -92,14 +92,14 @@ public class AiStickerLoadingFragment extends Fragment {
                         if (!isAdded()) return;
                         getParentFragmentManager()
                                 .beginTransaction()
-                                .replace(R.id.aiStickerView, AiStickerSuccessFragment.newWithImagePath(out.getAbsolutePath(), baseUrl, prompt))
+                                .replace(R.id.aiStickerView, AIStickerSuccessFragment.newWithImagePath(out.getAbsolutePath(), baseUrl, prompt))
                                 .commit();
                     } catch (Exception e) {
                         e.printStackTrace();
-                        // TODO: 오류 안내/재시도 UI
+                        goToFailDelayed();
                     }
                 } else {
-                    // TODO: 서버 오류 안내
+                    goToFailDelayed();
                 }
             }
 
@@ -107,7 +107,7 @@ public class AiStickerLoadingFragment extends Fragment {
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 if (!isAdded() || call.isCanceled()) return;
                 t.printStackTrace();
-                // TODO: 네트워크 오류 안내/재시도 UI
+                goToFailDelayed();
             }
         });
     }
@@ -196,6 +196,17 @@ public class AiStickerLoadingFragment extends Fragment {
 
     private int dp(float v) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics());
+    }
+
+    private void goToFailDelayed() {
+        if (!isAdded()) return;
+        requireView().postDelayed(() -> {
+            if (!isAdded()) return;
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.aiStickerView, new AIStickerFailFragment())
+                    .commit();
+        }, 3000);
     }
 
     @Override

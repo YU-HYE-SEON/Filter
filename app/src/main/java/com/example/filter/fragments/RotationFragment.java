@@ -1,11 +1,13 @@
 package com.example.filter.fragments;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,10 +18,10 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class RotationFragment extends Fragment {
-    private ImageView leftRotationIcon;
-    private ImageView rightRotationIcon;
-    private ImageView horizontalFlip;
-    private ImageView verticalFlip;
+    private ImageButton leftRotationIcon;
+    private ImageButton rightRotationIcon;
+    private ImageButton horizontalFlip;
+    private ImageButton verticalFlip;
     private ImageButton cancelBtn;
     private ImageButton checkBtn;
 
@@ -34,6 +36,40 @@ public class RotationFragment extends Fragment {
         verticalFlip = view.findViewById(R.id.verticalFlip);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
+
+        final long[] lastTap = {0};
+
+        attachPressEffect(leftRotationIcon, () -> {
+            long now = SystemClock.uptimeMillis();
+            if (now - lastTap[0] < 120) return; lastTap[0] = now;
+
+            FilterActivity a = (FilterActivity) getActivity();
+            if (a != null) a.rotatePhoto(-90);
+        });
+
+        attachPressEffect(rightRotationIcon, () -> {
+            long now = SystemClock.uptimeMillis();
+            if (now - lastTap[0] < 120) return; lastTap[0] = now;
+
+            FilterActivity a = (FilterActivity) getActivity();
+            if (a != null) a.rotatePhoto(90);
+        });
+
+        attachPressEffect(horizontalFlip, () -> {
+            long now = SystemClock.uptimeMillis();
+            if (now - lastTap[0] < 120) return; lastTap[0] = now;
+
+            FilterActivity a = (FilterActivity) getActivity();
+            if (a != null) a.flipPhoto(true);
+        });
+
+        attachPressEffect(verticalFlip, () -> {
+            long now = SystemClock.uptimeMillis();
+            if (now - lastTap[0] < 120) return; lastTap[0] = now;
+
+            FilterActivity a = (FilterActivity) getActivity();
+            if (a != null) a.flipPhoto(false);
+        });
 
         leftRotationIcon.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -118,5 +154,50 @@ public class RotationFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void attachPressEffect(ImageButton btn,Runnable onUpInside) {
+        btn.setClickable(true);
+        btn.setFocusable(true);
+        btn.setOnTouchListener((v, ev) -> {
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN: {
+                    btn.setImageResource(R.drawable.rotation_icon_yes);
+                    v.setPressed(true);
+                    return true;
+                }
+
+                /*case MotionEvent.ACTION_MOVE: {
+                    boolean inside = isPointInsideView(v, ev);
+                    btn.setImageResource(inside ? R.drawable.rotation_icon_yes : R.drawable.rotation_icon_no);
+                    v.setPressed(inside);
+                    return true;
+                }*/
+
+                case MotionEvent.ACTION_UP: {
+                    boolean inside = isPointInsideView(v, ev);
+                    btn.setImageResource(R.drawable.rotation_icon_no);
+                    v.setPressed(false);
+                    if (inside && onUpInside != null) {
+                        onUpInside.run();
+                    }
+                    return true;
+                }
+
+                case MotionEvent.ACTION_CANCEL: {
+                    btn.setImageResource(R.drawable.rotation_icon_no);
+                    v.setPressed(false);
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    private boolean isPointInsideView(View v, MotionEvent ev) {
+        float x = ev.getX();
+        float y = ev.getY();
+        return (x >= 0 && y >= 00 && x <= v.getWidth() && y <= v.getHeight());
     }
 }

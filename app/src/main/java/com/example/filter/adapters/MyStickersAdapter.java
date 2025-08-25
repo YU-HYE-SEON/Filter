@@ -1,6 +1,8 @@
 package com.example.filter.adapters;
 
 import android.annotation.SuppressLint;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,26 +12,44 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
+import com.example.filter.etc.StickerItem;
 
+import java.io.File;
 import java.util.List;
 
 public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.ViewHolder> {
-    private List<String> items;
+    private final List<StickerItem> items;
     private OnStickerClickListener clickListener;
     private OnStickerDeleteListener deleteListener;
     private int selectedPos = RecyclerView.NO_POSITION;
 
     public interface OnStickerClickListener {
-        void onStickerClick(int position, String stickerName);
+        void onStickerClick(int position, String stickerNameOrPath);
     }
+
     public interface OnStickerDeleteListener {
-        void onDeleteRequested(int position, String stickerName);
+        void onDeleteRequested(int position, String stickerNameOrPath);
     }
 
-    public void setOnStickerClickListener(OnStickerClickListener l) { this.clickListener = l; }
-    public void setOnStickerDeleteListener(OnStickerDeleteListener l) { this.deleteListener = l; }
+    public void setOnStickerClickListener(OnStickerClickListener l) {
+        this.clickListener = l;
+    }
 
-    public MyStickersAdapter(List<String> items) { this.items = items; }
+    public void setOnStickerDeleteListener(OnStickerDeleteListener l) {
+        this.deleteListener = l;
+    }
+
+    public MyStickersAdapter(List<StickerItem> items) {
+        this.items = items;
+    }
+
+    public void insertAtFront(StickerItem item) {
+        items.add(0, item);
+        notifyItemInserted(0);
+        if (selectedPos != RecyclerView.NO_POSITION) {
+            selectedPos++;
+        }
+    }
 
     public void removeAt(int position) {
         if (position >= 0 && position < items.size()) {
@@ -40,48 +60,81 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
         }
     }
 
-    public int getSelectedPos() { return selectedPos; }
-    public String getItem(int pos){ return items.get(pos); }
+    public int getSelectedPos() {
+        return selectedPos;
+    }
+
+    public StickerItem getItem(int pos) {
+        return items.get(pos);
+    }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent,int viewType){
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.i_mystickers,parent,false);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.i_mystickers, parent, false);
         return new ViewHolder(v);
     }
 
-    private final int[] stickerImages = {
-            R.drawable.sticker_hearts_no,
-            R.drawable.sticker_blueheart_no,
-            R.drawable.sticker_cyanheart_no
-    };
+    private final int[] fallback = {};
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder h, @SuppressLint("RecyclerView") int position) {
-        String name = items.get(position);
-        int noRes = h.itemView.getContext().getResources().getIdentifier(name + "_no","drawable",h.itemView.getContext().getPackageName());
-        int yesRes = h.itemView.getContext().getResources().getIdentifier(name + "_yes","drawable",h.itemView.getContext().getPackageName());
-        h.stickerImage.setImageResource(selectedPos == position && yesRes!=0 ? yesRes : (noRes!=0? noRes : stickerImages[Math.min(position, stickerImages.length-1)]));
+        StickerItem item = items.get(position);
+
+        if (item.isFile()) {
+            File f = new File(item.filePath);
+            if (f.exists()) {
+                h.stickerImage.setImageURI(Uri.fromFile(f));
+                if (h.stickerImage.getDrawable() == null) {
+                    h.stickerImage.setImageBitmap(BitmapFactory.decodeFile(f.getAbsolutePath()));
+                }
+            } else if (fallback.length > 0) {
+                h.stickerImage.setImageResource(fallback[Math.min(position, fallback.length - 1)]);
+            } else {
+                h.stickerImage.setImageDrawable(null);
+            }
+        } else {
+            if (item.resName != null) {
+                int resId = h.itemView.getResources()
+                        .getIdentifier(item.resName, "drawable", h.itemView.getContext().getPackageName());
+                if (resId != 0) h.stickerImage.setImageResource(resId);
+                else if (fallback.length > 0)
+                    h.stickerImage.setImageResource(fallback[Math.min(position, fallback.length - 1)]);
+                else
+                    h.stickerImage.setImageDrawable(null);
+            }
+        }
 
         h.stickerImage.setOnClickListener(v -> {
             int old = selectedPos;
             selectedPos = position;
-            notifyItemChanged(old);
+            //notifyItemChanged(old);
+            if (old != RecyclerView.NO_POSITION) notifyItemChanged(old);
             notifyItemChanged(selectedPos);
-            if (clickListener != null) clickListener.onStickerClick(position, name);
+            if (clickListener != null) {
+                String key = item.isFile() ? item.filePath : item.resName;
+                clickListener.onStickerClick(position, key);
+            }
         });
 
         h.itemView.setOnLongClickListener(v -> {
-            if (deleteListener != null) deleteListener.onDeleteRequested(position, name);
+            if (deleteListener != null) {
+                String key = item.isFile() ? item.filePath : item.resName;
+                deleteListener.onDeleteRequested(position, key);
+            }
             return true;
         });
     }
 
-    @Override public int getItemCount(){ return items.size(); }
+    @Override
+    public int getItemCount() {
+        return items.size();
+    }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView stickerImage;
-        public ViewHolder(View itemView){
+
+        public ViewHolder(View itemView) {
             super(itemView);
             stickerImage = itemView.findViewById(R.id.stickerImage);
         }

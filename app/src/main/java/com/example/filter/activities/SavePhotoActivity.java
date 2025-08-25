@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
@@ -14,6 +15,7 @@ import com.example.filter.etc.ClickUtils;
 import java.io.File;
 
 public class SavePhotoActivity extends BaseActivity {
+    private ImageButton backBtn;
     private ImageView photo;
     private ImageView backToHomeBtn;
     private ImageView registerBtn;
@@ -22,6 +24,7 @@ public class SavePhotoActivity extends BaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_save_photo);
+        backBtn = findViewById(R.id.backBtn);
         photo = findViewById(R.id.photo);
         backToHomeBtn = findViewById(R.id.backToHomeBtn);
         registerBtn = findViewById(R.id.registerBtn);
@@ -38,6 +41,11 @@ public class SavePhotoActivity extends BaseActivity {
                 }
             }
         }
+
+        backBtn.setOnClickListener(v->{
+            if (ClickUtils.isFastClick(500)) return;
+            finish();
+        });
 
         backToHomeBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;

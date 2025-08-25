@@ -15,7 +15,7 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/message"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:background="?attr/selectableItemBackgroundBorderless"
@@ -23,7 +23,7 @@
             android:gravity="center"
             android:paddingTop="20dp"
             android:paddingBottom="20dp"
-            android:text="스티커를 추가하면 사진 비율이 고정됩니다.\n현재 비율을 유지하시겠습니까?"
+            android:text=""
             android:textAlignment="center"
             android:textColor="@color/black"
             android:textSize="12sp"
@@ -44,12 +44,12 @@
             app:layout_constraintVertical_bias="0.65" />
 
         <Button
-            android:id="@+id/changeBtn"
+            android:id="@+id/button1"
             android:layout_width="150dp"
             android:layout_height="0dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:fontFamily="@font/roboto_medium"
-            android:text="변경"
+            android:text=""
             android:textAlignment="center"
             android:textColor="@color/black"
             android:textSize="12sp"
@@ -64,17 +64,17 @@
             android:layout_height="0dp"
             android:background="#BDBDBD"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/keepBtn"
-            app:layout_constraintStart_toEndOf="@+id/changeBtn"
+            app:layout_constraintEnd_toStartOf="@+id/button2"
+            app:layout_constraintStart_toEndOf="@+id/button1"
             app:layout_constraintTop_toBottomOf="@+id/line1" />
 
         <Button
-            android:id="@+id/keepBtn"
+            android:id="@+id/button2"
             android:layout_width="150dp"
             android:layout_height="0dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:fontFamily="@font/roboto_medium"
-            android:text="유지"
+            android:text=""
             android:textAlignment="center"
             android:textColor="@color/black"
             android:textSize="12sp"

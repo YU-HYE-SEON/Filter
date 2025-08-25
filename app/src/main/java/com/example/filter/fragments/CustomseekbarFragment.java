@@ -142,5 +142,10 @@ public class CustomseekbarFragment extends Fragment {
                     .replace(R.id.bottomArea2, new ColorsFragment())
                     .commit();
         }
+
+        requireActivity().getSupportFragmentManager().executePendingTransactions();
+        if (getActivity() instanceof FilterActivity) {
+            ((FilterActivity) getActivity()).requestUpdateBackGate();
+        }
     }
 }

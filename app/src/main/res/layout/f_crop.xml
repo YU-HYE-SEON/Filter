@@ -15,6 +15,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="150dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -22,20 +24,22 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/freeCutIcon"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/rotation_icon_no" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="freeCutIcon"/>
+                    android:text="자유"
+                    android:textColor="@color/white" />
 
             </LinearLayout>
 
@@ -43,20 +47,22 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/OTORatioIcon"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/rotation_icon_no" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="OTORatioIcon"/>
+                    android:text="1:1"
+                    android:textColor="@color/white" />
 
             </LinearLayout>
 
@@ -64,20 +70,22 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/TTFRatioIcon"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/rotation_icon_no" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="TTFRatioIcon"/>
+                    android:text="3:4"
+                    android:textColor="@color/white" />
 
             </LinearLayout>
 
@@ -85,20 +93,22 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/NTSRatioIcon"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/rotation_icon_no" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="NTSRatioIcon"/>
+                    android:text="9:16"
+                    android:textColor="@color/white" />
 
             </LinearLayout>
 
@@ -126,11 +136,11 @@
                 android:id="@+id/filterText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="자르기"
                 android:fontFamily="@font/pretendard_medium"
+                android:text="자르기"
                 android:textAlignment="center"
-                android:textSize="14sp"
                 android:textColor="@color/white"
+                android:textSize="14sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"

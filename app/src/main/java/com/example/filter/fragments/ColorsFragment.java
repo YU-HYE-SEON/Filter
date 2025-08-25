@@ -9,6 +9,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
@@ -22,6 +23,7 @@ public class ColorsFragment extends Fragment {
             highlightIcon, shadowIcon, temperatureIcon, tintIcon,
             saturationIcon, sharpnessIcon, blurIcon, vignetteIcon, noiseIcon;
     private ImageView nextBtn;
+    private ConstraintLayout bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
 
     @Nullable
@@ -43,10 +45,12 @@ public class ColorsFragment extends Fragment {
         noiseIcon = view.findViewById(R.id.noiseIcon);
         nextBtn = view.findViewById(R.id.nextBtn);
 
+        bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
         undoColor = requireActivity().findViewById(R.id.undoColor);
         redoColor = requireActivity().findViewById(R.id.redoColor);
         originalColor = requireActivity().findViewById(R.id.originalColor);
 
+        bottomArea1.setVisibility(View.VISIBLE);
         undoColor.setEnabled(false);
         redoColor.setEnabled(false);
         undoColor.setVisibility(View.VISIBLE);
@@ -156,8 +160,14 @@ public class ColorsFragment extends Fragment {
                                 .setCustomAnimations(R.anim.slide_up, 0)
                                 .replace(R.id.bottomArea2, new StickersFragment())
                                 .commit();
+
+                        ConstraintLayout bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
+                        bottomArea1.setVisibility(View.INVISIBLE);
                     }
-                }).show();
+                }).withMessage("스티커를 추가하면 사진 비율이 고정됩니다.\n현재 비율을 유지하시겠습니까?")
+                        .withButton1Text("변경")
+                        .withButton2Text("유지")
+                        .show();
             }
         });
 
@@ -173,6 +183,8 @@ public class ColorsFragment extends Fragment {
         blurIcon.setOnClickListener(listener);
         vignetteIcon.setOnClickListener(listener);
         noiseIcon.setOnClickListener(listener);
+
+        updateColorIcons();
 
         return view;
     }
@@ -192,15 +204,22 @@ public class ColorsFragment extends Fragment {
 
         undoColor.setAlpha(canUndo ? 1f : 0.4f);
         redoColor.setAlpha(canRedo ? 1f : 0.4f);
+
+        updateColorIcons();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         refreshColorButtons();
+        updateColorIcons();
 
         FilterActivity activity = (FilterActivity) getActivity();
-        if (activity != null) activity.refreshOriginalColorButton();
+
+        if (activity != null) {
+            activity.refreshOriginalColorButton();
+            activity.requestUpdateBackGate();
+        }
     }
 
     @Override
@@ -208,6 +227,31 @@ public class ColorsFragment extends Fragment {
         super.onHiddenChanged(hidden);
         if (!hidden) {
             refreshColorButtons();
+            updateColorIcons();
+            FilterActivity act = (FilterActivity) getActivity();
+            if (act != null) act.requestUpdateBackGate();
         }
+    }
+
+    private void updateColorIcons() {
+        FilterActivity a = (FilterActivity) getActivity();
+        if (a == null) return;
+
+        setIcon(brightnessIcon,  a.getCurrentValue("밝기")       != 0, R.drawable.brightness_icon_yes,  R.drawable.brightness_icon_no);
+        setIcon(exposureIcon,    a.getCurrentValue("노출")       != 0, R.drawable.exposure_icon_yes,    R.drawable.exposure_icon_no);
+        setIcon(contrastIcon,    a.getCurrentValue("대비")       != 0, R.drawable.contrast_icon_yes,    R.drawable.contrast_icon_no);
+        setIcon(highlightIcon,   a.getCurrentValue("하이라이트") != 0, R.drawable.highlight_icon_yes,   R.drawable.highlight_icon_no);
+        setIcon(shadowIcon,      a.getCurrentValue("그림자")     != 0, R.drawable.shadow_icon_yes,      R.drawable.shadow_icon_no);
+        setIcon(temperatureIcon, a.getCurrentValue("온도")       != 0, R.drawable.temperature_icon_yes, R.drawable.temperature_icon_no);
+        setIcon(tintIcon,        a.getCurrentValue("색조")       != 0, R.drawable.hue_icon_yes,         R.drawable.hue_icon_no);
+        setIcon(saturationIcon,  a.getCurrentValue("채도")       != 0, R.drawable.saturation_icon_yes,  R.drawable.saturation_icon_no);
+        setIcon(sharpnessIcon,   a.getCurrentValue("선명하게")   != 0, R.drawable.sharpness_icon_yes,   R.drawable.sharpness_icon_no);
+        setIcon(blurIcon,        a.getCurrentValue("흐리게")     != 0, R.drawable.blur_icon_yes,        R.drawable.blur_icon_no);
+        setIcon(vignetteIcon,    a.getCurrentValue("비네트")     != 0, R.drawable.vignette_icon_yes,    R.drawable.vignette_icon_no);
+        setIcon(noiseIcon,       a.getCurrentValue("노이즈")     != 0, R.drawable.noise_icon_no,       R.drawable.noise_icon_no);
+    }
+
+    private void setIcon(ImageView iv, boolean on, int yesRes, int noRes) {
+        if (iv != null) iv.setImageResource(on ? yesRes : noRes);
     }
 }

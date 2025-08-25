@@ -1,8 +1,10 @@
 package com.example.filter.activities;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
@@ -19,14 +21,22 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.R;
+import com.example.filter.etc.StickerStore;
+import com.example.filter.fragments.ColorsFragment;
+import com.example.filter.fragments.StickersFragment;
 import com.example.filter.fragments.ToolsFragment;
 
 import java.io.File;
@@ -37,6 +47,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class FilterActivity extends BaseActivity {
+    private FrameLayout stickerOverlay;
+    private ActivityResultLauncher<Intent> imagePickerLauncher;
+    private OnBackPressedCallback backGateCallback;
     private ImageButton undoColor, redoColor, originalColor;
     private ConstraintLayout topArea;
     private GLSurfaceView photoPreview;
@@ -184,6 +197,75 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
+    private int accumRotationDeg = 0;
+    private boolean accumFlipH = false;
+    private boolean accumFlipV = false;
+    private boolean rotationEdited = false;
+
+    public boolean isRotationEdited() {
+        return rotationEdited;
+    }
+
+    private static int normDeg(int d) {
+        int n = d % 360;
+        return (n < 0) ? n + 360 : n;
+    }
+
+    private boolean isGeometrySameAsOriginal() {
+        int r = normDeg(accumRotationDeg);
+        if (r == 0 && !accumFlipH && !accumFlipV) return true;
+        if (r == 180 && accumFlipH && accumFlipV) return true;
+        return false;
+    }
+
+    private void refreshRotationEditedFlag() {
+        rotationEdited = !isGeometrySameAsOriginal();
+    }
+
+    private boolean cropEdited = false;
+
+    public boolean isCropEdited() {
+        return cropEdited;
+    }
+
+    public void setCropEdited(boolean edited) {
+        this.cropEdited = edited;
+    }
+
+    public void resetCropState() {
+        lastCropMode = CropMode.NONE;
+        appliedCropMode = CropMode.NONE;
+        lastCropRectN = null;
+        needResetCropRectOnce = true;
+
+        isCropSessionLatched = false;
+        cropSessionEntryBitmap = null;
+
+        if (renderer != null && renderer.getCurrentBitmap() != null) {
+            Bitmap cur = renderer.getCurrentBitmap();
+            baseImageForCrop = cur.copy(cur.getConfig(), true);
+        }
+    }
+
+    public float getScaleFactor() {
+        return scaleFactor;
+    }
+
+    public float getTranslateX() {
+        return translateX;
+    }
+
+    public float getTranslateY() {
+        return translateY;
+    }
+
+    public boolean isViewportIdentity() {
+        return Math.abs(scaleFactor - 1f) < 1e-3f
+                && Math.abs(translateX) < 1e-2f
+                && Math.abs(translateY) < 1e-2f;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -193,10 +275,13 @@ public class FilterActivity extends BaseActivity {
         saveBtn = findViewById(R.id.saveBtn);
         saveTxt = findViewById(R.id.saveTxt);
         photoPreview = findViewById(R.id.photoPreview);
+        stickerOverlay = findViewById(R.id.stickerOverlay);
 
         undoColor = findViewById(R.id.undoColor);
         redoColor = findViewById(R.id.redoColor);
         originalColor = findViewById(R.id.originalColor);
+
+        StickerStore.get().init(getApplicationContext());
 
         originalColor.setOnTouchListener((v, ev) -> {
             switch (ev.getActionMasked()) {
@@ -289,37 +374,97 @@ public class FilterActivity extends BaseActivity {
             if (ClickUtils.isFastClick(500)) return;
 
             renderer.setOnBitmapCaptureListener(fullBitmap -> {
-                Bitmap cropped = renderer.cropCenterRegion(fullBitmap
-                        , renderer.getViewportX()
-                        , renderer.getViewportY()
-                        , renderer.getViewportWidth()
-                        , renderer.getViewportHeight());
-                File tempFile = new File(getCacheDir(), "temp_captured_image.png");
-                try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                    cropped.compress(Bitmap.CompressFormat.PNG, 100, out);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return;
-                }
-                Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
-                intent.putExtra("saved_image", tempFile.getAbsolutePath());
-                startActivity(intent);
+                runOnUiThread(() -> {
+                    try {
+                        Bitmap composed = fullBitmap.copy(Bitmap.Config.ARGB_8888, true);
+                        if (stickerOverlay != null) {
+                            Canvas canvas = new Canvas(composed);
+                            stickerOverlay.draw(canvas);
+                        }
+
+                        Bitmap cropped = renderer.cropCenterRegion(
+                                composed,
+                                renderer.getViewportX(),
+                                renderer.getViewportY(),
+                                renderer.getViewportWidth(),
+                                renderer.getViewportHeight()
+                        );
+
+                        File tempFile = new File(getCacheDir(), "temp_captured_image.png");
+                        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+                            cropped.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        }
+
+                        Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
+                        intent.putExtra("saved_image", tempFile.getAbsolutePath());
+                        startActivity(intent);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
             });
             renderer.captureBitmap();
         });
 
-        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+        backGateCallback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                handleBack();
+                Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+                if (isBackEnabledFor(cur)) {
+                    handleBackNavChain();
+                } else {
+
+                }
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, backGateCallback);
+
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
+                new androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks() {
+                    @Override
+                    public void onFragmentResumed(@NonNull androidx.fragment.app.FragmentManager fm,
+                                                  @NonNull Fragment f) {
+                        if (f.getId() == R.id.bottomArea2) {
+                            updateBackAndSaveUiEnabled(f);
+                        }
+                    }
+                }, true
+        );
+
+
+        backBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(500)) return;
+            Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+            if (isBackEnabledFor(cur)) {
+                handleBackNavChain();
             }
         });
 
-        backBtn = findViewById(R.id.backBtn);
-        backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
-            handleBack();
+        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+        updateBackAndSaveUiEnabled(cur);
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showExitConfirmDialog();
+            }
         });
+
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri uri = result.getData().getData();
+                        if (uri != null) {
+                            Intent i = new Intent(FilterActivity.this, FilterActivity.class);
+                            i.setData(uri);
+                            startActivity(i);
+                            finish();
+                        }
+                    }
+                }
+        );
 
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
             FrameLayout full = findViewById(R.id.fullScreenFragmentContainer);
@@ -333,6 +478,33 @@ public class FilterActivity extends BaseActivity {
                 main.setBackgroundColor(Color.BLACK);
             }
         });
+    }
+
+    private boolean isBackEnabledFor(Fragment f) {
+        return (f instanceof ToolsFragment)
+                || (f instanceof ColorsFragment)
+                || (f instanceof StickersFragment);
+    }
+
+    private void updateBackAndSaveUiEnabled(Fragment f) {
+        boolean enabled = isBackEnabledFor(f);
+        if (backBtn != null) {
+            backBtn.setEnabled(enabled);
+            backBtn.setClickable(enabled);
+            backBtn.setAlpha(enabled ? 1f : 0.3f);
+        }
+
+        if (saveBtn != null) {
+            saveBtn.setEnabled(enabled);
+            saveBtn.setClickable(enabled);
+            saveBtn.setAlpha(enabled ? 1f : 0.3f);
+            saveTxt.setAlpha(enabled ? 1f : 0.3f);
+        }
+    }
+
+    public void requestUpdateBackGate() {
+        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+        updateBackAndSaveUiEnabled(cur);
     }
 
     private void loadImageFromUri(Uri photoUri) {
@@ -379,6 +551,15 @@ public class FilterActivity extends BaseActivity {
             originalBitmap = bitmap.copy(bitmap.getConfig(), true);
             transformedBitmap = originalBitmap.copy(originalBitmap.getConfig(), true);
             photoPreview.requestRender();
+
+            accumRotationDeg = 0;
+            accumFlipH = false;
+            accumFlipV = false;
+            refreshRotationEditedFlag();
+
+            cropEdited = false;
+            resetCropState();
+
             if (renderer != null) {
                 renderer.resetAllFilter();
                 baselineFilterValues.clear();
@@ -393,13 +574,6 @@ public class FilterActivity extends BaseActivity {
     }
 
     private void handleBack() {
-        if (cropOverlay != null) {
-            restoreCropBeforeState();
-            hideCropOverlay();
-            setCurrentCropMode(CropMode.NONE);
-            return;
-        }
-
         FragmentManager fm = getSupportFragmentManager();
         if (fm.getBackStackEntryCount() > 0) {
             fm.popBackStack();
@@ -416,6 +590,77 @@ public class FilterActivity extends BaseActivity {
             finish();
         }
     }
+
+    private void handleBackNavChain() {
+        FragmentManager fm = getSupportFragmentManager();
+
+        Fragment full = fm.findFragmentById(R.id.fullScreenFragmentContainer);
+        if (full != null) {
+            showExitConfirmDialog();
+            return;
+        }
+
+        Fragment cur = fm.findFragmentById(R.id.bottomArea2);
+
+        if (cur instanceof StickersFragment) {
+            FrameLayout overlay = findViewById(R.id.stickerOverlay);
+            if (overlay != null) overlay.removeAllViews();
+
+            fm.beginTransaction()
+                    .setCustomAnimations(R.anim.slide_up, 0)
+                    .replace(R.id.bottomArea2, new ColorsFragment())
+                    .commit();
+
+            ConstraintLayout bottomArea1 = findViewById(R.id.bottomArea1);
+            bottomArea1.setVisibility(View.VISIBLE);
+
+            return;
+        }
+
+        if (cur instanceof ColorsFragment) {
+            fm.beginTransaction()
+                    .setCustomAnimations(R.anim.slide_up, 0)
+                    .replace(R.id.bottomArea2, new ToolsFragment())
+                    .commit();
+
+            ConstraintLayout bottomArea1 = findViewById(R.id.bottomArea1);
+            bottomArea1.setVisibility(View.INVISIBLE);
+
+            return;
+        }
+
+        if (cur instanceof ToolsFragment) {
+            openImagePicker();
+            return;
+        }
+
+        handleBack();
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        imagePickerLauncher.launch(intent);
+    }
+
+
+    private void showExitConfirmDialog() {
+        new FilterEixtDialog(this, new FilterEixtDialog.FilterEixtDialogListener() {
+            @Override
+            public void onKeep() {
+            }
+
+            @Override
+            public void onExit() {
+                finish();
+            }
+        }
+        ).withMessage("편집한 내용을 저장하지 않고\n종료하시겠습니까?")
+                .withButton1Text("예")
+                .withButton2Text("아니오")
+                .show();
+    }
+
 
     public int getCurrentValue(String filterType) {
         if (renderer != null && filterType != null) {
@@ -471,6 +716,10 @@ public class FilterActivity extends BaseActivity {
     }
 
     public void commitTransformations(boolean imageGeometryChanged) {
+        int pendingRot = normDeg((int) rotationDegree);
+        boolean pendingFlipH = flipHorizontal;
+        boolean pendingFlipV = flipVertical;
+
         Bitmap current = (renderer != null) ? renderer.getCurrentBitmap() : null;
         if (current != null) {
             originalBitmap = current.copy(current.getConfig(), true);
@@ -500,6 +749,13 @@ public class FilterActivity extends BaseActivity {
             float[] p = mapPanN(lastTxN, lastTyN, (int) rotationDegree, flipHorizontal, flipVertical);
             lastTxN = p[0];
             lastTyN = p[1];
+        }
+
+        if (imageGeometryChanged) {
+            accumRotationDeg = normDeg(accumRotationDeg + pendingRot);
+            if (pendingFlipH) accumFlipH = !accumFlipH;
+            if (pendingFlipV) accumFlipV = !accumFlipV;
+            refreshRotationEditedFlag();
         }
 
         rotationDegree = 0f;
@@ -768,7 +1024,6 @@ public class FilterActivity extends BaseActivity {
 
             case MotionEvent.ACTION_POINTER_UP:
                 if (event.getPointerCount() == 2) {
-                    //두 손가락에서 하나 뗐을 때 → 다음 한 손가락 MOVE는 무시
                     suppressNextSingleFingerMove = true;
                 }
                 break;
@@ -875,4 +1130,14 @@ public class FilterActivity extends BaseActivity {
     public void setBeforePressed(boolean pressed) {
         this.beforePressed = pressed;
     }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && intent.getBooleanExtra("EXIT_BY_CHILD", false)) {
+            finish();
+        }
+    }
+
 }

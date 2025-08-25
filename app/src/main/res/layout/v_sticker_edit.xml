@@ -11,16 +11,17 @@
         android:id="@+id/editFrame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
-        android:src="@drawable/sticker_edit_frame" />
+        android:src="@drawable/sticker_edit_frame"
+        android:visibility="invisible" />
 
     <ImageView
         android:id="@+id/stickerImage"
         android:layout_width="match_parent"
-        android:background="@android:color/transparent"
         android:layout_height="match_parent"
-        android:scaleType="fitCenter"
-        android:layout_gravity="center" />
+        android:layout_gravity="center"
+        android:background="@android:color/transparent"
+        android:padding="10dp"
+        android:scaleType="fitCenter" />
 
     <ImageView
         android:id="@+id/rotateController"
@@ -28,18 +29,18 @@
         android:layout_height="30dp"
         android:layout_gravity="top|start"
         android:src="@drawable/sticker_delete_icon"
-        android:visibility="invisible"
         android:translationX="-15dp"
-        android:translationY="-15dp" />
+        android:translationY="-15dp"
+        android:visibility="invisible" />
 
     <ImageView
         android:id="@+id/sizeController"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_gravity="bottom|end"
-        android:visibility="invisible"
         android:src="@drawable/sticker_size_controller"
         android:translationX="15dp"
-        android:translationY="15dp" />
+        android:translationY="15dp"
+        android:visibility="invisible" />
 
 </FrameLayout>

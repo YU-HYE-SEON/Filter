@@ -42,6 +42,10 @@
             android:theme="@style/Base.Theme.Filter"
             android:windowSoftInputMode="adjustPan" />
         <activity
+            android:name=".activities.LoadActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.Filter"/>
+        <activity
             android:name=".activities.SavePhotoActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />

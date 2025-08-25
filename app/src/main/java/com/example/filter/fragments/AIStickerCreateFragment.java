@@ -1,6 +1,7 @@
 package com.example.filter.fragments;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.Editable;
@@ -29,7 +30,7 @@ import androidx.fragment.app.Fragment;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 
-public class AiStickerCreateFragment extends Fragment {
+public class AIStickerCreateFragment extends Fragment {
     private ConstraintLayout aiStickerCreate;
     private LinearLayout contentBox;
     private ImageView img;
@@ -81,12 +82,12 @@ public class AiStickerCreateFragment extends Fragment {
             if (prompt.isEmpty()) return;
 
             //서버 재테스트할 때마다 변경해야 됨
-            String baseUrl = "https://5aa1a95b8cc0.ngrok-free.app/";
+            String baseUrl = "https://5ec6d63fcac1.ngrok-free.app";
 
             getParentFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.aiStickerView, AiStickerLoadingFragment.newInstance(baseUrl, prompt))
-                    .addToBackStack(null)
+                    .replace(R.id.aiStickerView, AIStickerLoadingFragment.newInstance(baseUrl, prompt))
+                    .addToBackStack("ai_create_to_loading")
                     .commit();
         });
 
@@ -191,7 +192,7 @@ public class AiStickerCreateFragment extends Fragment {
         createBtn.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
-                    createTxt.setTextColor(0xFFFFFFFF); // white
+                    createTxt.setTextColor(Color.WHITE);
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:

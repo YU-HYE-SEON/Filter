@@ -9,16 +9,19 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class ToolsFragment extends Fragment {
-    private ImageView rotationIcon;
-    private ImageView cropIcon;
+    private ImageButton rotationIcon;
+    private ImageButton cropIcon;
     private ImageButton nextBtn;
-    private ImageButton undoColor, redoColor, originalColor;
+    private ConstraintLayout bottomArea1;
+    //private ImageButton undoColor, redoColor, originalColor;
 
     @Nullable
     @Override
@@ -28,13 +31,27 @@ public class ToolsFragment extends Fragment {
         rotationIcon=view.findViewById(R.id.rotationIcon);
         cropIcon = view.findViewById(R.id.cropIcon);
 
-        undoColor = requireActivity().findViewById(R.id.undoColor);
-        redoColor = requireActivity().findViewById(R.id.redoColor);
-        originalColor = requireActivity().findViewById(R.id.originalColor);
+        bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
+        bottomArea1.setVisibility(View.INVISIBLE);
 
-        undoColor.setVisibility(View.INVISIBLE);
-        redoColor.setVisibility(View.INVISIBLE);
-        originalColor.setVisibility(View.INVISIBLE);
+        //undoColor = requireActivity().findViewById(R.id.undoColor);
+        //redoColor = requireActivity().findViewById(R.id.redoColor);
+        //originalColor = requireActivity().findViewById(R.id.originalColor);
+        //undoColor.setVisibility(View.INVISIBLE);
+        //redoColor.setVisibility(View.INVISIBLE);
+        //originalColor.setVisibility(View.INVISIBLE);
+
+        FilterActivity activity = (FilterActivity) requireActivity();
+
+        rotationIcon.setImageResource(
+                activity.isRotationEdited() ? R.drawable.rotation_icon_yes
+                        : R.drawable.rotation_icon_no
+        );
+
+        cropIcon.setImageResource(
+                activity.isCropEdited() ? R.drawable.crop_icon_yes
+                        : R.drawable.crop_icon_no
+        );
 
         rotationIcon.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,6 +70,10 @@ public class ToolsFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
+
+                if (!activity.isCropEdited()) {
+                    activity.resetCropState();
+                }
 
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
