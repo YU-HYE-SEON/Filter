@@ -4,20 +4,23 @@
     android:id="@+id/box"
     android:layout_width="300dp"
     android:layout_height="wrap_content"
+    android:layout_gravity="bottom|center_horizontal"
     android:background="@drawable/border7">
 
-    <ImageView
+    <com.skydoves.colorpickerview.ColorPickerView
         android:id="@+id/colorBox"
         android:layout_width="0dp"
         android:layout_height="130dp"
         android:layout_marginLeft="25dp"
         android:layout_marginTop="15dp"
         android:layout_marginRight="25dp"
-        android:background="@color/black"
+        app:debounceDuration="80"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:selector_size="12dp" />
 
+    <!-- 색 포화도 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/saturationBox"
         android:layout_width="0dp"
@@ -30,11 +33,13 @@
 
         <SeekBar
             android:id="@+id/saturationSeekbar"
-            android:layout_width="210dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
+            android:layout_marginEnd="10dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/saturationNum"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -192,6 +197,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- 투명도 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/alphaBox"
         android:layout_width="0dp"
@@ -204,11 +210,13 @@
 
         <SeekBar
             android:id="@+id/alphaSeekbar"
-            android:layout_width="210dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
+            android:layout_marginEnd="10dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/alphaNum"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -228,6 +236,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- 굵기 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/sizeBox"
         android:layout_width="0dp"
@@ -240,11 +249,13 @@
 
         <SeekBar
             android:id="@+id/sizeSeekbar"
-            android:layout_width="210dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
+            android:layout_marginEnd="10dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/size"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

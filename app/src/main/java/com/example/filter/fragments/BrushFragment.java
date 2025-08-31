@@ -1,7 +1,6 @@
 package com.example.filter.fragments;
 
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,8 +19,7 @@ public class BrushFragment extends Fragment {
     private ImageButton cancelBtn, checkBtn;
     private View currentToolPanel;
     private LayoutInflater inflater;
-    private FrameLayout fullScreenFragmentContainer;
-    private View bottomArea2;
+    private FrameLayout brushPanel;
 
     @Nullable
     @Override
@@ -36,8 +34,7 @@ public class BrushFragment extends Fragment {
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
-        fullScreenFragmentContainer = requireActivity().findViewById(R.id.fullScreenFragmentContainer);
-        bottomArea2  = requireActivity().findViewById(R.id.bottomArea2);
+        brushPanel = requireActivity().findViewById(R.id.brushPanel);
 
         pen.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
@@ -55,62 +52,31 @@ public class BrushFragment extends Fragment {
     }
 
     private void showPenPanel() {
-        if (fullScreenFragmentContainer == null) return;
+        if (brushPanel == null) return;
 
-        if (currentToolPanel != null) {
-            fullScreenFragmentContainer.removeAllViews();
-            currentToolPanel = null;
-        }
+        View panel = inflater.inflate(R.layout.v_pen, brushPanel, false);
 
-        View panel = inflater.inflate(R.layout.v_pen, fullScreenFragmentContainer, false);
-
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL
-        );
-        panel.setLayoutParams(lp);
-
-        fullScreenFragmentContainer.setVisibility(View.VISIBLE);
-        fullScreenFragmentContainer.addView(panel);
-        fullScreenFragmentContainer.bringToFront();
+        brushPanel.setVisibility(View.VISIBLE);
+        brushPanel.removeAllViews();
+        brushPanel.addView(panel);
 
         currentToolPanel = panel;
-
-        Runnable applyBottomMargin = () -> {
-            int h = (bottomArea2 != null) ? bottomArea2.getHeight() : dp(200);
-            FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) panel.getLayoutParams();
-            p.bottomMargin = h;
-            panel.setLayoutParams(p);
-            panel.requestLayout();
-        };
-        if (bottomArea2 != null && bottomArea2.getHeight() > 0) {
-            applyBottomMargin.run();
-        } else if (bottomArea2 != null) {
-            bottomArea2.post(applyBottomMargin);
-        } else {
-            panel.post(applyBottomMargin);
-        }
 
         View penCancel   = panel.findViewById(R.id.cancelBtn);
         View penComplete = panel.findViewById(R.id.completeBtn);
         if (penCancel != null)   penCancel.setOnClickListener(v -> hideToolPanel());
         if (penComplete != null) penComplete.setOnClickListener(v -> hideToolPanel());
-
-        panel.setAlpha(0f);
-        panel.setTranslationY(dp(24));
-        panel.animate().alpha(1f).translationY(0f).setDuration(160).start();
     }
 
     private void hideToolPanel() {
-        if (fullScreenFragmentContainer == null) return;
-        if (currentToolPanel == null) { fullScreenFragmentContainer.setVisibility(View.GONE); return; }
+        if (brushPanel == null) return;
+        if (currentToolPanel == null) { brushPanel.setVisibility(View.GONE); return; }
 
         View panel = currentToolPanel;
         panel.animate().alpha(0f).translationY(dp(16)).setDuration(120)
                 .withEndAction(() -> {
-                    fullScreenFragmentContainer.removeAllViews();
-                    fullScreenFragmentContainer.setVisibility(View.GONE);
+                    brushPanel.removeAllViews();
+                    brushPanel.setVisibility(View.GONE);
                     currentToolPanel = null;
                 }).start();
     }
