@@ -30,6 +30,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.filter.dialogs.FilterEixtDialog;
+import com.example.filter.etc.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 import com.example.filter.etc.FGLRenderer;
@@ -41,13 +42,12 @@ import com.example.filter.fragments.ToolsFragment;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class FilterActivity extends BaseActivity {
-    private FrameLayout stickerOverlay;
+    private FrameLayout overlayStack;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
     private OnBackPressedCallback backGateCallback;
     private ImageButton undoColor, redoColor, originalColor;
@@ -275,7 +275,7 @@ public class FilterActivity extends BaseActivity {
         saveBtn = findViewById(R.id.saveBtn);
         saveTxt = findViewById(R.id.saveTxt);
         photoPreview = findViewById(R.id.photoPreview);
-        stickerOverlay = findViewById(R.id.stickerOverlay);
+        overlayStack = findViewById(R.id.overlayStack);
 
         undoColor = findViewById(R.id.undoColor);
         redoColor = findViewById(R.id.redoColor);
@@ -377,9 +377,9 @@ public class FilterActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     try {
                         Bitmap composed = fullBitmap.copy(Bitmap.Config.ARGB_8888, true);
-                        if (stickerOverlay != null) {
+                        if (overlayStack != null) {
                             Canvas canvas = new Canvas(composed);
-                            stickerOverlay.draw(canvas);
+                            overlayStack.draw(canvas);
                         }
 
                         Bitmap cropped = renderer.cropCenterRegion(
@@ -571,6 +571,8 @@ public class FilterActivity extends BaseActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        updateBrushClipFromRenderer();
     }
 
     private void handleBack() {
@@ -603,7 +605,7 @@ public class FilterActivity extends BaseActivity {
         Fragment cur = fm.findFragmentById(R.id.bottomArea2);
 
         if (cur instanceof StickersFragment) {
-            FrameLayout overlay = findViewById(R.id.stickerOverlay);
+            FrameLayout overlay = findViewById(R.id.overlayStack);
             if (overlay != null) overlay.removeAllViews();
 
             fm.beginTransaction()
@@ -762,6 +764,8 @@ public class FilterActivity extends BaseActivity {
         flipHorizontal = false;
         flipVertical = false;
         resetViewportTransform();
+
+        updateBrushClipFromRenderer();
     }
 
     public void lockInCurrentCropMode() {
@@ -1086,6 +1090,8 @@ public class FilterActivity extends BaseActivity {
             renderer.setTranslate(0f, 0f);
             photoPreview.requestRender();
         }
+
+        updateBrushClipFromRenderer();
     }
 
     public void setLastCropRectNormalized(RectF rectN) {
@@ -1140,4 +1146,33 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
+    public void applyBrushClipRect(BrushOverlayView brush) {
+        if (renderer == null || brush == null) return;
+        int x = renderer.getViewportX();
+        int y = renderer.getViewportY();
+        int w = renderer.getViewportWidth();
+        int h = renderer.getViewportHeight();
+        brush.setClipRect(new android.graphics.Rect(x, y, x + w, y + h));
+    }
+
+    private void updateBrushClipFromRenderer() {
+        if (overlayStack == null) return;
+        BrushOverlayView brush = null;
+        for (int i = 0; i < overlayStack.getChildCount(); i++) {
+            View v = overlayStack.getChildAt(i);
+            if (v instanceof BrushOverlayView) {
+                brush = (BrushOverlayView) v;
+                break;
+            }
+        }
+        if (brush == null || renderer == null) return;
+
+        Rect r = new Rect(
+                renderer.getViewportX(),
+                renderer.getViewportY(),
+                renderer.getViewportX() + renderer.getViewportWidth(),
+                renderer.getViewportY() + renderer.getViewportHeight()
+        );
+        brush.setClipRect(r);
+    }
 }

@@ -95,7 +95,6 @@ public class StickerStore {
 
     public synchronized StickerItem pollPending() {
         return pending.pollFirst();
-        //return pending.pollLast();
     }
 
     public synchronized boolean removeByKey(String key) {

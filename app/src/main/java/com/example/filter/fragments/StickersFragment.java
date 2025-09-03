@@ -62,7 +62,7 @@ public class StickersFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
 
-                FrameLayout overlay = requireActivity().findViewById(R.id.stickerOverlay);
+                FrameLayout overlay = requireActivity().findViewById(R.id.overlayStack);
                 int sessionBaseline = (overlay != null) ? overlay.getChildCount() : 0;
 
                 MyStickersFragment f = new MyStickersFragment();
@@ -97,7 +97,7 @@ public class StickersFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
 
-                FrameLayout overlay = requireActivity().findViewById(R.id.brushOverlay);
+                FrameLayout overlay = requireActivity().findViewById(R.id.overlayStack);
                 int sessionBaseline = (overlay != null) ? overlay.getChildCount() : 0;
 
                 BrushFragment f = new BrushFragment();
@@ -144,7 +144,7 @@ public class StickersFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        FrameLayout overlay = requireActivity().findViewById(R.id.stickerOverlay);
+        FrameLayout overlay = requireActivity().findViewById(R.id.overlayStack);
         if (overlay == null) return;
         for (int i = 0; i < overlay.getChildCount(); i++) {
             View child = overlay.getChildAt(i);
@@ -171,6 +171,9 @@ public class StickersFragment extends Fragment {
                     stickerView.findViewById(R.id.sizeController) == null) {
                 return;
             }
+
+            stickerView.bringToFront();
+            overlay.invalidate();
 
             for (int i = 0; i < overlay.getChildCount(); i++) {
                 View child = overlay.getChildAt(i);

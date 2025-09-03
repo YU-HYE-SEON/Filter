@@ -27,7 +27,7 @@ public class EditMyStickerFragment extends Fragment {
     private float downRawX, downRawY, startX, startY;
     private float rotStartWrapperDeg, rotLastAngleDeg, rotAccumDeg;
     private int startW, startH;
-    private FrameLayout stickerOverlay;
+    private FrameLayout overlayStack;
     private static final int CTRL_BASE_DP = 30;
     private static final int CTRL_MIN_DP = 22;
     private static final int WRAPPER_MIN_DP = 100;
@@ -51,12 +51,12 @@ public class EditMyStickerFragment extends Fragment {
         cancelBtn = v.findViewById(R.id.cancelBtn);
         checkBtn = v.findViewById(R.id.checkBtn);
 
-        stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
-        if (stickerOverlay == null) return;
+        overlayStack = requireActivity().findViewById(R.id.overlayStack);
+        if (overlayStack == null) return;
 
-        stickerWrapper = stickerOverlay.findViewWithTag("editingSticker");
-        if (stickerWrapper == null && stickerOverlay.getChildCount() > 0) {
-            stickerWrapper = stickerOverlay.getChildAt(stickerOverlay.getChildCount() - 1);
+        stickerWrapper = overlayStack.findViewWithTag("editingSticker");
+        if (stickerWrapper == null && overlayStack.getChildCount() > 0) {
+            stickerWrapper = overlayStack.getChildAt(overlayStack.getChildCount() - 1);
         }
         if (stickerWrapper == null) return;
 
@@ -79,7 +79,7 @@ public class EditMyStickerFragment extends Fragment {
         prevEnabledSnapshot = args.getBooleanArray("prevEnabled");
 
         final int sessionBaseline = args.getInt("sessionBaseline",
-                (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0);
+                (overlayStack != null) ? overlayStack.getChildCount() : 0);
 
         origX = args.getFloat("x", stickerWrapper.getX());
         origY = args.getFloat("y", stickerWrapper.getY());
@@ -222,26 +222,26 @@ public class EditMyStickerFragment extends Fragment {
             hideControllers();
 
             if ("stickers".equals(origin)) {
-                if (stickerOverlay != null) {
-                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                        View child = stickerOverlay.getChildAt(i);
+                if (overlayStack != null) {
+                    for (int i = 0; i < overlayStack.getChildCount(); i++) {
+                        View child = overlayStack.getChildAt(i);
                         MyStickersFragment.setStickerActive(child, true);
                         child.setTag(R.id.tag_prev_enabled, null);
                     }
                 }
                 goBackTo(new StickersFragment());
             } else {
-                if (stickerOverlay != null) {
+                if (overlayStack != null) {
                     if (prevEnabledSnapshot != null &&
-                            prevEnabledSnapshot.length == stickerOverlay.getChildCount()) {
-                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                            View child = stickerOverlay.getChildAt(i);
+                            prevEnabledSnapshot.length == overlayStack.getChildCount()) {
+                        for (int i = 0; i < overlayStack.getChildCount(); i++) {
+                            View child = overlayStack.getChildAt(i);
                             MyStickersFragment.setStickerActive(child, prevEnabledSnapshot[i]);
                             child.setTag(R.id.tag_prev_enabled, null);
                         }
                     } else {
-                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                            View child = stickerOverlay.getChildAt(i);
+                        for (int i = 0; i < overlayStack.getChildCount(); i++) {
+                            View child = overlayStack.getChildAt(i);
                             Object prev = child.getTag(R.id.tag_prev_enabled);
                             boolean prevEnabled = (prev instanceof Boolean) ? (Boolean) prev : true;
                             MyStickersFragment.setStickerActive(child, prevEnabled);
@@ -265,27 +265,27 @@ public class EditMyStickerFragment extends Fragment {
             hideControllers();
 
             if ("stickers".equals(origin)) {
-                if (stickerOverlay != null) {
-                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                        View child = stickerOverlay.getChildAt(i);
+                if (overlayStack != null) {
+                    for (int i = 0; i < overlayStack.getChildCount(); i++) {
+                        View child = overlayStack.getChildAt(i);
                         MyStickersFragment.setStickerActive(child, true);
                         child.setTag(R.id.tag_prev_enabled, null);
                     }
                 }
                 goBackTo(new StickersFragment());
             } else {
-                if (stickerOverlay != null) {
+                if (overlayStack != null) {
                     if (prevEnabledSnapshot != null &&
-                            prevEnabledSnapshot.length == stickerOverlay.getChildCount()) {
-                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                        View child = stickerOverlay.getChildAt(i);
+                            prevEnabledSnapshot.length == overlayStack.getChildCount()) {
+                    for (int i = 0; i < overlayStack.getChildCount(); i++) {
+                        View child = overlayStack.getChildAt(i);
                         MyStickersFragment.setStickerActive(child, prevEnabledSnapshot[i]);
                         child.setTag(R.id.tag_prev_enabled, null);
                     }
                 }
                     else{
-                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                            View child = stickerOverlay.getChildAt(i);
+                        for (int i = 0; i < overlayStack.getChildCount(); i++) {
+                            View child = overlayStack.getChildAt(i);
                             Object prev = child.getTag(R.id.tag_prev_enabled);
                             boolean prevEnabled = (prev instanceof Boolean) ? (Boolean) prev : true;
                             MyStickersFragment.setStickerActive(child, prevEnabled);
@@ -316,7 +316,7 @@ public class EditMyStickerFragment extends Fragment {
 
     private float[] getTouchInOverlay(MotionEvent e) {
         int[] ov = new int[2];
-        stickerOverlay.getLocationOnScreen(ov);
+        overlayStack.getLocationOnScreen(ov);
         return new float[]{e.getRawX() - ov[0], e.getRawY() - ov[1]};
     }
 
