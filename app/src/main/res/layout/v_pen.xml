@@ -18,45 +18,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 채도 -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/saturationBox"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginLeft="25dp"
-        android:layout_marginRight="25dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/colorPalette">
-
-        <SeekBar
-            android:id="@+id/saturationSeekbar"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:max="100"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:progress="0"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <EditText
-            android:id="@+id/saturationValue"
-            android:layout_width="40dp"
-            android:layout_height="20dp"
-            android:background="@color/white"
-            android:inputType="number"
-            android:maxLength="3"
-            android:text="100"
-            android:textAlignment="center"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/colorCodeBox"
         android:layout_width="0dp"
@@ -65,10 +26,10 @@
         android:layout_marginRight="25dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/saturationBox">
+        app:layout_constraintTop_toBottomOf="@+id/colorPalette">
 
         <LinearLayout
-            android:id="@+id/Hex"
+            android:id="@+id/HexBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -101,14 +62,14 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/R"
+            android:id="@+id/Rbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/G"
-            app:layout_constraintStart_toEndOf="@+id/Hex"
+            app:layout_constraintEnd_toStartOf="@+id/Gbox"
+            app:layout_constraintStart_toEndOf="@+id/HexBox"
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
@@ -134,14 +95,14 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/G"
+            android:id="@+id/Gbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/B"
-            app:layout_constraintStart_toEndOf="@+id/R"
+            app:layout_constraintEnd_toStartOf="@+id/Bbox"
+            app:layout_constraintStart_toEndOf="@+id/Rbox"
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
@@ -167,7 +128,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/B"
+            android:id="@+id/Bbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -200,9 +161,9 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 투명도 -->
+    <!-- 채도 -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/alphaBox"
+        android:id="@+id/saturationBox"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:layout_marginLeft="25dp"
@@ -212,6 +173,46 @@
         app:layout_constraintTop_toBottomOf="@+id/colorCodeBox">
 
         <SeekBar
+            android:id="@+id/saturationSeekbar"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:progress="100"
+            android:splitTrack="false"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <EditText
+            android:id="@+id/saturationValue"
+            android:layout_width="40dp"
+            android:layout_height="20dp"
+            android:background="@color/white"
+            android:inputType="number"
+            android:maxLength="3"
+            android:text="100"
+            android:textAlignment="center"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 투명도 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/alphaBox"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/saturationBox">
+
+        <SeekBar
             android:id="@+id/alphaSeekbar"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
@@ -219,6 +220,7 @@
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:progress="100"
+            android:splitTrack="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -257,6 +259,7 @@
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:progress="0"
+            android:splitTrack="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

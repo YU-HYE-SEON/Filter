@@ -4,9 +4,17 @@ import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RoundRectShape;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -60,6 +68,24 @@ public class BrushFragment extends Fragment {
     private BrushOverlayView brushDraw;
     private BrushStateViewModel brushState;
     private View.OnLayoutChangeListener brushClipListener;
+    private float lastHue = 0f;
+    private float lastSat = 1f;
+    private boolean hasLastHS = false;
+    private static final int SAT_THUMB_DIAMETER_DP = 22;
+    private static final int SAT_THUMB_STROKE_DP = 2;
+    private GradientDrawable satTrack;
+    private GradientDrawable satThumb;
+    private Drawable alphaChecker;
+    private GradientDrawable alphaTrack;
+    private LayerDrawable alphaLayer;
+    private GradientDrawable alphaThumb;
+    private Drawable sizeChecker;
+    private GradientDrawable sizeTrack;
+    private LayerDrawable sizeLayer;
+    private GradientDrawable sizeThumb;
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private Runnable pendingSatUi, pendingAlphaUi;
+    private static final long SEEKBAR_THROTTLE_MS = 16;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -138,19 +164,6 @@ public class BrushFragment extends Fragment {
             showPenPanel();
         });
 
-        glowPen.setOnClickListener(v -> {
-            /*if (isPenPanelOpen) return;
-
-            if (brushDraw != null) {
-                brushDraw.setBrush(lastPenColor, lastPenSizePx, BrushOverlayView.BrushMode.GLOW);
-                brushDraw.setGlowParams(1.8f, 0.5f, 12f);
-                brushDraw.setDrawingEnabled(true);
-                brushDraw.bringToFront();
-            }
-
-            showPenPanel();*/
-        });
-
         cancelBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
 
@@ -191,9 +204,16 @@ public class BrushFragment extends Fragment {
         if (brushPanel == null || isPenPanelOpen) return;
         isPenPanelOpen = true;
 
+        final float backupHue = lastHue;
+        final float backupSat = lastSat;
+        final boolean backupHasHS = hasLastHS;
+
         if (brushDraw != null) brushDraw.setDrawingEnabled(false);
 
         View panel = inflater.inflate(R.layout.v_pen, brushPanel, false);
+
+        initSeekbarDrawables(panel);
+        setupSeekbarStaticPadding(panel);
 
         brushPanel.setVisibility(View.VISIBLE);
         brushPanel.removeAllViews();
@@ -218,8 +238,13 @@ public class BrushFragment extends Fragment {
         {
             float[] hsvInit = new float[3];
             Color.colorToHSV(0xFF000000 | (lastPenColor & 0x00FFFFFF), hsvInit);
-            baseHS[0] = hsvInit[0];
-            baseHS[1] = hsvInit[1];
+            if (hsvInit[2] == 0f && hasLastHS) {
+                baseHS[0] = lastHue;
+                baseHS[1] = lastSat;
+            } else {
+                baseHS[0] = hsvInit[0];
+                baseHS[1] = hsvInit[1];
+            }
         }
         final int[] sizeDiameterPx = {dp(4)};
 
@@ -268,6 +293,11 @@ public class BrushFragment extends Fragment {
                 int picked = envelope.getColor();
                 float[] hsvTmp = new float[3];
                 Color.colorToHSV(0xFF000000 | (picked & 0x00FFFFFF), hsvTmp);
+
+                lastHue = hsvTmp[0];
+                lastSat = hsvTmp[1];
+                hasLastHS = true;
+
                 baseHS[0] = hsvTmp[0];
                 baseHS[1] = hsvTmp[1];
 
@@ -325,8 +355,10 @@ public class BrushFragment extends Fragment {
 
                 float[] hsvTmp = new float[3];
                 Color.colorToHSV(0xFF000000 | (rgb & 0x00FFFFFF), hsvTmp);
-                baseHS[0] = hsvTmp[0];
-                baseHS[1] = hsvTmp[1];
+                float useH = (hsvTmp[2] == 0f && hasLastHS) ? lastHue : hsvTmp[0];
+                float useS = (hsvTmp[2] == 0f && hasLastHS) ? lastSat : hsvTmp[1];
+                baseHS[0] = useH;
+                baseHS[1] = useS;
                 if (satValue != null) {
                     setTextIfChangedKeepCursor(satValue, String.valueOf(Math.round(hsvTmp[2] * 100)));
                 }
@@ -357,8 +389,10 @@ public class BrushFragment extends Fragment {
 
                 float[] hsvTmp = new float[3];
                 Color.colorToHSV(0xFF000000 | ((r << 16) | (g << 8) | b), hsvTmp);
-                baseHS[0] = hsvTmp[0];
-                baseHS[1] = hsvTmp[1];
+                float useH = (hsvTmp[2] == 0f && hasLastHS) ? lastHue : hsvTmp[0];
+                float useS = (hsvTmp[2] == 0f && hasLastHS) ? lastSat : hsvTmp[1];
+                baseHS[0] = useH;
+                baseHS[1] = useS;
                 if (satValue != null) {
                     setTextIfChangedKeepCursor(satValue, String.valueOf(Math.round(hsvTmp[2] * 100)));
                 }
@@ -377,19 +411,23 @@ public class BrushFragment extends Fragment {
 
         if (satSeekbar != null)
             satSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (!fromUser) return;
-                    if (suppress) return;
-                    if (satValue != null) satValue.setText(String.valueOf(progress));
-                }
+                @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (!fromUser || suppress) return;
 
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-                }
+                    updateSatSeekbarAppearance(seekBar, baseHS[0], baseHS[1], progress);
+                    if (alphaSeekbar != null) {
+                        float vNow = progress / 100f;
+                        int aPctNow = clamp(parseIntEmptyZeroSafe(alphaValue), 0, 100);
+                        updateAlphaSeekbarAppearance(alphaSeekbar, baseHS[0], baseHS[1], vNow, aPctNow);
+                    }
 
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
+                    if (pendingSatUi != null) ui.removeCallbacks(pendingSatUi);
+                    pendingSatUi = () -> { if (satValue != null) satValue.setText(String.valueOf(progress)); };
+                    ui.postDelayed(pendingSatUi, SEEKBAR_THROTTLE_MS);
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {
+                    if (satValue != null) satValue.setText(String.valueOf(seekBar.getProgress()));
                 }
             });
 
@@ -427,24 +465,37 @@ public class BrushFragment extends Fragment {
                 suppress = true;
                 pushColorToUI(panel, colorPalette, argb, satValue, false);
                 suppress = false;
+
+                if (alphaSeekbar != null) {
+                    int aPctNow = clamp(parseIntEmptyZeroSafe(alphaValue), 0, 100);
+                    updateAlphaSeekbarAppearance(alphaSeekbar, baseHS[0], baseHS[1], v, aPctNow);
+                }
+
+                if (sizeSeekbar != null) {
+                    int vPctNow = clamp(parseIntEmptyZeroSafe(satValue), 0, 100);
+                    float vFor = vPctNow / 100f;
+                    int rgbScaled2 = Color.HSVToColor(new float[]{baseHS[0], baseHS[1], vFor}) & 0x00FFFFFF;
+                    int a2 = clamp(Math.round(clamp(parseIntEmptyZeroSafe(alphaValue), 0, 100) * 2.55f), 0, 255);
+                    updateSizeSeekbarAppearance(sizeSeekbar, (a2 << 24) | rgbScaled2);
+                }
             }
         });
 
         if (alphaSeekbar != null)
             alphaSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (!fromUser) return;
-                    if (suppress) return;
-                    if (alphaValue != null) alphaValue.setText(String.valueOf(progress));
-                }
+                @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (!fromUser || suppress) return;
 
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-                }
+                    float vNow = clamp(parseIntEmptyZeroSafe(satValue), 0, 100) / 100f;
+                    updateAlphaSeekbarAppearance(seekBar, baseHS[0], baseHS[1], vNow, progress);
 
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
+                    if (pendingAlphaUi != null) ui.removeCallbacks(pendingAlphaUi);
+                    pendingAlphaUi = () -> { if (alphaValue != null) alphaValue.setText(String.valueOf(progress)); };
+                    ui.postDelayed(pendingAlphaUi, SEEKBAR_THROTTLE_MS);
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {
+                    if (alphaValue != null) alphaValue.setText(String.valueOf(seekBar.getProgress()));
                 }
             });
 
@@ -479,6 +530,17 @@ public class BrushFragment extends Fragment {
                 suppress = true;
                 pushColorToUI(panel, colorPalette, argb, alphaValue, false);
                 suppress = false;
+
+                if (alphaSeekbar != null) {
+                    float vNow = clamp(parseIntEmptyZeroSafe(satValue), 0, 100) / 100f;
+                    updateAlphaSeekbarAppearance(alphaSeekbar, baseHS[0], baseHS[1], vNow, aPct);
+                }
+
+
+                float vNow2 = clamp(parseIntEmptyZeroSafe(satValue), 0, 100) / 100f;
+                int rgbScaled2 = Color.HSVToColor(new float[]{baseHS[0], baseHS[1], vNow2}) & 0x00FFFFFF;
+                int a2 = clamp(Math.round(aPct * 2.55f), 0, 255);
+                updateSizeSeekbarAppearance(sizeSeekbar, (a2 << 24) | rgbScaled2);
             }
         });
 
@@ -506,7 +568,13 @@ public class BrushFragment extends Fragment {
 
         View penCancel = panel.findViewById(R.id.cancelBtn);
         View penComplete = panel.findViewById(R.id.completeBtn);
-        if (penCancel != null) penCancel.setOnClickListener(v -> hideToolPanel(true));
+        if (penCancel != null) penCancel.setOnClickListener(v -> {
+            lastHue = backupHue;
+            lastSat = backupSat;
+            hasLastHS = backupHasHS;
+
+            hideToolPanel(true);
+        });
         if (penComplete != null) penComplete.setOnClickListener(v -> {
             int chosen = gatherCurrentARGB(
                     (EditText) panel.findViewById(R.id.RCode),
@@ -519,6 +587,8 @@ public class BrushFragment extends Fragment {
             tintPenButton(chosen);
 
             lastPenSizePx = sizeDiameterPx[0];
+
+            hasLastHS = true;
 
             brushState.color = lastPenColor;
             brushState.sizePx = lastPenSizePx;
@@ -589,7 +659,12 @@ public class BrushFragment extends Fragment {
         if (updateSelector && colorPalette != null) {
             moveSelectorToColor(colorPalette, argb);
 
-            int preview = colorAtFullSV(argb);
+            float[] hsv = new float[3];
+            Color.colorToHSV(0xFF000000 | (argb & 0x00FFFFFF), hsv);
+            float hPreview = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
+            float sPreview = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
+
+            int preview = Color.HSVToColor(new float[]{hPreview, sPreview, 1f});
             setSelectorColor(colorPalette, preview);
         }
 
@@ -612,6 +687,12 @@ public class BrushFragment extends Fragment {
         float[] hsv = new float[3];
         Color.colorToHSV(0xFF000000 | (argb & 0x00FFFFFF), hsv);
 
+        if (hsv[2] > 0f) {
+            lastHue = hsv[0];
+            lastSat = hsv[1];
+            hasLastHS = true;
+        }
+
         if (rCode != sourceEt) setTextSkipIfEmptyAndZero(rCode, r);
         if (gCode != sourceEt) setTextSkipIfEmptyAndZero(gCode, g);
         if (bCode != sourceEt) setTextSkipIfEmptyAndZero(bCode, b);
@@ -621,6 +702,25 @@ public class BrushFragment extends Fragment {
             setTextIfChangedKeepCursor(satValue, String.valueOf(Math.round(hsv[2] * 100)));
         if (alphaValue != sourceEt)
             setTextIfChangedKeepCursor(alphaValue, String.valueOf(Math.round(a / 2.55f)));
+
+        SeekBar satSeekbar = panel.findViewById(R.id.saturationSeekbar);
+        SeekBar alphaSeekbar = panel.findViewById(R.id.alphaSeekbar);
+        SeekBar sizeSeekbar = panel.findViewById(R.id.sizeSeekbar);
+        if (satSeekbar != null) {
+            float hForTrack = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
+            float sForTrack = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
+
+            int vPct = Math.round(hsv[2] * 100f);
+            updateSatSeekbarAppearance(satSeekbar, hForTrack, sForTrack, vPct);
+
+            if (alphaSeekbar != null) {
+                updateAlphaSeekbarAppearance(alphaSeekbar, hForTrack, sForTrack, hsv[2], Math.round(a / 2.55f));
+            }
+
+            if (sizeSeekbar != null) {
+                updateSizeSeekbarAppearance(sizeSeekbar, argb);
+            }
+        }
     }
 
     private int parseHexRGB(String hexCode) {
@@ -686,6 +786,15 @@ public class BrushFragment extends Fragment {
 
         float[] hsv = new float[3];
         Color.colorToHSV(0xFF000000 | (argb & 0x00FFFFFF), hsv);
+
+        if (hsv[2] == 0f && hasLastHS) {
+            hsv[0] = lastHue;
+            hsv[1] = lastSat;
+        } else {
+            lastHue = hsv[0];
+            lastSat = hsv[1];
+            hasLastHS = true;
+        }
 
         if (hsv[0] >= 360f) hsv[0] = 0f;
 
@@ -851,6 +960,104 @@ public class BrushFragment extends Fragment {
         if (bCode != null) bCode.setText(String.valueOf(b));
         if (alphaVal != null) alphaVal.setText(String.valueOf(aPct));
         if (satVal != null) satVal.setText(String.valueOf(vPct));
+    }
+
+    private void updateSatSeekbarAppearance(SeekBar bar, float hue, float sat, int vPct) {
+        int end = Color.HSVToColor(new float[]{hue, sat, 1f});
+        satTrack.setColors(new int[]{Color.BLACK, end});
+
+        float v = Math.max(0f, Math.min(1f, vPct / 100f));
+        int thumbArgb = Color.HSVToColor(new float[]{hue, sat, v});
+        satThumb.setColor(thumbArgb);
+        bar.invalidate();
+    }
+
+    private void updateAlphaSeekbarAppearance(SeekBar bar, float hue, float sat, float v, int aPct) {
+        int opaque = Color.HSVToColor(new float[]{hue, sat, Math.max(0f, Math.min(1f, v))});
+        int rgb = opaque & 0x00FFFFFF;
+
+        alphaTrack.setColors(new int[]{rgb, (rgb | 0xFF000000)});
+
+        int a = clamp(Math.round(aPct * 2.55f), 0, 255);
+        int thumbArgb = (a << 24) | rgb;
+        alphaThumb.setColor(thumbArgb);
+        bar.invalidate();
+    }
+
+    private void updateSizeSeekbarAppearance(SeekBar bar, int argb) {
+        sizeTrack.setColors(new int[]{argb, argb});
+        sizeThumb.setColor(argb);
+        bar.invalidate();
+    }
+
+    private Drawable buildRoundThumb(int diameterDp, int fillColor, int strokeDp) {
+        GradientDrawable d = new GradientDrawable();
+        d.setShape(GradientDrawable.OVAL);
+        d.setColor(fillColor);
+        d.setStroke(dp(strokeDp), Color.WHITE);
+        d.setSize(dp(diameterDp), dp(diameterDp));
+        return d;
+    }
+
+    private Drawable buildTiledCheckerboard(int cornerPx) {
+        Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.transparent_bg);
+        BitmapShader shader = new BitmapShader(bmp, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+
+        Matrix m = new Matrix();
+        float scale = 0.35f;
+        m.setScale(scale, scale);
+        shader.setLocalMatrix(m);
+
+        float r = cornerPx;
+        float[] radii = new float[]{r, r, r, r, r, r, r, r};
+        ShapeDrawable sd = new ShapeDrawable(new RoundRectShape(radii, null, null));
+        sd.getPaint().setAntiAlias(true);
+        sd.getPaint().setShader(shader);
+        return sd;
+    }
+
+    private void initSeekbarDrawables(View panel) {
+        satTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.BLACK, Color.WHITE});
+        satTrack.setCornerRadius(dp(999));
+        satThumb = (GradientDrawable) buildRoundThumb(SAT_THUMB_DIAMETER_DP, Color.WHITE, SAT_THUMB_STROKE_DP);
+
+        SeekBar sSat = panel.findViewById(R.id.saturationSeekbar);
+        sSat.setProgressDrawable(satTrack);
+        sSat.setThumb(satThumb);
+
+        alphaChecker = buildTiledCheckerboard(dp(999));
+        alphaTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.WHITE, Color.WHITE});
+        alphaTrack.setCornerRadius(dp(999));
+        alphaLayer = new LayerDrawable(new Drawable[]{alphaChecker, alphaTrack});
+        alphaThumb = (GradientDrawable) buildRoundThumb(SAT_THUMB_DIAMETER_DP, Color.WHITE, SAT_THUMB_STROKE_DP);
+
+        SeekBar sAlpha = panel.findViewById(R.id.alphaSeekbar);
+        sAlpha.setProgressDrawable(alphaLayer);
+        sAlpha.setThumb(alphaThumb);
+
+        sizeChecker = buildTiledCheckerboard(dp(999));
+        sizeTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.WHITE, Color.WHITE});
+        sizeTrack.setCornerRadius(dp(999));
+        sizeLayer = new LayerDrawable(new Drawable[]{sizeChecker, sizeTrack});
+        sizeThumb = (GradientDrawable) buildRoundThumb(SAT_THUMB_DIAMETER_DP, Color.WHITE, SAT_THUMB_STROKE_DP);
+
+        SeekBar sSize = panel.findViewById(R.id.sizeSeekbar);
+        sSize.setProgressDrawable(sizeLayer);
+        sSize.setThumb(sizeThumb);
+    }
+
+    private void setupSeekbarStaticPadding(View panel) {
+        //int pad = dp(SAT_THUMB_DIAMETER_DP / 2);
+        for (int id : new int[]{R.id.saturationSeekbar, R.id.alphaSeekbar, R.id.sizeSeekbar}) {
+            SeekBar b = panel.findViewById(id);
+            b.setPadding(0, 0, 0, 0);
+            try {
+                b.setThumbOffset(0);
+            } catch (Throwable ignore) {}
+        }
     }
 
     @Override
