@@ -134,11 +134,11 @@ public class LassoOverlayView extends View {
             }
             canvas.restoreToCount(id);*/
 
-            /*int save = clipOutAllShapes(canvas);
+            /*int savePen = clipOutAllShapes(canvas);
             for (Path s : shapes) {
                 canvas.drawPath(s, strokePaint);
             }
-            canvas.restoreToCount(save);*/
+            canvas.restoreToCount(savePen);*/
             boolean drawWithoutClip = isFullRectSelection();
 
             int save = 0;
