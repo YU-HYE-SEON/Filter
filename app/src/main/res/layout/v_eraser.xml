@@ -22,8 +22,9 @@
 
         <ImageView
             android:id="@+id/eraserSize"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_gravity="center"
             android:background="@color/black" />
 
     </LinearLayout>

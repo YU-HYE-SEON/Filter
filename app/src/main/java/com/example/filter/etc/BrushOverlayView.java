@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -28,26 +30,31 @@ public class BrushOverlayView extends View {
             corePaint.setStyle(Paint.Style.STROKE);
             corePaint.setStrokeJoin(Paint.Join.ROUND);
             corePaint.setStrokeCap(Paint.Cap.ROUND);
-            corePaint.setColor(color);
             corePaint.setStrokeWidth(widthPx);
 
-            if (mode == BrushMode.GLOW) {
-                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-                p.setStyle(Paint.Style.STROKE);
-                p.setStrokeJoin(Paint.Join.ROUND);
-                p.setStrokeCap(Paint.Cap.ROUND);
-
-                int a = Color.alpha(color);
-                int glowA = Math.round(a * glowAlpha);
-                int glowColor = (glowA << 24) | (color & 0x00FFFFFF);
-                p.setColor(glowColor);
-                p.setStrokeWidth(widthPx * glowScale);
-
-                p.setMaskFilter(new android.graphics.BlurMaskFilter(glowRadiusPx, BlurMaskFilter.Blur.NORMAL));
-
-                glowPaint = p;
-            } else {
+            if (mode == BrushMode.ERASER) {
+                corePaint.setColor(Color.TRANSPARENT);
+                corePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
                 glowPaint = null;
+            } else {
+                corePaint.setColor(color);
+
+                if (mode == BrushMode.GLOW) {
+                    Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    p.setStyle(Paint.Style.STROKE);
+                    p.setStrokeJoin(Paint.Join.ROUND);
+                    p.setStrokeCap(Paint.Cap.ROUND);
+
+                    int a = Color.alpha(color);
+                    int glowA = Math.round(a * glowAlpha);
+                    int glowColor = (glowA << 24) | (color & 0x00FFFFFF);
+                    p.setColor(glowColor);
+                    p.setStrokeWidth(widthPx * glowScale);
+                    p.setMaskFilter(new BlurMaskFilter(glowRadiusPx, BlurMaskFilter.Blur.NORMAL));
+                    glowPaint = p;
+                } else {
+                    glowPaint = null;
+                }
             }
         }
     }
