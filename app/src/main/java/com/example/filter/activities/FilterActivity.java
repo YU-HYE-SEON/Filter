@@ -7,24 +7,32 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
+
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -45,42 +53,56 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class FilterActivity extends BaseActivity {
-    private FrameLayout overlayStack;
+    /// UI ///
+    private FrameLayout stickerOverlay, brushOverlay;
+    private GLSurfaceView photoPreview;
+    private ImageButton backBtn, saveBtn;
+    private ImageButton undoColor, redoColor, originalColor;
+    private ImageButton undoSticker, redoSticker, originalSticker;
+    private TextView saveTxt;
+
+    /// renderer, photoImage ///
+    private FGLRenderer renderer;
+    private Bitmap originalBitmap, transformedBitmap, cropBeforeBitmap, baseImageForCrop;
+
+    /// 시스템 ///
     private ActivityResultLauncher<Intent> imagePickerLauncher;
     private OnBackPressedCallback backGateCallback;
-    private ImageButton undoColor, redoColor, originalColor;
-    private ConstraintLayout topArea;
-    private GLSurfaceView photoPreview;
-    private FGLRenderer renderer;
-    private ImageButton backBtn, saveBtn;
-    private TextView saveTxt;
-    private Bitmap originalBitmap, transformedBitmap, cropBeforeBitmap, baseImageForCrop;
-    private float rotationDegree = 0;
-    private boolean flipHorizontal = false, flipVertical = false;
-    private RectF lastCropRectN = null;
-    private CropBoxOverlayView cropOverlay;
 
-    public enum CropMode {NONE, FREE, OTO, TTF, NTS}
+    /// 크롭 ///
+    public enum CropMode {NONE, FREE, OTO, TTF, NTS;}
 
     private CropMode currentCropMode = CropMode.NONE;
     private CropMode lastCropMode = CropMode.NONE;
     private CropMode appliedCropMode = CropMode.NONE;
-    private float scaleFactor = 1.0f;
-    private ScaleGestureDetector scaleDetector;
-    private float lastTouchX = 0f, lastTouchY = 0f;
-    private boolean isTwoFingerGesture = false;
-    private float translateX = 0f, translateY = 0f;
-    private boolean suppressNextSingleFingerMove = false;
-    private float lastScale = 1f;
-    private float lastTxN = 0f, lastTyN = 0f;
+    private CropBoxOverlayView cropOverlay;
+    private RectF lastCropRectN = null;
+    private boolean cropEdited = false;
     private boolean needResetCropRectOnce = false;
     private Bitmap cropSessionEntryBitmap = null;
     private boolean isCropSessionLatched = false;
-    private boolean colorEdited = false;
-    private boolean beforePressed = false;
 
+    /// transform, gesture ///
+    private float scaleFactor = 1.0f;
+    private float translateX = 0f, translateY = 0f;
+    private float lastScale = 1f, lastTxN = 0f, lastTyN = 0f;
+    private ScaleGestureDetector scaleDetector;
+    private float lastTouchX = 0f, lastTouchY = 0f;
+    private boolean isTwoFingerGesture = false;
+    private boolean suppressNextSingleFingerMove = false;
+
+    /// 회전, 반전 ///
+    private float rotationDegree = 0;
+    private boolean flipHorizontal = false, flipVertical = false;
+    private int accumRotationDeg = 0;
+    private boolean accumFlipH = false, accumFlipV = false;
+    private boolean rotationEdited = false;
+
+    /// 컬러 ///
     private static class ColorEdit {
         final String filterType;
         final int before, after;
@@ -90,233 +112,110 @@ public class FilterActivity extends BaseActivity {
             this.before = b;
             this.after = a;
         }
+
     }
 
     private final ArrayList<ColorEdit> colorHistory = new ArrayList<>();
     private int colorCursor = -1;
-
-    public void recordColorEdit(String filterType, int before, int after) {
-        if (filterType == null) return;
-        if (before == after) return;
-
-        while (colorHistory.size() > colorCursor + 1) {
-            colorHistory.remove(colorHistory.size() - 1);
-        }
-        colorHistory.add(new ColorEdit(filterType, before, after));
-        colorCursor = colorHistory.size() - 1;
-
-        setColorEdited(true);
-    }
-
-    public boolean canUndoColor() {
-        return colorCursor >= 0;
-    }
-
-    public boolean canRedoColor() {
-        return colorCursor < colorHistory.size() - 1;
-    }
-
-    public void undoColor() {
-        if (!canUndoColor()) return;
-        ColorEdit e = colorHistory.get(colorCursor);
-        if (renderer != null) renderer.updateValue(e.filterType, e.before);
-        colorCursor--;
-        photoPreview.requestRender();
-        refreshOriginalColorButton();
-    }
-
-    public void redoColor() {
-        if (!canRedoColor()) return;
-        ColorEdit e = colorHistory.get(colorCursor + 1);
-        if (renderer != null) renderer.updateValue(e.filterType, e.after);
-        colorCursor++;
-        photoPreview.requestRender();
-        refreshOriginalColorButton();
-    }
-
+    private boolean colorEdited = false;
     private final String[] FILTER_KEYS = new String[]{
             "밝기", "노출", "대비", "하이라이트", "그림자",
             "온도", "색조", "채도", "선명하게", "흐리게", "비네트", "노이즈"
     };
-
+    private final HashMap<String, Integer> baselineFilterValues = new HashMap<>();
     private final HashMap<String, Integer> savedFilterValues = new HashMap<>();
     private boolean isPreviewingOriginalColors = false;
 
-    public void previewOriginalColors(boolean on) {
-        if (renderer == null) return;
+    /// 브러쉬, 스티커 ///
+    private static class StickerOp {
+        final ArrayList<View> views = new ArrayList<>();
+        final ArrayList<Integer> positions = new ArrayList<>();
+    }
 
-        if (on) {
-            if (isPreviewingOriginalColors) return;
-            savedFilterValues.clear();
-            for (String k : FILTER_KEYS) {
-                savedFilterValues.put(k, getCurrentValue(k));
-            }
-            renderer.resetAllFilter();
-            photoPreview.requestRender();
-            isPreviewingOriginalColors = true;
-        } else {
-            if (!savedFilterValues.isEmpty()) {
-                for (String k : FILTER_KEYS) {
-                    Integer v = savedFilterValues.get(k);
-                    if (v != null) renderer.updateValue(k, v);
-                }
-                savedFilterValues.clear();
-                photoPreview.requestRender();
-            }
-            isPreviewingOriginalColors = false;
+    private static class StickerEdit {
+        View view;
+        float bx, by, br;
+        int bw, bh;
+        float ax, ay, ar;
+        int aw, ah;
+    }
+
+    public static class ErasePatch {
+        public Rect rect;
+        public Bitmap before;
+    }
+
+    public static class EraseOp {
+        public ImageView view;
+        public ArrayList<ErasePatch> patches = new ArrayList<>();
+        public Path pathOnBitmap;
+        public float strokeWidthPx;
+    }
+
+    private static class HistoryOp {
+        StickerOp sticker;
+        int brushBefore = -1;
+        int brushAfter = -1;
+        StickerEdit edit;
+        View deletedView;
+        int deletedPos = -1;
+        View zChangedView = null;
+        int zBeforePos = -1;
+        int zAfterPos = -1;
+        Float zBeforeElevation = null;
+        Float zAfterElevation = null;
+        ArrayList<EraseOp> erases;
+
+        boolean hasSticker() {
+            return sticker != null && !sticker.views.isEmpty();
+        }
+
+        boolean hasBrush() {
+            return brushBefore >= 0 && brushAfter >= 0 && brushBefore != brushAfter;
+        }
+
+        boolean hasStickerEdit() {
+            return edit != null && edit.view != null;
+        }
+
+        boolean hasDeletion() {
+            return deletedView != null && deletedPos >= 0;
+        }
+
+        boolean hasZChange() {
+            return zChangedView != null && zBeforePos >= 0 && zAfterPos >= 0;
+        }
+
+        boolean hasErase() {
+            return erases != null && !erases.isEmpty();
         }
     }
 
-    public void setUndoRedoEnabled(boolean enabled) {
-        if (undoColor != null) {
-            undoColor.setEnabled(enabled);
-            undoColor.setAlpha(enabled ? 1f : 0.4f);
-        }
-        if (redoColor != null) {
-            redoColor.setEnabled(enabled);
-            redoColor.setAlpha(enabled ? 1f : 0.4f);
-        }
-    }
+    private final ArrayList<HistoryOp> history = new ArrayList<>();
+    private int historyCursor = -1;
 
-    private final HashMap<String, Integer> baselineFilterValues = new HashMap<>();
-
-    private boolean isAtBaseline() {
-        for (String k : FILTER_KEYS) {
-            int cur = getCurrentValue(k);
-            int base = baselineFilterValues.containsKey(k) ? baselineFilterValues.get(k) : 0;
-            if (cur != base) return false;
-        }
-        return true;
-    }
-
-    public void refreshOriginalColorButton() {
-        boolean same = isAtBaseline();
-        if (originalColor != null) {
-            originalColor.setEnabled(!same);
-            originalColor.setAlpha(!same ? 1f : 0.4f);
-        }
-    }
-
-    private int accumRotationDeg = 0;
-    private boolean accumFlipH = false;
-    private boolean accumFlipV = false;
-    private boolean rotationEdited = false;
-
-    public boolean isRotationEdited() {
-        return rotationEdited;
-    }
-
-    private static int normDeg(int d) {
-        int n = d % 360;
-        return (n < 0) ? n + 360 : n;
-    }
-
-    private boolean isGeometrySameAsOriginal() {
-        int r = normDeg(accumRotationDeg);
-        if (r == 0 && !accumFlipH && !accumFlipV) return true;
-        if (r == 180 && accumFlipH && accumFlipV) return true;
-        return false;
-    }
-
-    private void refreshRotationEditedFlag() {
-        rotationEdited = !isGeometrySameAsOriginal();
-    }
-
-    private boolean cropEdited = false;
-
-    public boolean isCropEdited() {
-        return cropEdited;
-    }
-
-    public void setCropEdited(boolean edited) {
-        this.cropEdited = edited;
-    }
-
-    public void resetCropState() {
-        lastCropMode = CropMode.NONE;
-        appliedCropMode = CropMode.NONE;
-        lastCropRectN = null;
-        needResetCropRectOnce = true;
-
-        isCropSessionLatched = false;
-        cropSessionEntryBitmap = null;
-
-        if (renderer != null && renderer.getCurrentBitmap() != null) {
-            Bitmap cur = renderer.getCurrentBitmap();
-            baseImageForCrop = cur.copy(cur.getConfig(), true);
-        }
-    }
-
-    public float getScaleFactor() {
-        return scaleFactor;
-    }
-
-    public float getTranslateX() {
-        return translateX;
-    }
-
-    public float getTranslateY() {
-        return translateY;
-    }
-
-    public boolean isViewportIdentity() {
-        return Math.abs(scaleFactor - 1f) < 1e-3f
-                && Math.abs(translateX) < 1e-2f
-                && Math.abs(translateY) < 1e-2f;
-    }
-
+    /// lifecycle ///
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_filter);
-        topArea = findViewById(R.id.topArea);
         backBtn = findViewById(R.id.backBtn);
         saveBtn = findViewById(R.id.saveBtn);
         saveTxt = findViewById(R.id.saveTxt);
         photoPreview = findViewById(R.id.photoPreview);
-        overlayStack = findViewById(R.id.overlayStack);
+        stickerOverlay = findViewById(R.id.stickerOverlay);
+        brushOverlay = findViewById(R.id.brushOverlay);
 
         undoColor = findViewById(R.id.undoColor);
         redoColor = findViewById(R.id.redoColor);
         originalColor = findViewById(R.id.originalColor);
 
+        undoSticker = findViewById(R.id.undoSticker);
+        redoSticker = findViewById(R.id.redoSticker);
+        originalSticker = findViewById(R.id.originalSticker);
+
         StickerStore.get().init(getApplicationContext());
-
-        originalColor.setOnTouchListener((v, ev) -> {
-            switch (ev.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    v.setPressed(true);
-                    if (undoColor != null) {
-                        undoColor.setEnabled(false);
-                        undoColor.setAlpha(0.4f);
-                    }
-                    if (redoColor != null) {
-                        redoColor.setEnabled(false);
-                        redoColor.setAlpha(0.4f);
-                    }
-                    previewOriginalColors(true);
-                    return true;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    v.setPressed(false);
-                    previewOriginalColors(false);
-                    if (undoColor != null) {
-                        boolean canUndo = canUndoColor();
-                        undoColor.setEnabled(canUndo);
-                        undoColor.setAlpha(canUndo ? 1f : 0.4f);
-                    }
-                    if (redoColor != null) {
-                        boolean canRedo = canRedoColor();
-                        redoColor.setEnabled(canRedo);
-                        redoColor.setAlpha(canRedo ? 1f : 0.4f);
-                    }
-                    return true;
-            }
-            return true;
-        });
-
-        cropOverlay = null;
 
         if (photoPreview != null) {
             photoPreview.setEGLContextClientVersion(2);
@@ -370,6 +269,117 @@ public class FilterActivity extends BaseActivity {
             }
         });
 
+        setupColorButtons();
+        setupStickerButtons();
+        setupSaveButton();
+        setupBackNavigation();
+        setupImagePicker();
+
+        cropOverlay = null;
+
+        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+        updateBackAndSaveUiEnabled(cur);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showExitConfirmDialog();
+            }
+        });
+
+        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+            FrameLayout full = findViewById(R.id.fullScreenFragmentContainer);
+            ConstraintLayout filter = findViewById(R.id.filterActivity);
+            ConstraintLayout main = findViewById(R.id.main);
+
+            Fragment f = getSupportFragmentManager().findFragmentById(R.id.fullScreenFragmentContainer);
+            if (f == null) {
+                full.setVisibility(View.GONE);
+                filter.setVisibility(View.VISIBLE);
+                main.setBackgroundColor(Color.BLACK);
+            }
+        });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && intent.getBooleanExtra("EXIT_BY_CHILD", false)) {
+            finish();
+        }
+    }
+
+    /// UI Setting ///
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupColorButtons() {
+        originalColor.setOnTouchListener((v, ev) -> {
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    originalColor.setAlpha(0.4f);
+                    if (undoColor != null) {
+                        undoColor.setEnabled(false);
+                        undoColor.setAlpha(0.4f);
+                    }
+                    if (redoColor != null) {
+                        redoColor.setEnabled(false);
+                        redoColor.setAlpha(0.4f);
+                    }
+                    previewOriginalColors(true);
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.setPressed(false);
+                    originalColor.setAlpha(1f);
+                    previewOriginalColors(false);
+                    if (undoColor != null) {
+                        boolean canUndo = canUndoColor();
+                        undoColor.setEnabled(canUndo);
+                        undoColor.setAlpha(canUndo ? 1f : 0.4f);
+                    }
+                    if (redoColor != null) {
+                        boolean canRedo = canRedoColor();
+                        redoColor.setEnabled(canRedo);
+                        redoColor.setAlpha(canRedo ? 1f : 0.4f);
+                    }
+                    return true;
+            }
+            return true;
+        });
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupStickerButtons() {
+        originalSticker.setOnTouchListener((v, ev) -> {
+            if (!v.isEnabled()) return true;
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    originalSticker.setAlpha(0.4f);
+                    if (undoSticker != null) {
+                        undoSticker.setEnabled(false);
+                        undoSticker.setAlpha(0.4f);
+                    }
+                    if (redoSticker != null) {
+                        redoSticker.setEnabled(false);
+                        redoSticker.setAlpha(0.4f);
+                    }
+                    previewOriginalStickers(true);
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.setPressed(false);
+                    //originalSticker.setAlpha(1f);
+                    previewOriginalStickers(false);
+                    refreshStickerButtons();
+                    return true;
+            }
+            return true;
+        });
+    }
+
+    private void setupSaveButton() {
         saveBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
 
@@ -377,10 +387,10 @@ public class FilterActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     try {
                         Bitmap composed = fullBitmap.copy(Bitmap.Config.ARGB_8888, true);
-                        if (overlayStack != null) {
-                            Canvas canvas = new Canvas(composed);
-                            overlayStack.draw(canvas);
-                        }
+                        Canvas canvas = new Canvas(composed);
+
+                        if (brushOverlay != null) brushOverlay.draw(canvas);
+                        if (stickerOverlay != null) stickerOverlay.draw(canvas);
 
                         Bitmap cropped = renderer.cropCenterRegion(
                                 composed,
@@ -406,7 +416,9 @@ public class FilterActivity extends BaseActivity {
             });
             renderer.captureBitmap();
         });
+    }
 
+    private void setupBackNavigation() {
         backGateCallback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -423,8 +435,7 @@ public class FilterActivity extends BaseActivity {
         getSupportFragmentManager().registerFragmentLifecycleCallbacks(
                 new androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks() {
                     @Override
-                    public void onFragmentResumed(@NonNull androidx.fragment.app.FragmentManager fm,
-                                                  @NonNull Fragment f) {
+                    public void onFragmentResumed(FragmentManager fm, Fragment f) {
                         if (f.getId() == R.id.bottomArea2) {
                             updateBackAndSaveUiEnabled(f);
                         }
@@ -440,17 +451,9 @@ public class FilterActivity extends BaseActivity {
                 handleBackNavChain();
             }
         });
+    }
 
-        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-        updateBackAndSaveUiEnabled(cur);
-
-        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                showExitConfirmDialog();
-            }
-        });
-
+    private void setupImagePicker() {
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -465,48 +468,9 @@ public class FilterActivity extends BaseActivity {
                     }
                 }
         );
-
-        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
-            FrameLayout full = findViewById(R.id.fullScreenFragmentContainer);
-            ConstraintLayout filter = findViewById(R.id.filterActivity);
-            ConstraintLayout main = findViewById(R.id.main);
-
-            Fragment f = getSupportFragmentManager().findFragmentById(R.id.fullScreenFragmentContainer);
-            if (f == null) {
-                full.setVisibility(View.GONE);
-                filter.setVisibility(View.VISIBLE);
-                main.setBackgroundColor(Color.BLACK);
-            }
-        });
     }
 
-    private boolean isBackEnabledFor(Fragment f) {
-        return (f instanceof ToolsFragment)
-                || (f instanceof ColorsFragment)
-                || (f instanceof StickersFragment);
-    }
-
-    private void updateBackAndSaveUiEnabled(Fragment f) {
-        boolean enabled = isBackEnabledFor(f);
-        if (backBtn != null) {
-            backBtn.setEnabled(enabled);
-            backBtn.setClickable(enabled);
-            backBtn.setAlpha(enabled ? 1f : 0.3f);
-        }
-
-        if (saveBtn != null) {
-            saveBtn.setEnabled(enabled);
-            saveBtn.setClickable(enabled);
-            saveBtn.setAlpha(enabled ? 1f : 0.3f);
-            saveTxt.setAlpha(enabled ? 1f : 0.3f);
-        }
-    }
-
-    public void requestUpdateBackGate() {
-        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-        updateBackAndSaveUiEnabled(cur);
-    }
-
+    /// 사진 이미지 가져오기 ///
     private void loadImageFromUri(Uri photoUri) {
         if (renderer == null || photoPreview == null) {
             return;
@@ -575,440 +539,28 @@ public class FilterActivity extends BaseActivity {
         updateBrushClipFromRenderer();
     }
 
-    private void handleBack() {
-        FragmentManager fm = getSupportFragmentManager();
-        if (fm.getBackStackEntryCount() > 0) {
-            fm.popBackStack();
-            return;
-        }
+    /// transform ///
+    public void resetViewportTransform() {
+        scaleFactor = 1.0f;
+        translateX = 0f;
+        translateY = 0f;
 
-        Fragment current = fm.findFragmentById(R.id.bottomArea2);
-        if (current instanceof ToolsFragment) {
-            Intent intent = new Intent(FilterActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            finish();
-        } else {
-            finish();
-        }
-    }
-
-    private void handleBackNavChain() {
-        FragmentManager fm = getSupportFragmentManager();
-
-        Fragment full = fm.findFragmentById(R.id.fullScreenFragmentContainer);
-        if (full != null) {
-            showExitConfirmDialog();
-            return;
-        }
-
-        Fragment cur = fm.findFragmentById(R.id.bottomArea2);
-
-        if (cur instanceof StickersFragment) {
-            FrameLayout overlay = findViewById(R.id.overlayStack);
-            if (overlay != null) overlay.removeAllViews();
-
-            fm.beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new ColorsFragment())
-                    .commit();
-
-            ConstraintLayout bottomArea1 = findViewById(R.id.bottomArea1);
-            bottomArea1.setVisibility(View.VISIBLE);
-
-            return;
-        }
-
-        if (cur instanceof ColorsFragment) {
-            fm.beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new ToolsFragment())
-                    .commit();
-
-            ConstraintLayout bottomArea1 = findViewById(R.id.bottomArea1);
-            bottomArea1.setVisibility(View.INVISIBLE);
-
-            return;
-        }
-
-        if (cur instanceof ToolsFragment) {
-            openImagePicker();
-            return;
-        }
-
-        handleBack();
-    }
-
-    private void openImagePicker() {
-        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.setType("image/*");
-        imagePickerLauncher.launch(intent);
-    }
-
-
-    private void showExitConfirmDialog() {
-        new FilterEixtDialog(this, new FilterEixtDialog.FilterEixtDialogListener() {
-            @Override
-            public void onKeep() {
-            }
-
-            @Override
-            public void onExit() {
-                finish();
-            }
-        }
-        ).withMessage("편집한 내용을 저장하지 않고\n종료하시겠습니까?")
-                .withButton1Text("예")
-                .withButton2Text("아니오")
-                .show();
-    }
-
-
-    public int getCurrentValue(String filterType) {
-        if (renderer != null && filterType != null) {
-            return renderer.getCurrentValue(filterType);
-        }
-        return 0;
-    }
-
-    public void onTempValue(String filterType, int value) {
-        if (renderer != null && filterType != null) {
-            renderer.setTempValue(filterType, value);
-            refreshOriginalColorButton();
-        }
-    }
-
-    public void onUpdateValue(String filterType, int value) {
-        if (filterType != null) {
-            renderer.updateValue(filterType, value);
-            refreshOriginalColorButton();
-        }
-    }
-
-    public void onCancelValue(String filterType) {
-        if (renderer != null && filterType != null) {
-            renderer.cancelValue(filterType);
-            refreshOriginalColorButton();
-        }
-    }
-
-    public void rotatePhoto(int degree) {
-        rotationDegree = (rotationDegree + degree) % 360;
-        applyTransform();
-    }
-
-    public void flipPhoto(boolean horizontal) {
-        if (horizontal) flipHorizontal = !flipHorizontal;
-        else flipVertical = !flipVertical;
-        applyTransform();
-    }
-
-    public void restoreOriginalPhoto() {
-        rotationDegree = 0;
-        flipHorizontal = false;
-        flipVertical = false;
-        if (originalBitmap != null) {
-            renderer.setBitmap(originalBitmap);
+        if (renderer != null) {
+            renderer.setScaleFactor(1.0f);
+            renderer.setTranslate(0f, 0f);
             photoPreview.requestRender();
         }
-    }
-
-    public void commitTransformations() {
-        commitTransformations(false);
-    }
-
-    public void commitTransformations(boolean imageGeometryChanged) {
-        int pendingRot = normDeg((int) rotationDegree);
-        boolean pendingFlipH = flipHorizontal;
-        boolean pendingFlipV = flipVertical;
-
-        Bitmap current = (renderer != null) ? renderer.getCurrentBitmap() : null;
-        if (current != null) {
-            originalBitmap = current.copy(current.getConfig(), true);
-            transformedBitmap = originalBitmap.copy(originalBitmap.getConfig(), true);
-            renderer.setBitmap(originalBitmap);
-        }
-
-        if (imageGeometryChanged && baseImageForCrop != null) {
-            Matrix m = new Matrix();
-            m.postRotate(rotationDegree);
-            float sx = flipHorizontal ? -1f : 1f;
-            float sy = flipVertical ? -1f : 1f;
-            m.postScale(sx, sy);
-            baseImageForCrop = Bitmap.createBitmap(
-                    baseImageForCrop, 0, 0,
-                    baseImageForCrop.getWidth(), baseImageForCrop.getHeight(),
-                    m, true
-            );
-
-            if (lastCropRectN != null) {
-                int rot = ((int) rotationDegree % 360 + 360) % 360;
-                lastCropRectN = mapRectN(lastCropRectN, rot, flipHorizontal, flipVertical);
-            } else {
-                needResetCropRectOnce = true;
-            }
-
-            float[] p = mapPanN(lastTxN, lastTyN, (int) rotationDegree, flipHorizontal, flipVertical);
-            lastTxN = p[0];
-            lastTyN = p[1];
-        }
-
-        if (imageGeometryChanged) {
-            accumRotationDeg = normDeg(accumRotationDeg + pendingRot);
-            if (pendingFlipH) accumFlipH = !accumFlipH;
-            if (pendingFlipV) accumFlipV = !accumFlipV;
-            refreshRotationEditedFlag();
-        }
-
-        rotationDegree = 0f;
-        flipHorizontal = false;
-        flipVertical = false;
-        resetViewportTransform();
 
         updateBrushClipFromRenderer();
     }
 
-    public void lockInCurrentCropMode() {
-        if (lastCropMode != CropMode.NONE) {
-            appliedCropMode = lastCropMode;
-        }
+    public boolean isViewportIdentity() {
+        return Math.abs(scaleFactor - 1f) < 1e-3f
+                && Math.abs(translateX) < 1e-2f
+                && Math.abs(translateY) < 1e-2f;
     }
 
-    public void revertLastSelectionToApplied() {
-        lastCropMode = appliedCropMode;
-    }
-
-    public CropMode getAppliedCropMode() {
-        return appliedCropMode;
-    }
-
-    private Rect calcCenteredCropRect(int vpX, int vpY, int vpW, int vpH,
-                                      boolean fullSize, boolean fixed, int ratioX, int ratioY) {
-        final float factor = fullSize ? 1.0f : 0.9f;
-
-        if (!fixed || ratioX <= 0 || ratioY <= 0) {
-            int w = Math.round(vpW * factor);
-            int h = Math.round(vpH * factor);
-            int l = vpX + (vpW - w) / 2;
-            int t = vpY + (vpH - h) / 2;
-            return new Rect(l, t, l + w, t + h);
-        }
-
-        float target = (float) ratioX / (float) ratioY;
-        int cw, ch;
-
-        float vRatio = (float) vpW / (float) vpH;
-        if (vRatio > target) {
-            ch = Math.round(vpH * factor);
-            cw = Math.round(ch * target);
-        } else {
-            cw = Math.round(vpW * factor);
-            ch = Math.round(cw / target);
-        }
-
-        int left = vpX + (vpW - cw) / 2;
-        int top = vpY + (vpH - ch) / 2;
-        return new Rect(left, top, left + cw, top + ch);
-    }
-
-    private float[] mapPointN(float x, float y, int rotDeg, boolean flipH, boolean flipV) {
-        if (flipH) x = 1f - x;
-        if (flipV) y = 1f - y;
-
-        int r = ((rotDeg % 360) + 360) % 360;
-        switch (r) {
-            case 90:
-                return new float[]{1f - y, x};
-            case 180:
-                return new float[]{1f - x, 1f - y};
-            case 270:
-                return new float[]{y, 1f - x};
-            default:
-                return new float[]{x, y};
-        }
-    }
-
-    private RectF mapRectN(RectF src, int rotDeg, boolean flipH, boolean flipV) {
-        if (src == null) return null;
-        float[] lt = mapPointN(src.left, src.top, rotDeg, flipH, flipV);
-        float[] rb = mapPointN(src.right, src.bottom, rotDeg, flipH, flipV);
-        RectF out = new RectF(
-                Math.min(lt[0], rb[0]),
-                Math.min(lt[1], rb[1]),
-                Math.max(lt[0], rb[0]),
-                Math.max(lt[1], rb[1])
-        );
-
-        out.left = Math.max(0f, Math.min(1f, out.left));
-        out.top = Math.max(0f, Math.min(1f, out.top));
-        out.right = Math.max(0f, Math.min(1f, out.right));
-        out.bottom = Math.max(0f, Math.min(1f, out.bottom));
-        return out;
-    }
-
-    private float[] mapPanN(float txN, float tyN, int rotDeg, boolean flipH, boolean flipV) {
-        if (flipH) txN = -txN;
-        if (flipV) tyN = -tyN;
-
-        int r = ((rotDeg % 360) + 360) % 360;
-        switch (r) {
-            case 90:
-                return new float[]{tyN, -txN};
-            case 180:
-                return new float[]{-txN, -tyN};
-            case 270:
-                return new float[]{-tyN, txN};
-            default:
-                return new float[]{txN, tyN};
-        }
-    }
-
-    private void applyTransform() {
-        if (originalBitmap == null) return;
-        Matrix matrix = new Matrix();
-        matrix.postRotate(rotationDegree);
-        float sx = flipHorizontal ? -1f : 1f;
-        float sy = flipVertical ? -1f : 1f;
-        matrix.postScale(sx, sy);
-        transformedBitmap = Bitmap.createBitmap(originalBitmap, 0, 0,
-                originalBitmap.getWidth(), originalBitmap.getHeight(), matrix, true);
-
-        if (transformedBitmap != null) {
-            renderer.setBitmap(transformedBitmap);
-        }
-    }
-
-    public CropBoxOverlayView getCropOverlay() {
-        return cropOverlay;
-    }
-
-    public Bitmap getCropBeforeBitmap() {
-        return cropBeforeBitmap;
-    }
-
-    public FGLRenderer getRenderer() {
-        return renderer;
-    }
-
-    public GLSurfaceView getPhotoPreview() {
-        return photoPreview;
-    }
-
-    public void restoreCropBeforeState() {
-        Bitmap restore = (isCropSessionLatched && cropSessionEntryBitmap != null)
-                ? cropSessionEntryBitmap
-                : cropBeforeBitmap;
-
-        if (restore != null) {
-            renderer.setBitmap(restore);
-
-            scaleFactor = 1.0f;
-            translateX = 0f;
-            translateY = 0f;
-            rotationDegree = 0f;
-            flipHorizontal = false;
-            flipVertical = false;
-
-            renderer.setScaleFactor(scaleFactor);
-            renderer.setTranslate(translateX, translateY);
-            photoPreview.requestRender();
-        }
-    }
-
-    public void showCropOverlay(boolean fullSize, boolean fixed, int ratioX, int ratioY, boolean restorePrevRect) {
-        if (!isCropSessionLatched && renderer != null && renderer.getCurrentBitmap() != null) {
-            Bitmap cur = renderer.getCurrentBitmap();
-            cropSessionEntryBitmap = cur.copy(cur.getConfig(), true);
-            isCropSessionLatched = true;
-        }
-
-        if (renderer != null && renderer.getCurrentBitmap() != null) {
-            cropBeforeBitmap = renderer.getCurrentBitmap()
-                    .copy(renderer.getCurrentBitmap().getConfig(), true);
-        }
-
-        FrameLayout container = findViewById(R.id.photoPreviewContainer);
-        if (cropOverlay != null) container.removeView(cropOverlay);
-
-        if (restorePrevRect && baseImageForCrop != null) {
-            renderer.setBitmap(baseImageForCrop);
-
-            int w = photoPreview.getWidth();
-            int h = photoPreview.getHeight();
-            renderer.onSurfaceChanged(null, w, h);
-
-            restoreViewTransformFromSnapshot();
-        } else {
-            resetViewportTransform();
-        }
-
-        cropOverlay = new CropBoxOverlayView(this);
-        container.addView(cropOverlay, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-
-        int vpX = renderer.getViewportX();
-        int vpY = renderer.getViewportY();
-        int vpW = renderer.getViewportWidth();
-        int vpH = renderer.getViewportHeight();
-
-        cropOverlay.setFixedAspectRatio(fixed);
-        cropOverlay.setAspectRatio(ratioX, ratioY);
-        cropOverlay.setViewportInfo(vpX, vpY, vpW, vpH);
-
-        Rect prev = (restorePrevRect) ? getLastCropRectInViewportPx() : null;
-        if (prev != null) {
-            cropOverlay.setCropRect(prev);
-            needResetCropRectOnce = false;
-            return;
-        }
-
-        if (needResetCropRectOnce) {
-            Rect center = calcCenteredCropRect(vpX, vpY, vpW, vpH, fullSize, fixed, ratioX, ratioY);
-            cropOverlay.setCropRect(center);
-            needResetCropRectOnce = false;
-            return;
-        }
-
-        cropOverlay.initializeCropBox(vpX, vpY, vpW, vpH, fullSize);
-    }
-
-    public void hideCropOverlay() {
-        if (cropOverlay != null) {
-            ((ViewGroup) cropOverlay.getParent()).removeView(cropOverlay);
-            cropOverlay = null;
-        }
-
-        isCropSessionLatched = false;
-        cropSessionEntryBitmap = null;
-    }
-
-    public void setCurrentCropMode(CropMode mode) {
-        this.currentCropMode = mode;
-
-        if (mode != CropMode.NONE) {
-            this.lastCropMode = mode;
-        }
-    }
-
-    public CropMode getLastCropMode() {
-        return lastCropMode;
-    }
-
-    private Rect getLastCropRectInViewportPx() {
-        if (lastCropRectN == null || renderer == null) return null;
-        int vpX = renderer.getViewportX();
-        int vpY = renderer.getViewportY();
-        int vpW = renderer.getViewportWidth();
-        int vpH = renderer.getViewportHeight();
-
-        int l = vpX + Math.round(lastCropRectN.left * vpW);
-        int t = vpY + Math.round(lastCropRectN.top * vpH);
-        int r = vpX + Math.round(lastCropRectN.right * vpW);
-        int b = vpY + Math.round(lastCropRectN.bottom * vpH);
-        return new Rect(l, t, r, b);
-    }
-
+    /// gesture ///
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getActionMasked()) {
@@ -1080,22 +632,73 @@ public class FilterActivity extends BaseActivity {
         return true;
     }
 
-    public void resetViewportTransform() {
-        scaleFactor = 1.0f;
-        translateX = 0f;
-        translateY = 0f;
-
-        if (renderer != null) {
-            renderer.setScaleFactor(1.0f);
-            renderer.setTranslate(0f, 0f);
-            photoPreview.requestRender();
+    /// 크롭 ///
+    public void showCropOverlay(boolean fullSize, boolean fixed, int ratioX, int ratioY, boolean restorePrevRect) {
+        if (!isCropSessionLatched && renderer != null && renderer.getCurrentBitmap() != null) {
+            Bitmap cur = renderer.getCurrentBitmap();
+            cropSessionEntryBitmap = cur.copy(cur.getConfig(), true);
+            isCropSessionLatched = true;
         }
 
-        updateBrushClipFromRenderer();
+        if (renderer != null && renderer.getCurrentBitmap() != null) {
+            cropBeforeBitmap = renderer.getCurrentBitmap()
+                    .copy(renderer.getCurrentBitmap().getConfig(), true);
+        }
+
+        FrameLayout container = findViewById(R.id.photoPreviewContainer);
+        if (cropOverlay != null) container.removeView(cropOverlay);
+
+        if (restorePrevRect && baseImageForCrop != null) {
+            renderer.setBitmap(baseImageForCrop);
+
+            int w = photoPreview.getWidth();
+            int h = photoPreview.getHeight();
+            renderer.onSurfaceChanged(null, w, h);
+
+            restoreViewTransformFromSnapshot();
+        } else {
+            resetViewportTransform();
+        }
+
+        cropOverlay = new CropBoxOverlayView(this);
+        container.addView(cropOverlay, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
+        int vpX = renderer.getViewportX();
+        int vpY = renderer.getViewportY();
+        int vpW = renderer.getViewportWidth();
+        int vpH = renderer.getViewportHeight();
+
+        cropOverlay.setFixedAspectRatio(fixed);
+        cropOverlay.setAspectRatio(ratioX, ratioY);
+        cropOverlay.setViewportInfo(vpX, vpY, vpW, vpH);
+
+        Rect prev = (restorePrevRect) ? getLastCropRectInViewportPx() : null;
+        if (prev != null) {
+            cropOverlay.setCropRect(prev);
+            needResetCropRectOnce = false;
+            return;
+        }
+
+        if (needResetCropRectOnce) {
+            Rect center = calcCenteredCropRect(vpX, vpY, vpW, vpH, fullSize, fixed, ratioX, ratioY);
+            cropOverlay.setCropRect(center);
+            needResetCropRectOnce = false;
+            return;
+        }
+
+        cropOverlay.initializeCropBox(vpX, vpY, vpW, vpH, fullSize);
     }
 
-    public void setLastCropRectNormalized(RectF rectN) {
-        this.lastCropRectN = rectN;
+    public void hideCropOverlay() {
+        if (cropOverlay != null) {
+            ((ViewGroup) cropOverlay.getParent()).removeView(cropOverlay);
+            cropOverlay = null;
+        }
+
+        isCropSessionLatched = false;
+        cropSessionEntryBitmap = null;
     }
 
     public void snapshotViewTransformForRestore() {
@@ -1119,60 +722,1085 @@ public class FilterActivity extends BaseActivity {
         photoPreview.requestRender();
     }
 
-    public boolean isColorEdited() {
-        return colorEdited;
+    public void setLastCropRectNormalized(RectF rectN) {
+        this.lastCropRectN = rectN;
+    }
+
+    public void restoreCropBeforeState() {
+        Bitmap restore = (isCropSessionLatched && cropSessionEntryBitmap != null)
+                ? cropSessionEntryBitmap
+                : cropBeforeBitmap;
+
+        if (restore != null) {
+            renderer.setBitmap(restore);
+
+            scaleFactor = 1.0f;
+            translateX = 0f;
+            translateY = 0f;
+            rotationDegree = 0f;
+            flipHorizontal = false;
+            flipVertical = false;
+
+            renderer.setScaleFactor(scaleFactor);
+            renderer.setTranslate(translateX, translateY);
+            photoPreview.requestRender();
+        }
+    }
+
+    public void resetCropState() {
+        lastCropMode = CropMode.NONE;
+        appliedCropMode = CropMode.NONE;
+        lastCropRectN = null;
+        needResetCropRectOnce = true;
+
+        isCropSessionLatched = false;
+        cropSessionEntryBitmap = null;
+
+        if (renderer != null && renderer.getCurrentBitmap() != null) {
+            Bitmap cur = renderer.getCurrentBitmap();
+            baseImageForCrop = cur.copy(cur.getConfig(), true);
+        }
+    }
+
+    public boolean isCropEdited() {
+        return cropEdited;
+    }
+
+    public void setCropEdited(boolean edited) {
+        this.cropEdited = edited;
+    }
+
+    public void lockInCurrentCropMode() {
+        if (lastCropMode != CropMode.NONE) {
+            appliedCropMode = lastCropMode;
+        }
+    }
+
+    public void revertLastSelectionToApplied() {
+        lastCropMode = appliedCropMode;
+    }
+
+    public CropBoxOverlayView getCropOverlay() {
+        return cropOverlay;
+    }
+
+    public void setCurrentCropMode(CropMode mode) {
+        this.currentCropMode = mode;
+
+        if (mode != CropMode.NONE) {
+            this.lastCropMode = mode;
+        }
+    }
+
+    public CropMode getLastCropMode() {
+        return lastCropMode;
+    }
+
+    private Rect getLastCropRectInViewportPx() {
+        if (lastCropRectN == null || renderer == null) return null;
+        int vpX = renderer.getViewportX();
+        int vpY = renderer.getViewportY();
+        int vpW = renderer.getViewportWidth();
+        int vpH = renderer.getViewportHeight();
+
+        int l = vpX + Math.round(lastCropRectN.left * vpW);
+        int t = vpY + Math.round(lastCropRectN.top * vpH);
+        int r = vpX + Math.round(lastCropRectN.right * vpW);
+        int b = vpY + Math.round(lastCropRectN.bottom * vpH);
+        return new Rect(l, t, r, b);
+    }
+
+    private Rect calcCenteredCropRect(int vpX, int vpY, int vpW, int vpH,
+                                      boolean fullSize, boolean fixed, int ratioX, int ratioY) {
+        final float factor = fullSize ? 1.0f : 0.9f;
+
+        if (!fixed || ratioX <= 0 || ratioY <= 0) {
+            int w = Math.round(vpW * factor);
+            int h = Math.round(vpH * factor);
+            int l = vpX + (vpW - w) / 2;
+            int t = vpY + (vpH - h) / 2;
+            return new Rect(l, t, l + w, t + h);
+        }
+
+        float target = (float) ratioX / (float) ratioY;
+        int cw, ch;
+
+        float vRatio = (float) vpW / (float) vpH;
+        if (vRatio > target) {
+            ch = Math.round(vpH * factor);
+            cw = Math.round(ch * target);
+        } else {
+            cw = Math.round(vpW * factor);
+            ch = Math.round(cw / target);
+        }
+
+        int left = vpX + (vpW - cw) / 2;
+        int top = vpY + (vpH - ch) / 2;
+        return new Rect(left, top, left + cw, top + ch);
+    }
+
+    /// 회전, 반전 ///
+    public void rotatePhoto(int degree) {
+        rotationDegree = (rotationDegree + degree) % 360;
+        applyTransform();
+    }
+
+    public void flipPhoto(boolean horizontal) {
+        if (horizontal) flipHorizontal = !flipHorizontal;
+        else flipVertical = !flipVertical;
+        applyTransform();
+    }
+
+    public void commitTransformations() {
+        commitTransformations(false);
+    }
+
+    public void commitTransformations(boolean imageGeometryChanged) {
+        int pendingRot = normDeg((int) rotationDegree);
+        boolean pendingFlipH = flipHorizontal;
+        boolean pendingFlipV = flipVertical;
+
+        Bitmap current = (renderer != null) ? renderer.getCurrentBitmap() : null;
+        if (current != null) {
+            originalBitmap = current.copy(current.getConfig(), true);
+            transformedBitmap = originalBitmap.copy(originalBitmap.getConfig(), true);
+            renderer.setBitmap(originalBitmap);
+        }
+
+        if (imageGeometryChanged && baseImageForCrop != null) {
+            Matrix m = new Matrix();
+            m.postRotate(rotationDegree);
+            float sx = flipHorizontal ? -1f : 1f;
+            float sy = flipVertical ? -1f : 1f;
+            m.postScale(sx, sy);
+            baseImageForCrop = Bitmap.createBitmap(
+                    baseImageForCrop, 0, 0,
+                    baseImageForCrop.getWidth(), baseImageForCrop.getHeight(),
+                    m, true
+            );
+
+            if (lastCropRectN != null) {
+                int rot = ((int) rotationDegree % 360 + 360) % 360;
+                lastCropRectN = mapRectN(lastCropRectN, rot, flipHorizontal, flipVertical);
+            } else {
+                needResetCropRectOnce = true;
+            }
+
+            float[] p = mapPanN(lastTxN, lastTyN, (int) rotationDegree, flipHorizontal, flipVertical);
+            lastTxN = p[0];
+            lastTyN = p[1];
+        }
+
+        if (imageGeometryChanged) {
+            accumRotationDeg = normDeg(accumRotationDeg + pendingRot);
+            if (pendingFlipH) accumFlipH = !accumFlipH;
+            if (pendingFlipV) accumFlipV = !accumFlipV;
+            refreshRotationEditedFlag();
+        }
+
+        rotationDegree = 0f;
+        flipHorizontal = false;
+        flipVertical = false;
+        resetViewportTransform();
+
+        updateBrushClipFromRenderer();
+    }
+
+    private void applyTransform() {
+        if (originalBitmap == null) return;
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotationDegree);
+        float sx = flipHorizontal ? -1f : 1f;
+        float sy = flipVertical ? -1f : 1f;
+        matrix.postScale(sx, sy);
+        transformedBitmap = Bitmap.createBitmap(originalBitmap, 0, 0,
+                originalBitmap.getWidth(), originalBitmap.getHeight(), matrix, true);
+
+        if (transformedBitmap != null) {
+            renderer.setBitmap(transformedBitmap);
+        }
+    }
+
+    public boolean isRotationEdited() {
+        return rotationEdited;
+    }
+
+    private static int normDeg(int d) {
+        int n = d % 360;
+        return (n < 0) ? n + 360 : n;
+    }
+
+    private boolean isGeometrySameAsOriginal() {
+        int r = normDeg(accumRotationDeg);
+        if (r == 0 && !accumFlipH && !accumFlipV) return true;
+        if (r == 180 && accumFlipH && accumFlipV) return true;
+        return false;
+    }
+
+    private void refreshRotationEditedFlag() {
+        rotationEdited = !isGeometrySameAsOriginal();
+    }
+
+    public void restoreOriginalPhoto() {
+        rotationDegree = 0;
+        flipHorizontal = false;
+        flipVertical = false;
+        if (originalBitmap != null) {
+            renderer.setBitmap(originalBitmap);
+            photoPreview.requestRender();
+        }
+    }
+
+    /// 컬러 ///
+    public void recordColorEdit(String filterType, int before, int after) {
+        if (filterType == null) return;
+        if (before == after) return;
+
+        while (colorHistory.size() > colorCursor + 1) {
+            colorHistory.remove(colorHistory.size() - 1);
+        }
+        colorHistory.add(new ColorEdit(filterType, before, after));
+        colorCursor = colorHistory.size() - 1;
+
+        setColorEdited(true);
+    }
+
+    public boolean canUndoColor() {
+        return colorCursor >= 0;
+    }
+
+    public boolean canRedoColor() {
+        return colorCursor < colorHistory.size() - 1;
+    }
+
+    public void undoColor() {
+        if (!canUndoColor()) return;
+        ColorEdit e = colorHistory.get(colorCursor);
+        if (renderer != null) renderer.updateValue(e.filterType, e.before);
+        colorCursor--;
+        photoPreview.requestRender();
+        refreshOriginalColorButton();
+    }
+
+    public void redoColor() {
+        if (!canRedoColor()) return;
+        ColorEdit e = colorHistory.get(colorCursor + 1);
+        if (renderer != null) renderer.updateValue(e.filterType, e.after);
+        colorCursor++;
+        photoPreview.requestRender();
+        refreshOriginalColorButton();
+    }
+
+    public void previewOriginalColors(boolean on) {
+        if (renderer == null) return;
+
+        if (on) {
+            if (isPreviewingOriginalColors) return;
+            savedFilterValues.clear();
+            for (String k : FILTER_KEYS) {
+                savedFilterValues.put(k, getCurrentValue(k));
+            }
+            renderer.resetAllFilter();
+            photoPreview.requestRender();
+            isPreviewingOriginalColors = true;
+        } else {
+            if (!savedFilterValues.isEmpty()) {
+                for (String k : FILTER_KEYS) {
+                    Integer v = savedFilterValues.get(k);
+                    if (v != null) renderer.updateValue(k, v);
+                }
+                savedFilterValues.clear();
+                photoPreview.requestRender();
+            }
+            isPreviewingOriginalColors = false;
+        }
+    }
+
+    public void refreshOriginalColorButton() {
+        boolean same = isAtBaseline();
+        if (originalColor != null) {
+            originalColor.setEnabled(!same);
+            originalColor.setAlpha(!same ? 1f : 0.4f);
+        }
+    }
+
+    private boolean isAtBaseline() {
+        for (String k : FILTER_KEYS) {
+            int cur = getCurrentValue(k);
+            int base = baselineFilterValues.containsKey(k) ? baselineFilterValues.get(k) : 0;
+            if (cur != base) return false;
+        }
+        return true;
     }
 
     public void setColorEdited(boolean edited) {
         this.colorEdited = edited;
         refreshOriginalColorButton();
-        refreshOriginalColorButton();
     }
 
-    public boolean isBeforePressed() {
-        return beforePressed;
+
+
+    public int getCurrentValue(String filterType) {
+        if (renderer != null && filterType != null) {
+            return renderer.getCurrentValue(filterType);
+        }
+        return 0;
     }
 
-    public void setBeforePressed(boolean pressed) {
-        this.beforePressed = pressed;
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        if (intent != null && intent.getBooleanExtra("EXIT_BY_CHILD", false)) {
-            finish();
+    public void onTempValue(String filterType, int value) {
+        if (renderer != null && filterType != null) {
+            renderer.setTempValue(filterType, value);
+            refreshOriginalColorButton();
         }
     }
 
+    public void onUpdateValue(String filterType, int value) {
+        if (filterType != null) {
+            renderer.updateValue(filterType, value);
+            refreshOriginalColorButton();
+        }
+    }
+
+    public void onCancelValue(String filterType) {
+        if (renderer != null && filterType != null) {
+            renderer.cancelValue(filterType);
+            refreshOriginalColorButton();
+        }
+    }
+
+    /*public void resetColorState() {
+        isPreviewingOriginalColors = false;
+        savedFilterValues.clear();
+
+        if (renderer != null) {
+            renderer.resetAllFilter();
+            photoPreview.requestRender();
+        }
+
+        colorHistory.clear();
+        colorCursor = -1;
+        colorEdited = false;
+
+        baselineFilterValues.clear();
+        for (String k : FILTER_KEYS) {
+            baselineFilterValues.put(k, getCurrentValue(k));
+        }
+
+        if (undoColor != null) {
+            undoColor.setEnabled(false);
+            undoColor.setAlpha(0.4f);
+        }
+        if (redoColor != null) {
+            redoColor.setEnabled(false);
+            redoColor.setAlpha(0.4f);
+        }
+        refreshOriginalColorButton();
+    }*/
+
+    /// geometry ///
+    private float[] mapPointN(float x, float y, int rotDeg, boolean flipH, boolean flipV) {
+        if (flipH) x = 1f - x;
+        if (flipV) y = 1f - y;
+
+        int r = ((rotDeg % 360) + 360) % 360;
+        switch (r) {
+            case 90:
+                return new float[]{1f - y, x};
+            case 180:
+                return new float[]{1f - x, 1f - y};
+            case 270:
+                return new float[]{y, 1f - x};
+            default:
+                return new float[]{x, y};
+        }
+    }
+
+    private RectF mapRectN(RectF src, int rotDeg, boolean flipH, boolean flipV) {
+        if (src == null) return null;
+        float[] lt = mapPointN(src.left, src.top, rotDeg, flipH, flipV);
+        float[] rb = mapPointN(src.right, src.bottom, rotDeg, flipH, flipV);
+        RectF out = new RectF(
+                Math.min(lt[0], rb[0]),
+                Math.min(lt[1], rb[1]),
+                Math.max(lt[0], rb[0]),
+                Math.max(lt[1], rb[1])
+        );
+
+        out.left = Math.max(0f, Math.min(1f, out.left));
+        out.top = Math.max(0f, Math.min(1f, out.top));
+        out.right = Math.max(0f, Math.min(1f, out.right));
+        out.bottom = Math.max(0f, Math.min(1f, out.bottom));
+        return out;
+    }
+
+    private float[] mapPanN(float txN, float tyN, int rotDeg, boolean flipH, boolean flipV) {
+        if (flipH) txN = -txN;
+        if (flipV) tyN = -tyN;
+
+        int r = ((rotDeg % 360) + 360) % 360;
+        switch (r) {
+            case 90:
+                return new float[]{tyN, -txN};
+            case 180:
+                return new float[]{-txN, -tyN};
+            case 270:
+                return new float[]{-tyN, txN};
+            default:
+                return new float[]{txN, tyN};
+        }
+    }
+
+    /// 브러쉬, 스티커 ///
     public void applyBrushClipRect(BrushOverlayView brush) {
         if (renderer == null || brush == null) return;
         int x = renderer.getViewportX();
         int y = renderer.getViewportY();
         int w = renderer.getViewportWidth();
         int h = renderer.getViewportHeight();
-        brush.setClipRect(new android.graphics.Rect(x, y, x + w, y + h));
+        brush.setClipRect(new Rect(x, y, x + w, y + h));
     }
 
     private void updateBrushClipFromRenderer() {
-        if (overlayStack == null) return;
-        BrushOverlayView brush = null;
-        for (int i = 0; i < overlayStack.getChildCount(); i++) {
-            View v = overlayStack.getChildAt(i);
+        if (brushOverlay == null || renderer == null) return;
+        for (int i = 0; i < brushOverlay.getChildCount(); i++) {
+            View v = brushOverlay.getChildAt(i);
             if (v instanceof BrushOverlayView) {
-                brush = (BrushOverlayView) v;
+                applyBrushClipRect((BrushOverlayView) v);
                 break;
             }
         }
-        if (brush == null || renderer == null) return;
+    }
 
-        Rect r = new Rect(
-                renderer.getViewportX(),
-                renderer.getViewportY(),
-                renderer.getViewportX() + renderer.getViewportWidth(),
-                renderer.getViewportY() + renderer.getViewportHeight()
-        );
-        brush.setClipRect(r);
+    private BrushOverlayView findBrushView() {
+        if (brushOverlay == null) return null;
+        for (int i = 0; i < brushOverlay.getChildCount(); i++) {
+            View v = brushOverlay.getChildAt(i);
+            if (v instanceof BrushOverlayView) return (BrushOverlayView) v;
+        }
+        return null;
+    }
+
+    private boolean hasAnyStickerPlaced() {
+        FrameLayout so = findViewById(R.id.stickerOverlay);
+        if (so == null) return false;
+        for (int i = 0; i < so.getChildCount(); i++) {
+            View child = so.getChildAt(i);
+            if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean bitmapHasAnyVisiblePixel(Bitmap bmp) {
+        final int w = bmp.getWidth(), h = bmp.getHeight();
+        int[] row = new int[w];
+        for (int y = 0; y < h; y++) {
+            bmp.getPixels(row, 0, w, 0, y, w, 1);
+            for (int x = 0; x < w; x++) {
+                if (((row[x] >>> 24) & 0xFF) != 0) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasVisibleBrushContent() {
+        BrushOverlayView bv = findBrushView();
+        if (bv != null) {
+            try {
+                if (bv.hasEffectiveContent()) return true;
+            } catch (Throwable ignore) {
+                if (bv.getVisibleStrokeCount() > 0) return true;
+            }
+        }
+
+        FrameLayout so = findViewById(R.id.stickerOverlay);
+        if (so != null) {
+            for (int i = 0; i < so.getChildCount(); i++) {
+                View child = so.getChildAt(i);
+                if (!(child instanceof ImageView)) continue;
+                if (!Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
+
+                Drawable d = ((ImageView) child).getDrawable();
+                if (!(d instanceof BitmapDrawable)) continue;
+
+                Bitmap bmp = ((BitmapDrawable) d).getBitmap();
+                if (bmp != null && !bmp.isRecycled() && bitmapHasAnyVisiblePixel(bmp)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void refreshStickerButtons() {
+        if (undoSticker == null || redoSticker == null || originalSticker == null) return;
+
+        boolean canUndo = canUndoSticker();
+        boolean canRedo = canRedoSticker();
+
+        boolean hasAnyPlacedStrict = hasAnyStickerPlaced() || hasVisibleBrushContent();
+
+        undoSticker.setEnabled(canUndo);
+        undoSticker.setAlpha(canUndo ? 1f : 0.4f);
+
+        redoSticker.setEnabled(canRedo);
+        redoSticker.setAlpha(canRedo ? 1f : 0.4f);
+
+        originalSticker.setEnabled(hasAnyPlacedStrict);
+        originalSticker.setAlpha(hasAnyPlacedStrict ? 1f : 0.4f);
+    }
+
+    private void pushHistory(HistoryOp op) {
+        while (history.size() > historyCursor + 1) history.remove(history.size() - 1);
+        history.add(op);
+        historyCursor = history.size() - 1;
+        refreshStickerButtons();
+    }
+
+    public void recordStickerPlacement(int baselineIndex) {
+        FrameLayout overlay = findViewById(R.id.stickerOverlay);
+        if (overlay == null) {
+            refreshStickerButtons();
+            return;
+        }
+
+        int childCount = overlay.getChildCount();
+        if (baselineIndex < 0 || baselineIndex >= childCount) {
+            refreshStickerButtons();
+            return;
+        }
+
+        StickerOp sop = new StickerOp();
+        for (int i = baselineIndex; i < childCount; i++) {
+            View v = overlay.getChildAt(i);
+            sop.views.add(v);
+            sop.positions.add(i);
+        }
+        if (sop.views.isEmpty()) {
+            refreshStickerButtons();
+            return;
+        }
+
+        HistoryOp hop = new HistoryOp();
+        hop.sticker = sop;
+
+        pushHistory(hop);
+    }
+
+    public void recordStickerEdit(View v,
+                                  float bx, float by, int bw, int bh, float br,
+                                  float ax, float ay, int aw, int ah, float ar) {
+        boolean samePos = Math.abs(bx - ax) < 0.5f && Math.abs(by - ay) < 0.5f;
+        boolean sameRot = Math.abs(br - ar) < 0.5f;
+        boolean sameSize = (bw == aw) && (bh == ah);
+        if (samePos && sameRot && sameSize) {
+            refreshStickerButtons();
+            return;
+        }
+
+        StickerEdit se = new StickerEdit();
+        se.view = v;
+        se.bx = bx;
+        se.by = by;
+        se.bw = bw;
+        se.bh = bh;
+        se.br = br;
+        se.ax = ax;
+        se.ay = ay;
+        se.aw = aw;
+        se.ah = ah;
+        se.ar = ar;
+
+        HistoryOp hop = new HistoryOp();
+        hop.edit = se;
+
+        pushHistory(hop);
+    }
+
+    public void recordStickerDelete(View v) {
+        FrameLayout overlay = findViewById(R.id.stickerOverlay);
+        if (overlay == null) {
+            refreshStickerButtons();
+            return;
+        }
+
+        int pos = overlay.indexOfChild(v);
+        if (pos < 0) {
+            refreshStickerButtons();
+            return;
+        }
+
+        HistoryOp hop = new HistoryOp();
+        hop.deletedView = v;
+        hop.deletedPos = pos;
+        pushHistory(hop);
+    }
+
+    public boolean canUndoSticker() {
+        return historyCursor >= 0;
+    }
+
+    public boolean canRedoSticker() {
+        return historyCursor < history.size() - 1;
+    }
+
+    public void undoSticker() {
+        if (!canUndoSticker()) return;
+
+        HistoryOp op = history.get(historyCursor);
+        FrameLayout overlay = findViewById(R.id.stickerOverlay);
+        BrushOverlayView bv = findBrushView();
+
+        if (op.hasSticker() && overlay != null) {
+            for (int i = op.sticker.views.size() - 1; i >= 0; i--) {
+                View v = op.sticker.views.get(i);
+                if (v.getParent() == overlay) overlay.removeView(v);
+            }
+        }
+        if (op.hasBrush() && bv != null) {
+            bv.setVisibleStrokeCount(op.brushBefore);
+        }
+        if (op.hasStickerEdit()) {
+            applyStickerGeom(op.edit.view,
+                    op.edit.bx, op.edit.by, op.edit.bw, op.edit.bh, op.edit.br);
+        }
+        if (op.hasDeletion() && overlay != null) {
+            if (op.deletedView.getParent() != overlay) {
+                int pos = Math.min(op.deletedPos, overlay.getChildCount());
+                overlay.addView(op.deletedView, pos);
+            }
+        }
+        if (op.hasZChange() && overlay != null && op.zChangedView != null) {
+            if (op.zChangedView.getParent() == overlay) {
+                overlay.removeView(op.zChangedView);
+            }
+            int insert = Math.min(op.zBeforePos, overlay.getChildCount());
+            overlay.addView(op.zChangedView, insert);
+            if (op.zBeforeElevation != null) {
+                androidx.core.view.ViewCompat.setZ(op.zChangedView, op.zBeforeElevation);
+            }
+            overlay.invalidate();
+        }
+        if (op.hasErase()) {
+            for (EraseOp eo : op.erases) {
+                if (!(eo.view instanceof ImageView)) continue;
+                ImageView iv = eo.view;
+                if (iv.getDrawable() == null || !(iv.getDrawable() instanceof BitmapDrawable))
+                    continue;
+                Bitmap bmp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+                if (bmp == null || bmp.isRecycled()) continue;
+
+                Canvas c = new Canvas(bmp);
+                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
+                for (int i = eo.patches.size() - 1; i >= 0; i--) {
+                    ErasePatch patch = eo.patches.get(i);
+                    if (patch.before == null || patch.before.isRecycled()) continue;
+                    c.save();
+                    c.clipRect(patch.rect);
+                    c.drawBitmap(patch.before, patch.rect.left, patch.rect.top, p);
+                    c.restore();
+                }
+                iv.invalidate();
+            }
+        }
+        historyCursor--;
+        refreshStickerButtons();
+    }
+
+    public void redoSticker() {
+        if (!canRedoSticker()) return;
+
+        HistoryOp op = history.get(historyCursor + 1);
+        FrameLayout overlay = findViewById(R.id.stickerOverlay);
+        BrushOverlayView bv = findBrushView();
+
+        if (op.hasSticker() && overlay != null) {
+            for (int i = 0; i < op.sticker.views.size(); i++) {
+                View v = op.sticker.views.get(i);
+                if (v.getParent() == overlay) continue;
+                int pos = Math.min(op.sticker.positions.get(i), overlay.getChildCount());
+                overlay.addView(v, pos);
+            }
+        }
+        if (op.hasBrush() && bv != null) {
+            bv.setVisibleStrokeCount(op.brushAfter);
+        }
+        if (op.hasStickerEdit()) {
+            applyStickerGeom(op.edit.view,
+                    op.edit.ax, op.edit.ay, op.edit.aw, op.edit.ah, op.edit.ar);
+        }
+        if (op.hasDeletion() && overlay != null) {
+            if (op.deletedView.getParent() == overlay) {
+                overlay.removeView(op.deletedView);
+            }
+        }
+        if (op.hasZChange() && overlay != null && op.zChangedView != null) {
+            if (op.zChangedView.getParent() == overlay) {
+                overlay.removeView(op.zChangedView);
+            }
+            int insert = Math.min(op.zAfterPos, overlay.getChildCount());
+            overlay.addView(op.zChangedView, insert);
+            if (op.zAfterElevation != null) {
+                androidx.core.view.ViewCompat.setZ(op.zChangedView, op.zAfterElevation);
+            }
+            overlay.invalidate();
+        }
+        if (op.hasErase()) {
+            for (EraseOp eo : op.erases) {
+                if (!(eo.view instanceof ImageView)) continue;
+                ImageView iv = eo.view;
+                if (iv.getDrawable() == null || !(iv.getDrawable() instanceof BitmapDrawable))
+                    continue;
+                Bitmap bmp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+                if (bmp == null || bmp.isRecycled()) continue;
+
+                Canvas c = new Canvas(bmp);
+                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeJoin(Paint.Join.ROUND);
+                p.setStrokeCap(Paint.Cap.ROUND);
+                p.setStrokeWidth(eo.strokeWidthPx);
+                p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+                if (eo.pathOnBitmap != null) {
+                    c.drawPath(eo.pathOnBitmap, p);
+                }
+                iv.invalidate();
+            }
+        }
+        historyCursor++;
+        refreshStickerButtons();
+    }
+
+    private void applyStickerGeom(View v, float x, float y, int w, int h, float rot) {
+        v.setX(x);
+        v.setY(y);
+        ViewGroup.LayoutParams lp = v.getLayoutParams();
+        if (lp != null) {
+            lp.width = w;
+            lp.height = h;
+            v.setLayoutParams(lp);
+        }
+        v.setPivotX(w / 2f);
+        v.setPivotY(h / 2f);
+        v.setRotation(rot);
+        v.requestLayout();
+    }
+
+    public void previewOriginalStickers(boolean on) {
+        FrameLayout overlay = findViewById(R.id.stickerOverlay);
+        if (overlay != null) overlay.setVisibility(on ? View.INVISIBLE : View.VISIBLE);
+        if (brushOverlay != null) brushOverlay.setVisibility(on ? View.INVISIBLE : View.VISIBLE);
+    }
+
+    public void resetStickerState(boolean removeOverlayChildren) {
+        FrameLayout overlay = findViewById(R.id.stickerOverlay);
+        if (removeOverlayChildren && overlay != null) {
+            overlay.removeAllViews();
+        }
+
+        BrushOverlayView bv = findBrushView();
+        if (removeOverlayChildren && bv != null) {
+            bv.clear();
+        }
+
+        history.clear();
+        historyCursor = -1;
+
+        previewOriginalStickers(false);
+
+        refreshStickerButtons();
+    }
+
+    public void recordStickerZOrderChange(View v, int beforeIndex, float beforeZ, int afterIndex, float afterZ) {
+        if (beforeIndex == afterIndex && Math.abs(beforeZ - afterZ) < 0.5f) {
+            refreshStickerButtons();
+            return;
+        }
+        HistoryOp hop = new HistoryOp();
+        hop.zChangedView = v;
+        hop.zBeforePos = beforeIndex;
+        hop.zAfterPos = afterIndex;
+        hop.zBeforeElevation = beforeZ;
+        hop.zAfterElevation = afterZ;
+        pushHistory(hop);
+    }
+
+    public void recordBrushErase(List<EraseOp> ops) {
+        if (ops == null || ops.isEmpty()) {
+            refreshStickerButtons();
+            return;
+        }
+        HistoryOp hop = new HistoryOp();
+        hop.erases = new ArrayList<>(ops);
+        pushHistory(hop);
+    }
+
+    /*public void pushMosaicSourceTo(BrushOverlayView v) {
+        pushMosaicSourceTo(v, null);
+    }
+
+    public void pushMosaicSourceTo(BrushOverlayView target, @Nullable View excludeSticker) {
+        if (target == null || renderer == null) return;
+
+        capturePreviewBitmap(src -> {
+            if (src == null) return;
+
+            int x = renderer.getViewportX();
+            int y = renderer.getViewportY();
+            int w = renderer.getViewportWidth();
+            int h = renderer.getViewportHeight();
+
+            FrameLayout container = findViewById(R.id.photoPreviewContainer);
+            int outW = (container != null ? container.getWidth() : x + w);
+            int outH = (container != null ? container.getHeight() : y + h);
+            if (outW <= 0) outW = x + w;
+            if (outH <= 0) outH = y + h;
+
+
+            Bitmap out = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(out);
+            canvas.drawBitmap(src, x, y, null);
+
+            padEdges(canvas, src, x, y, w, h, outW, outH);
+
+            //if (brushOverlay != null) brushOverlay.draw(canvas);
+            if (stickerOverlay != null) {
+                if (excludeSticker != null) {
+                    int vis = excludeSticker.getVisibility();
+                    excludeSticker.setVisibility(View.INVISIBLE);
+                    stickerOverlay.draw(canvas);
+                    excludeSticker.setVisibility(vis);
+                } else {
+                    stickerOverlay.draw(canvas);
+                }
+            }
+
+            target.setMosaicSource(out);
+            src.recycle();
+        });
+    }
+
+    private static void padEdges(Canvas canvas, Bitmap src,
+                                 int x, int y, int w, int h, int outW, int outH) {
+        if (y > 0) {
+            canvas.drawBitmap(src, new Rect(0, 0, w, 1), new Rect(x, 0, x + w, y), null);
+        }
+        if (y + h < outH) {
+            canvas.drawBitmap(src, new Rect(0, h - 1, w, h), new Rect(x, y + h, x + w, outH), null);
+        }
+        if (x > 0) {
+            canvas.drawBitmap(src, new Rect(0, 0, 1, h), new Rect(0, y, x, y + h), null);
+        }
+        if (x + w < outW) {
+            canvas.drawBitmap(src, new Rect(w - 1, 0, w, h), new Rect(x + w, y, outW, y + h), null);
+        }
+        if (x > 0 && y > 0) {
+            canvas.drawBitmap(src, new Rect(0, 0, 1, 1), new Rect(0, 0, x, y), null);
+        }
+        if (x + w < outW && y > 0) {
+            canvas.drawBitmap(src, new Rect(w - 1, 0, w, 1), new Rect(x + w, 0, outW, y), null);
+        }
+        if (x > 0 && y + h < outH) {
+            canvas.drawBitmap(src, new Rect(0, h - 1, 1, h), new Rect(0, y + h, x, outH), null);
+        }
+        if (x + w < outW && y + h < outH) {
+            canvas.drawBitmap(src, new Rect(w - 1, h - 1, w, h), new Rect(x + w, y + h, outW, outH), null);
+        }
+    }*/
+
+    /*private void capturePreviewBitmap(Consumer<Bitmap> cb) {
+        if (photoPreview == null || renderer == null) {
+            cb.accept(null);
+            return;
+        }
+
+        final int w = photoPreview.getWidth();
+        final int h = photoPreview.getHeight();
+        if (w <= 0 || h <= 0) {
+            cb.accept(null);
+            return;
+        }
+
+        final Bitmap dst = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+
+        photoPreview.requestRender();
+        new Handler(Looper.getMainLooper()).post(() -> {
+            PixelCopy.request(photoPreview, dst, result -> {
+                if (result == PixelCopy.SUCCESS) {
+                    int vx = renderer.getViewportX();
+                    int vy = renderer.getViewportY();
+                    int vw = renderer.getViewportWidth();
+                    int vh = renderer.getViewportHeight();
+
+                    if (vx < 0) vx = 0;
+                    if (vy < 0) vy = 0;
+                    if (vx + vw > dst.getWidth()) vw = dst.getWidth() - vx;
+                    if (vy + vh > dst.getHeight()) vh = dst.getHeight() - vy;
+
+                    Bitmap cropped = Bitmap.createBitmap(dst, vx, vy, vw, vh);
+
+                    dst.recycle();
+                    cb.accept(cropped);
+                } else {
+                    dst.recycle();
+                    cb.accept(null);
+                }
+            }, new Handler(Looper.getMainLooper()));
+        });
+    }*/
+
+    /*private void updateBrushMosaicSourceIfAny() {
+        if (brushOverlay == null) return;
+        for (int i = 0; i < brushOverlay.getChildCount(); i++) {
+            View v = brushOverlay.getChildAt(i);
+            if (v instanceof BrushOverlayView) {
+                pushMosaicSourceTo((BrushOverlayView) v);
+                break;
+            }
+        }
+    }
+
+    public void refreshMosaicSourceExcludingSticker(@NonNull View sticker) {
+        FrameLayout host = brushOverlay != null ? brushOverlay : stickerOverlay;
+        if (host == null) return;
+        for (int i = 0; i < host.getChildCount(); i++) {
+            View v = host.getChildAt(i);
+            if (v instanceof BrushOverlayView) {
+                pushMosaicSourceTo((BrushOverlayView) v, sticker);
+                break;
+            }
+        }
+    }*/
+
+    /// UI, 시스템 ///
+    private boolean isBackEnabledFor(Fragment f) {
+        return (f instanceof ToolsFragment)
+                || (f instanceof ColorsFragment)
+                || (f instanceof StickersFragment);
+    }
+
+    private void updateBackAndSaveUiEnabled(Fragment f) {
+        boolean enabled = isBackEnabledFor(f);
+        if (backBtn != null) {
+            backBtn.setEnabled(enabled);
+            backBtn.setClickable(enabled);
+            backBtn.setAlpha(enabled ? 1f : 0.3f);
+        }
+
+        if (saveBtn != null) {
+            saveBtn.setEnabled(enabled);
+            saveBtn.setClickable(enabled);
+            saveBtn.setAlpha(enabled ? 1f : 0.3f);
+            saveTxt.setAlpha(enabled ? 1f : 0.3f);
+        }
+    }
+
+    public void requestUpdateBackGate() {
+        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+        updateBackAndSaveUiEnabled(cur);
+    }
+
+    private void handleBack() {
+        FragmentManager fm = getSupportFragmentManager();
+        if (fm.getBackStackEntryCount() > 0) {
+            fm.popBackStack();
+            return;
+        }
+
+        Fragment current = fm.findFragmentById(R.id.bottomArea2);
+        if (current instanceof ToolsFragment) {
+            Intent intent = new Intent(FilterActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        } else {
+            finish();
+        }
+    }
+
+    private void handleBackNavChain() {
+        FragmentManager fm = getSupportFragmentManager();
+
+        Fragment full = fm.findFragmentById(R.id.fullScreenFragmentContainer);
+        if (full != null) {
+            showExitConfirmDialog();
+            return;
+        }
+
+        Fragment cur = fm.findFragmentById(R.id.bottomArea2);
+
+        if (cur instanceof StickersFragment) {
+            FrameLayout stickerOverlay = findViewById(R.id.stickerOverlay);
+            FrameLayout brushOverlay = findViewById(R.id.brushOverlay);
+            if (stickerOverlay != null) stickerOverlay.removeAllViews();
+            if (brushOverlay != null) brushOverlay.removeAllViews();
+
+            resetStickerState(false);
+
+            fm.beginTransaction()
+                    .setCustomAnimations(R.anim.slide_up, 0)
+                    .replace(R.id.bottomArea2, new ColorsFragment())
+                    .commit();
+
+            ConstraintLayout bottomArea1 = findViewById(R.id.bottomArea1);
+            bottomArea1.setVisibility(View.VISIBLE);
+
+            return;
+        }
+
+        if (cur instanceof ColorsFragment) {
+            //resetColorState();
+
+            fm.beginTransaction()
+                    .setCustomAnimations(R.anim.slide_up, 0)
+                    .replace(R.id.bottomArea2, new ToolsFragment())
+                    .commit();
+
+            ConstraintLayout bottomArea1 = findViewById(R.id.bottomArea1);
+            bottomArea1.setVisibility(View.INVISIBLE);
+
+            return;
+        }
+
+        if (cur instanceof ToolsFragment) {
+            openImagePicker();
+            return;
+        }
+
+        handleBack();
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        imagePickerLauncher.launch(intent);
+    }
+
+    private void showExitConfirmDialog() {
+        new FilterEixtDialog(this, new FilterEixtDialog.FilterEixtDialogListener() {
+            @Override
+            public void onKeep() {
+            }
+
+            @Override
+            public void onExit() {
+                finish();
+            }
+        }
+        ).withMessage("편집한 내용을 저장하지 않고\n종료하시겠습니까?")
+                .withButton1Text("예")
+                .withButton2Text("아니오")
+                .show();
+    }
+
+
+    /// getter ///
+    public FGLRenderer getRenderer() {
+        return renderer;
+    }
+
+    public GLSurfaceView getPhotoPreview() {
+        return photoPreview;
     }
 }

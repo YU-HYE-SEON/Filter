@@ -24,7 +24,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
     private final Context context;  //리소스 접근 위해 사용
     private GLSurfaceView glSurfaceView;    //화면에 그려지는 OpenGL의 뷰 (현재 불러온 사진 이미지 + 필터 적용)
     private Bitmap bitmap;  //렌더링할 이미지, openGL의 텍스쳐로 변환
-    private int viewportX, viewportY, viewportWidth, viewportHeight;
+    private int viewportX, viewportY, viewportWidth, viewportHeight;    //화면에 실제로 보여지는 영역
     private int textureId = 0;  //텍스쳐 객체 고유 ID 참조용, 0:생성한 텍스쳐 없음
     private int program;    //쉐이더 프로그램 ID, 쉐이더 프로그램 = (버텍스 쉐이더(정점 위치 계산) + 프래그먼트 쉐이더(픽셀 색상 계산))
     private int positionHandle, texCoordHandle; //버텍스 쉐이더의 변수들 ID 참조용 핸들
@@ -38,12 +38,12 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
     private float imageAspectRatio; //사진 이미지 비율
 
     //최종 적용 조절값
-    private float updateBrightness = 0f, updateExposure = 0f, updateContrast = 1.0f, updateHighlight = 0f,
+    private float updateBrightness = 0f, updateExposure = 0f, updateContrast = 0f, updateHighlight = 0f,
             updateShadow = 0f, updateTemperature = 0f, updateTint = 0f, updateSaturation = 1.0f,
             updateSharpness = 0f, updateBlur = 0f, updateVignette = 0f, updateNoise = 0f;
 
     //최종 적용 전 실시간 미리보기용 조절값 (onDrawFrame에서 사용)
-    private float tempBrightness = 0f, tempExposure = 0f, tempContrast = 1.0f, tempHighlight = 0f,
+    private float tempBrightness = 0f, tempExposure = 0f, tempContrast = 0f, tempHighlight = 0f,
             tempShadow = 0f, tempTemperature = 0f, tempTint = 0f, tempSaturation = 1.0f,
             tempSharpness = 0f, tempBlur = 0f, tempVignette = 0f, tempNoise = 0f;
 
@@ -254,10 +254,90 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
-            //사진 저장하고자 할 때 현재 이미지를 비트맵으로 변환시키는 메서드 호출 및 전달
             if (shouldCapture) {
                 shouldCapture = false;
-                Bitmap captured = createBitmapFromGLSurface(0, 0, glSurfaceView.getWidth(), glSurfaceView.getHeight());
+
+                final int w = glSurfaceView.getWidth();
+                final int h = glSurfaceView.getHeight();
+                Bitmap captured;
+
+                //오프스크린 렌더링 방식을 사용하기 위함 (사용자 눈에 직접 보이지 않게 처리)
+                //색감 보정 후 크롭 시 찰나에 원본 색감으로 깜빡이는 문제와
+                //색감 보정 후 크롭 시 색감 보정이 이중 적용되는 문제 해결을 위함
+                //오프스크린 렌더링용 세팅 및 실행
+                if (captureUnfilteredNext) {
+                    //오프스크린 렌더링 준비 메서드 호출
+                    ensureOffscreenTarget(w, h);
+
+                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, offFbo);
+                    GLES20.glViewport(0, 0, w, h);
+
+                    GLES20.glClearColor(0f, 0f, 0f, 1f);
+                    GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
+                    GLES20.glUseProgram(program);
+
+                    float[] scaledVertices2 = new float[] {
+                            -1.0f * scaleFactor + translateX, -1.0f * scaleFactor + translateY,
+                            1.0f * scaleFactor + translateX, -1.0f * scaleFactor + translateY,
+                            -1.0f * scaleFactor + translateX,  1.0f * scaleFactor + translateY,
+                            1.0f * scaleFactor + translateX,  1.0f * scaleFactor + translateY
+                    };
+                    vertexBuffer.put(scaledVertices2).position(0);
+
+                    GLES20.glEnableVertexAttribArray(positionHandle);
+                    GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer);
+                    GLES20.glEnableVertexAttribArray(texCoordHandle);
+                    GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 0, texCoordBuffer);
+
+                    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+                    GLES20.glUniform1i(textureHandle, 0);
+
+                    GLES20.glUniform1f(brightnessHandle,  0f);
+                    GLES20.glUniform1f(exposureHandle,    0f);
+                    GLES20.glUniform1f(contrastHandle,    0f);
+                    GLES20.glUniform1f(highlightHandle,   0f);
+                    GLES20.glUniform1f(shadowHandle,      0f);
+                    GLES20.glUniform1f(temperatureHandle, 0f);
+                    GLES20.glUniform1f(tintHandle,        0f);
+                    GLES20.glUniform1f(saturationHandle,  1.0f);
+                    GLES20.glUniform1f(sharpnessHandle,   0f);
+                    GLES20.glUniform1f(blurHandle,        0f);
+                    GLES20.glUniform1f(vignetteHandle,    0f);
+                    GLES20.glUniform1f(noiseHandle,       0f);
+                    GLES20.glUniform2f(resolutionHandle,  bitmap.getWidth(), bitmap.getHeight());
+
+                    GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+                    int[] rgba = new int[w * h];
+                    int[] argb = new int[w * h];
+                    IntBuffer ib = IntBuffer.wrap(rgba);
+                    ib.position(0);
+                    GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, ib);
+
+                    for (int i = 0; i < h; i++) {
+                        for (int j = 0; j < w; j++) {
+                            int idx = i * w + j;
+                            int p = rgba[idx];
+                            int r = (p      ) & 0xff;
+                            int g = (p >>  8) & 0xff;
+                            int b = (p >> 16) & 0xff;
+                            int a = (p >> 24) & 0xff;
+                            int flip = (h - i - 1) * w + j;
+                            argb[flip] = (a << 24) | (r << 16) | (g << 8) | b;
+                        }
+                    }
+                    captured = Bitmap.createBitmap(argb, w, h, Bitmap.Config.ARGB_8888);
+
+                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+                    GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
+
+                    captureUnfilteredNext = false;
+                } else {
+                    captured = createBitmapFromGLSurface(0, 0, w, h);
+                }
+
                 if (listener != null) {
                     glSurfaceView.post(() -> listener.onBitmapCaptured(captured));
                 }
@@ -586,5 +666,74 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         int correctedY = fullBitmap.getHeight() - viewportY - viewportHeight;
 
         return Bitmap.createBitmap(fullBitmap, viewportX, correctedY, viewportWidth, viewportHeight);
+    }
+
+    //오프스크린 렌더링 방식을 사용하기 위함 (사용자 눈에 직접 보이지 않게 처리)
+    //색감 보정 후 크롭 시 찰나에 원본 색감으로 깜빡이는 문제와
+    //색감 보정 후 크롭 시 색감 보정이 이중 적용되는 문제 해결을 위한 변수들
+    private boolean captureUnfilteredNext = false;
+    private int offFbo = 0;
+    private int offTex = 0;
+    private int offRbo = 0;
+    private int offW = 0, offH = 0;
+
+    //색감 보정 후 사진 크롭 시 찰나에 원본 색감으로 깜빡이는 문제 해결을 위한 메서드, 크롭된 사진을 우회적으로 캡쳐함
+    public void captureBitmapUnfiltered() {
+        captureUnfilteredNext = true;
+        shouldCapture = true;
+        if (glSurfaceView != null) glSurfaceView.requestRender();
+    }
+
+    //오프스크린 렌더링 준비
+    private void ensureOffscreenTarget(int width, int height) {
+        if (offFbo != 0 && width == offW && height == offH) return;
+
+        releaseOffscreenTarget();
+
+        offW = width;
+        offH = height;
+
+        int[] ids = new int[1];
+
+        GLES20.glGenTextures(1, ids, 0);
+        offTex = ids[0];
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, offTex);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, offW, offH, 0,
+                GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+
+        GLES20.glGenFramebuffers(1, ids, 0);
+        offFbo = ids[0];
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, offFbo);
+        GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
+                GLES20.GL_TEXTURE_2D, offTex, 0);
+
+        GLES20.glGenRenderbuffers(1, ids, 0);
+        offRbo = ids[0];
+        GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, offRbo);
+        GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_DEPTH_COMPONENT16, offW, offH);
+        GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
+                GLES20.GL_RENDERBUFFER, offRbo);
+
+        int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
+        if (status != GLES20.GL_FRAMEBUFFER_COMPLETE) {
+            releaseOffscreenTarget();
+        }
+
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+        GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, 0);
+    }
+
+    //메모리 차원에서 오프스크린 렌더링에 사용된 데이터들 삭제
+    private void releaseOffscreenTarget() {
+        int[] ids = new int[1];
+        if (offTex != 0) { ids[0] = offTex; GLES20.glDeleteTextures(1, ids, 0); offTex = 0; }
+        if (offRbo != 0) { ids[0] = offRbo; GLES20.glDeleteRenderbuffers(1, ids, 0); offRbo = 0; }
+        if (offFbo != 0) { ids[0] = offFbo; GLES20.glDeleteFramebuffers(1, ids, 0); offFbo = 0; }
+        offW = offH = 0;
     }
 }

@@ -19,6 +19,9 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CropFragment extends Fragment {
     private ImageButton freeCutIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
     private ImageButton cancelBtn, checkBtn;
@@ -162,13 +165,17 @@ public class CropFragment extends Fragment {
                     int height = cropRect.height();
 
                     //유효 범위 체크
-                    if (x < 0 || y < 0 || x + width > fullBitmap.getWidth() || y + height > fullBitmap.getHeight()) {
+                    if (x < 0 || y < 0
+                            || width <= 0 || height <= 0
+                            || x + width > fullBitmap.getWidth()
+                            || y + height > fullBitmap.getHeight()) {
                         return;
                     }
 
                     Bitmap cropped = Bitmap.createBitmap(fullBitmap, x, y, width, height);
 
                     activity.getRenderer().setBitmap(cropped);
+
                     activity.resetViewportTransform();
                     activity.hideCropOverlay();
                     activity.getPhotoPreview().requestRender();
@@ -183,7 +190,7 @@ public class CropFragment extends Fragment {
 
                 });
 
-                activity.getRenderer().captureBitmap();
+                activity.getRenderer().captureBitmapUnfiltered();
             }
         });
 

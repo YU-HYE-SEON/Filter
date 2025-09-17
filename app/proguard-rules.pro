@@ -17,5 +17,5 @@
 #-keepattributes SourceFile,LineNumberTable
 
 # If you keep the line number information, uncomment this to
-# hide the original source file title.
+# hide the originalColor source file title.
 #-renamesourcefileattribute SourceFile

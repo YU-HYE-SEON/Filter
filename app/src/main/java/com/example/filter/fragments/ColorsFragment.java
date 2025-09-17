@@ -25,6 +25,7 @@ public class ColorsFragment extends Fragment {
     private ImageView nextBtn;
     private ConstraintLayout bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
+    private ImageButton undoSticker, redoSticker, originalSticker;
 
     @Nullable
     @Override
@@ -49,8 +50,15 @@ public class ColorsFragment extends Fragment {
         undoColor = requireActivity().findViewById(R.id.undoColor);
         redoColor = requireActivity().findViewById(R.id.redoColor);
         originalColor = requireActivity().findViewById(R.id.originalColor);
+        undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        redoSticker = requireActivity().findViewById(R.id.redoSticker);
+        originalSticker = requireActivity().findViewById(R.id.originalSticker);
+
 
         bottomArea1.setVisibility(View.VISIBLE);
+        undoSticker.setVisibility(View.INVISIBLE);
+        redoSticker.setVisibility(View.INVISIBLE);
+        originalSticker.setVisibility(View.INVISIBLE);
         undoColor.setEnabled(false);
         redoColor.setEnabled(false);
         undoColor.setVisibility(View.VISIBLE);
@@ -58,7 +66,9 @@ public class ColorsFragment extends Fragment {
         originalColor.setVisibility(View.VISIBLE);
 
         FilterActivity activity = (FilterActivity) getActivity();
-        if (activity != null) activity.refreshOriginalColorButton();
+        if (activity != null) {
+            activity.refreshOriginalColorButton();
+        }
 
         undoColor.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
@@ -214,8 +224,15 @@ public class ColorsFragment extends Fragment {
         refreshColorButtons();
         updateColorIcons();
 
-        FilterActivity activity = (FilterActivity) getActivity();
+        if (undoColor != null) undoColor.setVisibility(View.VISIBLE);
+        if (redoColor != null) redoColor.setVisibility(View.VISIBLE);
+        if (originalColor != null) originalColor.setVisibility(View.VISIBLE);
 
+        if (undoSticker != null) undoSticker.setVisibility(View.INVISIBLE);
+        if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
+        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);
+
+        FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {
             activity.refreshOriginalColorButton();
             activity.requestUpdateBackGate();
@@ -226,10 +243,12 @@ public class ColorsFragment extends Fragment {
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
         if (!hidden) {
-            refreshColorButtons();
-            updateColorIcons();
             FilterActivity act = (FilterActivity) getActivity();
-            if (act != null) act.requestUpdateBackGate();
+            if (act != null) {
+                act.requestUpdateBackGate();
+                refreshColorButtons();
+                updateColorIcons();
+            }
         }
     }
 
@@ -237,18 +256,18 @@ public class ColorsFragment extends Fragment {
         FilterActivity a = (FilterActivity) getActivity();
         if (a == null) return;
 
-        setIcon(brightnessIcon,  a.getCurrentValue("밝기")       != 0, R.drawable.brightness_icon_yes,  R.drawable.brightness_icon_no);
-        setIcon(exposureIcon,    a.getCurrentValue("노출")       != 0, R.drawable.exposure_icon_yes,    R.drawable.exposure_icon_no);
-        setIcon(contrastIcon,    a.getCurrentValue("대비")       != 0, R.drawable.contrast_icon_yes,    R.drawable.contrast_icon_no);
-        setIcon(highlightIcon,   a.getCurrentValue("하이라이트") != 0, R.drawable.highlight_icon_yes,   R.drawable.highlight_icon_no);
-        setIcon(shadowIcon,      a.getCurrentValue("그림자")     != 0, R.drawable.shadow_icon_yes,      R.drawable.shadow_icon_no);
-        setIcon(temperatureIcon, a.getCurrentValue("온도")       != 0, R.drawable.temperature_icon_yes, R.drawable.temperature_icon_no);
-        setIcon(tintIcon,        a.getCurrentValue("색조")       != 0, R.drawable.hue_icon_yes,         R.drawable.hue_icon_no);
-        setIcon(saturationIcon,  a.getCurrentValue("채도")       != 0, R.drawable.saturation_icon_yes,  R.drawable.saturation_icon_no);
-        setIcon(sharpnessIcon,   a.getCurrentValue("선명하게")   != 0, R.drawable.sharpness_icon_yes,   R.drawable.sharpness_icon_no);
-        setIcon(blurIcon,        a.getCurrentValue("흐리게")     != 0, R.drawable.blur_icon_yes,        R.drawable.blur_icon_no);
-        setIcon(vignetteIcon,    a.getCurrentValue("비네트")     != 0, R.drawable.vignette_icon_yes,    R.drawable.vignette_icon_no);
-        setIcon(noiseIcon,       a.getCurrentValue("노이즈")     != 0, R.drawable.noise_icon_no,       R.drawable.noise_icon_no);
+        setIcon(brightnessIcon, a.getCurrentValue("밝기") != 0, R.drawable.brightness_icon_yes, R.drawable.brightness_icon_no);
+        setIcon(exposureIcon, a.getCurrentValue("노출") != 0, R.drawable.exposure_icon_yes, R.drawable.exposure_icon_no);
+        setIcon(contrastIcon, a.getCurrentValue("대비") != 0, R.drawable.contrast_icon_yes, R.drawable.contrast_icon_no);
+        setIcon(highlightIcon, a.getCurrentValue("하이라이트") != 0, R.drawable.highlight_icon_yes, R.drawable.highlight_icon_no);
+        setIcon(shadowIcon, a.getCurrentValue("그림자") != 0, R.drawable.shadow_icon_yes, R.drawable.shadow_icon_no);
+        setIcon(temperatureIcon, a.getCurrentValue("온도") != 0, R.drawable.temperature_icon_yes, R.drawable.temperature_icon_no);
+        setIcon(tintIcon, a.getCurrentValue("색조") != 0, R.drawable.hue_icon_yes, R.drawable.hue_icon_no);
+        setIcon(saturationIcon, a.getCurrentValue("채도") != 0, R.drawable.saturation_icon_yes, R.drawable.saturation_icon_no);
+        setIcon(sharpnessIcon, a.getCurrentValue("선명하게") != 0, R.drawable.sharpness_icon_yes, R.drawable.sharpness_icon_no);
+        setIcon(blurIcon, a.getCurrentValue("흐리게") != 0, R.drawable.blur_icon_yes, R.drawable.blur_icon_no);
+        setIcon(vignetteIcon, a.getCurrentValue("비네트") != 0, R.drawable.vignette_icon_yes, R.drawable.vignette_icon_no);
+        setIcon(noiseIcon, a.getCurrentValue("노이즈") != 0, R.drawable.noise_icon_no, R.drawable.noise_icon_no);
     }
 
     private void setIcon(ImageView iv, boolean on, int yesRes, int noRes) {

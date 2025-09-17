@@ -13,9 +13,11 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class EditMyStickerFragment extends Fragment {
@@ -27,13 +29,20 @@ public class EditMyStickerFragment extends Fragment {
     private float downRawX, downRawY, startX, startY;
     private float rotStartWrapperDeg, rotLastAngleDeg, rotAccumDeg;
     private int startW, startH;
-    private FrameLayout overlayStack;
+    private FrameLayout stickerOverlay;
     private static final int CTRL_BASE_DP = 30;
     private static final int CTRL_MIN_DP = 22;
     private static final int WRAPPER_MIN_DP = 100;
     private final float ROT_MIN_RADIUS_DP = 24f;
     public static String sLastReturnOriginAction = null;
     private boolean[] prevEnabledSnapshot;
+    ImageButton undoSticker, redoSticker, originalSticker;
+    private Float prevElevation = null;
+    private Float entryX = null, entryY = null, entryR = null;
+    private Integer entryW = null, entryH = null;
+    private static final float EPS_POS = 0.5f;
+    private static final float EPS_ROT = 0.5f;
+    private static final int   EPS_SIZE = 1;
 
     @Nullable
     @Override
@@ -51,14 +60,29 @@ public class EditMyStickerFragment extends Fragment {
         cancelBtn = v.findViewById(R.id.cancelBtn);
         checkBtn = v.findViewById(R.id.checkBtn);
 
-        overlayStack = requireActivity().findViewById(R.id.overlayStack);
-        if (overlayStack == null) return;
+        stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
+        if (stickerOverlay == null) return;
 
-        stickerWrapper = overlayStack.findViewWithTag("editingSticker");
-        if (stickerWrapper == null && overlayStack.getChildCount() > 0) {
-            stickerWrapper = overlayStack.getChildAt(overlayStack.getChildCount() - 1);
+        undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        redoSticker = requireActivity().findViewById(R.id.redoSticker);
+        originalSticker = requireActivity().findViewById(R.id.originalSticker);
+
+        if (undoSticker != null) undoSticker.setVisibility(View.INVISIBLE);
+        if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
+        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);
+
+        stickerWrapper = stickerOverlay.findViewWithTag("editingSticker");
+        if (stickerWrapper == null && stickerOverlay.getChildCount() > 0) {
+            stickerWrapper = stickerOverlay.getChildAt(stickerOverlay.getChildCount() - 1);
         }
         if (stickerWrapper == null) return;
+
+        if (getArguments() != null && getArguments().containsKey("prevElevation")) {
+            prevElevation = getArguments().getFloat("prevElevation", ViewCompat.getZ(stickerWrapper));
+        } else {
+            prevElevation = ViewCompat.getZ(stickerWrapper);
+        }
+        raiseStickerToAbsoluteTop(stickerWrapper, stickerOverlay);
 
         editFrame = stickerWrapper.findViewById(R.id.editFrame);
         stickerImage = stickerWrapper.findViewById(R.id.stickerImage);
@@ -79,7 +103,7 @@ public class EditMyStickerFragment extends Fragment {
         prevEnabledSnapshot = args.getBooleanArray("prevEnabled");
 
         final int sessionBaseline = args.getInt("sessionBaseline",
-                (overlayStack != null) ? overlayStack.getChildCount() : 0);
+                (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0);
 
         origX = args.getFloat("x", stickerWrapper.getX());
         origY = args.getFloat("y", stickerWrapper.getY());
@@ -102,6 +126,12 @@ public class EditMyStickerFragment extends Fragment {
             stickerWrapper.setPivotX(stickerWrapper.getWidth() / 2f);
             stickerWrapper.setPivotY(stickerWrapper.getHeight() / 2f);
             positionControllers();
+
+            entryX = stickerWrapper.getX();
+            entryY = stickerWrapper.getY();
+            entryW = stickerWrapper.getLayoutParams().width;
+            entryH = stickerWrapper.getLayoutParams().height;
+            entryR = stickerWrapper.getRotation();
         });
 
         stickerWrapper.setOnClickListener(null);
@@ -218,30 +248,37 @@ public class EditMyStickerFragment extends Fragment {
         cancelBtn.setOnClickListener(x -> {
             if (ClickUtils.isFastClick(500)) return;
 
+            if ("stickers".equals(origin)) {
+                FilterActivity a = (FilterActivity) requireActivity();
+                if (stickerWrapper != null) {
+                    a.recordStickerDelete(stickerWrapper);
+                }
+            }
+
             removeStickerWrapper();
             hideControllers();
 
             if ("stickers".equals(origin)) {
-                if (overlayStack != null) {
-                    for (int i = 0; i < overlayStack.getChildCount(); i++) {
-                        View child = overlayStack.getChildAt(i);
+                if (stickerOverlay != null) {
+                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                        View child = stickerOverlay.getChildAt(i);
                         MyStickersFragment.setStickerActive(child, true);
                         child.setTag(R.id.tag_prev_enabled, null);
                     }
                 }
                 goBackTo(new StickersFragment());
             } else {
-                if (overlayStack != null) {
+                if (stickerOverlay != null) {
                     if (prevEnabledSnapshot != null &&
-                            prevEnabledSnapshot.length == overlayStack.getChildCount()) {
-                        for (int i = 0; i < overlayStack.getChildCount(); i++) {
-                            View child = overlayStack.getChildAt(i);
+                            prevEnabledSnapshot.length == stickerOverlay.getChildCount()) {
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
                             MyStickersFragment.setStickerActive(child, prevEnabledSnapshot[i]);
                             child.setTag(R.id.tag_prev_enabled, null);
                         }
                     } else {
-                        for (int i = 0; i < overlayStack.getChildCount(); i++) {
-                            View child = overlayStack.getChildAt(i);
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
                             Object prev = child.getTag(R.id.tag_prev_enabled);
                             boolean prevEnabled = (prev instanceof Boolean) ? (Boolean) prev : true;
                             MyStickersFragment.setStickerActive(child, prevEnabled);
@@ -249,6 +286,8 @@ public class EditMyStickerFragment extends Fragment {
                         }
                     }
                 }
+                restoreElevationIfNeeded();
+
                 sLastReturnOriginAction = "mystickers_cancel";
                 requireActivity().getSupportFragmentManager().popBackStack();
             }
@@ -265,27 +304,63 @@ public class EditMyStickerFragment extends Fragment {
             hideControllers();
 
             if ("stickers".equals(origin)) {
-                if (overlayStack != null) {
-                    for (int i = 0; i < overlayStack.getChildCount(); i++) {
-                        View child = overlayStack.getChildAt(i);
+                FilterActivity a = (FilterActivity) requireActivity();
+
+                //float bx = getArguments().getFloat("prevX", stickerWrapper.getX());
+                //float by = getArguments().getFloat("prevY", stickerWrapper.getY());
+                //int bw = getArguments().getInt("prevW", stickerWrapper.getLayoutParams().width);
+                //int bh = getArguments().getInt("prevH", stickerWrapper.getLayoutParams().height);
+                //float br = getArguments().getFloat("prevR", stickerWrapper.getRotation());
+
+                int aw = stickerWrapper.getLayoutParams().width;
+                int ah = stickerWrapper.getLayoutParams().height;
+                float ax = stickerWrapper.getX();
+                float ay = stickerWrapper.getY();
+                float ar = stickerWrapper.getRotation();
+
+                // ✅ 엔트리 스냅샷과 비교(사용자 편집 여부 판정)
+                boolean samePos  = (entryX != null && entryY != null)
+                        && Math.abs(ax - entryX) < EPS_POS
+                        && Math.abs(ay - entryY) < EPS_POS;
+                boolean sameRot  = (entryR != null) && Math.abs(ar - entryR) < EPS_ROT;
+                boolean sameSize = (entryW != null && entryH != null)
+                        && Math.abs(aw - entryW) <= EPS_SIZE
+                        && Math.abs(ah - entryH) <= EPS_SIZE;
+
+                // 기존 prev(편집 전) 값은 남겨두되, '사용자 조작 없음'이면 기록 생략
+                if (!(samePos && sameRot && sameSize)) {
+                    float bx = getArguments().getFloat("prevX", stickerWrapper.getX());
+                    float by = getArguments().getFloat("prevY", stickerWrapper.getY());
+                    int   bw = getArguments().getInt("prevW", stickerWrapper.getLayoutParams().width);
+                    int   bh = getArguments().getInt("prevH", stickerWrapper.getLayoutParams().height);
+                    float br = getArguments().getFloat("prevR", stickerWrapper.getRotation());
+
+                    a.recordStickerEdit(stickerWrapper, bx, by, bw, bh, br, ax, ay, aw, ah, ar);
+                }
+
+                //a.recordStickerEdit(stickerWrapper, bx, by, bw, bh, br, ax, ay, aw, ah, ar);
+
+                if (stickerOverlay != null) {
+                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                        View child = stickerOverlay.getChildAt(i);
                         MyStickersFragment.setStickerActive(child, true);
                         child.setTag(R.id.tag_prev_enabled, null);
                     }
                 }
+                restoreElevationIfNeeded();
                 goBackTo(new StickersFragment());
             } else {
-                if (overlayStack != null) {
+                if (stickerOverlay != null) {
                     if (prevEnabledSnapshot != null &&
-                            prevEnabledSnapshot.length == overlayStack.getChildCount()) {
-                    for (int i = 0; i < overlayStack.getChildCount(); i++) {
-                        View child = overlayStack.getChildAt(i);
-                        MyStickersFragment.setStickerActive(child, prevEnabledSnapshot[i]);
-                        child.setTag(R.id.tag_prev_enabled, null);
-                    }
-                }
-                    else{
-                        for (int i = 0; i < overlayStack.getChildCount(); i++) {
-                            View child = overlayStack.getChildAt(i);
+                            prevEnabledSnapshot.length == stickerOverlay.getChildCount()) {
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
+                            MyStickersFragment.setStickerActive(child, prevEnabledSnapshot[i]);
+                            child.setTag(R.id.tag_prev_enabled, null);
+                        }
+                    } else {
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
                             Object prev = child.getTag(R.id.tag_prev_enabled);
                             boolean prevEnabled = (prev instanceof Boolean) ? (Boolean) prev : true;
                             MyStickersFragment.setStickerActive(child, prevEnabled);
@@ -293,10 +368,29 @@ public class EditMyStickerFragment extends Fragment {
                         }
                     }
                 }
+                restoreElevationIfNeeded();
+
                 sLastReturnOriginAction = "mystickers_check";
                 requireActivity().getSupportFragmentManager().popBackStack();
             }
         });
+    }
+
+    private void restoreElevationIfNeeded() {
+        if (stickerWrapper != null && prevElevation != null) {
+            ViewCompat.setZ(stickerWrapper, prevElevation);
+            stickerWrapper.invalidate();
+        }
+    }
+
+    private void raiseStickerToAbsoluteTop(@NonNull View sticker, @NonNull ViewGroup parent) {
+        float maxZ = 0f;
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            maxZ = Math.max(maxZ, ViewCompat.getZ(parent.getChildAt(i)));
+        }
+        ViewCompat.setZ(sticker, maxZ + 1000f);
+        sticker.bringToFront();
+        parent.invalidate();
     }
 
     private void updateControllerAngles() {
@@ -316,7 +410,7 @@ public class EditMyStickerFragment extends Fragment {
 
     private float[] getTouchInOverlay(MotionEvent e) {
         int[] ov = new int[2];
-        overlayStack.getLocationOnScreen(ov);
+        stickerOverlay.getLocationOnScreen(ov);
         return new float[]{e.getRawX() - ov[0], e.getRawY() - ov[1]};
     }
 

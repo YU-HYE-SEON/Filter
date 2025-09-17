@@ -1,10 +1,10 @@
 package com.example.filter.activities;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -15,7 +15,10 @@ import android.graphics.drawable.GradientDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -48,7 +51,23 @@ public class LoadActivity extends BaseActivity {
     private ImageView lassoCut, shapeCut;
     private ImageView squareCut, starCut, triangleCut, circleCut, heartCut;
     private ImageButton cancelBtn, checkBtn;
+    private boolean shapeModeOn = false;
+    private boolean lassoModeOn = false;
+    private final Matrix imgMatrix = new Matrix();
+    private final Matrix savedMatrix = new Matrix();
+    private final float[] mvals = new float[9];
+    private float minScale = 1f;
+    private float maxScale = 4f;
 
+    private enum Mode {NONE, DRAG, ZOOM}
+
+    private Mode touchMode = Mode.NONE;
+    private float startX, startY;
+    private float pinchStartDist = 0f;
+    private float pinchMidX = 0f, pinchMidY = 0f;
+    private ScaleGestureDetector scaleDetector;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,6 +96,28 @@ public class LoadActivity extends BaseActivity {
         }
 
         loadImage.post(() -> {
+            if (loadImage.getDrawable() == null) return;
+
+            int vw = loadImage.getWidth();
+            int vh = loadImage.getHeight();
+            int dw = loadImage.getDrawable().getIntrinsicWidth();
+            int dh = loadImage.getDrawable().getIntrinsicHeight();
+
+            if (vw == 0 || vh == 0 || dw <= 0 || dh <= 0) return;
+
+            float s = Math.min(vw / (float) dw, vh / (float) dh);
+            minScale = s;
+
+            float dx = (vw - dw * s) * 0.5f;
+            float dy = (vh - dh * s) * 0.5f;
+
+            imgMatrix.reset();
+            imgMatrix.postScale(s, s);
+            imgMatrix.postTranslate(dx, dy);
+            loadImage.setImageMatrix(imgMatrix);
+
+            updateOverlaysImageBounds();
+
             RectF imgRect = getImageDisplayRect(loadImage);
             if (imgRect != null) {
                 shapeOverlay.setImageBounds(imgRect);
@@ -84,52 +125,130 @@ public class LoadActivity extends BaseActivity {
             }
         });
 
+        scaleDetector = new ScaleGestureDetector(this,
+                new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                    @Override
+                    public boolean onScale(ScaleGestureDetector detector) {
+                        float factor = detector.getScaleFactor();
+                        imgMatrix.getValues(mvals);
+                        float curScale = mvals[Matrix.MSCALE_X];
+                        float target = curScale * factor;
+
+                        if (target < minScale) factor = minScale / curScale;
+                        else if (target > maxScale) factor = maxScale / curScale;
+
+                        imgMatrix.postScale(factor, factor, pinchMidX, pinchMidY);
+                        constrainTranslation();
+                        loadImage.setImageMatrix(imgMatrix);
+                        updateOverlaysImageBounds();
+                        return true;
+                    }
+                });
+
+        loadImage.setOnTouchListener((v, ev) -> {
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    savedMatrix.set(imgMatrix);
+                    startX = ev.getX();
+                    startY = ev.getY();
+                    touchMode = Mode.DRAG;
+                    break;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    if (ev.getPointerCount() >= 2) {
+                        pinchStartDist = spacing(ev);
+                        midPoint(ev, out -> {
+                            pinchMidX = out[0];
+                            pinchMidY = out[1];
+                        });
+                        savedMatrix.set(imgMatrix);
+                        touchMode = Mode.ZOOM;
+                    }
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if (touchMode == Mode.DRAG) {
+                        imgMatrix.set(savedMatrix);
+                        float dx = ev.getX() - startX;
+                        float dy = ev.getY() - startY;
+                        imgMatrix.postTranslate(dx, dy);
+                        constrainTranslation();
+                        loadImage.setImageMatrix(imgMatrix);
+                        updateOverlaysImageBounds();
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                case MotionEvent.ACTION_POINTER_UP:
+                    touchMode = Mode.NONE;
+                    break;
+            }
+            if (ev.getPointerCount() >= 2) scaleDetector.onTouchEvent(ev);
+            else if (ev.getActionMasked() == MotionEvent.ACTION_MOVE)
+                scaleDetector.onTouchEvent(ev);
+            return true;
+        });
+
         shapeOverlay.setMaskScale(0.3f);
 
         lassoCut.setOnClickListener(v -> {
-            lassoCut.setImageResource(R.drawable.rotation_icon_yes);
-            shapeCut.setImageResource(R.drawable.rotation_icon_no);
-
-            shapeOverlay.setShape(ShapeType.NONE);
-            lassoOverlay.setLassoVisible(true);
-
-            lassoOverlay.beginFullSelection();
-
-            visibleOff();
+            if (lassoModeOn) {
+                lassoModeOn = false;
+                lassoCut.setImageResource(R.drawable.rotation_icon_no);
+                lassoOverlay.setLassoVisible(false);
+            } else {
+                lassoModeOn = true;
+                lassoCut.setImageResource(R.drawable.rotation_icon_yes);
+                shapeCut.setImageResource(R.drawable.rotation_icon_no);
+                shapeOverlay.setShape(ShapeType.NONE);
+                updateOverlaysImageBounds();
+                lassoOverlay.setLassoVisible(true);
+                lassoOverlay.getViewTreeObserver().addOnGlobalLayoutListener(
+                        new ViewTreeObserver.OnGlobalLayoutListener() {
+                            @Override
+                            public void onGlobalLayout() {
+                                lassoOverlay.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                                lassoOverlay.beginFullSelection();
+                            }
+                        });
+                visibleOff();
+            }
         });
 
         shapeCut.setOnClickListener(v -> {
-            shapeCut.setImageResource(R.drawable.rotation_icon_yes);
-            lassoCut.setImageResource(R.drawable.rotation_icon_no);
-
-            lassoOverlay.setLassoVisible(false);
-
-            visibleOn();
+            if (shapeModeOn) {
+                shapeModeOn = false;
+                shapeCut.setImageResource(R.drawable.rotation_icon_no);
+                shapeOverlay.setShape(ShapeType.NONE);
+                updateShapeIcons(null);
+                visibleOff();
+            } else {
+                shapeModeOn = true;
+                shapeCut.setImageResource(R.drawable.rotation_icon_yes);
+                lassoCut.setImageResource(R.drawable.rotation_icon_no);
+                lassoOverlay.setLassoVisible(false);
+                visibleOn();
+                shapeOverlay.setShape(ShapeType.NONE);
+                updateShapeIcons(null);
+            }
         });
 
         squareCut.setOnClickListener(v -> {
-            shapeOverlay.setShape(ShapeType.SQUARE);
-            updateShapeIcons("square");
+            toggleShape(ShapeType.SQUARE);
         });
 
         starCut.setOnClickListener(v -> {
-            shapeOverlay.setShape(ShapeType.STAR);
-            updateShapeIcons("star");
+            toggleShape(ShapeType.STAR);
         });
 
         triangleCut.setOnClickListener(v -> {
-            shapeOverlay.setShape(ShapeType.TRIANGLE);
-            updateShapeIcons("triangle");
+            toggleShape(ShapeType.TRIANGLE);
         });
 
         circleCut.setOnClickListener(v -> {
-            shapeOverlay.setShape(ShapeType.CIRCLE);
-            updateShapeIcons("circle");
+            toggleShape(ShapeType.CIRCLE);
         });
 
         heartCut.setOnClickListener(v -> {
-            shapeOverlay.setShape(ShapeType.HEART);
-            updateShapeIcons("heart");
+            toggleShape(ShapeType.HEART);
         });
 
         cancelBtn.setOnClickListener(v -> {
@@ -291,12 +410,23 @@ public class LoadActivity extends BaseActivity {
         shapeOverlay.setShape(ShapeType.NONE);
     }
 
-    private void updateShapeIcons(String shape) {
-        squareCut.setImageResource("square".equals(shape) ? R.drawable.square_yes : R.drawable.square_no);
-        starCut.setImageResource("star".equals(shape) ? R.drawable.star_yes : R.drawable.star_no);
-        triangleCut.setImageResource("triangle".equals(shape) ? R.drawable.triangle_yes : R.drawable.triangle_no);
-        circleCut.setImageResource("circle".equals(shape) ? R.drawable.circle_yes : R.drawable.circle_no);
-        heartCut.setImageResource("heart".equals(shape) ? R.drawable.heart_yes : R.drawable.heart_no);
+    private void updateShapeIcons(ShapeType type) {
+        squareCut.setImageResource(type == ShapeType.SQUARE ? R.drawable.square_yes : R.drawable.square_no);
+        starCut.setImageResource(type == ShapeType.STAR ? R.drawable.star_yes : R.drawable.star_no);
+        triangleCut.setImageResource(type == ShapeType.TRIANGLE ? R.drawable.triangle_yes : R.drawable.triangle_no);
+        circleCut.setImageResource(type == ShapeType.CIRCLE ? R.drawable.circle_yes : R.drawable.circle_no);
+        heartCut.setImageResource(type == ShapeType.HEART ? R.drawable.heart_yes : R.drawable.heart_no);
+    }
+
+    private void toggleShape(ShapeType target) {
+        ShapeType cur = shapeOverlay.getCurrentShape();
+        if (cur == target) {
+            shapeOverlay.setShape(ShapeType.NONE);
+            updateShapeIcons(null);
+        } else {
+            shapeOverlay.setShape(target);
+            updateShapeIcons(target);
+        }
     }
 
     private Bitmap getBitmapFromImageView(ImageView iv) {
@@ -359,9 +489,7 @@ public class LoadActivity extends BaseActivity {
         return out;
     }
 
-    private Bitmap cropByMask(Bitmap src, Bitmap maskBmp, RectF
-            maskRectView, Matrix
-                                      viewToBmp) {
+    private Bitmap cropByMask(Bitmap src, Bitmap maskBmp, RectF maskRectView, Matrix viewToBmp) {
         if (src == null || maskBmp == null || maskRectView == null) return null;
 
         RectF maskRectBmp = new RectF(maskRectView);
@@ -376,13 +504,40 @@ public class LoadActivity extends BaseActivity {
 
         c.drawBitmap(src, 0, 0, null);
 
-        Paint pm = new Paint(Paint.ANTI_ALIAS_FLAG);
-        pm.setFilterBitmap(true);
+        Paint pm = new Paint();
+        pm.setAntiAlias(false);
+        pm.setFilterBitmap(false);
+        pm.setDither(false);
         pm.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
         c.drawBitmap(maskBmp, null, maskRectBmp, pm);
         pm.setXfermode(null);
 
+        cleanupAlpha(out, 160);
+
         return out;
+    }
+
+    private void cleanupAlpha(Bitmap bmp, int threshold) {
+        int w = bmp.getWidth(), h = bmp.getHeight();
+        int[] row = new int[w];
+
+        int th = Math.max(0, Math.min(255, threshold));
+
+        for (int y = 0; y < h; y++) {
+            bmp.getPixels(row, 0, w, 0, y, w, 1);
+            for (int x = 0; x < w; x++) {
+                int c = row[x];
+                int a = (c >>> 24) & 0xFF;
+                if (a == 0) {
+                    row[x] = 0;
+                } else if (a < th) {
+                    row[x] = 0;
+                } else {
+                    row[x] = (0xFF << 24) | (c & 0x00FFFFFF);
+                }
+            }
+            bmp.setPixels(row, 0, w, 0, y, w, 1);
+        }
     }
 
     private File savePngToStickers(Bitmap bmp, android.content.Context ctx) throws
@@ -470,5 +625,70 @@ public class LoadActivity extends BaseActivity {
                 finish();
             }
         }).withMessage("편집한 내용을 저장하지 않고\n종료하시겠습니까?").withButton1Text("예").withButton2Text("아니오").show();
+    }
+
+    private float spacing(MotionEvent e) {
+        if (e.getPointerCount() < 2) return 0f;
+        float dx = e.getX(0) - e.getX(1);
+        float dy = e.getY(0) - e.getY(1);
+        return (float) Math.hypot(dx, dy);
+    }
+
+    private interface MidOut {
+        void onMid(float[] xy);
+    }
+
+    private void midPoint(MotionEvent e, MidOut cb) {
+        if (e.getPointerCount() < 2) return;
+        cb.onMid(new float[]{(e.getX(0) + e.getX(1)) / 2f,
+                (e.getY(0) + e.getY(1)) / 2f});
+    }
+
+    private void constrainTranslation() {
+        if (loadImage.getDrawable() == null) return;
+
+        int vw = loadImage.getWidth();
+        int vh = loadImage.getHeight();
+        int dw = loadImage.getDrawable().getIntrinsicWidth();
+        int dh = loadImage.getDrawable().getIntrinsicHeight();
+
+        imgMatrix.getValues(mvals);
+        float curScale = mvals[Matrix.MSCALE_X];
+        float clampScale = Math.max(minScale, Math.min(curScale, maxScale));
+        if (Math.abs(clampScale - curScale) > 1e-6f) {
+            float cx = vw * 0.5f, cy = vh * 0.5f;
+            imgMatrix.postScale(clampScale / curScale, clampScale / curScale, cx, cy);
+            imgMatrix.getValues(mvals);
+        }
+
+        RectF rect = new RectF(0, 0, dw, dh);
+        Matrix m = new Matrix(imgMatrix);
+        m.mapRect(rect);
+
+        float dx = 0f, dy = 0f;
+
+        if (rect.width() <= vw) {
+            dx = vw / 2f - rect.centerX();
+        } else {
+            if (rect.left > 0) dx = -rect.left;
+            else if (rect.right < vw) dx = vw - rect.right;
+        }
+
+        if (rect.height() <= vh) {
+            dy = vh / 2f - rect.centerY();
+        } else {
+            if (rect.top > 0) dy = -rect.top;
+            else if (rect.bottom < vh) dy = vh - rect.bottom;
+        }
+
+        if (dx != 0f || dy != 0f) imgMatrix.postTranslate(dx, dy);
+    }
+
+    private void updateOverlaysImageBounds() {
+        RectF r = getImageDisplayRect(loadImage);
+        if (r != null) {
+            shapeOverlay.setImageBounds(r);
+            lassoOverlay.setImageBounds(r);
+        }
     }
 }

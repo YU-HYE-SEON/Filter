@@ -50,6 +50,11 @@ public class CustomseekbarFragment extends Fragment {
         undoColor.setVisibility(View.INVISIBLE);
         redoColor.setVisibility(View.INVISIBLE);
 
+        FilterActivity activity = (FilterActivity) getActivity();
+        if (activity != null) {
+            activity.refreshOriginalColorButton();
+        }
+
         Bundle bundle = getArguments();
         if (bundle != null) {
             filterType = bundle.getString("filterType", "");
@@ -91,7 +96,6 @@ public class CustomseekbarFragment extends Fragment {
             }
         });
 
-
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -121,10 +125,13 @@ public class CustomseekbarFragment extends Fragment {
         return view;
     }
 
-    @Override public void onPause() {
-        super.onPause();
-        FilterActivity act = (FilterActivity) getActivity();
-        if (act != null) act.previewOriginalColors(false);
+    @Override
+    public void onResume() {
+        super.onResume();
+        FilterActivity a = (FilterActivity) getActivity();
+        if (a != null) {
+            a.refreshOriginalColorButton();
+        }
     }
 
     private void showPreviousFagement() {

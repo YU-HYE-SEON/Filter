@@ -14,34 +14,34 @@ import androidx.annotation.NonNull;
 
 import com.example.filter.R;
 
-public class MyStickerDeleteDialog extends Dialog {
-    public interface MyStickerDeleteDialogListener {
-        void onKeep();
+public class BrushToStickerDialog extends Dialog {
+    public interface BrushToStickerDialogListener {
+        void onYes();
 
-        void onDelete();
+        void onNo();
     }
 
-    private MyStickerDeleteDialogListener listener;
+    private BrushToStickerDialogListener listener;
     private CharSequence messageText = null;
     private CharSequence button1Text = null;
     private CharSequence button2Text = null;
 
-    public MyStickerDeleteDialog(@NonNull Context context, MyStickerDeleteDialogListener listener) {
+    public BrushToStickerDialog(@NonNull Context context, BrushToStickerDialogListener listener) {
         super(context);
         this.listener = listener;
     }
 
-    public MyStickerDeleteDialog withMessage(CharSequence text) {
+    public BrushToStickerDialog withMessage(CharSequence text) {
         this.messageText = text;
         return this;
     }
 
-    public MyStickerDeleteDialog withButton1Text(CharSequence text) {
+    public BrushToStickerDialog withButton1Text(CharSequence text) {
         this.button1Text = text;
         return this;
     }
 
-    public MyStickerDeleteDialog withButton2Text(CharSequence text) {
+    public BrushToStickerDialog withButton2Text(CharSequence text) {
         this.button2Text = text;
         return this;
     }
@@ -67,21 +67,21 @@ public class MyStickerDeleteDialog extends Dialog {
         getWindow().setAttributes(lp);
 
         TextView textView = findViewById(R.id.message);
-        Button deleteBtn = findViewById(R.id.button1);
-        Button keepBtn = findViewById(R.id.button2);
+        Button yesBtn = findViewById(R.id.button1);
+        Button noBtn = findViewById(R.id.button2);
 
         if (textView != null && messageText != null) textView.setText(messageText);
-        if (deleteBtn != null && button1Text != null) deleteBtn.setText(button1Text);
-        if (keepBtn != null && button2Text != null) keepBtn.setText(button2Text);
+        if (yesBtn != null && button1Text != null) yesBtn.setText(button1Text);
+        if (noBtn != null && button2Text != null) noBtn.setText(button2Text);
 
-        keepBtn.setOnClickListener(v -> {
+        yesBtn.setOnClickListener(v -> {
             dismiss();
-            if (listener != null) listener.onKeep();
+            if(listener != null) listener.onYes();
         });
 
-        deleteBtn.setOnClickListener(v -> {
+        noBtn.setOnClickListener(v -> {
             dismiss();
-            if (listener != null) listener.onDelete();
+            if (listener != null) listener.onNo();
         });
     }
 }

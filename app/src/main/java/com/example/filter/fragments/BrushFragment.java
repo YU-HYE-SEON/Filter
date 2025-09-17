@@ -1,6 +1,7 @@
 package com.example.filter.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,6 +11,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -17,6 +23,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,47 +36,78 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
+import com.example.filter.dialogs.BrushToStickerDialog;
 import com.example.filter.etc.BrushOverlayView;
 import com.example.filter.etc.BrushPrefs;
 import com.example.filter.etc.BrushStateViewModel;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.LassoOverlayView;
+import com.example.filter.etc.StickerItem;
+import com.example.filter.etc.StickerStore;
 import com.skydoves.colorpickerview.ColorPickerView;
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
 
 public class BrushFragment extends Fragment {
-    private ImageButton pen, glowPen, mosaic, eraser;
+    private static class Patch {
+        Rect rect;
+        Bitmap before;
+    }
+
+    private static class PendingErase {
+        ImageView view;
+        Path path = new Path();
+        float width;
+        ArrayList<Patch> patches = new ArrayList<>();
+        boolean hadEffect = false;
+    }
+
+    private final Map<ImageView, PendingErase> activeErases = new HashMap<>();
+    private ConstraintLayout topArea;
+    private ImageButton pen, glowPen, crayon, eraser;
     private ImageButton cancelBtn, checkBtn;
     private View currentToolPanel;
     private LayoutInflater inflater;
     private FrameLayout brushPanel;
     private boolean suppress = false;
-    private float curHue = 0f;
-    private float curSat = 1f;
-    private float curVal = 1f;
+    private float curHue = 0f, curSat = 1f, curVal = 1f;
     private int curAlphaPct = 100;
     private int lastPenColor = 0xFFFFFFFF;
     private int lastPenSizePx = 0;
     private int lastGlowColor = 0xFFFFFFFF;
     private int lastGlowSizePx = 0;
+    private int lastCrayonColor = 0xFFFFFFFF;
+    private int lastCrayonSizePx = 0;
     private boolean isPenPanelOpen = false;
-    private FrameLayout overlayStack;
+    private FrameLayout brushOverlay;
     private BrushOverlayView brushDraw;
     private BrushStateViewModel brushState;
     private View.OnLayoutChangeListener brushClipListener;
@@ -91,6 +129,15 @@ public class BrushFragment extends Fragment {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private Runnable pendingSatUi, pendingAlphaUi;
     private static final long SEEKBAR_THROTTLE_MS = 16;
+    private ConstraintLayout bottomArea1;
+    private ImageButton undoSticker, redoSticker, originalSticker;
+    private LinearLayout brushToSticker;
+    private LassoOverlayView lassoOverlay;
+    private CheckBox checkBox;
+    private BrushOverlayView.BrushMode lastMode = BrushOverlayView.BrushMode.PEN;
+    private int baselineStrokeCount = 0;
+    private int baselineChildCount = 0;
+    private FrameLayout stickerOverlay;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -99,20 +146,26 @@ public class BrushFragment extends Fragment {
         brushState = new ViewModelProvider(requireActivity()).get(BrushStateViewModel.class);
 
         int prefPenColor = BrushPrefs.getPenColor(requireContext(), brushState.color);
-        int prefPenSize = BrushPrefs.getPenSize(requireContext(), brushState.sizePx > 0 ? brushState.sizePx : dp(4));
+        int prefPenSize = BrushPrefs.getPenSize(requireContext(), brushState.sizePx > 0 ? brushState.sizePx : dp(10));
         int prefGlowColor = BrushPrefs.getGlowColor(requireContext(), brushState.color);
-        int prefGlowSize = BrushPrefs.getGlowSize(requireContext(), brushState.sizePx > 0 ? brushState.sizePx : dp(4));
+        int prefGlowSize = BrushPrefs.getGlowSize(requireContext(), brushState.sizePx > 0 ? brushState.sizePx : dp(10));
+        int prefCrayonColor = BrushPrefs.getCrayonColor(requireContext(), brushState.color);
+        int prefCrayonSize = BrushPrefs.getCrayonSize(requireContext(), brushState.sizePx > 0 ? brushState.sizePx : dp(10));
 
         if (savedInstanceState != null) {
             lastPenColor = savedInstanceState.getInt("lastPenColor", prefPenColor);
             lastPenSizePx = savedInstanceState.getInt("lastPenSizePx", prefPenSize);
             lastGlowColor = savedInstanceState.getInt("lastGlowColor", prefGlowColor);
             lastGlowSizePx = savedInstanceState.getInt("lastGlowSizePx", prefGlowSize);
+            lastCrayonColor = savedInstanceState.getInt("lastCrayonColor", prefCrayonColor);
+            lastCrayonSizePx = savedInstanceState.getInt("lastCrayonSizePx", prefCrayonSize);
         } else {
             lastPenColor = prefPenColor;
             lastPenSizePx = prefPenSize;
             lastGlowColor = prefGlowColor;
             lastGlowSizePx = prefGlowSize;
+            lastCrayonColor = prefCrayonColor;
+            lastCrayonSizePx = prefCrayonSize;
         }
 
         brushState.color = lastPenColor;
@@ -127,32 +180,258 @@ public class BrushFragment extends Fragment {
 
         pen = view.findViewById(R.id.pen);
         glowPen = view.findViewById(R.id.glowPen);
-        mosaic = view.findViewById(R.id.mosaic);
+        crayon = view.findViewById(R.id.crayon);
         eraser = view.findViewById(R.id.eraser);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
         brushPanel = requireActivity().findViewById(R.id.brushPanel);
-        overlayStack = requireActivity().findViewById(R.id.overlayStack);
+        brushOverlay = requireActivity().findViewById(R.id.brushOverlay);
+
+        bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
+        undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        redoSticker = requireActivity().findViewById(R.id.redoSticker);
+        originalSticker = requireActivity().findViewById(R.id.originalSticker);
+        brushToSticker = requireActivity().findViewById(R.id.brushToSticker);
+        lassoOverlay = requireActivity().findViewById(R.id.lassoOverlay);
+        checkBox = requireActivity().findViewById(R.id.checkBox);
+
+        topArea = requireActivity().findViewById(R.id.topArea);
+        stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
+
+        if (bottomArea1 != null) {
+            undoSticker.setVisibility(View.INVISIBLE);
+            redoSticker.setVisibility(View.INVISIBLE);
+            originalSticker.setVisibility(View.INVISIBLE);
+            bottomArea1.setVisibility(View.VISIBLE);
+            brushToSticker.setVisibility(View.VISIBLE);
+        }
+
+        if (checkBox != null) {
+            checkBox.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isChecked) {
+                    pen.setEnabled(false);
+                    glowPen.setEnabled(false);
+                    crayon.setEnabled(false);
+                    eraser.setEnabled(false);
+                    pen.setAlpha(0.2f);
+                    glowPen.setAlpha(0.2f);
+                    crayon.setAlpha(0.2f);
+                    eraser.setAlpha(0.2f);
+                    lassoOverlay.setVisibility(View.VISIBLE);
+
+                    FilterActivity act = (FilterActivity) requireActivity();
+                    if (act.getRenderer() != null) {
+                        int vx = act.getRenderer().getViewportX();
+                        int vy = act.getRenderer().getViewportY();
+                        int vw = act.getRenderer().getViewportWidth();
+                        int vh = act.getRenderer().getViewportHeight();
+                        lassoOverlay.setImageBounds(new RectF(vx, vy, vx + vw, vy + vh));
+                        lassoOverlay.setLassoVisible(true);
+                        lassoOverlay.clearAll();
+                        lassoOverlay.setDrawingEnabled(true);
+                    }
+                    lassoOverlay.setLassoListener(() -> {
+                        lassoOverlay.setDrawingEnabled(false);
+                        showBrushToStickerDialog();
+                    });
+                } else {
+                    lassoOverlay.setLassoListener(null);
+                    lassoOverlay.setDrawingEnabled(false);
+                    lassoOverlay.setLassoVisible(false);
+                    pen.setEnabled(true);
+                    glowPen.setEnabled(true);
+                    crayon.setEnabled(true);
+                    eraser.setEnabled(true);
+                    setModeAlpha(lastMode);
+                }
+            });
+        }
 
         tintPenButton(lastPenColor);
         tintGlowButton(lastGlowColor);
+        tintCrayonButton(lastCrayonColor);
 
-        if (overlayStack != null && brushDraw == null) {
-            brushDraw = new BrushOverlayView(requireContext());
-            overlayStack.addView(brushDraw,
-                    new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT));
+        if (brushOverlay != null) {
+            brushDraw = pickupExistingBrushOverlay(brushOverlay);
+            if (brushDraw == null) {
+                brushDraw = new BrushOverlayView(requireContext());
 
-            int initialSize = (lastPenSizePx > 0) ? lastPenSizePx : dp(4);
-            brushDraw.setBrush(lastPenColor, initialSize);
+                brushOverlay.addView(brushDraw,
+                        new FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+            baselineStrokeCount = brushDraw.getVisibleStrokeCount();
+            if (stickerOverlay != null) baselineChildCount = stickerOverlay.getChildCount();
+
+            if (brushDraw != null) {
+                brushDraw.setOnStrokeProgressListener(new BrushOverlayView.OnStrokeProgressListener() {
+                    @Override
+                    public void onStrokeProgress(Path path, float strokeWidthPx, BrushOverlayView.BrushMode mode) {
+                        if (mode != BrushOverlayView.BrushMode.ERASER) return;
+                        if (stickerOverlay == null) return;
+
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
+                            if (!(child instanceof ImageView)) continue;
+                            if (!Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
+
+                            ImageView iv = (ImageView) child;
+                            Drawable d = iv.getDrawable();
+                            if (!(d instanceof BitmapDrawable)) continue;
+
+                            Bitmap bmp = ((BitmapDrawable) d).getBitmap();
+                            if (bmp == null || bmp.isRecycled()) continue;
+
+                            if (!bmp.isMutable()) {
+                                bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
+                                iv.setImageBitmap(bmp);
+                            }
+
+                            Path mappedDelta = mapPathFromBrushViewToBitmap(path, brushOverlay, iv, bmp.getWidth(), bmp.getHeight());
+
+                            PendingErase pe = activeErases.get(iv);
+                            if (pe == null) {
+                                pe = new PendingErase();
+                                pe.view = iv;
+                                pe.width = strokeWidthPx;
+                                activeErases.put(iv, pe);
+                            }
+                            pe.path.addPath(mappedDelta);
+
+                            Rect rect = rectForPath(mappedDelta, strokeWidthPx, bmp.getWidth(), bmp.getHeight());
+                            Bitmap before = null;
+                            try {
+                                before = Bitmap.createBitmap(bmp, rect.left, rect.top, rect.width(), rect.height());
+                                Patch p = new Patch();
+                                p.rect = rect;
+                                p.before = before;
+                                pe.patches.add(p);
+                            } catch (Throwable ignore) {
+                            }
+
+                            Canvas c = new Canvas(bmp);
+                            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                            p.setStyle(Paint.Style.STROKE);
+                            p.setStrokeJoin(Paint.Join.ROUND);
+                            p.setStrokeCap(Paint.Cap.ROUND);
+                            p.setStrokeWidth(strokeWidthPx);
+                            p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+                            c.drawPath(mappedDelta, p);
+
+                            iv.invalidate();
+
+                            if (before != null && !before.isRecycled()) {
+                                try {
+                                    int w = rect.width(), h = rect.height();
+                                    int[] afterRow = new int[w];
+                                    int[] beforeRow = new int[w];
+                                    boolean changed = false;
+                                    for (int yy = 0; yy < h && !changed; yy++) {
+                                        bmp.getPixels(afterRow, 0, w, rect.left, rect.top + yy, w, 1);
+                                        before.getPixels(beforeRow, 0, w, 0, yy, w, 1);
+                                        for (int xx = 0; xx < w; xx++) {
+                                            int aB = (beforeRow[xx] >>> 24) & 0xFF;
+                                            int aA = (afterRow[xx] >>> 24) & 0xFF;
+                                            if (aA < aB) {
+                                                changed = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (changed) pe.hadEffect = true;
+                                } catch (Throwable ignore) { }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onStrokeEnd(Path fullPath, float strokeWidthPx, BrushOverlayView.BrushMode mode) {
+                        if (mode == BrushOverlayView.BrushMode.ERASER && !activeErases.isEmpty()) {
+                            boolean anyEffect = false;
+                            for (PendingErase pe : activeErases.values()) {
+                                if (pe.hadEffect) {
+                                    anyEffect = true;
+                                    break;
+                                }
+                            }
+
+                            if (!anyEffect) {
+                                for (PendingErase pe : activeErases.values()) {
+                                    for (Patch pa : pe.patches) {
+                                        if (pa.before != null && !pa.before.isRecycled())
+                                            pa.before.recycle();
+                                    }
+                                    pe.patches.clear();
+                                }
+                                activeErases.clear();
+                                return;
+                            }
+
+                            FilterActivity act = (FilterActivity) requireActivity();
+                            ArrayList<FilterActivity.EraseOp> ops = new ArrayList<>();
+
+                            for (PendingErase pe : activeErases.values()) {
+                                if (!pe.hadEffect) {
+                                    for (Patch pa : pe.patches) {
+                                        if (pa.before != null && !pa.before.isRecycled())
+                                            pa.before.recycle();
+                                    }
+                                    continue;
+                                }
+
+                                FilterActivity.EraseOp eo = new FilterActivity.EraseOp();
+                                eo.view = pe.view;
+                                eo.pathOnBitmap = new Path(pe.path);
+                                eo.strokeWidthPx = pe.width;
+
+                                for (Patch pa : pe.patches) {
+                                    FilterActivity.ErasePatch ep = new FilterActivity.ErasePatch();
+                                    ep.rect = new Rect(pa.rect);
+                                    ep.before = pa.before;
+                                    eo.patches.add(ep);
+                                }
+                                ops.add(eo);
+                            }
+
+                            if (!ops.isEmpty()) act.recordBrushErase(ops);
+
+                            activeErases.clear();
+                        }
+                    }
+                });
+            }
+
+            BrushOverlayView.BrushMode startMode
+                    = BrushPrefs.getLastMode(requireContext(), BrushOverlayView.BrushMode.PEN);
+
+            int color;
+            int sizePx;
+            switch (startMode) {
+                case GLOW:
+                    color = lastGlowColor;
+                    sizePx = (lastGlowSizePx > 0) ? lastGlowSizePx : dp(10);
+                    break;
+                case CRAYON:
+                    color = lastCrayonColor;
+                    sizePx = (lastCrayonSizePx > 0) ? lastCrayonSizePx : dp(10);
+                    break;
+                case ERASER:
+                    color = Color.TRANSPARENT;
+                    sizePx = BrushPrefs.getEraserSize(requireContext(), dp(10));
+                    break;
+                case PEN:
+                default:
+                    color = lastPenColor;
+                    sizePx = (lastPenSizePx > 0) ? lastPenSizePx : dp(10);
+                    break;
+            }
+            brushDraw.setBrush(color, sizePx, startMode);
             brushDraw.setDrawingEnabled(!isPenPanelOpen);
 
-            Activity act0 = getActivity();
-            if (act0 instanceof FilterActivity && brushDraw != null) {
-                ((FilterActivity) act0).applyBrushClipRect(brushDraw);
-            }
+            setModeAlpha(startMode);
+            lastMode = startMode;
 
             brushClipListener = (v, a, b, c, d, e, f, g, h) -> {
                 if (!isAdded()) return;
@@ -161,17 +440,19 @@ public class BrushFragment extends Fragment {
                     ((FilterActivity) act).applyBrushClipRect(brushDraw);
                 }
             };
-            overlayStack.addOnLayoutChangeListener(brushClipListener);
+            brushOverlay.addOnLayoutChangeListener(brushClipListener);
         }
 
         pen.setOnClickListener(v -> {
             if (isPenPanelOpen) return;
             if (brushDraw != null) {
-                brushDraw.setBrush(lastPenColor, lastPenSizePx, BrushOverlayView.BrushMode.NORMAL);
+                brushDraw.setBrush(lastPenColor, lastPenSizePx, BrushOverlayView.BrushMode.PEN);
                 brushDraw.setDrawingEnabled(true);
-                brushDraw.bringToFront();
             }
-            showPanel(BrushOverlayView.BrushMode.NORMAL);
+            lastMode = BrushOverlayView.BrushMode.PEN;
+            setModeAlpha(lastMode);
+            BrushPrefs.saveLastMode(requireContext(), lastMode);
+            showPanel(lastMode);
         });
 
         glowPen.setOnClickListener(v -> {
@@ -179,19 +460,35 @@ public class BrushFragment extends Fragment {
             if (brushDraw != null) {
                 brushDraw.setBrush(lastGlowColor, lastGlowSizePx, BrushOverlayView.BrushMode.GLOW);
                 brushDraw.setDrawingEnabled(true);
-                brushDraw.bringToFront();
             }
-            showPanel(BrushOverlayView.BrushMode.GLOW);
+            lastMode = BrushOverlayView.BrushMode.GLOW;
+            setModeAlpha(lastMode);
+            BrushPrefs.saveLastMode(requireContext(), lastMode);
+            showPanel(lastMode);
+        });
+
+        crayon.setOnClickListener(v -> {
+            if (isPenPanelOpen) return;
+            if (brushDraw != null) {
+                brushDraw.setBrush(lastCrayonColor, lastCrayonSizePx, BrushOverlayView.BrushMode.CRAYON);
+                brushDraw.setDrawingEnabled(true);
+            }
+            lastMode = BrushOverlayView.BrushMode.CRAYON;
+            setModeAlpha(lastMode);
+            BrushPrefs.saveLastMode(requireContext(), lastMode);
+            showPanel(lastMode);
         });
 
         eraser.setOnClickListener(v -> {
             if (isPenPanelOpen) return;
             if (brushDraw != null) {
-                int lastEraserSizePx = BrushPrefs.getEraserSize(requireContext(), dp(20));
-                brushDraw.setBrush(Color.TRANSPARENT, lastEraserSizePx, BrushOverlayView.BrushMode.ERASER);
+                int lastEraserSize = BrushPrefs.getEraserSize(requireContext(), dp(10));
+                brushDraw.setBrush(Color.TRANSPARENT, lastEraserSize, BrushOverlayView.BrushMode.ERASER);
                 brushDraw.setDrawingEnabled(true);
-                brushDraw.bringToFront();
             }
+            lastMode = BrushOverlayView.BrushMode.ERASER;
+            setModeAlpha(lastMode);
+            BrushPrefs.saveLastMode(requireContext(), lastMode);
             showEraserPanel();
         });
 
@@ -200,10 +497,14 @@ public class BrushFragment extends Fragment {
 
             if (currentToolPanel != null) hideToolPanel(false);
             if (brushDraw != null) {
-                brushDraw.clear();
+                brushDraw.trimToCount(baselineStrokeCount);
                 brushDraw.setDrawingEnabled(false);
             }
             isPenPanelOpen = false;
+
+            if (checkBox != null && checkBox.isChecked()) {
+                checkBox.setChecked(false);
+            }
 
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
@@ -218,8 +519,55 @@ public class BrushFragment extends Fragment {
             if (currentToolPanel != null) hideToolPanel(false);
             if (brushDraw != null) {
                 brushDraw.setDrawingEnabled(false);
+
+                int from = baselineStrokeCount;
+                int to = brushDraw.getVisibleStrokeCount();
+                Bitmap sessionBmp = brushDraw.renderStrokes(from, to);
+                if (sessionBmp != null) {
+                    boolean hasPixel = hasAnyVisiblePixel(sessionBmp);
+                    if (hasPixel && stickerOverlay != null) {
+                        ImageView layer = new ImageView(requireContext());
+                        layer.setImageBitmap(sessionBmp);
+                        layer.setScaleType(ImageView.ScaleType.FIT_XY);
+                        layer.setLayoutParams(new FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT));
+
+                        layer.setClickable(false);
+                        layer.setLongClickable(false);
+                        layer.setFocusable(false);
+                        layer.setFocusableInTouchMode(false);
+                        layer.setEnabled(false);
+                        layer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+                        layer.setOnTouchListener(null);
+                        layer.setTag(R.id.tag_brush_layer, Boolean.TRUE);
+
+                        float maxZ = 0f;
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            maxZ = Math.max(maxZ, ViewCompat.getZ(stickerOverlay.getChildAt(i)));
+                        }
+                        ViewCompat.setZ(layer, maxZ);
+
+                        stickerOverlay.addView(layer);
+                    } else {
+                        if (sessionBmp != null && !sessionBmp.isRecycled()) sessionBmp.recycle();
+                    }
+                }
+
+                brushDraw.trimToCount(baselineStrokeCount);
             }
+
+            FilterActivity a = (FilterActivity) requireActivity();
+            if (stickerOverlay != null) {
+                a.recordStickerPlacement(baselineChildCount);
+                baselineChildCount = stickerOverlay.getChildCount();
+            }
+
             isPenPanelOpen = false;
+
+            if (checkBox != null && checkBox.isChecked()) {
+                checkBox.setChecked(false);
+            }
 
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
@@ -231,6 +579,30 @@ public class BrushFragment extends Fragment {
         return view;
     }
 
+    private BrushOverlayView pickupExistingBrushOverlay(@NonNull FrameLayout overlay) {
+        BrushOverlayView keep = null;
+        for (int i = 0; i < overlay.getChildCount(); i++) {
+            View child = overlay.getChildAt(i);
+            if (child instanceof BrushOverlayView) {
+                if (keep == null) {
+                    keep = (BrushOverlayView) child;
+                } else {
+                    overlay.removeView(child);
+                    i--;
+                }
+            }
+        }
+        return keep;
+    }
+
+    private void setModeAlpha(BrushOverlayView.BrushMode mode) {
+        float on = 1f, off = 0.2f;
+        if (pen != null) pen.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
+        if (glowPen != null) glowPen.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
+        if (crayon != null) crayon.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);
+        if (eraser != null) eraser.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
+    }
+
     private void hideToolPanel(boolean enableDrawingAfterClose) {
         if (brushPanel == null) return;
         if (currentToolPanel == null) {
@@ -239,7 +611,6 @@ public class BrushFragment extends Fragment {
 
             if (brushDraw != null) {
                 brushDraw.setDrawingEnabled(enableDrawingAfterClose);
-                if (enableDrawingAfterClose) brushDraw.bringToFront();
             }
 
             return;
@@ -302,8 +673,10 @@ public class BrushFragment extends Fragment {
 
         if (mode == BrushOverlayView.BrushMode.GLOW) {
             updateGlowSizePreview(panel, argb, curDia);
-        } else {
+        } else if (mode == BrushOverlayView.BrushMode.PEN) {
             updatePenSizePreview(panel, argb, curDia);
+        } else {
+            updateCrayonSizePreview(panel, argb, curDia);
         }
 
         EditText hexCode = panel.findViewById(R.id.HexCode);
@@ -412,6 +785,17 @@ public class BrushFragment extends Fragment {
         return Math.max(min, Math.min(max, v));
     }
 
+    private Rect rectForPath(Path mapped, float strokeWidth, int bmpW, int bmpH) {
+        RectF b = new RectF();
+        mapped.computeBounds(b, true);
+        int pad = Math.max(2, Math.round(strokeWidth / 2f + 2f));
+        int l = clamp(Math.round(b.left) - pad, 0, bmpW - 1);
+        int t = clamp(Math.round(b.top) - pad, 0, bmpH - 1);
+        int r = clamp(Math.round(b.right) + pad, 0, bmpW - 1);
+        int btm = clamp(Math.round(b.bottom) + pad, 0, bmpH - 1);
+        return new Rect(l, t, Math.max(l + 1, r), Math.max(t + 1, btm));
+    }
+
     private void moveSelectorToColor(ColorPickerView colorPalette, int argb) {
         if (colorPalette == null) return;
 
@@ -483,8 +867,8 @@ public class BrushFragment extends Fragment {
     }
 
     private void updateGlowSizePreview(View panel, int argb, int diameterPx) {
-        ImageView iv = panel.findViewById(R.id.size);
-        if (iv == null) return;
+        ImageView size = panel.findViewById(R.id.size);
+        if (size == null) return;
 
         final float glowScale = 1.8f;
         final float blurDp = 12f;
@@ -515,21 +899,77 @@ public class BrushFragment extends Fragment {
         core.setColor(argb);
         c.drawCircle(cx, cy, coreR, core);
 
-        ViewGroup.LayoutParams lp = iv.getLayoutParams();
+        ViewGroup.LayoutParams lp = size.getLayoutParams();
         if (lp != null) {
             lp.width = bmW;
             lp.height = bmH;
-            iv.setLayoutParams(lp);
+            size.setLayoutParams(lp);
         }
-        iv.setScaleType(ImageView.ScaleType.CENTER);
-        iv.setImageBitmap(bmp);
-        iv.setBackground(null);
+        size.setScaleType(ImageView.ScaleType.CENTER);
+        size.setImageBitmap(bmp);
+        size.setBackground(null);
+    }
+
+    private void updateCrayonSizePreview(View panel, int argb, int diameterPx) {
+        ImageView size = panel.findViewById(R.id.size);
+        if (size == null) return;
+
+        int bmW = Math.max(diameterPx + dp(8), dp(16));
+        int bmH = bmW;
+
+        Bitmap bmp = Bitmap.createBitmap(bmW, bmH, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        float cx = bmW / 2f, cy = bmH / 2f;
+        float r = diameterPx / 2f;
+
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setStyle(Paint.Style.FILL);
+
+        int N = Math.max(24, Math.min(240, Math.round(r * 10)));
+        long seed = (argb * 31L) ^ (diameterPx * 131L);
+        Random rand = new Random(seed);
+
+        int baseA = Color.alpha(argb);
+        int rgb = (argb & 0x00FFFFFF);
+
+        for (int i = 0; i < N; i++) {
+            double t = 2 * Math.PI * rand.nextDouble();
+            double u = rand.nextDouble() + rand.nextDouble();
+            double rr = (u > 1 ? 2 - u : u);
+            float px = (float) (cx + Math.cos(t) * rr * r);
+            float py = (float) (cy + Math.sin(t) * rr * r);
+
+            float dist = (float) Math.hypot(px - cx, py - cy) / (r + 0.0001f);
+            float alphaScale = 1f - (dist * 0.7f);
+            int a = Math.max(20, Math.min(255, Math.round(baseA * alphaScale)));
+
+            p.setColor((a << 24) | rgb);
+
+            float dotR = Math.max(0.6f, r * 0.09f + rand.nextFloat() * r * 0.06f);
+            c.drawCircle(px, py, dotR, p);
+        }
+
+        Paint core = new Paint(Paint.ANTI_ALIAS_FLAG);
+        core.setStyle(Paint.Style.FILL);
+        int coreA = Math.min(255, Math.round(baseA * 0.9f));
+        core.setColor((coreA << 24) | rgb);
+        c.drawCircle(cx, cy, Math.max(1f, r * 0.15f), core);
+
+        ViewGroup.LayoutParams lp = size.getLayoutParams();
+        if (lp != null) {
+            lp.width = bmW;
+            lp.height = bmH;
+            size.setLayoutParams(lp);
+        }
+        size.setScaleType(ImageView.ScaleType.CENTER);
+        size.setImageBitmap(bmp);
+        size.setBackground(null);
     }
 
     private int getDiameterFromSeekbar(View panel) {
         SeekBar sizeSeekbar = panel.findViewById(R.id.sizeSeekbar);
-        if (sizeSeekbar == null) return dp(4);
-        int min = dp(4), max = dp(40);
+        if (sizeSeekbar == null) return dp(10);
+        int min = dp(10), max = dp(40);
         int progress = sizeSeekbar.getProgress();
         return min + Math.round((max - min) * (progress / 100f));
     }
@@ -587,10 +1027,6 @@ public class BrushFragment extends Fragment {
         return Math.round(v * getResources().getDisplayMetrics().density);
     }
 
-    private int pxToDp(int px) {
-        return Math.round(px / getResources().getDisplayMetrics().density);
-    }
-
     private void tintPenButton(int argb) {
         if (pen == null) return;
         int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
@@ -601,6 +1037,12 @@ public class BrushFragment extends Fragment {
         if (glowPen == null) return;
         int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
         ImageViewCompat.setImageTintList(glowPen, ColorStateList.valueOf(opaque));
+    }
+
+    private void tintCrayonButton(int argb) {
+        if (crayon == null) return;
+        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
+        ImageViewCompat.setImageTintList(crayon, ColorStateList.valueOf(opaque));
     }
 
     private void fillEditorsFromColor(View panel, int argb) {
@@ -654,18 +1096,18 @@ public class BrushFragment extends Fragment {
         bar.invalidate();
     }
 
-    private void updateEraserSizePreview(ImageView eraserSizeView, int sizeDp) {
+    private void updateEraserSizePreview(ImageView eraserSizeView, int sizePx) {
         if (eraserSizeView == null) return;
 
         GradientDrawable d = new GradientDrawable();
         d.setShape(GradientDrawable.OVAL);
         d.setColor(Color.WHITE);
-        d.setSize(dp(sizeDp), dp(sizeDp));
+        d.setSize(dp(sizePx), dp(sizePx));
 
         ViewGroup.LayoutParams lp = eraserSizeView.getLayoutParams();
         if (lp != null) {
-            lp.width = dp(sizeDp);
-            lp.height = dp(sizeDp);
+            lp.width = sizePx;
+            lp.height = sizePx;
             eraserSizeView.setLayoutParams(lp);
         }
         eraserSizeView.setBackground(d);
@@ -749,26 +1191,34 @@ public class BrushFragment extends Fragment {
     }
 
     private int getLastColor(BrushOverlayView.BrushMode mode) {
-        return (mode == BrushOverlayView.BrushMode.GLOW) ? lastGlowColor : lastPenColor;
+        if (mode == BrushOverlayView.BrushMode.GLOW) return lastGlowColor;
+        if (mode == BrushOverlayView.BrushMode.CRAYON) return lastCrayonColor;
+        return lastPenColor;
     }
 
     private int getLastSize(BrushOverlayView.BrushMode mode) {
-        return (mode == BrushOverlayView.BrushMode.GLOW) ? lastGlowSizePx : lastPenSizePx;
+        if (mode == BrushOverlayView.BrushMode.GLOW) return lastGlowSizePx;
+        if (mode == BrushOverlayView.BrushMode.CRAYON) return lastCrayonSizePx;
+        return lastPenSizePx;
     }
 
     private void setLastColor(BrushOverlayView.BrushMode mode, int argb) {
         if (mode == BrushOverlayView.BrushMode.GLOW) lastGlowColor = argb;
+        else if (mode == BrushOverlayView.BrushMode.CRAYON) lastCrayonColor = argb;
         else lastPenColor = argb;
     }
 
     private void setLastSize(BrushOverlayView.BrushMode mode, int px) {
         if (mode == BrushOverlayView.BrushMode.GLOW) lastGlowSizePx = px;
+        else if (mode == BrushOverlayView.BrushMode.CRAYON) lastCrayonSizePx = px;
         else lastPenSizePx = px;
     }
 
     private void updateSizePreviewByMode(View panel, int argb, int diameterPx, BrushOverlayView.BrushMode mode) {
         if (mode == BrushOverlayView.BrushMode.GLOW) {
             updateGlowSizePreview(panel, argb, diameterPx);
+        } else if (mode == BrushOverlayView.BrushMode.CRAYON) {
+            updateCrayonSizePreview(panel, argb, diameterPx);
         } else {
             updatePenSizePreview(panel, argb, diameterPx);
         }
@@ -784,7 +1234,8 @@ public class BrushFragment extends Fragment {
 
         if (brushDraw != null) brushDraw.setDrawingEnabled(false);
 
-        int layout = (mode == BrushOverlayView.BrushMode.GLOW) ? R.layout.v_glow : R.layout.v_pen;
+        int layout = (mode == BrushOverlayView.BrushMode.GLOW)
+                ? R.layout.v_glow : (mode == BrushOverlayView.BrushMode.CRAYON ? R.layout.v_crayon : R.layout.v_pen);
         View panel = inflater.inflate(layout, brushPanel, false);
 
         initSeekbarDrawables(panel);
@@ -807,7 +1258,7 @@ public class BrushFragment extends Fragment {
         SeekBar sizeSeek = panel.findViewById(R.id.sizeSeekbar);
 
         int lastColor = getLastColor(mode);
-        int lastSize = Math.max(getLastSize(mode), dp(4));
+        int lastSize = Math.max(getLastSize(mode), dp(10));
         fillEditorsFromColor(panel, lastColor);
 
         final float[] baseHS = new float[]{0f, 1f, 1f};
@@ -821,7 +1272,7 @@ public class BrushFragment extends Fragment {
         }
 
         if (sizeSeek != null) {
-            int min = dp(4), max = dp(40);
+            int min = dp(10), max = dp(40);
             int initProgress = clamp(Math.round((lastSize - min) * 100f / (max - min)), 0, 100);
             sizeSeek.setProgress(initProgress);
         }
@@ -998,7 +1449,7 @@ public class BrushFragment extends Fragment {
             sizeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
-                    int min = dp(4), max = dp(40);
+                    int min = dp(10), max = dp(40);
                     int dia = min + Math.round((max - min) * (p / 100f));
                     int curArgb = gatherCurrentARGB(rCode, gCode, bCode, aVal);
                     updateSizePreviewByMode(panel, curArgb, dia, mode);
@@ -1026,20 +1477,30 @@ public class BrushFragment extends Fragment {
             int dia = getDiameterFromSeekbar(panel);
             setLastColor(mode, chosen);
             setLastSize(mode, dia);
+
             if (mode == BrushOverlayView.BrushMode.GLOW) tintGlowButton(chosen);
+            else if (mode == BrushOverlayView.BrushMode.CRAYON) tintCrayonButton(chosen);
             else tintPenButton(chosen);
 
             brushState.color = chosen;
             brushState.sizePx = dia;
+
             if (mode == BrushOverlayView.BrushMode.GLOW) {
                 BrushPrefs.saveGlow(requireContext(), chosen, dia);
                 if (brushDraw != null)
                     brushDraw.setBrush(chosen, dia, BrushOverlayView.BrushMode.GLOW);
+            } else if (mode == BrushOverlayView.BrushMode.CRAYON) {
+                BrushPrefs.saveCrayon(requireContext(), chosen, dia);
+                if (brushDraw != null)
+                    brushDraw.setBrush(chosen, dia, BrushOverlayView.BrushMode.CRAYON);
             } else {
                 BrushPrefs.savePen(requireContext(), chosen, dia);
                 if (brushDraw != null)
-                    brushDraw.setBrush(chosen, dia, BrushOverlayView.BrushMode.NORMAL);
+                    brushDraw.setBrush(chosen, dia, BrushOverlayView.BrushMode.PEN);
             }
+
+            BrushPrefs.saveLastMode(requireContext(), mode);
+
             hideToolPanel(true);
         });
     }
@@ -1059,20 +1520,52 @@ public class BrushFragment extends Fragment {
         ImageView eraserSizeView = panel.findViewById(R.id.eraserSize);
         SeekBar sizeSeekbar = panel.findViewById(R.id.sizeSeekbar);
 
-        int lastSizePx = BrushPrefs.getEraserSize(requireContext(), 20);
-        int lastSizeDp = Math.max(10, Math.min(100, pxToDp(lastSizePx)));
-        int progress = Math.round((lastSizeDp - 10) * 100f / 90f);
+        try {
+            sizeSeekbar.setThumbOffset(0);
+        } catch (Throwable ignore) {
+        }
+
+        final int minPx = dp(10);
+        final int maxPx = dp(100);
+
+        int lastSizePx = BrushPrefs.getEraserSize(requireContext(), dp(10));
+        lastSizePx = Math.max(minPx, Math.min(maxPx, lastSizePx));
+
+        int progress = Math.round((lastSizePx - minPx) * 100f / (maxPx - minPx));
         sizeSeekbar.setProgress(progress);
 
-        updateEraserSizePreview(eraserSizeView, lastSizeDp);
+        GradientDrawable eraserTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.parseColor("#007BFF"), Color.parseColor("#C2FA7A")}
+        );
+        eraserTrack.setCornerRadius(dp(999));
+        eraserTrack.mutate();
+        sizeSeekbar.setProgressDrawable(eraserTrack);
+
+        GradientDrawable eraserThumb =
+                (GradientDrawable) buildRoundThumb(SAT_THUMB_DIAMETER_DP, Color.BLACK, SAT_THUMB_STROKE_DP);
+        eraserThumb.mutate();
+
+        sizeSeekbar.setProgress(progress);
+        float ratio = Math.max(0f, Math.min(1f, progress / 100f));
+        int initColor = interpolateColor(Color.parseColor("#007BFF"), Color.parseColor("#C2FA7A"), ratio);
+        eraserThumb.setColor(initColor);
+        sizeSeekbar.setThumb(eraserThumb);
+
+        updateEraserSizePreview(eraserSizeView, lastSizePx);
 
         sizeSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int p, boolean fromUser) {
-                int sizeDp = 10 + Math.round(90f * (p / 100f));
-                updateEraserSizePreview(eraserSizeView, sizeDp);
+                int sizePx = minPx + Math.round((maxPx - minPx) * (p / 100f));
+                updateEraserSizePreview(eraserSizeView, sizePx);
+
+                float ratio = Math.max(0f, Math.min(1f, p / 100f));
+                int thumbColor = interpolateColor(Color.parseColor("#007BFF"), Color.parseColor("#C2FA7A"), ratio);
+                eraserThumb.setColor(thumbColor);
+                seekBar.invalidate();
+
                 if (brushDraw != null) {
-                    brushDraw.setBrush(Color.TRANSPARENT, dp(sizeDp), BrushOverlayView.BrushMode.ERASER);
+                    brushDraw.setBrush(Color.TRANSPARENT, sizePx, BrushOverlayView.BrushMode.ERASER);
                 }
             }
 
@@ -1091,16 +1584,28 @@ public class BrushFragment extends Fragment {
         if (cancelPanel != null) cancelPanel.setOnClickListener(v -> hideToolPanel(true));
 
         if (completePanel != null) completePanel.setOnClickListener(v -> {
-            int sizeDp = 10 + Math.round(90f * (sizeSeekbar.getProgress() / 100f));
-            int sizePx = dp(sizeDp);
+            int sizePx = minPx + Math.round((maxPx - minPx) * (sizeSeekbar.getProgress() / 100f));
             BrushPrefs.saveEraser(requireContext(), sizePx);
             if (brushDraw != null) {
                 brushDraw.setBrush(Color.TRANSPARENT, sizePx, BrushOverlayView.BrushMode.ERASER);
             }
+
+            BrushPrefs.saveLastMode(requireContext(), BrushOverlayView.BrushMode.ERASER);
+
             hideToolPanel(true);
         });
     }
 
+    private int interpolateColor(int start, int end, float t) {
+        int sa = (start >> 24) & 0xFF, sr = (start >> 16) & 0xFF, sg = (start >> 8) & 0xFF, sb = start & 0xFF;
+        int ea = (end >> 24) & 0xFF, er = (end >> 16) & 0xFF, eg = (end >> 8) & 0xFF, eb = end & 0xFF;
+
+        int a = (int) (sa + (ea - sa) * t);
+        int r = (int) (sr + (er - sr) * t);
+        int g = (int) (sg + (eg - sg) * t);
+        int b = (int) (sb + (eb - sb) * t);
+        return Color.argb(a, r, g, b);
+    }
 
     private int argbFromCur() {
         int rgb = Color.HSVToColor(new float[]{curHue, curSat, Math.max(0f, Math.min(1f, curVal))}) & 0x00FFFFFF;
@@ -1155,15 +1660,277 @@ public class BrushFragment extends Fragment {
         outState.putInt("lastPenSizePx", lastPenSizePx);
         outState.putInt("lastGlowColor", lastGlowColor);
         outState.putInt("lastGlowSizePx", lastGlowSizePx);
+        outState.putInt("lastCrayonColor", lastCrayonColor);
+        outState.putInt("lastCrayonSizePx", lastCrayonSizePx);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (overlayStack != null && brushClipListener != null) {
-            overlayStack.removeOnLayoutChangeListener(brushClipListener);
+        if (brushOverlay != null && brushClipListener != null) {
+            brushOverlay.removeOnLayoutChangeListener(brushClipListener);
             brushClipListener = null;
         }
         if (brushDraw != null) brushDraw.setDrawingEnabled(false);
+
+        if (checkBox != null) {
+            checkBox.setOnCheckedChangeListener(null);
+            checkBox.setChecked(false);
+        }
+        if (lassoOverlay != null) {
+            lassoOverlay.setLassoListener(null);
+            lassoOverlay.clearAll();
+            lassoOverlay.setDrawingEnabled(false);
+            lassoOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    private void showBrushToStickerDialog() {
+        new BrushToStickerDialog(requireContext(), new BrushToStickerDialog.BrushToStickerDialogListener() {
+            @Override
+            public void onYes() {
+                brushToSticker();
+            }
+
+            @Override
+            public void onNo() {
+                lassoOverlay.clearAll();
+                lassoOverlay.setDrawingEnabled(true);
+            }
+        }
+        ).withMessage("선택한 영역을 내 스티커에 추가하시겠습니까?")
+                .withButton1Text("예")
+                .withButton2Text("아니오")
+                .show();
+    }
+
+    private void brushToSticker() {
+        Bitmap overlayBmp = null;
+        Bitmap cropped = null;
+        try {
+            if (brushOverlay == null || lassoOverlay == null) return;
+            int w = Math.max(1, brushOverlay.getWidth());
+            int h = Math.max(1, brushOverlay.getHeight());
+            overlayBmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(overlayBmp);
+            brushOverlay.draw(canvas);
+
+            FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
+            if (stickerOverlay != null) {
+                for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                    View child = stickerOverlay.getChildAt(i);
+                    if (!(child instanceof ImageView)) continue;
+                    if (!Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
+
+                    int save = canvas.save();
+                    canvas.translate(child.getX(), child.getY());
+                    child.draw(canvas);
+                    canvas.restore();
+                }
+            }
+
+            List<Path> shapes = lassoOverlay.getShapes();
+            if (shapes == null || shapes.isEmpty()) {
+                showToast("브러쉬를 감지하지 못했습니다");
+                return;
+            }
+
+            cropped = cropByPathsUnion(overlayBmp, shapes, new Matrix());
+            if (cropped == null) {
+                showToast("내 스티커에 저장을 실패했습니다.");
+                return;
+            }
+
+            if (!hasAnyVisiblePixel(cropped)) {
+                showToast("브러쉬를 감지하지 못했습니다");
+                return;
+            }
+
+            Bitmap trimmed = trimTransparentAndPad(cropped, 8, dp(10));
+            if (trimmed != cropped) {
+                cropped.recycle();
+                cropped = trimmed;
+            }
+
+            File f = savePngToStickers(cropped, requireContext());
+            StickerStore.get().enqueuePending(StickerItem.fromFile(f.getAbsolutePath()));
+            showToast("내 스티커에 저장을 완료했습니다");
+        } catch (Throwable t) {
+            showToast("내 스티커에 저장을 실패했습니다");
+        } finally {
+            if (overlayBmp != null && !overlayBmp.isRecycled()) overlayBmp.recycle();
+            if (cropped != null && !cropped.isRecycled()) cropped.recycle();
+            if (lassoOverlay != null) {
+                lassoOverlay.clearAll();
+                lassoOverlay.setDrawingEnabled(true);
+            }
+        }
+    }
+
+    private Bitmap cropByPathsUnion(Bitmap src, List<Path> pathsInView, Matrix viewToBmp) {
+        if (src == null || pathsInView == null || pathsInView.isEmpty()) return null;
+
+        Path unionBmp = new Path();
+        boolean first = true;
+        for (Path pv : pathsInView) {
+            Path p = new Path(pv);
+            p.transform(viewToBmp);
+            if (first) {
+                unionBmp.set(p);
+                first = false;
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                unionBmp.op(p, Path.Op.UNION);
+            } else {
+                unionBmp.addPath(p);
+            }
+        }
+        unionBmp.setFillType(Path.FillType.WINDING);
+
+        RectF b = new RectF();
+        unionBmp.computeBounds(b, true);
+        if (b.isEmpty()) return null;
+
+        b.inset(-1f, -1f);
+
+        int outW = Math.max(1, Math.round(b.width()));
+        int outH = Math.max(1, Math.round(b.height()));
+        Bitmap out = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(out);
+
+        c.translate(-b.left, -b.top);
+
+        Paint pm = new Paint(Paint.ANTI_ALIAS_FLAG);
+        pm.setStyle(Paint.Style.FILL);
+        c.drawPath(unionBmp, pm);
+
+        pm.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        c.drawBitmap(src, 0, 0, pm);
+        pm.setXfermode(null);
+
+        return out;
+    }
+
+    private File savePngToStickers(Bitmap bmp, Context c) throws IOException {
+        File dir = new File(c.getFilesDir(), "stickers");
+        if (!dir.exists()) dir.mkdirs();
+        String name = "sticker_" + System.currentTimeMillis() + ".png";
+        File f = new File(dir, name);
+        FileOutputStream fos = new FileOutputStream(f);
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        fos.flush();
+        fos.close();
+        return f;
+    }
+
+    private boolean hasAnyVisiblePixel(@NonNull Bitmap bmp) {
+        int w = bmp.getWidth(), h = bmp.getHeight();
+        int[] row = new int[w];
+        for (int y = 0; y < h; y++) {
+            bmp.getPixels(row, 0, w, 0, y, w, 1);
+            for (int x = 0; x < w; x++) {
+                if (((row[x] >>> 24) & 0xFF) != 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private Bitmap trimTransparentAndPad(@NonNull Bitmap src, int alphaThreshold, int padPx) {
+        int w = src.getWidth(), h = src.getHeight();
+        int[] row = new int[w];
+        int left = w, right = -1, top = h, bottom = -1;
+
+        for (int y = 0; y < h; y++) {
+            src.getPixels(row, 0, w, 0, y, w, 1);
+            for (int x = 0; x < w; x++) {
+                int a = (row[x] >>> 24) & 0xFF;
+                if (a > alphaThreshold) {
+                    if (x < left) left = x;
+                    if (x > right) right = x;
+                    if (y < top) top = y;
+                    if (y > bottom) bottom = y;
+                }
+            }
+        }
+
+        if (right < left || bottom < top) return src;
+
+        left = Math.max(0, left - padPx);
+        top = Math.max(0, top - padPx);
+        right = Math.min(w - 1, right + padPx);
+        bottom = Math.min(h - 1, bottom + padPx);
+
+        int outW = Math.max(1, right - left + 1);
+        int outH = Math.max(1, bottom - top + 1);
+
+        Bitmap out = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(out);
+        c.drawBitmap(src, -left, -top, null);
+        return out;
+    }
+
+    private void showToast(String message) {
+        View old = topArea.findViewWithTag("inline_banner");
+        if (old != null) topArea.removeView(old);
+
+        TextView tv = new TextView(requireContext());
+        tv.setTag("inline_banner");
+        tv.setText(message);
+        tv.setTextColor(0XFFFFFFFF);
+        tv.setTextSize(14);
+        tv.setPadding(dp(14), dp(10), dp(14), dp(10));
+        tv.setElevation(dp(4));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xCC222222);
+        bg.setCornerRadius(dp(16));
+        tv.setBackground(bg);
+
+        ConstraintLayout.LayoutParams lp =
+                new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                        ConstraintLayout.LayoutParams.WRAP_CONTENT);
+        lp.startToStart = topArea.getId();
+        lp.endToEnd = topArea.getId();
+        lp.topToTop = topArea.getId();
+        lp.bottomToBottom = topArea.getId();
+        tv.setLayoutParams(lp);
+
+        tv.setAlpha(0f);
+        topArea.addView(tv);
+        tv.animate().alpha(1f).setDuration(150).start();
+
+        tv.postDelayed(() -> tv.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction(() -> {
+                    if (tv.getParent() == topArea) topArea.removeView(tv);
+                })
+                .start(), 2000);
+    }
+
+    private Path mapPathFromBrushViewToBitmap(Path src,
+                                              View brushOverlay,
+                                              ImageView targetView,
+                                              int bmpW, int bmpH) {
+        Path out = new Path(src);
+
+        float bx = brushOverlay.getX(), by = brushOverlay.getY();
+        Matrix m = new Matrix();
+        m.postTranslate(bx, by);
+        out.transform(m);
+
+        float tx = targetView.getX(), ty = targetView.getY();
+        m.reset();
+        m.postTranslate(-tx, -ty);
+        out.transform(m);
+
+        float sx = (bmpW * 1f) / Math.max(1, targetView.getWidth());
+        float sy = (bmpH * 1f) / Math.max(1, targetView.getHeight());
+        m.reset();
+        m.postScale(sx, sy);
+        out.transform(m);
+
+        return out;
     }
 }

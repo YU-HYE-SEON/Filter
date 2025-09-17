@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="tag_prev_enabled" type="id"/>
+    <item name="tag_stickerRaised" type="id"/>
+    <item name="tag_brush_layer" type="id"/>
 </resources>

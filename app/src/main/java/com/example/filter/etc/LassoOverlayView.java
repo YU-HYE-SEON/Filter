@@ -13,6 +13,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LassoOverlayView extends View {
+    public interface LassoListener {
+        void onShapeCompleted();
+    }
+
+    private LassoListener listener = null;
+    private boolean drawingEnabled = true;
+
+    public void setLassoListener(LassoListener l) {
+        this.listener = l;
+    }
+
+    public void setDrawingEnabled(boolean enabled) {
+        this.drawingEnabled = enabled;
+    }
+
+    public boolean isDrawingEnabled() {
+        return drawingEnabled;
+    }
+
     private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint dimPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint clearPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -34,19 +53,26 @@ public class LassoOverlayView extends View {
 
     private static final float EPS = 0.5f;
 
+    private RectF getVisibleImageRect() {
+        if (imageBounds == null) return null;
+        RectF vis = new RectF(imageBounds);
+        boolean has = vis.intersect(0f, 0f, getWidth(), getHeight());
+        return has ? vis : null;
+    }
+
     private boolean isFullRectSelection() {
-        if (!fullSelectionShown || shapes.size() != 1 || imageBounds == null) return false;
+        RectF target = getVisibleImageRect();
+        if (!fullSelectionShown || shapes.size() != 1 || target == null) return false;
 
         Path p = shapes.get(0);
         RectF r = new RectF();
         boolean isRect = p.isRect(r);
-
         if (!isRect) return false;
 
-        return Math.abs(r.left - imageBounds.left)   <= EPS &&
-                Math.abs(r.top - imageBounds.top)     <= EPS &&
-                Math.abs(r.right - imageBounds.right) <= EPS &&
-                Math.abs(r.bottom - imageBounds.bottom) <= EPS;
+        return Math.abs(r.left - target.left) <= EPS &&
+                Math.abs(r.top - target.top) <= EPS &&
+                Math.abs(r.right - target.right) <= EPS &&
+                Math.abs(r.bottom - target.bottom) <= EPS;
     }
 
     public LassoOverlayView(Context c) {
@@ -125,20 +151,6 @@ public class LassoOverlayView extends View {
         }
 
         if (!shapes.isEmpty()) {
-            /*int id = canvas.saveLayer(0, 0, getWidth(), getHeight(), null);
-            canvas.drawRect(0, 0, getWidth(), getHeight(), dimPaint);
-            for (Path s : shapes) {
-                Path fill = new Path(s);
-                fill.setFillType(Path.FillType.WINDING);
-                canvas.drawPath(fill, clearPaint);
-            }
-            canvas.restoreToCount(id);*/
-
-            /*int savePen = clipOutAllShapes(canvas);
-            for (Path s : shapes) {
-                canvas.drawPath(s, strokePaint);
-            }
-            canvas.restoreToCount(savePen);*/
             boolean drawWithoutClip = isFullRectSelection();
 
             int save = 0;
@@ -179,6 +191,7 @@ public class LassoOverlayView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
+        if (!drawingEnabled) return false;
         if (e.getPointerCount() > 1) return false;
 
         final float x = clampX(e.getX());
@@ -248,6 +261,8 @@ public class LassoOverlayView extends View {
 
                 cancelCurrent();
 
+                if (listener != null) listener.onShapeCompleted();
+
                 invalidate();
                 return true;
         }
@@ -286,12 +301,15 @@ public class LassoOverlayView extends View {
     }
 
     public void beginFullSelection() {
-        if (imageBounds == null) return;
+        RectF vis = getVisibleImageRect();
+        if (vis == null) return;
+
         shapes.clear();
         Path rect = new Path();
-        rect.addRect(imageBounds, Path.Direction.CW);
+        rect.addRect(vis, Path.Direction.CW);
         rect.setFillType(Path.FillType.WINDING);
         shapes.add(rect);
+
         fullSelectionShown = true;
         forceDim = true;
         invalidate();

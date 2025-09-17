@@ -80,7 +80,7 @@
                     android:orientation="vertical">
 
                     <ImageButton
-                        android:id="@+id/mosaic"
+                        android:id="@+id/crayon"
                         android:layout_width="70dp"
                         android:layout_height="70dp"
                         android:background="@android:color/transparent"
@@ -90,7 +90,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="모자이크"
+                        android:text="색연필"
                         android:textColor="@color/white" />
 
                 </LinearLayout>
