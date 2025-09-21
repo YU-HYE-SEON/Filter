@@ -13,6 +13,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -74,7 +75,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 
 public class BrushFragment extends Fragment {
     /// 관련 클래스 ///
@@ -146,6 +146,7 @@ public class BrushFragment extends Fragment {
     /// 색연필 ///
     private int lastCrayonColor = 0xFFFFFFFF;
     private int lastCrayonSizePx = 0;
+    private BitmapShader crayonPreviewShader;
 
     /// 지우개 ///
     private final ArrayList<FilterActivity.EraseOp> sessionEraseOps = new ArrayList<>();
@@ -839,9 +840,9 @@ public class BrushFragment extends Fragment {
         int argb = argbFromCur();
         int rr = Color.red(argb), gg = Color.green(argb), bb = Color.blue(argb);
         setTextIfChangedKeepCursor(hex, String.format(Locale.US, "%02X%02X%02X", rr, gg, bb));
-        setTextIfChangedKeepCursor(r, String.valueOf(rr));
-        setTextIfChangedKeepCursor(g, String.valueOf(gg));
-        setTextIfChangedKeepCursor(b, String.valueOf(bb));
+        setTextSkipIfEmptyAndZero(r, rr);
+        setTextSkipIfEmptyAndZero(g, gg);
+        setTextSkipIfEmptyAndZero(b, bb);
         setTextIfChangedKeepCursor(v, String.valueOf(Math.round(curVal * 100)));
         setTextIfChangedKeepCursor(a, String.valueOf(curAlphaPct));
     }
@@ -1156,60 +1157,95 @@ public class BrushFragment extends Fragment {
         size.setBackground(null);
     }
 
+    private BitmapShader ensureCrayonPreviewShader() {
+        if (crayonPreviewShader != null) return crayonPreviewShader;
+
+        Drawable d = requireContext().getDrawable(R.drawable.crayon_texture);
+        if (d == null) return null;
+
+        Bitmap src;
+        if (d instanceof BitmapDrawable) {
+            src = ((BitmapDrawable) d).getBitmap();
+        } else {
+            int w = Math.max(2, d.getIntrinsicWidth());
+            int h = Math.max(2, d.getIntrinsicHeight());
+            if (w <= 0) w = 256;
+            if (h <= 0) h = 256;
+            src = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas cc = new Canvas(src);
+            d.setBounds(0, 0, w, h);
+            d.draw(cc);
+        }
+
+        int w = src.getWidth(), h = src.getHeight();
+        int[] in = new int[w * h];
+        int[] out = new int[w * h];
+        src.getPixels(in, 0, w, 0, 0, w, h);
+
+        for (int i = 0; i < in.length; i++) {
+            int c = in[i];
+            int r = (c >> 16) & 0xFF;
+            int g = (c >> 8) & 0xFF;
+            int b = (c) & 0xFF;
+            int luminance = (int) (0.299f * r + 0.587f * g + 0.114f * b);
+            int alpha = 255 - luminance;
+            if (alpha < 0) alpha = 0;
+            if (alpha > 255) alpha = 255;
+            out[i] = (alpha << 24) | 0x00FFFFFF;
+        }
+
+        Bitmap mask = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        mask.setPixels(out, 0, w, 0, 0, w, h);
+
+        crayonPreviewShader = new BitmapShader(mask, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+        return crayonPreviewShader;
+    }
+
     private void updateCrayonSizePreview(View panel, int argb, int diameterPx) {
         ImageView size = panel.findViewById(R.id.size);
+        View wrap = panel.findViewById(R.id.sizePreviewWrap);
         if (size == null) return;
 
-        int bmW = Math.max(diameterPx + dp(8), dp(16));
-        int bmH = bmW;
+        Runnable draw = () -> {
+            int bmW = (wrap != null && wrap.getWidth() > 0) ? wrap.getWidth() : dp(40);
+            int bmH = bmW;
 
-        Bitmap bmp = Bitmap.createBitmap(bmW, bmH, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bmp);
-        float cx = bmW / 2f, cy = bmH / 2f;
-        float r = diameterPx / 2f;
+            Bitmap bmp = Bitmap.createBitmap(bmW, bmH, Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(bmp);
+            float cx = bmW / 2f, cy = bmH / 2f;
+            float r = diameterPx / 2f;
 
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setStyle(Paint.Style.FILL);
+            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+            p.setStyle(Paint.Style.FILL);
 
-        int N = Math.max(24, Math.min(240, Math.round(r * 10)));
-        long seed = (argb * 31L) ^ (diameterPx * 131L);
-        Random rand = new Random(seed);
+            BitmapShader shader = ensureCrayonPreviewShader();
+            if (shader != null) {
+                p.setShader(shader);
+                int opaqueColor = (argb | 0xFF000000);
+                p.setColorFilter(new PorterDuffColorFilter(opaqueColor, PorterDuff.Mode.SRC_ATOP));
+                p.setAlpha(Color.alpha(argb));
+            } else {
+                p.setColor(argb);
+            }
 
-        int baseA = Color.alpha(argb);
-        int rgb = (argb & 0x00FFFFFF);
+            c.drawCircle(cx, cy, r, p);
 
-        for (int i = 0; i < N; i++) {
-            double t = 2 * Math.PI * rand.nextDouble();
-            double u = rand.nextDouble() + rand.nextDouble();
-            double rr = (u > 1 ? 2 - u : u);
-            float px = (float) (cx + Math.cos(t) * rr * r);
-            float py = (float) (cy + Math.sin(t) * rr * r);
+            ViewGroup.LayoutParams lp = size.getLayoutParams();
+            if (lp != null) {
+                lp.width = bmW;
+                lp.height = bmH;
+                size.setLayoutParams(lp);
+            }
+            size.setScaleType(ImageView.ScaleType.CENTER);
+            size.setImageBitmap(bmp);
+            size.setBackground(null);
+        };
 
-            float dist = (float) Math.hypot(px - cx, py - cy) / (r + 0.0001f);
-            float alphaScale = 1f - (dist * 0.7f);
-            int a = Math.max(20, Math.min(255, Math.round(baseA * alphaScale)));
-
-            p.setColor((a << 24) | rgb);
-
-            float dotR = Math.max(0.6f, r * 0.09f + rand.nextFloat() * r * 0.06f);
-            c.drawCircle(px, py, dotR, p);
+        if (wrap == null || wrap.getWidth() == 0) {
+            size.post(draw);
+        } else {
+            draw.run();
         }
-
-        Paint core = new Paint(Paint.ANTI_ALIAS_FLAG);
-        core.setStyle(Paint.Style.FILL);
-        int coreA = Math.min(255, Math.round(baseA * 0.9f));
-        core.setColor((coreA << 24) | rgb);
-        c.drawCircle(cx, cy, Math.max(1f, r * 0.15f), core);
-
-        ViewGroup.LayoutParams lp = size.getLayoutParams();
-        if (lp != null) {
-            lp.width = bmW;
-            lp.height = bmH;
-            size.setLayoutParams(lp);
-        }
-        size.setScaleType(ImageView.ScaleType.CENTER);
-        size.setImageBitmap(bmp);
-        size.setBackground(null);
     }
 
     private void updateEraserSizePreview(ImageView eraserSizeView, int sizePx) {
@@ -1421,6 +1457,7 @@ public class BrushFragment extends Fragment {
             if (suppress) return;
             String hex = hexCode.getText().toString().trim();
             if (hex.length() != 6) return;
+
             int rgb = parseHexRGB(hex);
             int aPct = parseIntSafe(aVal, 100);
             int a = clamp(Math.round(aPct * 2.55f), 0, 255);
@@ -1428,13 +1465,28 @@ public class BrushFragment extends Fragment {
 
             float[] hsv = new float[3];
             Color.colorToHSV(0xFF000000 | (rgb & 0x00FFFFFF), hsv);
-            baseHS[0] = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
-            baseHS[1] = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
+            //baseHS[0] = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
+            //baseHS[1] = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
+
             if (satVal != null)
                 setTextIfChangedKeepCursor(satVal, String.valueOf(Math.round(hsv[2] * 100)));
 
+            float useHue = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
+            float useSat = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
+
+            curHue = useHue;
+            curSat = useSat;
+            curVal = hsv[2];
+            curAlphaPct = aPct;
+
+            lastHue = curHue;
+            lastSat = curSat;
+            hasLastHS = true;
+
             suppress = true;
             pushColorToUI(panel, colorPalette, argb, hexCode, true, mode);
+            refreshAllSeekbars(satSeek, aSeek, sizeSeek);
+            syncEditorsFromCur(hexCode, rCode, gCode, bCode, satVal, aVal);
             suppress = false;
         });
 
@@ -1445,17 +1497,33 @@ public class BrushFragment extends Fragment {
             int b = clamp(parseIntEmptyZeroSafe(bCode), 0, 255);
             int aPct = clamp(parseIntEmptyZeroSafe(aVal), 0, 100);
             int a = clamp(Math.round(aPct * 2.55f), 0, 255);
+            int argb = (a << 24) | (r << 16) | (g << 8) | b;
 
             float[] hsv = new float[3];
             Color.colorToHSV(0xFF000000 | ((r << 16) | (g << 8) | b), hsv);
-            baseHS[0] = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
-            baseHS[1] = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
-            if (satVal != null)
-                setTextIfChangedKeepCursor(satVal, String.valueOf(Math.round(hsv[2] * 100)));
+            //baseHS[0] = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
+            //baseHS[1] = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
 
-            int argb = (a << 24) | (r << 16) | (g << 8) | b;
+            if (satVal != null) {
+                setTextIfChangedKeepCursor(satVal, String.valueOf(Math.round(hsv[2] * 100)));
+            }
+
+            float useHue = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
+            float useSat = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
+
+            curHue = useHue;
+            curSat = useSat;
+            curVal = hsv[2];
+            curAlphaPct = aPct;
+
+            lastHue = curHue;
+            lastSat = curSat;
+            hasLastHS = true;
+
             suppress = true;
             pushColorToUI(panel, colorPalette, argb, (EditText) getView().findFocus(), true, mode);
+            refreshAllSeekbars(satSeek, aSeek, sizeSeek);
+            syncEditorsFromCur(hexCode, rCode, gCode, bCode, satVal, aVal);
             suppress = false;
         });
 
@@ -1489,10 +1557,17 @@ public class BrushFragment extends Fragment {
 
         if (satVal != null) satVal.addTextChangedListener(new SimpleTextWatcher(() -> {
             if (suppress) return;
-            int raw = clamp(parseIntEmptyZero(satVal.getText().toString()), 0, 100);
-            if (satSeek != null) satSeek.setProgress(raw);
+            int raw = parseIntEmptyZero(satVal.getText().toString());
+            int clamped = clamp(raw, 0, 100);
+            if (raw != clamped) {
+                suppress = true;
+                setTextIfChangedKeepCursor(satVal, String.valueOf(clamped));
+                suppress = false;
+            }
 
-            curVal = raw / 100f;
+            if (satSeek != null) satSeek.setProgress(clamped);
+
+            curVal = clamped / 100f;
             refreshAllSeekbars(satSeek, aSeek, sizeSeek);
             suppress = true;
             pushColorToUI(panel, colorPalette, argbFromCur(), satVal, false, mode);
@@ -1524,10 +1599,16 @@ public class BrushFragment extends Fragment {
 
         if (aVal != null) aVal.addTextChangedListener(new SimpleTextWatcher(() -> {
             if (suppress) return;
-            int aPct = clamp(parseIntEmptyZeroSafe(aVal), 0, 100);
-            if (aSeek != null) aSeek.setProgress(aPct);
+            int raw = parseIntEmptyZeroSafe(aVal);
+            int clamped = clamp(raw, 0, 100);
+            if (raw != clamped) {
+                suppress = true;
+                setTextIfChangedKeepCursor(aVal, String.valueOf(clamped));
+                suppress = false;
+            }
+            if (aSeek != null) aSeek.setProgress(clamped);
 
-            curAlphaPct = aPct;
+            curAlphaPct = clamped;
             refreshAllSeekbars(satSeek, aSeek, sizeSeek);
             suppress = true;
             pushColorToUI(panel, colorPalette, argbFromCur(), aVal, false, mode);

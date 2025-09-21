@@ -2,17 +2,26 @@ package com.example.filter.etc;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.appcompat.content.res.AppCompatResources;
+
+import com.example.filter.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +29,16 @@ import java.util.List;
 public class BrushOverlayView extends View {
     public interface OnStrokeProgressListener {
         void onStrokeProgress(Path deltaPath, float strokeWidthPx, BrushMode mode);
+
         void onStrokeEnd(Path fullPath, float strokeWidthPx, BrushMode mode);
     }
+
     private OnStrokeProgressListener progressListener;
-    public void setOnStrokeProgressListener(OnStrokeProgressListener l) { this.progressListener = l; }
+
+    public void setOnStrokeProgressListener(OnStrokeProgressListener l) {
+        this.progressListener = l;
+    }
+
     public enum BrushMode {PEN, GLOW, CRAYON, ERASER}
 
     private class Stroke {
@@ -60,8 +75,17 @@ public class BrushOverlayView extends View {
                 return;
             }
             if (mode == BrushMode.CRAYON) {
-                corePaint.setColor(color);
+                loadCrayonShaderAlphaMask();
+                if (crayonShader != null) {
+                    corePaint.setShader(crayonShader);
+                    int opaqueColor = (color | 0xFF000000);
+                    corePaint.setColorFilter(new PorterDuffColorFilter(opaqueColor, PorterDuff.Mode.SRC_ATOP));
+                    corePaint.setAlpha(Color.alpha(color));
+                } else {
+                    corePaint.setColor(color);
+                }
                 glowPaint = null;
+                return;
             }
             corePaint.setColor(color);
         }
@@ -70,6 +94,7 @@ public class BrushOverlayView extends View {
     private final List<Stroke> strokes = new ArrayList<>();
     private final List<Stroke> undone = new ArrayList<>();
     private Stroke current;
+    private Rect clipRectPx;
     private boolean drawingEnabled = true;
     private float lastX, lastY;
     private static final float TOUCH_TOLERANCE = 2f;
@@ -79,7 +104,7 @@ public class BrushOverlayView extends View {
     private float glowScale = 1.8f;
     private float glowAlpha = 0.5f;
     private float glowRadiusPx = 12f;
-    private Rect clipRectPx;
+    private BitmapShader crayonShader;
     private int visibleCount = 0;
 
     public BrushOverlayView(Context ctx) {
@@ -142,6 +167,54 @@ public class BrushOverlayView extends View {
         }
         c.restoreToCount(save);
         return out;
+    }
+
+    private void loadCrayonShaderAlphaMask() {
+        if (crayonShader != null) return;
+
+        Drawable d = AppCompatResources.getDrawable(getContext(), R.drawable.crayon_texture);
+
+        if (d == null) return;
+
+        Bitmap bmp;
+        if (d instanceof BitmapDrawable) {
+            bmp = ((BitmapDrawable) d).getBitmap();
+        } else {
+            int w = Math.max(2, d.getIntrinsicWidth());
+            int h = Math.max(2, d.getIntrinsicHeight());
+            if (w <= 0) w = 256;
+            if (h <= 0) h = 256;
+            bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(bmp);
+            d.setBounds(0, 0, w, h);
+            d.draw(c);
+        }
+
+        int w = bmp.getWidth(), h = bmp.getHeight();
+        int[] in = new int[w * h];
+        int[] out = new int[w * h];
+        bmp.getPixels(in, 0, w, 0, 0, w, h);
+
+        for (int i = 0; i < in.length; i++) {
+            int c = in[i];
+            int r = (c >> 16) & 0xFF;
+            int g = (c >> 8) & 0xFF;
+            int b = c & 0xFF;
+
+            int luminance = (int) (0.299f * r + 0.587f * g + 0.114f * b);
+            //int alphaStrength = 255;
+            int alpha = (255 - luminance);
+            //alpha = (alpha * alphaStrength) / 255;
+            if (alpha < 0) alpha = 0;
+            if (alpha > 255) alpha = 255;
+
+            out[i] = (alpha << 24) | 0x00FFFFFF;
+        }
+
+        Bitmap mask = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        mask.setPixels(out, 0, w, 0, 0, w, h);
+
+        crayonShader = new BitmapShader(mask, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
     }
 
     @Override
