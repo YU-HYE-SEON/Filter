@@ -194,7 +194,7 @@ public class FilterActivity extends BaseActivity {
     private final ArrayList<HistoryOp> history = new ArrayList<>();
     private int historyCursor = -1;
 
-    /// lifecycle ///
+    /// life cycle ///
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {

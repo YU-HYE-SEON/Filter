@@ -249,6 +249,8 @@ public class EditMyStickerFragment extends Fragment {
             if (ClickUtils.isFastClick(500)) return;
 
             if ("stickers".equals(origin)) {
+                restoreElevationIfNeeded();
+
                 FilterActivity a = (FilterActivity) requireActivity();
                 if (stickerWrapper != null) {
                     a.recordStickerDelete(stickerWrapper);
@@ -306,19 +308,12 @@ public class EditMyStickerFragment extends Fragment {
             if ("stickers".equals(origin)) {
                 FilterActivity a = (FilterActivity) requireActivity();
 
-                //float bx = getArguments().getFloat("prevX", stickerWrapper.getX());
-                //float by = getArguments().getFloat("prevY", stickerWrapper.getY());
-                //int bw = getArguments().getInt("prevW", stickerWrapper.getLayoutParams().width);
-                //int bh = getArguments().getInt("prevH", stickerWrapper.getLayoutParams().height);
-                //float br = getArguments().getFloat("prevR", stickerWrapper.getRotation());
-
                 int aw = stickerWrapper.getLayoutParams().width;
                 int ah = stickerWrapper.getLayoutParams().height;
                 float ax = stickerWrapper.getX();
                 float ay = stickerWrapper.getY();
                 float ar = stickerWrapper.getRotation();
 
-                // ✅ 엔트리 스냅샷과 비교(사용자 편집 여부 판정)
                 boolean samePos  = (entryX != null && entryY != null)
                         && Math.abs(ax - entryX) < EPS_POS
                         && Math.abs(ay - entryY) < EPS_POS;
@@ -327,7 +322,6 @@ public class EditMyStickerFragment extends Fragment {
                         && Math.abs(aw - entryW) <= EPS_SIZE
                         && Math.abs(ah - entryH) <= EPS_SIZE;
 
-                // 기존 prev(편집 전) 값은 남겨두되, '사용자 조작 없음'이면 기록 생략
                 if (!(samePos && sameRot && sameSize)) {
                     float bx = getArguments().getFloat("prevX", stickerWrapper.getX());
                     float by = getArguments().getFloat("prevY", stickerWrapper.getY());
@@ -337,8 +331,6 @@ public class EditMyStickerFragment extends Fragment {
 
                     a.recordStickerEdit(stickerWrapper, bx, by, bw, bh, br, ax, ay, aw, ah, ar);
                 }
-
-                //a.recordStickerEdit(stickerWrapper, bx, by, bw, bh, br, ax, ay, aw, ah, ar);
 
                 if (stickerOverlay != null) {
                     for (int i = 0; i < stickerOverlay.getChildCount(); i++) {

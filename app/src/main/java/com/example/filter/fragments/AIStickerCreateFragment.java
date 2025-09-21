@@ -82,7 +82,7 @@ public class AIStickerCreateFragment extends Fragment {
             if (prompt.isEmpty()) return;
 
             //서버 재테스트할 때마다 변경해야 됨
-            String baseUrl = "https://525e77336925.ngrok-free.app";
+            String baseUrl = "https://5ec6d63fcac1.ngrok-free.app";
 
             getParentFragmentManager()
                     .beginTransaction()

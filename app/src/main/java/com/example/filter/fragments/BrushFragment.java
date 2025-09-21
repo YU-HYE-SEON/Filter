@@ -77,6 +77,28 @@ import java.util.Map;
 import java.util.Random;
 
 public class BrushFragment extends Fragment {
+    /// 관련 클래스 ///
+    private static class SimpleTextWatcher implements TextWatcher {
+        private final Runnable after;
+
+        SimpleTextWatcher(Runnable after) {
+            this.after = after;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int a, int b, int c) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int a, int b, int c) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            if (after != null) after.run();
+        }
+    }
+
     private static class Patch {
         Rect rect;
         Bitmap before;
@@ -90,55 +112,85 @@ public class BrushFragment extends Fragment {
         boolean hadEffect = false;
     }
 
-    private final Map<ImageView, PendingErase> activeErases = new HashMap<>();
+    /// UI ///
     private ConstraintLayout topArea;
     private ImageButton pen, glowPen, crayon, eraser;
     private ImageButton cancelBtn, checkBtn;
-    private View currentToolPanel;
-    private LayoutInflater inflater;
     private FrameLayout brushPanel;
-    private boolean suppress = false;
-    private float curHue = 0f, curSat = 1f, curVal = 1f;
-    private int curAlphaPct = 100;
-    private int lastPenColor = 0xFFFFFFFF;
-    private int lastPenSizePx = 0;
-    private int lastGlowColor = 0xFFFFFFFF;
-    private int lastGlowSizePx = 0;
-    private int lastCrayonColor = 0xFFFFFFFF;
-    private int lastCrayonSizePx = 0;
-    private boolean isPenPanelOpen = false;
-    private FrameLayout brushOverlay;
-    private BrushOverlayView brushDraw;
-    private BrushStateViewModel brushState;
-    private View.OnLayoutChangeListener brushClipListener;
-    private float lastHue = 0f;
-    private float lastSat = 1f;
-    private boolean hasLastHS = false;
-    private static final int SAT_THUMB_DIAMETER_DP = 22;
-    private static final int SAT_THUMB_STROKE_DP = 2;
-    private GradientDrawable satTrack;
-    private GradientDrawable satThumb;
-    private Drawable alphaChecker;
-    private GradientDrawable alphaTrack;
-    private LayerDrawable alphaLayer;
-    private GradientDrawable alphaThumb;
-    private Drawable sizeChecker;
-    private GradientDrawable sizeTrack;
-    private LayerDrawable sizeLayer;
-    private GradientDrawable sizeThumb;
+    private FrameLayout brushOverlay, stickerOverlay;
+    private LassoOverlayView lassoOverlay;
+    private LinearLayout brushToSticker;
+    private ConstraintLayout bottomArea1;
+    private ImageButton undoSticker, redoSticker, originalSticker;
+    private CheckBox checkBox;
+
+    /// 시스템 ///
+    private LayoutInflater inflater;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private Runnable pendingSatUi, pendingAlphaUi;
     private static final long SEEKBAR_THROTTLE_MS = 16;
-    private ConstraintLayout bottomArea1;
-    private ImageButton undoSticker, redoSticker, originalSticker;
-    private LinearLayout brushToSticker;
-    private LassoOverlayView lassoOverlay;
-    private CheckBox checkBox;
-    private BrushOverlayView.BrushMode lastMode = BrushOverlayView.BrushMode.PEN;
-    private int baselineStrokeCount = 0;
-    private int baselineChildCount = 0;
-    private FrameLayout stickerOverlay;
 
+    /// 패널 ///
+    private View currentToolPanel;
+    private boolean isPenPanelOpen = false;
+    private boolean suppress = false;
+
+    /// 펜 ///
+    private int lastPenColor = 0xFFFFFFFF;
+    private int lastPenSizePx = 0;
+
+    /// 글로우 펜 ///
+    private int lastGlowColor = 0xFFFFFFFF;
+    private int lastGlowSizePx = 0;
+
+    /// 색연필 ///
+    private int lastCrayonColor = 0xFFFFFFFF;
+    private int lastCrayonSizePx = 0;
+
+    /// 지우개 ///
+    private final ArrayList<FilterActivity.EraseOp> sessionEraseOps = new ArrayList<>();
+
+    /// undoSticker, redoSticker, originalSticker 작업 ///
+    private final Map<ImageView, PendingErase> activeErases = new HashMap<>();
+
+    /// 색상 코드 변수 ///
+    private float curHue = 0f, curSat = 1f, curVal = 1f;
+    private boolean hasLastHS = false;
+
+    /// 시크바 공통 변수 ///
+    private static final int THUMB_DIAMETER_DP = 22;
+    private static final int THUMB_STROKE_DP = 2;
+
+    /// 채도 시크바 ///
+    private float lastHue = 0f;
+    private float lastSat = 1f;
+    private GradientDrawable satTrack;
+    private GradientDrawable satThumb;
+
+    /// 투명도 시크바 ///
+    private Drawable alphaChecker;
+    private LayerDrawable alphaLayer;
+    private GradientDrawable alphaTrack;
+    private GradientDrawable alphaThumb;
+    private int curAlphaPct = 100;
+
+    /// 굵기 시크바 ///
+    private Drawable sizeChecker;
+    private LayerDrawable sizeLayer;
+    private GradientDrawable sizeTrack;
+    private GradientDrawable sizeThumb;
+
+    /// 브러쉬 ///
+    private BrushOverlayView brushDraw;
+    private BrushStateViewModel brushState;
+    private BrushOverlayView.BrushMode lastMode = BrushOverlayView.BrushMode.PEN;
+    private View.OnLayoutChangeListener brushClipListener;
+    private int baselineStrokeCount = 0;
+
+    /// 스티커 ///
+    private int baselineChildCount = 0;
+
+    /// life cycle ///
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -341,7 +393,8 @@ public class BrushFragment extends Fragment {
                                         }
                                     }
                                     if (changed) pe.hadEffect = true;
-                                } catch (Throwable ignore) { }
+                                } catch (Throwable ignore) {
+                                }
                             }
                         }
                     }
@@ -395,7 +448,8 @@ public class BrushFragment extends Fragment {
                                 ops.add(eo);
                             }
 
-                            if (!ops.isEmpty()) act.recordBrushErase(ops);
+                            sessionEraseOps.addAll(ops);
+                            //if (!ops.isEmpty()) act.recordBrushErase(ops);
 
                             activeErases.clear();
                         }
@@ -496,6 +550,11 @@ public class BrushFragment extends Fragment {
             if (ClickUtils.isFastClick(500)) return;
 
             if (currentToolPanel != null) hideToolPanel(false);
+
+            rollbackActiveErases();
+
+            rollbackSessionErases();
+
             if (brushDraw != null) {
                 brushDraw.trimToCount(baselineStrokeCount);
                 brushDraw.setDrawingEnabled(false);
@@ -558,6 +617,11 @@ public class BrushFragment extends Fragment {
             }
 
             FilterActivity a = (FilterActivity) requireActivity();
+            if (!sessionEraseOps.isEmpty()) {
+                a.recordBrushErase(sessionEraseOps);
+                sessionEraseOps.clear();
+            }
+
             if (stickerOverlay != null) {
                 a.recordStickerPlacement(baselineChildCount);
                 baselineChildCount = stickerOverlay.getChildCount();
@@ -579,83 +643,39 @@ public class BrushFragment extends Fragment {
         return view;
     }
 
-    private BrushOverlayView pickupExistingBrushOverlay(@NonNull FrameLayout overlay) {
-        BrushOverlayView keep = null;
-        for (int i = 0; i < overlay.getChildCount(); i++) {
-            View child = overlay.getChildAt(i);
-            if (child instanceof BrushOverlayView) {
-                if (keep == null) {
-                    keep = (BrushOverlayView) child;
-                } else {
-                    overlay.removeView(child);
-                    i--;
-                }
-            }
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("lastPenColor", lastPenColor);
+        outState.putInt("lastPenSizePx", lastPenSizePx);
+        outState.putInt("lastGlowColor", lastGlowColor);
+        outState.putInt("lastGlowSizePx", lastGlowSizePx);
+        outState.putInt("lastCrayonColor", lastCrayonColor);
+        outState.putInt("lastCrayonSizePx", lastCrayonSizePx);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (brushOverlay != null && brushClipListener != null) {
+            brushOverlay.removeOnLayoutChangeListener(brushClipListener);
+            brushClipListener = null;
         }
-        return keep;
-    }
+        if (brushDraw != null) brushDraw.setDrawingEnabled(false);
 
-    private void setModeAlpha(BrushOverlayView.BrushMode mode) {
-        float on = 1f, off = 0.2f;
-        if (pen != null) pen.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
-        if (glowPen != null) glowPen.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
-        if (crayon != null) crayon.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);
-        if (eraser != null) eraser.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
-    }
-
-    private void hideToolPanel(boolean enableDrawingAfterClose) {
-        if (brushPanel == null) return;
-        if (currentToolPanel == null) {
-            brushPanel.setVisibility(View.GONE);
-            isPenPanelOpen = false;
-
-            if (brushDraw != null) {
-                brushDraw.setDrawingEnabled(enableDrawingAfterClose);
-            }
-
-            return;
+        if (checkBox != null) {
+            checkBox.setOnCheckedChangeListener(null);
+            checkBox.setChecked(false);
         }
-
-        View panel = currentToolPanel;
-        panel.animate().alpha(0f).translationY(dp(16)).setDuration(120)
-                .withEndAction(() -> {
-                    brushPanel.removeAllViews();
-                    brushPanel.setVisibility(View.GONE);
-                    currentToolPanel = null;
-                    isPenPanelOpen = false;
-
-                    if (brushDraw != null) brushDraw.setDrawingEnabled(enableDrawingAfterClose);
-                }).start();
-    }
-
-    private Bitmap makeRectHSVPalette(int width, int height) {
-        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        float[] hsv = new float[]{0f, 1f, 1f};
-        for (int y = 0; y < height; y++) {
-            float s = (float) y / (float) (height - 1);
-            for (int x = 0; x < width; x++) {
-                float h = (float) x / (float) (width - 1) * 360f;
-                hsv[0] = h;
-                hsv[1] = s;
-                hsv[2] = 1f;
-                bmp.setPixel(x, y, Color.HSVToColor(hsv));
-            }
+        if (lassoOverlay != null) {
+            lassoOverlay.setLassoListener(null);
+            lassoOverlay.clearAll();
+            lassoOverlay.setDrawingEnabled(false);
+            lassoOverlay.setVisibility(View.GONE);
         }
-        return bmp;
     }
 
-    private void setSelectorColor(ColorPickerView colorPalette, int fillColor) {
-        GradientDrawable d = new GradientDrawable();
-        d.setShape(GradientDrawable.OVAL);
-        d.setColor(fillColor);
-        d.setSize(dp(22), dp(22));
-
-        int strokeColor = Color.WHITE;
-        d.setStroke(dp(2), strokeColor);
-
-        colorPalette.setSelectorDrawable(d);
-    }
-
+    /// 패널 UI ///
     private void pushColorToUI(View panel, ColorPickerView colorPalette, int argb, EditText sourceEt, boolean updateSelector, BrushOverlayView.BrushMode mode) {
         if (updateSelector && colorPalette != null) {
             moveSelectorToColor(colorPalette, argb);
@@ -727,73 +747,33 @@ public class BrushFragment extends Fragment {
         }
     }
 
-    private int parseHexRGB(String hexCode) {
-        try {
-            return (int) Long.parseLong(hexCode, 16);
-        } catch (Exception e) {
-            return 0xFFFFFF;
-        }
-    }
-
-    private InputFilter hexLengthFilter(int max) {
-        return (source, start, end, dest, dstart, dend) -> {
-            int newLen = dest.length() - (dend - dstart) + (end - start);
-            if (newLen > max) return "";
-            return null;
-        };
-    }
-
-    private InputFilter hexCharsOnly() {
-        return (source, start, end, dest, dstart, dend) -> {
-            for (int i = start; i < end; i++) {
-                char c = source.charAt(i);
-                boolean ok = (c >= '0' && c <= '9') ||
-                        (c >= 'a' && c <= 'f') ||
-                        (c >= 'A' && c <= 'F');
-                if (!ok) return "";
+    /// 컬러 팔레트 ///
+    private Bitmap makeRectHSVPalette(int width, int height) {
+        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        float[] hsv = new float[]{0f, 1f, 1f};
+        for (int y = 0; y < height; y++) {
+            float s = (float) y / (float) (height - 1);
+            for (int x = 0; x < width; x++) {
+                float h = (float) x / (float) (width - 1) * 360f;
+                hsv[0] = h;
+                hsv[1] = s;
+                hsv[2] = 1f;
+                bmp.setPixel(x, y, Color.HSVToColor(hsv));
             }
-            return null;
-        };
-    }
-
-    private void setIfEmpty(EditText et, String def) {
-        if (et != null && et.getText().length() == 0) et.setText(def);
-    }
-
-    private int gatherCurrentARGB(EditText rCode, EditText gCode, EditText bCode, EditText alphaValue) {
-        int r = clamp(parseIntEmptyZeroSafe(rCode), 0, 255);
-        int g = clamp(parseIntEmptyZeroSafe(gCode), 0, 255);
-        int b = clamp(parseIntEmptyZeroSafe(bCode), 0, 255);
-        int aPct = clamp(parseIntEmptyZeroSafe(alphaValue), 0, 100);
-        int a = clamp(Math.round(aPct * 2.55f), 0, 255);
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-    private int parseIntSafe(EditText et, int def) {
-        return parseInt(et != null ? et.getText().toString() : null, def);
-    }
-
-    private int parseInt(String s, int def) {
-        try {
-            return Integer.parseInt(s == null ? "" : s.trim());
-        } catch (Exception e) {
-            return def;
         }
+        return bmp;
     }
 
-    private int clamp(int v, int min, int max) {
-        return Math.max(min, Math.min(max, v));
-    }
+    private void setSelectorColor(ColorPickerView colorPalette, int fillColor) {
+        GradientDrawable d = new GradientDrawable();
+        d.setShape(GradientDrawable.OVAL);
+        d.setColor(fillColor);
+        d.setSize(dp(22), dp(22));
 
-    private Rect rectForPath(Path mapped, float strokeWidth, int bmpW, int bmpH) {
-        RectF b = new RectF();
-        mapped.computeBounds(b, true);
-        int pad = Math.max(2, Math.round(strokeWidth / 2f + 2f));
-        int l = clamp(Math.round(b.left) - pad, 0, bmpW - 1);
-        int t = clamp(Math.round(b.top) - pad, 0, bmpH - 1);
-        int r = clamp(Math.round(b.right) + pad, 0, bmpW - 1);
-        int btm = clamp(Math.round(b.bottom) + pad, 0, bmpH - 1);
-        return new Rect(l, t, Math.max(l + 1, r), Math.max(t + 1, btm));
+        int strokeColor = Color.WHITE;
+        d.setStroke(dp(2), strokeColor);
+
+        colorPalette.setSelectorDrawable(d);
     }
 
     private void moveSelectorToColor(ColorPickerView colorPalette, int argb) {
@@ -831,6 +811,120 @@ public class BrushFragment extends Fragment {
         }
     }
 
+    /// 색상 코드, RGB코드 ///
+    private void fillEditorsFromColor(View panel, int argb) {
+        EditText hexCode = panel.findViewById(R.id.HexCode);
+        EditText rCode = panel.findViewById(R.id.RCode);
+        EditText gCode = panel.findViewById(R.id.GCode);
+        EditText bCode = panel.findViewById(R.id.BCode);
+        EditText alphaVal = panel.findViewById(R.id.alphaValue);
+        EditText satVal = panel.findViewById(R.id.saturationValue);
+
+        int r = Color.red(argb), g = Color.green(argb), b = Color.blue(argb);
+        int aPct = Math.round(Color.alpha(argb) / 2.55f);
+
+        float[] hsv = new float[3];
+        Color.colorToHSV(0xFF000000 | (argb & 0x00FFFFFF), hsv);
+        int vPct = Math.round(hsv[2] * 100f);
+
+        if (hexCode != null) hexCode.setText(String.format(Locale.US, "%02X%02X%02X", r, g, b));
+        if (rCode != null) rCode.setText(String.valueOf(r));
+        if (gCode != null) gCode.setText(String.valueOf(g));
+        if (bCode != null) bCode.setText(String.valueOf(b));
+        if (alphaVal != null) alphaVal.setText(String.valueOf(aPct));
+        if (satVal != null) satVal.setText(String.valueOf(vPct));
+    }
+
+    private void syncEditorsFromCur(EditText hex, EditText r, EditText g, EditText b, EditText v, EditText a) {
+        int argb = argbFromCur();
+        int rr = Color.red(argb), gg = Color.green(argb), bb = Color.blue(argb);
+        setTextIfChangedKeepCursor(hex, String.format(Locale.US, "%02X%02X%02X", rr, gg, bb));
+        setTextIfChangedKeepCursor(r, String.valueOf(rr));
+        setTextIfChangedKeepCursor(g, String.valueOf(gg));
+        setTextIfChangedKeepCursor(b, String.valueOf(bb));
+        setTextIfChangedKeepCursor(v, String.valueOf(Math.round(curVal * 100)));
+        setTextIfChangedKeepCursor(a, String.valueOf(curAlphaPct));
+    }
+
+    private InputFilter hexLengthFilter(int max) {
+        return (source, start, end, dest, dstart, dend) -> {
+            int newLen = dest.length() - (dend - dstart) + (end - start);
+            if (newLen > max) return "";
+            return null;
+        };
+    }
+
+    private InputFilter hexCharsOnly() {
+        return (source, start, end, dest, dstart, dend) -> {
+            for (int i = start; i < end; i++) {
+                char c = source.charAt(i);
+                boolean ok = (c >= '0' && c <= '9') ||
+                        (c >= 'a' && c <= 'f') ||
+                        (c >= 'A' && c <= 'F');
+                if (!ok) return "";
+            }
+            return null;
+        };
+    }
+
+    private int parseHexRGB(String hexCode) {
+        try {
+            return (int) Long.parseLong(hexCode, 16);
+        } catch (Exception e) {
+            return 0xFFFFFF;
+        }
+    }
+
+    private int gatherCurrentARGB(EditText rCode, EditText gCode, EditText bCode, EditText alphaValue) {
+        int r = clamp(parseIntEmptyZeroSafe(rCode), 0, 255);
+        int g = clamp(parseIntEmptyZeroSafe(gCode), 0, 255);
+        int b = clamp(parseIntEmptyZeroSafe(bCode), 0, 255);
+        int aPct = clamp(parseIntEmptyZeroSafe(alphaValue), 0, 100);
+        int a = clamp(Math.round(aPct * 2.55f), 0, 255);
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    private int argbFromCur() {
+        int rgb = Color.HSVToColor(new float[]{curHue, curSat, Math.max(0f, Math.min(1f, curVal))}) & 0x00FFFFFF;
+        int a = clamp(Math.round(curAlphaPct * 2.55f), 0, 255);
+        return (a << 24) | rgb;
+    }
+
+    private int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
+    }
+
+    private int parseIntSafe(EditText et, int def) {
+        return parseInt(et != null ? et.getText().toString() : null, def);
+    }
+
+    private int parseInt(String s, int def) {
+        try {
+            return Integer.parseInt(s == null ? "" : s.trim());
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    private int parseIntEmptyZero(String s) {
+        if (s == null) return 0;
+        String t = s.trim();
+        if (t.length() == 0) return 0;
+        try {
+            return Integer.parseInt(t);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private int parseIntEmptyZeroSafe(EditText et) {
+        return parseIntEmptyZero(et == null ? null : et.getText().toString());
+    }
+
+    private void setIfEmpty(EditText et, String def) {
+        if (et != null && et.getText().length() == 0) et.setText(def);
+    }
+
     private void setTextIfChangedKeepCursor(EditText et, String newText) {
         if (et == null) return;
         String cur = et.getText() == null ? "" : et.getText().toString();
@@ -847,6 +941,158 @@ public class BrushFragment extends Fragment {
         }
     }
 
+    private void setTextSkipIfEmptyAndZero(EditText et, int numeric) {
+        if (et == null) return;
+        String cur = et.getText() == null ? "" : et.getText().toString();
+        if (cur.length() == 0 && numeric == 0) return;
+        setTextIfChangedKeepCursor(et, String.valueOf(numeric));
+    }
+
+    private void applyFallbackIfEmpty(EditText et, String fallback) {
+        if (et == null) return;
+        CharSequence cs = et.getText();
+        String cur = cs == null ? "" : cs.toString().trim();
+        if (cur.length() == 0) {
+            suppress = true;
+            setTextIfChangedKeepCursor(et, fallback);
+            suppress = false;
+        }
+    }
+
+    private void attachEmptyFallback(EditText et, String fallback) {
+        if (et == null) return;
+        et.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) applyFallbackIfEmpty(et, fallback);
+        });
+        et.setOnEditorActionListener((TextView v, int actionId, KeyEvent event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE
+                    || actionId == EditorInfo.IME_ACTION_NEXT
+                    || actionId == EditorInfo.IME_ACTION_GO
+                    || actionId == EditorInfo.IME_ACTION_SEND) {
+                applyFallbackIfEmpty(et, fallback);
+            }
+            return false;
+        });
+    }
+
+    /// 시크바 공통 ///
+    private void refreshAllSeekbars(SeekBar satSeek, SeekBar alphaSeek, SeekBar sizeSeek) {
+        int vPct = Math.round(curVal * 100f);
+        updateSatSeekbarAppearance(satSeek, curHue, curSat, vPct);
+        if (alphaSeek != null)
+            updateAlphaSeekbarAppearance(alphaSeek, curHue, curSat, curVal, curAlphaPct);
+        if (sizeSeek != null) updateSizeSeekbarAppearance(sizeSeek, argbFromCur());
+    }
+
+    private void initSeekbarDrawables(View panel) {
+        satTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.BLACK, Color.WHITE});
+        satTrack.setCornerRadius(dp(999));
+        satThumb = (GradientDrawable) buildRoundThumb(THUMB_DIAMETER_DP, Color.WHITE, THUMB_STROKE_DP);
+        satTrack.mutate();
+        satThumb.mutate();
+
+        SeekBar sSat = panel.findViewById(R.id.saturationSeekbar);
+        sSat.setProgressDrawable(satTrack);
+        sSat.setThumb(satThumb);
+
+        alphaChecker = buildTiledCheckerboard(dp(999));
+        alphaTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.WHITE, Color.WHITE});
+        alphaTrack.setCornerRadius(dp(999));
+        alphaLayer = new LayerDrawable(new Drawable[]{alphaChecker, alphaTrack});
+        alphaThumb = (GradientDrawable) buildRoundThumb(THUMB_DIAMETER_DP, Color.WHITE, THUMB_STROKE_DP);
+        alphaTrack.mutate();
+        alphaThumb.mutate();
+
+        SeekBar sAlpha = panel.findViewById(R.id.alphaSeekbar);
+        sAlpha.setProgressDrawable(alphaLayer);
+        sAlpha.setThumb(alphaThumb);
+
+        sizeChecker = buildTiledCheckerboard(dp(999));
+        sizeTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.WHITE, Color.WHITE});
+        sizeTrack.setCornerRadius(dp(999));
+        sizeLayer = new LayerDrawable(new Drawable[]{sizeChecker, sizeTrack});
+        sizeThumb = (GradientDrawable) buildRoundThumb(THUMB_DIAMETER_DP, Color.WHITE, THUMB_STROKE_DP);
+        sizeTrack.mutate();
+        sizeThumb.mutate();
+
+        SeekBar sSize = panel.findViewById(R.id.sizeSeekbar);
+        sSize.setProgressDrawable(sizeLayer);
+        sSize.setThumb(sizeThumb);
+    }
+
+    private void setupSeekbarStaticPadding(View panel) {
+        int padding = dp(THUMB_DIAMETER_DP / 2);
+        for (int id : new int[]{R.id.saturationSeekbar, R.id.alphaSeekbar, R.id.sizeSeekbar}) {
+            SeekBar b = panel.findViewById(id);
+            b.setPadding(0, 0, padding, 0);
+            try {
+                b.setThumbOffset(0);
+            } catch (Throwable ignore) {
+            }
+        }
+    }
+
+    private Drawable buildRoundThumb(int diameterDp, int fillColor, int strokeDp) {
+        GradientDrawable d = new GradientDrawable();
+        d.setShape(GradientDrawable.OVAL);
+        d.setColor(fillColor);
+        d.setStroke(dp(strokeDp), Color.WHITE);
+        d.setSize(dp(diameterDp), dp(diameterDp));
+        return d;
+    }
+
+    private Drawable buildTiledCheckerboard(int cornerPx) {
+        Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.transparent_bg);
+        BitmapShader shader = new BitmapShader(bmp, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+
+        Matrix m = new Matrix();
+        float scale = 0.35f;
+        m.setScale(scale, scale);
+        shader.setLocalMatrix(m);
+
+        float r = cornerPx;
+        float[] radii = new float[]{r, r, r, r, r, r, r, r};
+        ShapeDrawable sd = new ShapeDrawable(new RoundRectShape(radii, null, null));
+        sd.getPaint().setAntiAlias(true);
+        sd.getPaint().setShader(shader);
+        return sd;
+    }
+
+    /// 채도 시크바 ///
+    private void updateSatSeekbarAppearance(SeekBar bar, float hue, float sat, int vPct) {
+        int end = Color.HSVToColor(new float[]{hue, sat, 1f});
+        satTrack.setColors(new int[]{Color.BLACK, end});
+
+        float v = Math.max(0f, Math.min(1f, vPct / 100f));
+        int thumbArgb = Color.HSVToColor(new float[]{hue, sat, v});
+        satThumb.setColor(thumbArgb);
+        bar.invalidate();
+    }
+
+    /// 투명도 시크바 ///
+    private void updateAlphaSeekbarAppearance(SeekBar bar, float hue, float sat, float v, int aPct) {
+        int opaque = Color.HSVToColor(new float[]{hue, sat, Math.max(0f, Math.min(1f, v))});
+        int rgb = opaque & 0x00FFFFFF;
+
+        alphaTrack.setColors(new int[]{rgb, (rgb | 0xFF000000)});
+
+        int a = clamp(Math.round(aPct * 2.55f), 0, 255);
+        int thumbArgb = (a << 24) | rgb;
+        alphaThumb.setColor(thumbArgb);
+        bar.invalidate();
+    }
+
+    /// 굵기 시크바 ///
+    private void updateSizeSeekbarAppearance(SeekBar bar, int argb) {
+        sizeTrack.setColors(new int[]{argb, argb});
+        sizeThumb.setColor(argb);
+        bar.invalidate();
+    }
+
+    /// 브러쉬 최종 이미지 미리보기 ///
     private void updatePenSizePreview(View panel, int argb, int diameterPx) {
         View size = panel.findViewById(R.id.size);
 
@@ -966,136 +1212,6 @@ public class BrushFragment extends Fragment {
         size.setBackground(null);
     }
 
-    private int getDiameterFromSeekbar(View panel) {
-        SeekBar sizeSeekbar = panel.findViewById(R.id.sizeSeekbar);
-        if (sizeSeekbar == null) return dp(10);
-        int min = dp(10), max = dp(40);
-        int progress = sizeSeekbar.getProgress();
-        return min + Math.round((max - min) * (progress / 100f));
-    }
-
-    private int parseIntEmptyZero(String s) {
-        if (s == null) return 0;
-        String t = s.trim();
-        if (t.length() == 0) return 0;
-        try {
-            return Integer.parseInt(t);
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    private int parseIntEmptyZeroSafe(EditText et) {
-        return parseIntEmptyZero(et == null ? null : et.getText().toString());
-    }
-
-    private void setTextSkipIfEmptyAndZero(EditText et, int numeric) {
-        if (et == null) return;
-        String cur = et.getText() == null ? "" : et.getText().toString();
-        if (cur.length() == 0 && numeric == 0) return;
-        setTextIfChangedKeepCursor(et, String.valueOf(numeric));
-    }
-
-    private void applyFallbackIfEmpty(EditText et, String fallback) {
-        if (et == null) return;
-        CharSequence cs = et.getText();
-        String cur = cs == null ? "" : cs.toString().trim();
-        if (cur.length() == 0) {
-            suppress = true;
-            setTextIfChangedKeepCursor(et, fallback);
-            suppress = false;
-        }
-    }
-
-    private void attachEmptyFallback(EditText et, String fallback) {
-        if (et == null) return;
-        et.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) applyFallbackIfEmpty(et, fallback);
-        });
-        et.setOnEditorActionListener((TextView v, int actionId, KeyEvent event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE
-                    || actionId == EditorInfo.IME_ACTION_NEXT
-                    || actionId == EditorInfo.IME_ACTION_GO
-                    || actionId == EditorInfo.IME_ACTION_SEND) {
-                applyFallbackIfEmpty(et, fallback);
-            }
-            return false;
-        });
-    }
-
-    private int dp(int v) {
-        return Math.round(v * getResources().getDisplayMetrics().density);
-    }
-
-    private void tintPenButton(int argb) {
-        if (pen == null) return;
-        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
-        ImageViewCompat.setImageTintList(pen, ColorStateList.valueOf(opaque));
-    }
-
-    private void tintGlowButton(int argb) {
-        if (glowPen == null) return;
-        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
-        ImageViewCompat.setImageTintList(glowPen, ColorStateList.valueOf(opaque));
-    }
-
-    private void tintCrayonButton(int argb) {
-        if (crayon == null) return;
-        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
-        ImageViewCompat.setImageTintList(crayon, ColorStateList.valueOf(opaque));
-    }
-
-    private void fillEditorsFromColor(View panel, int argb) {
-        EditText hexCode = panel.findViewById(R.id.HexCode);
-        EditText rCode = panel.findViewById(R.id.RCode);
-        EditText gCode = panel.findViewById(R.id.GCode);
-        EditText bCode = panel.findViewById(R.id.BCode);
-        EditText alphaVal = panel.findViewById(R.id.alphaValue);
-        EditText satVal = panel.findViewById(R.id.saturationValue);
-
-        int r = Color.red(argb), g = Color.green(argb), b = Color.blue(argb);
-        int aPct = Math.round(Color.alpha(argb) / 2.55f);
-
-        float[] hsv = new float[3];
-        Color.colorToHSV(0xFF000000 | (argb & 0x00FFFFFF), hsv);
-        int vPct = Math.round(hsv[2] * 100f);
-
-        if (hexCode != null) hexCode.setText(String.format(Locale.US, "%02X%02X%02X", r, g, b));
-        if (rCode != null) rCode.setText(String.valueOf(r));
-        if (gCode != null) gCode.setText(String.valueOf(g));
-        if (bCode != null) bCode.setText(String.valueOf(b));
-        if (alphaVal != null) alphaVal.setText(String.valueOf(aPct));
-        if (satVal != null) satVal.setText(String.valueOf(vPct));
-    }
-
-    private void updateSatSeekbarAppearance(SeekBar bar, float hue, float sat, int vPct) {
-        int end = Color.HSVToColor(new float[]{hue, sat, 1f});
-        satTrack.setColors(new int[]{Color.BLACK, end});
-
-        float v = Math.max(0f, Math.min(1f, vPct / 100f));
-        int thumbArgb = Color.HSVToColor(new float[]{hue, sat, v});
-        satThumb.setColor(thumbArgb);
-        bar.invalidate();
-    }
-
-    private void updateAlphaSeekbarAppearance(SeekBar bar, float hue, float sat, float v, int aPct) {
-        int opaque = Color.HSVToColor(new float[]{hue, sat, Math.max(0f, Math.min(1f, v))});
-        int rgb = opaque & 0x00FFFFFF;
-
-        alphaTrack.setColors(new int[]{rgb, (rgb | 0xFF000000)});
-
-        int a = clamp(Math.round(aPct * 2.55f), 0, 255);
-        int thumbArgb = (a << 24) | rgb;
-        alphaThumb.setColor(thumbArgb);
-        bar.invalidate();
-    }
-
-    private void updateSizeSeekbarAppearance(SeekBar bar, int argb) {
-        sizeTrack.setColors(new int[]{argb, argb});
-        sizeThumb.setColor(argb);
-        bar.invalidate();
-    }
-
     private void updateEraserSizePreview(ImageView eraserSizeView, int sizePx) {
         if (eraserSizeView == null) return;
 
@@ -1113,107 +1229,6 @@ public class BrushFragment extends Fragment {
         eraserSizeView.setBackground(d);
     }
 
-    private Drawable buildRoundThumb(int diameterDp, int fillColor, int strokeDp) {
-        GradientDrawable d = new GradientDrawable();
-        d.setShape(GradientDrawable.OVAL);
-        d.setColor(fillColor);
-        d.setStroke(dp(strokeDp), Color.WHITE);
-        d.setSize(dp(diameterDp), dp(diameterDp));
-        return d;
-    }
-
-    private Drawable buildTiledCheckerboard(int cornerPx) {
-        Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.transparent_bg);
-        BitmapShader shader = new BitmapShader(bmp, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
-
-        Matrix m = new Matrix();
-        float scale = 0.35f;
-        m.setScale(scale, scale);
-        shader.setLocalMatrix(m);
-
-        float r = cornerPx;
-        float[] radii = new float[]{r, r, r, r, r, r, r, r};
-        ShapeDrawable sd = new ShapeDrawable(new RoundRectShape(radii, null, null));
-        sd.getPaint().setAntiAlias(true);
-        sd.getPaint().setShader(shader);
-        return sd;
-    }
-
-    private void initSeekbarDrawables(View panel) {
-        satTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{Color.BLACK, Color.WHITE});
-        satTrack.setCornerRadius(dp(999));
-        satThumb = (GradientDrawable) buildRoundThumb(SAT_THUMB_DIAMETER_DP, Color.WHITE, SAT_THUMB_STROKE_DP);
-        satTrack.mutate();
-        satThumb.mutate();
-
-        SeekBar sSat = panel.findViewById(R.id.saturationSeekbar);
-        sSat.setProgressDrawable(satTrack);
-        sSat.setThumb(satThumb);
-
-        alphaChecker = buildTiledCheckerboard(dp(999));
-        alphaTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{Color.WHITE, Color.WHITE});
-        alphaTrack.setCornerRadius(dp(999));
-        alphaLayer = new LayerDrawable(new Drawable[]{alphaChecker, alphaTrack});
-        alphaThumb = (GradientDrawable) buildRoundThumb(SAT_THUMB_DIAMETER_DP, Color.WHITE, SAT_THUMB_STROKE_DP);
-        alphaTrack.mutate();
-        alphaThumb.mutate();
-
-        SeekBar sAlpha = panel.findViewById(R.id.alphaSeekbar);
-        sAlpha.setProgressDrawable(alphaLayer);
-        sAlpha.setThumb(alphaThumb);
-
-        sizeChecker = buildTiledCheckerboard(dp(999));
-        sizeTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{Color.WHITE, Color.WHITE});
-        sizeTrack.setCornerRadius(dp(999));
-        sizeLayer = new LayerDrawable(new Drawable[]{sizeChecker, sizeTrack});
-        sizeThumb = (GradientDrawable) buildRoundThumb(SAT_THUMB_DIAMETER_DP, Color.WHITE, SAT_THUMB_STROKE_DP);
-        sizeTrack.mutate();
-        sizeThumb.mutate();
-
-        SeekBar sSize = panel.findViewById(R.id.sizeSeekbar);
-        sSize.setProgressDrawable(sizeLayer);
-        sSize.setThumb(sizeThumb);
-    }
-
-    private void setupSeekbarStaticPadding(View panel) {
-        int padding = dp(SAT_THUMB_DIAMETER_DP / 2);
-        for (int id : new int[]{R.id.saturationSeekbar, R.id.alphaSeekbar, R.id.sizeSeekbar}) {
-            SeekBar b = panel.findViewById(id);
-            b.setPadding(0, 0, padding, 0);
-            try {
-                b.setThumbOffset(0);
-            } catch (Throwable ignore) {
-            }
-        }
-    }
-
-    private int getLastColor(BrushOverlayView.BrushMode mode) {
-        if (mode == BrushOverlayView.BrushMode.GLOW) return lastGlowColor;
-        if (mode == BrushOverlayView.BrushMode.CRAYON) return lastCrayonColor;
-        return lastPenColor;
-    }
-
-    private int getLastSize(BrushOverlayView.BrushMode mode) {
-        if (mode == BrushOverlayView.BrushMode.GLOW) return lastGlowSizePx;
-        if (mode == BrushOverlayView.BrushMode.CRAYON) return lastCrayonSizePx;
-        return lastPenSizePx;
-    }
-
-    private void setLastColor(BrushOverlayView.BrushMode mode, int argb) {
-        if (mode == BrushOverlayView.BrushMode.GLOW) lastGlowColor = argb;
-        else if (mode == BrushOverlayView.BrushMode.CRAYON) lastCrayonColor = argb;
-        else lastPenColor = argb;
-    }
-
-    private void setLastSize(BrushOverlayView.BrushMode mode, int px) {
-        if (mode == BrushOverlayView.BrushMode.GLOW) lastGlowSizePx = px;
-        else if (mode == BrushOverlayView.BrushMode.CRAYON) lastCrayonSizePx = px;
-        else lastPenSizePx = px;
-    }
-
     private void updateSizePreviewByMode(View panel, int argb, int diameterPx, BrushOverlayView.BrushMode mode) {
         if (mode == BrushOverlayView.BrushMode.GLOW) {
             updateGlowSizePreview(panel, argb, diameterPx);
@@ -1224,6 +1239,80 @@ public class BrushFragment extends Fragment {
         }
     }
 
+    /// 지우개 ///
+    private int interpolateColor(int start, int end, float t) {
+        int sa = (start >> 24) & 0xFF, sr = (start >> 16) & 0xFF, sg = (start >> 8) & 0xFF, sb = start & 0xFF;
+        int ea = (end >> 24) & 0xFF, er = (end >> 16) & 0xFF, eg = (end >> 8) & 0xFF, eb = end & 0xFF;
+
+        int a = (int) (sa + (ea - sa) * t);
+        int r = (int) (sr + (er - sr) * t);
+        int g = (int) (sg + (eg - sg) * t);
+        int b = (int) (sb + (eb - sb) * t);
+        return Color.argb(a, r, g, b);
+    }
+
+    private int getDiameterFromSeekbar(View panel) {
+        SeekBar sizeSeekbar = panel.findViewById(R.id.sizeSeekbar);
+        if (sizeSeekbar == null) return dp(10);
+        int min = dp(10), max = dp(40);
+        int progress = sizeSeekbar.getProgress();
+        return min + Math.round((max - min) * (progress / 100f));
+    }
+
+    private Rect rectForPath(Path mapped, float strokeWidth, int bmpW, int bmpH) {
+        RectF b = new RectF();
+        mapped.computeBounds(b, true);
+        int pad = Math.max(2, Math.round(strokeWidth / 2f + 2f));
+        int l = clamp(Math.round(b.left) - pad, 0, bmpW - 1);
+        int t = clamp(Math.round(b.top) - pad, 0, bmpH - 1);
+        int r = clamp(Math.round(b.right) + pad, 0, bmpW - 1);
+        int btm = clamp(Math.round(b.bottom) + pad, 0, bmpH - 1);
+        return new Rect(l, t, Math.max(l + 1, r), Math.max(t + 1, btm));
+    }
+
+    private void rollbackActiveErases() {
+        if (activeErases.isEmpty()) return;
+        for (PendingErase pe : activeErases.values()) {
+            if (!(pe.view.getDrawable() instanceof BitmapDrawable)) continue;
+            Bitmap bmp = ((BitmapDrawable) pe.view.getDrawable()).getBitmap();
+            if (bmp == null || bmp.isRecycled()) continue;
+
+            for (Patch pa : pe.patches) {
+                if (pa.before == null || pa.before.isRecycled()) continue;
+                Canvas c = new Canvas(bmp);
+                c.drawBitmap(pa.before, pa.rect.left, pa.rect.top, null);
+
+                pa.before.recycle();
+            }
+            pe.patches.clear();
+            pe.hadEffect = false;
+            pe.path.reset();
+            pe.view.invalidate();
+        }
+        activeErases.clear();
+    }
+
+    private void rollbackSessionErases() {
+        if (sessionEraseOps.isEmpty()) return;
+        for (FilterActivity.EraseOp eo : sessionEraseOps) {
+            if (!(eo.view.getDrawable() instanceof BitmapDrawable)) continue;
+            Bitmap bmp = ((BitmapDrawable) eo.view.getDrawable()).getBitmap();
+            if (bmp == null || bmp.isRecycled()) continue;
+
+            Canvas c = new Canvas(bmp);
+            for (FilterActivity.ErasePatch ep : eo.patches) {
+                if (ep.before == null || ep.before.isRecycled()) continue;
+                c.drawBitmap(ep.before, ep.rect.left, ep.rect.top, null);
+
+                ep.before.recycle();
+                ep.before = null;
+            }
+            eo.view.invalidate();
+        }
+        sessionEraseOps.clear();
+    }
+
+    /// 패널 열기 ///
     private void showPanel(BrushOverlayView.BrushMode mode) {
         if (brushPanel == null || isPenPanelOpen) return;
         isPenPanelOpen = true;
@@ -1542,7 +1631,7 @@ public class BrushFragment extends Fragment {
         sizeSeekbar.setProgressDrawable(eraserTrack);
 
         GradientDrawable eraserThumb =
-                (GradientDrawable) buildRoundThumb(SAT_THUMB_DIAMETER_DP, Color.BLACK, SAT_THUMB_STROKE_DP);
+                (GradientDrawable) buildRoundThumb(THUMB_DIAMETER_DP, Color.BLACK, THUMB_STROKE_DP);
         eraserThumb.mutate();
 
         sizeSeekbar.setProgress(progress);
@@ -1596,95 +1685,98 @@ public class BrushFragment extends Fragment {
         });
     }
 
-    private int interpolateColor(int start, int end, float t) {
-        int sa = (start >> 24) & 0xFF, sr = (start >> 16) & 0xFF, sg = (start >> 8) & 0xFF, sb = start & 0xFF;
-        int ea = (end >> 24) & 0xFF, er = (end >> 16) & 0xFF, eg = (end >> 8) & 0xFF, eb = end & 0xFF;
+    /// 패널 닫기 ///
+    private void hideToolPanel(boolean enableDrawingAfterClose) {
+        if (brushPanel == null) return;
+        if (currentToolPanel == null) {
+            brushPanel.setVisibility(View.GONE);
+            isPenPanelOpen = false;
 
-        int a = (int) (sa + (ea - sa) * t);
-        int r = (int) (sr + (er - sr) * t);
-        int g = (int) (sg + (eg - sg) * t);
-        int b = (int) (sb + (eb - sb) * t);
-        return Color.argb(a, r, g, b);
-    }
+            if (brushDraw != null) {
+                brushDraw.setDrawingEnabled(enableDrawingAfterClose);
+            }
 
-    private int argbFromCur() {
-        int rgb = Color.HSVToColor(new float[]{curHue, curSat, Math.max(0f, Math.min(1f, curVal))}) & 0x00FFFFFF;
-        int a = clamp(Math.round(curAlphaPct * 2.55f), 0, 255);
-        return (a << 24) | rgb;
-    }
-
-    private void refreshAllSeekbars(SeekBar satSeek, SeekBar alphaSeek, SeekBar sizeSeek) {
-        int vPct = Math.round(curVal * 100f);
-        updateSatSeekbarAppearance(satSeek, curHue, curSat, vPct);
-        if (alphaSeek != null)
-            updateAlphaSeekbarAppearance(alphaSeek, curHue, curSat, curVal, curAlphaPct);
-        if (sizeSeek != null) updateSizeSeekbarAppearance(sizeSeek, argbFromCur());
-    }
-
-    private void syncEditorsFromCur(EditText hex, EditText r, EditText g, EditText b, EditText v, EditText a) {
-        int argb = argbFromCur();
-        int rr = Color.red(argb), gg = Color.green(argb), bb = Color.blue(argb);
-        setTextIfChangedKeepCursor(hex, String.format(Locale.US, "%02X%02X%02X", rr, gg, bb));
-        setTextIfChangedKeepCursor(r, String.valueOf(rr));
-        setTextIfChangedKeepCursor(g, String.valueOf(gg));
-        setTextIfChangedKeepCursor(b, String.valueOf(bb));
-        setTextIfChangedKeepCursor(v, String.valueOf(Math.round(curVal * 100)));
-        setTextIfChangedKeepCursor(a, String.valueOf(curAlphaPct));
-    }
-
-    private static class SimpleTextWatcher implements TextWatcher {
-        private final Runnable after;
-
-        SimpleTextWatcher(Runnable after) {
-            this.after = after;
+            return;
         }
 
-        @Override
-        public void beforeTextChanged(CharSequence s, int a, int b, int c) {
-        }
+        View panel = currentToolPanel;
+        panel.animate().alpha(0f).translationY(dp(16)).setDuration(120)
+                .withEndAction(() -> {
+                    brushPanel.removeAllViews();
+                    brushPanel.setVisibility(View.GONE);
+                    currentToolPanel = null;
+                    isPenPanelOpen = false;
 
-        @Override
-        public void onTextChanged(CharSequence s, int a, int b, int c) {
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            if (after != null) after.run();
-        }
+                    if (brushDraw != null) brushDraw.setDrawingEnabled(enableDrawingAfterClose);
+                }).start();
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt("lastPenColor", lastPenColor);
-        outState.putInt("lastPenSizePx", lastPenSizePx);
-        outState.putInt("lastGlowColor", lastGlowColor);
-        outState.putInt("lastGlowSizePx", lastGlowSizePx);
-        outState.putInt("lastCrayonColor", lastCrayonColor);
-        outState.putInt("lastCrayonSizePx", lastCrayonSizePx);
+    /// 브러쉬 컬러 & 굵기 ///
+    private int getLastColor(BrushOverlayView.BrushMode mode) {
+        if (mode == BrushOverlayView.BrushMode.GLOW) return lastGlowColor;
+        if (mode == BrushOverlayView.BrushMode.CRAYON) return lastCrayonColor;
+        return lastPenColor;
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (brushOverlay != null && brushClipListener != null) {
-            brushOverlay.removeOnLayoutChangeListener(brushClipListener);
-            brushClipListener = null;
-        }
-        if (brushDraw != null) brushDraw.setDrawingEnabled(false);
-
-        if (checkBox != null) {
-            checkBox.setOnCheckedChangeListener(null);
-            checkBox.setChecked(false);
-        }
-        if (lassoOverlay != null) {
-            lassoOverlay.setLassoListener(null);
-            lassoOverlay.clearAll();
-            lassoOverlay.setDrawingEnabled(false);
-            lassoOverlay.setVisibility(View.GONE);
-        }
+    private int getLastSize(BrushOverlayView.BrushMode mode) {
+        if (mode == BrushOverlayView.BrushMode.GLOW) return lastGlowSizePx;
+        if (mode == BrushOverlayView.BrushMode.CRAYON) return lastCrayonSizePx;
+        return lastPenSizePx;
     }
 
+    private void setLastColor(BrushOverlayView.BrushMode mode, int argb) {
+        if (mode == BrushOverlayView.BrushMode.GLOW) lastGlowColor = argb;
+        else if (mode == BrushOverlayView.BrushMode.CRAYON) lastCrayonColor = argb;
+        else lastPenColor = argb;
+    }
+
+    private void setLastSize(BrushOverlayView.BrushMode mode, int px) {
+        if (mode == BrushOverlayView.BrushMode.GLOW) lastGlowSizePx = px;
+        else if (mode == BrushOverlayView.BrushMode.CRAYON) lastCrayonSizePx = px;
+        else lastPenSizePx = px;
+    }
+
+    /// 브러쉬 오버레이 재사용 → 브러쉬 그림 여러 번 그리고 관리 가능 ///
+    private BrushOverlayView pickupExistingBrushOverlay(@NonNull FrameLayout overlay) {
+        BrushOverlayView keep = null;
+        for (int i = 0; i < overlay.getChildCount(); i++) {
+            View child = overlay.getChildAt(i);
+            if (child instanceof BrushOverlayView) {
+                if (keep == null) {
+                    keep = (BrushOverlayView) child;
+                } else {
+                    overlay.removeView(child);
+                    i--;
+                }
+            }
+        }
+        return keep;
+    }
+
+    /// undoSticker, redoSticker, originalSticker 작업 관련 ///
+    private Path mapPathFromBrushViewToBitmap(Path src, View brushOverlay, ImageView targetView, int bmpW, int bmpH) {
+        Path out = new Path(src);
+
+        float bx = brushOverlay.getX(), by = brushOverlay.getY();
+        Matrix m = new Matrix();
+        m.postTranslate(bx, by);
+        out.transform(m);
+
+        float tx = targetView.getX(), ty = targetView.getY();
+        m.reset();
+        m.postTranslate(-tx, -ty);
+        out.transform(m);
+
+        float sx = (bmpW * 1f) / Math.max(1, targetView.getWidth());
+        float sy = (bmpH * 1f) / Math.max(1, targetView.getHeight());
+        m.reset();
+        m.postScale(sx, sy);
+        out.transform(m);
+
+        return out;
+    }
+
+    /// 브러쉬 → 스티커 변환 & 올가미 ///
     private void showBrushToStickerDialog() {
         new BrushToStickerDialog(requireContext(), new BrushToStickerDialog.BrushToStickerDialogListener() {
             @Override
@@ -1909,28 +2001,35 @@ public class BrushFragment extends Fragment {
                 .start(), 2000);
     }
 
-    private Path mapPathFromBrushViewToBitmap(Path src,
-                                              View brushOverlay,
-                                              ImageView targetView,
-                                              int bmpW, int bmpH) {
-        Path out = new Path(src);
+    /// 버튼 UI ///
+    private void tintPenButton(int argb) {
+        if (pen == null) return;
+        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
+        ImageViewCompat.setImageTintList(pen, ColorStateList.valueOf(opaque));
+    }
 
-        float bx = brushOverlay.getX(), by = brushOverlay.getY();
-        Matrix m = new Matrix();
-        m.postTranslate(bx, by);
-        out.transform(m);
+    private void tintGlowButton(int argb) {
+        if (glowPen == null) return;
+        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
+        ImageViewCompat.setImageTintList(glowPen, ColorStateList.valueOf(opaque));
+    }
 
-        float tx = targetView.getX(), ty = targetView.getY();
-        m.reset();
-        m.postTranslate(-tx, -ty);
-        out.transform(m);
+    private void tintCrayonButton(int argb) {
+        if (crayon == null) return;
+        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
+        ImageViewCompat.setImageTintList(crayon, ColorStateList.valueOf(opaque));
+    }
 
-        float sx = (bmpW * 1f) / Math.max(1, targetView.getWidth());
-        float sy = (bmpH * 1f) / Math.max(1, targetView.getHeight());
-        m.reset();
-        m.postScale(sx, sy);
-        out.transform(m);
+    private void setModeAlpha(BrushOverlayView.BrushMode mode) {
+        float on = 1f, off = 0.2f;
+        if (pen != null) pen.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
+        if (glowPen != null) glowPen.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
+        if (crayon != null) crayon.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);
+        if (eraser != null) eraser.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
+    }
 
-        return out;
+    /// 단위 변환 ///
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 }

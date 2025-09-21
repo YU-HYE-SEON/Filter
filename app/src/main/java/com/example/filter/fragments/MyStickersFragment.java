@@ -361,6 +361,13 @@ public class MyStickersFragment extends Fragment {
 
             int beforeIndex = overlay.indexOfChild(stickerView);
             float beforeZ = ViewCompat.getZ(stickerView);
+            int n = overlay.getChildCount();
+            boolean[] prevEnabled = new boolean[n];
+
+            Bundle args = new Bundle();
+            args.putString("origin", "mystickers");
+            args.putBooleanArray("prevEnabled", prevEnabled);
+            args.putFloat("prevElevation", beforeZ);
 
             raiseStickerToAbsoluteTop(stickerView, overlay);
 
@@ -377,8 +384,6 @@ public class MyStickersFragment extends Fragment {
             overlay.requestLayout();
             overlay.invalidate();
 
-            int n = overlay.getChildCount();
-            boolean[] prevEnabled = new boolean[n];
             for (int i = 0; i < n; i++) prevEnabled[i] = overlay.getChildAt(i).isEnabled();
 
             hideControllersForAll(overlay);
@@ -391,10 +396,6 @@ public class MyStickersFragment extends Fragment {
 
             setControllersVisible(stickerView, true);
             stickerView.setTag("editingSticker");
-
-            Bundle args = new Bundle();
-            args.putString("origin", "mystickers");
-            args.putBooleanArray("prevEnabled", prevEnabled);
 
             EditMyStickerFragment edit = new EditMyStickerFragment();
             edit.setArguments(args);
@@ -498,5 +499,4 @@ public class MyStickersFragment extends Fragment {
             }
         }
     }
-
 }
