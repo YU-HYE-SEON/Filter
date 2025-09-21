@@ -63,7 +63,7 @@ public class CustomSeekbar extends View {
         progressText = new Paint(Paint.ANTI_ALIAS_FLAG);
         progressText.setTypeface(ResourcesCompat.getFont(getContext(), R.font.roboto_bold));
         progressText.setColor(Color.parseColor("#6B6B6B"));
-        progressText.setTextSize(spToPx(15));
+        progressText.setTextSize(spToPx(18));
         progressText.setTextAlign(Paint.Align.CENTER);
     }
 

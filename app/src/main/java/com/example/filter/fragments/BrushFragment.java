@@ -2051,7 +2051,7 @@ public class BrushFragment extends Fragment {
         tv.setTag("inline_banner");
         tv.setText(message);
         tv.setTextColor(0XFFFFFFFF);
-        tv.setTextSize(14);
+        tv.setTextSize(16);
         tv.setPadding(dp(14), dp(10), dp(14), dp(10));
         tv.setElevation(dp(4));
 

@@ -39,7 +39,7 @@
                 android:text="어떤 스티커를 만들어 볼까요?"
                 android:textAlignment="center"
                 android:textColor="@color/white"
-                android:textSize="16sp" />
+                android:textSize="20sp" />
 
             <TextView
                 android:id="@+id/warningTxt"
@@ -50,7 +50,7 @@
                 android:text="현재 입력 텍스트가 너무 길어요"
                 android:textAlignment="center"
                 android:textColor="#FF0000"
-                android:textSize="10sp"
+                android:textSize="14sp"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toTopOf="@+id/editText"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -77,7 +77,7 @@
                 android:paddingRight="14dp"
                 android:paddingBottom="10dp"
                 android:textColor="@color/black"
-                android:textSize="16sp" />
+                android:textSize="20sp" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="wrap_content"
@@ -102,9 +102,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/pretendard_semibold"
-                    android:text="만들기"
+                    android:text="제작하기"
                     android:textColor="#007BFF"
-                    android:textSize="16sp"
+                    android:textSize="20sp"
                     android:visibility="invisible"
                     app:layout_constraintBottom_toBottomOf="@+id/createBtn"
                     app:layout_constraintEnd_toEndOf="@+id/createBtn"
