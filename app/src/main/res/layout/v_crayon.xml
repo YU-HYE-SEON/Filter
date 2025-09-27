@@ -45,7 +45,7 @@
                 android:text="색상코드"
                 android:textAlignment="center"
                 android:textColor="@color/white"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/HexCode"
@@ -57,7 +57,7 @@
                 android:text="FFFFFF"
                 android:textAlignment="center"
                 android:textAllCaps="true"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
         </LinearLayout>
 
@@ -79,7 +79,7 @@
                 android:text="R"
                 android:textAlignment="center"
                 android:textColor="@color/white"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/RCode"
@@ -90,7 +90,7 @@
                 android:maxLength="3"
                 android:text="255"
                 android:textAlignment="center"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
         </LinearLayout>
 
@@ -112,7 +112,7 @@
                 android:text="G"
                 android:textAlignment="center"
                 android:textColor="@color/white"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/GCode"
@@ -123,7 +123,7 @@
                 android:maxLength="3"
                 android:text="255"
                 android:textAlignment="center"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
         </LinearLayout>
 
@@ -144,7 +144,7 @@
                 android:text="B"
                 android:textAlignment="center"
                 android:textColor="@color/white"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/BCode"
@@ -155,7 +155,7 @@
                 android:maxLength="3"
                 android:text="255"
                 android:textAlignment="center"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
         </LinearLayout>
 
@@ -193,7 +193,7 @@
             android:maxLength="3"
             android:text="100"
             android:textAlignment="center"
-            android:textSize="12sp"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -232,7 +232,7 @@
             android:maxLength="3"
             android:text="100"
             android:textAlignment="center"
-            android:textSize="12sp"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -320,7 +320,7 @@
             android:text="취소"
             android:textAlignment="center"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/line2"
             app:layout_constraintStart_toStartOf="parent"
@@ -334,7 +334,7 @@
             android:text="완료"
             android:textAlignment="center"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/line2"

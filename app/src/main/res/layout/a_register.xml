@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:layout_height="match_parent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/topArea"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="120dp"
         android:background="@android:color/transparent"
+        android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
@@ -20,7 +20,7 @@
             android:fontFamily="@font/pretendard_semibold"
             android:text="내 필터 등록"
             android:textAlignment="center"
-            android:textSize="15sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -42,11 +42,12 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
-        android:id="@+id/view"
+        android:id="@+id/photoView"
         android:layout_width="match_parent"
         android:layout_height="300dp"
+        android:elevation="2dp"
         android:gravity="center"
-        android:padding="20dp"
+        android:padding="8dp"
         app:layout_constraintTop_toBottomOf="@+id/topArea">
 
         <ImageView
@@ -57,42 +58,51 @@
             android:scaleType="fitCenter" />
 
     </LinearLayout>
-    
-    <ScrollView
+
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@drawable/border5"
-        android:paddingTop="25dp"
+        android:background="@android:color/transparent"
+        android:clipToPadding="false"
+        android:elevation="4dp"
+        android:fillViewport="true"
+        android:isScrollContainer="true"
+        android:overScrollMode="never"
         android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view">
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
+            android:id="@+id/contentContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:animateLayoutChanges="true"
+            android:background="@drawable/border5"
             android:orientation="vertical"
             android:padding="20dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
                 android:fontFamily="@font/pretendard_semibold"
                 android:text="필터 이름(필수)"
                 android:textColor="@color/white"
-                android:textSize="15sp" />
+                android:textSize="18sp" />
 
             <EditText
                 android:id="@+id/titleEditText"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/border6"
                 android:fontFamily="@font/pretendard_semibold"
                 android:hint="이름을 작성해 주세요 (최대 15자)"
                 android:inputType="text"
                 android:paddingLeft="10dp"
-                android:textSize="15sp" />
+                android:paddingRight="10dp"
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/alertTxt1"
@@ -100,61 +110,42 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:fontFamily="@font/pretendard_semibold"
-                android:paddingLeft="10dp"
                 android:text="작성 가능한 이름은 최대 15자 입니다."
-                android:textColor="#FF0000"
-                android:textSize="12sp"
+                android:textColor="#FFFF00"
+                android:textSize="16sp"
                 android:visibility="invisible" />
 
             <TextView
+                android:id="@+id/tagTxt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                android:fontFamily="@font/pretendard_semibold"
-                android:text="저장 스튜디오(필수)"
-                android:textColor="@color/white"
-                android:textSize="15sp" />
-
-            <Spinner
-                android:id="@+id/studioSpinner"
-                style="@style/Widget.AppCompat.Spinner"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/border6"
-                android:dropDownWidth="match_parent" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="48dp"
                 android:fontFamily="@font/pretendard_semibold"
                 android:text="#태그(선택)"
                 android:textColor="@color/white"
-                android:textSize="15sp" />
+                android:textSize="18sp" />
 
             <EditText
                 android:id="@+id/tagEditText"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/border6"
                 android:fontFamily="@font/pretendard_semibold"
                 android:hint="관련된 태그를 작성해 주세요"
                 android:inputType="text"
                 android:paddingLeft="10dp"
-                android:textSize="15sp" />
+                android:paddingRight="10dp"
+                android:textSize="18sp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:fontFamily="@font/pretendard_semibold"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:text="태그는 띄어쓰기로 구분해 주세요. 각 10자 이하로 5개까지 가능하며,\n한글, 영문, 숫자, 밑줄(_)만 입력 가능해요."
+                android:text="태그는 띄어쓰기로 구분해 주세요. 각 10자 이하로 5개까지 가능하며, 한글, 영문, 숫자, 밑줄(_)만 입력 가능해요."
                 android:textColor="#83C3FF"
-                android:textSize="12sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/alertTxt2"
@@ -162,73 +153,26 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:fontFamily="@font/pretendard_semibold"
-                android:paddingLeft="10dp"
                 android:text="작성 가능한 최대 태그 개수는 5개입니다."
-                android:textColor="#FF0000"
-                android:textSize="12sp"
+                android:textColor="#FFFF00"
+                android:textSize="16sp"
                 android:visibility="invisible" />
 
             <TextView
+                android:id="@+id/saleTxt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                android:fontFamily="@font/pretendard_semibold"
-                android:text="공개 여부"
-                android:textColor="@color/white"
-                android:textSize="15sp" />
-
-            <RadioGroup
-                android:id="@+id/isPublicRadioGroup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal">
-
-                <RadioButton
-                    android:id="@+id/privateRadio"
-                    android:layout_width="90dp"
-                    android:layout_height="35dp"
-                    android:background="@drawable/border6"
-                    android:checked="true"
-                    android:fontFamily="@font/pretendard_semibold"
-                    android:text="비공개"
-                    android:textColor="@color/black" />
-
-                <RadioButton
-                    android:id="@+id/publicRadio"
-                    android:layout_width="90dp"
-                    android:layout_height="35dp"
-                    android:layout_marginStart="10dp"
-                    android:background="@drawable/border6"
-                    android:fontFamily="@font/pretendard_semibold"
-                    android:text="공개"
-                    android:textColor="@color/black" />
-            </RadioGroup>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:fontFamily="@font/pretendard_semibold"
-                android:paddingLeft="10dp"
-                android:text="비공개로 설정 시 나만 볼 수 있도록 등록 돼요.\n판매 혹은 노출을 원하실 경우 공개로 설정해 주세요."
-                android:textColor="#83C3FF"
-                android:textSize="12sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="48dp"
                 android:fontFamily="@font/pretendard_semibold"
                 android:text="판매 여부"
                 android:textColor="@color/white"
-                android:textSize="15sp" />
+                android:textSize="18sp" />
 
             <RadioGroup
                 android:id="@+id/saleRadioGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="5dp"
                 android:orientation="horizontal">
 
                 <RadioButton
@@ -239,7 +183,8 @@
                     android:checked="true"
                     android:fontFamily="@font/pretendard_semibold"
                     android:text="무료"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
 
                 <RadioButton
                     android:id="@+id/paidRadio"
@@ -249,13 +194,14 @@
                     android:background="@drawable/border6"
                     android:fontFamily="@font/pretendard_semibold"
                     android:text="유료"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
             </RadioGroup>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="15dp"
                 android:gravity="center"
                 android:orientation="horizontal">
 
@@ -278,7 +224,7 @@
                         android:inputType="number"
                         android:paddingLeft="10dp"
                         android:textColor="#888888"
-                        android:textSize="14sp" />
+                        android:textSize="16sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -288,7 +234,7 @@
                         android:fontFamily="@font/pretendard_semibold"
                         android:text="P"
                         android:textColor="@color/black"
-                        android:textSize="14sp" />
+                        android:textSize="16sp" />
                 </LinearLayout>
 
                 <TextView
@@ -299,7 +245,7 @@
                     android:paddingLeft="10dp"
                     android:text="· 최소 10P ~ 최대 300P\n· 10P 단위로 작성"
                     android:textColor="#83C3FF"
-                    android:textSize="12sp" />
+                    android:textSize="16sp" />
 
             </LinearLayout>
 
@@ -309,23 +255,21 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:fontFamily="@font/pretendard_semibold"
-                android:paddingLeft="10dp"
                 android:text="무료 필터의 경우 가격을 측정할 수 없습니다."
-                android:textColor="#FF0000"
-                android:textSize="12sp"
+                android:textColor="#FFFF00"
+                android:textSize="16sp"
                 android:visibility="visible" />
-
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="50dp"
-                android:layout_marginBottom="70dp">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="68dp"
+                android:layout_marginBottom="48dp">
 
                 <ImageButton
                     android:id="@+id/registerBtn"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
+                    android:layout_height="50dp"
                     android:background="@drawable/border4"
                     android:enabled="true"
                     android:fontFamily="@font/pretendard_semibold"
@@ -340,7 +284,7 @@
                     android:text="필터 등록"
                     android:textAlignment="center"
                     android:textColor="#007AFF"
-                    android:textSize="15sp"
+                    android:textSize="18sp"
                     app:layout_constraintBottom_toBottomOf="@+id/registerBtn"
                     app:layout_constraintEnd_toEndOf="@+id/registerBtn"
                     app:layout_constraintStart_toStartOf="@+id/registerBtn"
@@ -348,9 +292,8 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-
         </LinearLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

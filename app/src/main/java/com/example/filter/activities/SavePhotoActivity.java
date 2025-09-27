@@ -51,7 +51,10 @@ public class SavePhotoActivity extends BaseActivity {
             if (ClickUtils.isFastClick(500)) return;
 
             Intent intent = new Intent(SavePhotoActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
+
+            finish();
         });
 
         registerBtn.setOnClickListener(v -> {

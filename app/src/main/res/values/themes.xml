@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Base.Theme.Filter" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Base.Theme.Filter" parent="Theme.MaterialComponents.Light.NoActionBar">z
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
     </style>

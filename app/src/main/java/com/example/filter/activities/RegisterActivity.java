@@ -1,65 +1,207 @@
 package com.example.filter.activities;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.TextWatcher;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.TextView;
+
+import android.animation.ValueAnimator;
+
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import androidx.annotation.Nullable;
 
 import com.example.filter.R;
-import com.example.filter.adapters.CustomSpinnerAdapter;
-
-import java.util.Arrays;
-import java.util.List;
+import com.example.filter.etc.ClickUtils;
 
 public class RegisterActivity extends BaseActivity {
+    private View topArea, photoView, contentContainer;
     private ImageView photo;
-    private EditText titleEditText;
-    private Spinner studioSpinner;
-    private List<String> studioNames;
-    private EditText tagEditText;
-    private EditText pointEditText;
-    private TextView alertTxt1;
-    private TextView alertTxt2;
-    private TextView alertTxt3;
+    private NestedScrollView scrollView;
+    private EditText titleEditText, tagEditText, pointEditText;
+    private TextView alertTxt1, alertTxt2, alertTxt3, tagTxt, saleTxt;
     private RadioGroup saleRadioGroup;
-    private RadioButton freeRadio;
-    private RadioButton paidRadio;
+    private RadioButton freeRadio, paidRadio;
+    private ImageButton registerBtn, backBtn;
     private boolean isFree = true;
     private boolean isPointFirstEdited = false;
-    private ImageButton registerBtn;
-    private ScrollView scrollView;
 
+    private enum Anchor {NONE, TAG_TXT, SALE_TXT, REGISTER_BTN}
+
+    private Anchor pendingAnchor = Anchor.NONE;
+    private boolean keyboardVisible = false;
+    private boolean wasKeyboardVisible = false;
+    private final Rect lastVisibleFrame = new Rect();
+    private int keyboardHeight = 0;
+    private float downX, downY;
+    private boolean maybeTap = false;
+    private int touchSlop;
+    private boolean forceScroll = false;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_register);
+
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+        topArea = findViewById(R.id.topArea);
+        photoView = findViewById(R.id.photoView);
         photo = findViewById(R.id.photo);
+        scrollView = findViewById(R.id.scrollView);
+        contentContainer = findViewById(R.id.contentContainer);
         titleEditText = findViewById(R.id.titleEditText);
-        studioSpinner = findViewById(R.id.studioSpinner);
         tagEditText = findViewById(R.id.tagEditText);
         pointEditText = findViewById(R.id.pointEditText);
         alertTxt1 = findViewById(R.id.alertTxt1);
         alertTxt2 = findViewById(R.id.alertTxt2);
         alertTxt3 = findViewById(R.id.alertTxt3);
+        tagTxt = findViewById(R.id.tagTxt);
+        saleTxt = findViewById(R.id.saleTxt);
         saleRadioGroup = findViewById(R.id.saleRadioGroup);
         freeRadio = findViewById(R.id.freeRadio);
         paidRadio = findViewById(R.id.paidRadio);
         registerBtn = findViewById(R.id.registerBtn);
-        scrollView = findViewById(R.id.scrollView);
+        backBtn = findViewById(R.id.backBtn);
+
+        scrollView.setOnTouchListener((v, ev) -> {
+            Rect btnRect = new Rect();
+            boolean btnVisible = backBtn.getGlobalVisibleRect(btnRect);
+            if (!btnVisible) return false;
+
+            float rawX = ev.getRawX();
+            float rawY = ev.getRawY();
+
+            boolean hitBack = btnRect.contains((int) rawX, (int) rawY);
+
+            if (!hitBack) {
+                return false;
+            }
+            if (isCoveredByScrollContent(backBtn, contentContainer)) {
+                return true;
+            }
+
+            int[] btnLoc = new int[2];
+            backBtn.getLocationOnScreen(btnLoc);
+
+            MotionEvent forwarded = MotionEvent.obtain(ev);
+            forwarded.offsetLocation(-btnLoc[0], -btnLoc[1]);
+            boolean handled = backBtn.dispatchTouchEvent(forwarded);
+            forwarded.recycle();
+
+            return handled || ev.getAction() == MotionEvent.ACTION_UP;
+        });
+
+        backBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(500)) return;
+            finish();
+        });
+
+        scrollView.post(() -> {
+            int topH = topArea.getHeight();
+            int photoH = photoView.getHeight();
+
+            if (topH <= 0) topH = dp(60);
+            if (photoH <= 0) photoH = dp(300);
+
+            int offset = topH + photoH;
+            scrollView.setPadding(
+                    scrollView.getPaddingLeft(),
+                    offset,
+                    scrollView.getPaddingRight(),
+                    scrollView.getPaddingBottom()
+            );
+        });
+
+        final int[] overlayHeights = new int[1];
+        Runnable recomputeOverlay = () -> {
+            int topH = topArea.getHeight();
+            int photoH = photoView.getHeight();
+            if (topH <= 0) topH = dp(60);
+            if (photoH <= 0) photoH = dp(300);
+            overlayHeights[0] = topH + photoH;
+        };
+        scrollView.post(recomputeOverlay);
+
+        final View root = findViewById(android.R.id.content);
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets sys = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+
+            topArea.setPadding(
+                    topArea.getPaddingLeft(),
+                    sys.top,
+                    topArea.getPaddingRight(),
+                    topArea.getPaddingBottom()
+            );
+
+            int topPad = overlayHeights[0] + sys.top;
+            int bottomPad = Math.max(sys.bottom, ime.bottom);
+
+            scrollView.setPadding(
+                    scrollView.getPaddingLeft(),
+                    topPad,
+                    scrollView.getPaddingRight(),
+                    bottomPad
+            );
+            return insets;
+        });
+
+        View.OnLayoutChangeListener relayout = (view, l, t, r, b, ol, ot, or, ob) -> {
+            int old = overlayHeights[0];
+            recomputeOverlay.run();
+            if (overlayHeights[0] != old) {
+                ViewCompat.requestApplyInsets(root);
+            }
+        };
+        topArea.addOnLayoutChangeListener(relayout);
+        photoView.addOnLayoutChangeListener(relayout);
+
+        root.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            root.getWindowVisibleDisplayFrame(lastVisibleFrame);
+            int screenHeight = root.getRootView().getHeight();
+            int visibleHeight = lastVisibleFrame.height();
+            int diff = screenHeight - visibleHeight;
+
+            keyboardVisible = diff > dp(100);
+            keyboardHeight = keyboardVisible ? diff : 0;
+
+            if (keyboardVisible) {
+                if (pendingAnchor != Anchor.NONE) {
+                    alignToPendingAnchor();
+                }
+            } else {
+                if (wasKeyboardVisible) {
+                    clearAllEditFocus();
+                    pendingAnchor = Anchor.NONE;
+                }
+            }
+            wasKeyboardVisible = keyboardVisible;
+        });
 
         String imagePath = getIntent().getStringExtra("final_image");
         if (imagePath != null) {
@@ -69,6 +211,10 @@ public class RegisterActivity extends BaseActivity {
             }
         }
 
+        titleEditText.setOnClickListener(v -> focusWithAnchor(titleEditText, Anchor.TAG_TXT, false));
+        titleEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) focusWithAnchor(titleEditText, Anchor.TAG_TXT, false);
+        });
         titleEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -81,6 +227,7 @@ public class RegisterActivity extends BaseActivity {
             @Override
             public void afterTextChanged(Editable s) {
                 if (s.length() > 15) {
+                    alertTxt1.setText("작성 가능한 이름은 최대 15자 입니다.");
                     alertTxt1.setVisibility(View.VISIBLE);
                 } else {
                     alertTxt1.setVisibility(View.INVISIBLE);
@@ -88,15 +235,11 @@ public class RegisterActivity extends BaseActivity {
             }
         });
 
-        List<String> studioList = Arrays.asList("대표 스튜디오 이름1", "대표 스튜디오 이름2", "대표 스튜디오 이름3");
-
-        CustomSpinnerAdapter adapter = new CustomSpinnerAdapter(this, studioList);
-        studioSpinner.setAdapter(adapter);
-
-        studioSpinner.post(() -> {
-            studioSpinner.setDropDownVerticalOffset(studioSpinner.getHeight());
+        tagEditText.setOnClickListener(v -> focusWithAnchor(tagEditText, Anchor.SALE_TXT, false));
+        tagEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) focusWithAnchor(tagEditText, Anchor.SALE_TXT, false);
         });
-
+        tagEditText.setFilters(new InputFilter[]{singleSpaceFilter});
         tagEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -108,7 +251,8 @@ public class RegisterActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                String[] tags = s.toString().trim().split("\\s+");
+                String str = s.toString().trim();
+                String[] tags = str.isEmpty() ? new String[]{} : str.split(" ");
                 if (tags.length > 5) {
                     alertTxt2.setVisibility(View.VISIBLE);
                 } else {
@@ -118,6 +262,8 @@ public class RegisterActivity extends BaseActivity {
         });
 
         saleRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            hideKeyboardAndClearFocus();
+
             if (checkedId == R.id.freeRadio) {
                 isFree = true;
                 pointEditText.setText("0");
@@ -127,13 +273,31 @@ public class RegisterActivity extends BaseActivity {
                 alertTxt3.setVisibility(View.VISIBLE);
             } else if (checkedId == R.id.paidRadio) {
                 isFree = false;
+                isPointFirstEdited = false;
                 pointEditText.setTextColor(Color.BLACK);
                 pointEditText.setEnabled(true);
-                alertTxt3.setVisibility(View.INVISIBLE);
+                pointEditText.setText("0");
+                pointEditText.setSelection(pointEditText.getText().length());
             }
         });
 
+        pointEditText.setOnClickListener(v -> {
+            if (!pointEditText.isEnabled()) {
+                paidRadio.setChecked(true);
+            }
+            focusWithAnchor(pointEditText, Anchor.REGISTER_BTN, false);
+        });
+        pointEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                if (!pointEditText.isEnabled()) {
+                    paidRadio.setChecked(true);
+                }
+                focusWithAnchor(pointEditText, Anchor.REGISTER_BTN, false);
+            }
+        });
         pointEditText.addTextChangedListener(new TextWatcher() {
+            private boolean selfChange = false;
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -144,18 +308,23 @@ public class RegisterActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (isFree) return;
+                if (selfChange || isFree) return;
 
-                if (paidRadio.isChecked() && !isPointFirstEdited && !s.toString().equals("0")) {
-                    isPointFirstEdited = true;
-                    String newText = s.toString().replaceFirst("^0+", "");
+                String t = s.toString();
+
+                if (paidRadio.isChecked() && t.length() > 1 && t.startsWith("0")) {
+                    String newText = t.replaceFirst("^0+(?=\\d)", "");
                     if (newText.isEmpty()) newText = "0";
+                    selfChange = true;
                     pointEditText.setText(newText);
                     pointEditText.setSelection(newText.length());
+                    selfChange = false;
+                    isPointFirstEdited = true;
                     return;
                 }
+
                 try {
-                    int point = Integer.parseInt(s.toString());
+                    int point = Integer.parseInt(t);
                     if (point < 10 || point > 300 || point % 10 != 0) {
                         alertTxt3.setText("판매 불가한 가격입니다.");
                         alertTxt3.setVisibility(View.VISIBLE);
@@ -170,6 +339,8 @@ public class RegisterActivity extends BaseActivity {
         });
 
         registerBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(500)) return;
+
             String title = titleEditText.getText().toString().trim();
             String tagStr = tagEditText.getText().toString().trim();
             String[] tags = tagStr.isEmpty() ? new String[]{} : tagStr.split("\\s+");
@@ -178,42 +349,217 @@ public class RegisterActivity extends BaseActivity {
             if (title.isEmpty() || title.length() > 15) {
                 alertTxt1.setText(title.isEmpty() ? "필터 이름을 입력해주세요." : "작성 가능한 이름은 최대 15자 입니다.");
                 alertTxt1.setVisibility(View.VISIBLE);
-                titleEditText.requestFocus();
-                titleEditText.getParent().requestChildFocus(titleEditText, titleEditText);
-                scrollUp(titleEditText);
+                focusWithAnchor(titleEditText, Anchor.TAG_TXT, true);
                 return;
             } else if (tags.length > 5) {
-                tagEditText.requestFocus();
-                tagEditText.getParent().requestChildFocus(tagEditText, tagEditText);
-                scrollUp(tagEditText);
+                focusWithAnchor(tagEditText, Anchor.SALE_TXT, true);
                 return;
             } else if (!isFree) {
                 try {
                     int point = Integer.parseInt(pointStr);
                     if (point < 10 || point > 300 || point % 10 != 0) {
-                        pointEditText.requestFocus();
-                        pointEditText.getParent().requestChildFocus(pointEditText, pointEditText);
+                        focusWithAnchor(pointEditText, Anchor.REGISTER_BTN, true);
                         return;
                     }
                 } catch (NumberFormatException e) {
-                    pointEditText.requestFocus();
-                    pointEditText.getParent().requestChildFocus(pointEditText, pointEditText);
+                    focusWithAnchor(pointEditText, Anchor.REGISTER_BTN, true);
                     return;
                 }
             }
 
             Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
+            finish();
+        });
+
+        touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+    }
+
+    private boolean isCoveredByScrollContent(View target, View scrollContent) {
+        Rect targetRect = new Rect();
+        Rect contentRect = new Rect();
+
+        boolean tOk = target.getGlobalVisibleRect(targetRect);
+        boolean cOk = scrollContent.getGlobalVisibleRect(contentRect);
+
+        if (!tOk || !cOk) return false;
+
+        return Rect.intersects(targetRect, contentRect);
+    }
+
+    private final InputFilter singleSpaceFilter = (source, start, end, dest, dstart, dend) -> {
+        if (source == null || start >= end) return null;
+
+        String in = source.subSequence(start, end).toString();
+        String compact = in.replaceAll("\\s{2,}", " ");
+        StringBuilder sb = new StringBuilder(compact);
+
+        if (sb.length() > 0 && sb.charAt(0) == ' ' && dstart > 0 && dest.charAt(dstart - 1) == ' ') {
+            sb.deleteCharAt(0);
+        }
+        if (sb.length() > 0 && sb.charAt(sb.length() - 1) == ' ' && dend < dest.length() && dest.charAt(dend) == ' ') {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        if (sb.length() == 1 && sb.charAt(0) == ' ' && dstart > 0 && dest.charAt(dstart - 1) == ' ') {
+            return "";
+        }
+
+        String out = sb.toString();
+        return out.equals(in) ? null : out;
+    };
+
+
+    private void focusWithAnchor(EditText editText, Anchor anchor, boolean forceScroll) {
+        if (editText == null) return;
+        editText.requestFocus();
+        showKeyboard(editText);
+        pendingAnchor = anchor;
+        this.forceScroll = forceScroll;
+
+        if (keyboardVisible) {
+            new Handler().postDelayed(this::alignToPendingAnchor, 16);
+        }
+    }
+
+    private void alignToPendingAnchor() {
+        if (pendingAnchor == Anchor.NONE) return;
+
+        View target;
+        switch (pendingAnchor) {
+            case TAG_TXT:
+                target = tagTxt;
+                break;
+            case SALE_TXT:
+                target = saleTxt;
+                break;
+            case REGISTER_BTN:
+                target = registerBtn;
+                break;
+            default:
+                return;
+        }
+        alignKeyboardTopToViewTop(target);
+    }
+
+    private void alignKeyboardTopToViewTop(View target) {
+        if (target == null) return;
+
+        final int SAFE_SLACK_PX = dp(6);
+
+        int[] loc = new int[2];
+        target.getLocationInWindow(loc);
+        int targetTop = loc[1];
+
+        int keyboardTop = lastVisibleFrame.bottom;
+        int dy = targetTop - keyboardTop;
+
+        if (forceScroll) {
+            if (Math.abs(dy) > dp(1)) {
+                scrollView.smoothScrollBy(0, dy);
+                //animateScrollToY(dy, 220);
+            }
+        } else {
+            if (dy > SAFE_SLACK_PX) {
+                scrollView.smoothScrollBy(0, dy);
+                //animateScrollToY(dy, 220);
+            }
+        }
+    }
+
+    private void animateScrollToY(int dy, long durationMs) {
+        if (Math.abs(dy) < dp(1)) return;
+
+        final int startY = scrollView.getScrollY();
+        final int targetY = Math.max(0, startY + dy);
+
+        ValueAnimator va = ValueAnimator.ofInt(startY, targetY);
+        va.setDuration(durationMs);
+        va.setInterpolator(new FastOutSlowInInterpolator());
+        va.addUpdateListener(a -> scrollView.scrollTo(0, (int) a.getAnimatedValue()));
+        va.start();
+    }
+
+    private void showKeyboard(View view) {
+        view.post(() -> {
+            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+            }
         });
     }
 
-    private void scrollUp(View view) {
-        scrollView.post(() -> {
-            int offset = 100;
-            int y = view.getTop() - offset;
-            if (y < 0) y = 0;
-            scrollView.smoothScrollTo(0, y);
-        });
+    private boolean isPointInsideView(MotionEvent ev, View v) {
+        if (v == null) return false;
+        Rect r = new Rect();
+        boolean visible = v.getGlobalVisibleRect(r);
+        if (!visible) return false;
+        final int x = (int) ev.getRawX();
+        final int y = (int) ev.getRawY();
+        return r.contains(x, y);
+    }
+
+    private boolean isPointInsideAnyEditText(MotionEvent ev) {
+        return isPointInsideView(ev, titleEditText)
+                || isPointInsideView(ev, tagEditText)
+                || isPointInsideView(ev, pointEditText);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN: {
+                downX = ev.getRawX();
+                downY = ev.getRawY();
+                maybeTap = true;
+                break;
+            }
+            case MotionEvent.ACTION_MOVE: {
+                float dx = Math.abs(ev.getRawX() - downX);
+                float dy = Math.abs(ev.getRawY() - downY);
+                if (dx > touchSlop || dy > touchSlop) {
+                    maybeTap = false;
+                }
+                break;
+            }
+            case MotionEvent.ACTION_UP: {
+                if (maybeTap) {
+                    View focused = getCurrentFocus();
+                    boolean focusedIsEdit = focused instanceof EditText;
+                    boolean tapInsideAnyEdit = isPointInsideAnyEditText(ev);
+                    boolean tapRegister = isPointInsideView(ev, registerBtn);
+
+                    if (focusedIsEdit && !tapInsideAnyEdit && !tapRegister) {
+                        hideKeyboardAndClearFocus();
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private void hideKeyboardAndClearFocus() {
+        View v = getCurrentFocus();
+        if (v == null) v = scrollView;
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null && v != null) {
+            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        }
+        clearAllEditFocus();
+        pendingAnchor = Anchor.NONE;
+        forceScroll = false;
+    }
+
+    private void clearAllEditFocus() {
+        if (titleEditText != null) titleEditText.clearFocus();
+        if (tagEditText != null) tagEditText.clearFocus();
+        if (pointEditText != null) pointEditText.clearFocus();
+    }
+
+    private int dp(int value) {
+        return (int) (getResources().getDisplayMetrics().density * value);
     }
 }
-
