@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bg"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#007AFF">
@@ -19,12 +20,16 @@
             android:id="@+id/logoBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingTop="120dp"
+            android:paddingBottom="120dp">
 
             <TextView
                 android:id="@+id/txt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:letterSpacing="0.1"
                 android:text="필터 하나로 시작하는 나만의 비즈니스"
                 android:textColor="@color/white"
                 android:textSize="17sp"
@@ -34,6 +39,7 @@
                 android:id="@+id/logo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:letterSpacing="0.1"
                 android:text="Feel'em"
                 android:textColor="#C2FA7A"
                 android:textSize="80sp"
@@ -51,30 +57,39 @@
             android:visibility="gone">
 
             <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/googleLogin"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/border6"
+                android:layout_height="55dp"
+                android:background="@drawable/border8"
+                android:gravity="center"
                 android:text="구글로 시작하기"
                 android:textAlignment="center"
-                android:textColor="@color/black" />
+                android:textColor="@color/black"
+                android:textSize="18sp" />
 
             <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/naverLogin"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="55dp"
                 android:layout_marginTop="15dp"
-                android:background="@drawable/border6"
+                android:background="@drawable/border8"
+                android:gravity="center"
                 android:text="네이버로 시작하기"
                 android:textAlignment="center"
-                android:textColor="@color/black" />
+                android:textColor="@color/black"
+                android:textSize="18sp" />
 
             <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/kakaoTalkLogin"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="55dp"
                 android:layout_marginTop="15dp"
-                android:background="@drawable/border6"
+                android:background="@drawable/border8"
+                android:gravity="center"
                 android:text="카카오톡으로 시작하기"
                 android:textAlignment="center"
-                android:textColor="@color/black" />
+                android:textColor="@color/black"
+                android:textSize="18sp" />
 
         </LinearLayout>
 
