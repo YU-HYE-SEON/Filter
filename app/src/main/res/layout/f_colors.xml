@@ -13,10 +13,9 @@
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:layout_weight="1">
 
             <HorizontalScrollView
                 android:layout_width="match_parent"
@@ -31,101 +30,389 @@
                     android:layout_height="match_parent"
                     android:gravity="center">
 
-                    <ImageView
-                        android:id="@+id/brightnessIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/brightness_icon_no" />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
 
-                    <ImageView
-                        android:id="@+id/exposureIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/exposure_icon_no" />
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
 
-                    <ImageView
-                        android:id="@+id/contrastIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/contrast_icon_no" />
+                            <ImageView
+                                android:id="@+id/brightnessIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_brightness_no" />
 
-                    <ImageView
-                        android:id="@+id/highlightIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/highlight_icon_no" />
+                            <TextView
+                                android:id="@+id/brightnessTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="밝기"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
 
-                    <ImageView
-                        android:id="@+id/shadowIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/shadow_icon_no" />
+                        </LinearLayout>
 
-                    <ImageView
-                        android:id="@+id/temperatureIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/temperature_icon_no" />
+                    </LinearLayout>
 
-                    <ImageView
-                        android:id="@+id/tintIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/hue_icon_no" />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
 
-                    <ImageView
-                        android:id="@+id/saturationIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/saturation_icon_no" />
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
 
-                    <ImageView
-                        android:id="@+id/sharpnessIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/sharpness_icon_no" />
+                            <ImageView
+                                android:id="@+id/exposureIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_exposure_no" />
 
-                    <ImageView
-                        android:id="@+id/blurIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/blur_icon_no" />
+                            <TextView
+                                android:id="@+id/exposureTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="노출"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
 
-                    <ImageView
-                        android:id="@+id/vignetteIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/vignette_icon_no" />
+                        </LinearLayout>
 
-                    <ImageView
-                        android:id="@+id/noiseIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="15dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/noise_icon_no" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/contrastIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_contrast_no" />
+
+                            <TextView
+                                android:id="@+id/contrastTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="대비"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/highlightIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_highlight_no" />
+
+                            <TextView
+                                android:id="@+id/highlightTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="하이라이트"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/shadowIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_shadow_no" />
+
+                            <TextView
+                                android:id="@+id/shadowTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="그림자"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/temperatureIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_temperature_no" />
+
+                            <TextView
+                                android:id="@+id/temperatureTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="온도"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/tintIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_tint_no" />
+
+                            <TextView
+                                android:id="@+id/tintTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="색조"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/saturationIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_saturation_no" />
+
+                            <TextView
+                                android:id="@+id/saturationTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="채도"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/sharpnessIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_sharpness_no" />
+
+                            <TextView
+                                android:id="@+id/sharpnessTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="선명하게"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/blurIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_blur_no" />
+
+                            <TextView
+                                android:id="@+id/blurTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="흐리게"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/vignetteIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_vignette_no" />
+
+                            <TextView
+                                android:id="@+id/vignetteTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="비네트"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <LinearLayout
+                            android:layout_width="@dimen/colors_item_width"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/noiseIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:padding="5dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/icon_noise_no" />
+
+                            <TextView
+                                android:id="@+id/noiseTxt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="노이즈"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
@@ -177,7 +464,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/next_btn" />
+                    android:src="@drawable/btn_next" />
 
             </LinearLayout>
 

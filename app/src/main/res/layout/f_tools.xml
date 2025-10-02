@@ -25,14 +25,30 @@
                 android:layout_weight="1"
                 android:gravity="center">
 
-                <ImageButton
-                    android:id="@+id/rotationIcon"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:background="@android:color/transparent"
-                    android:padding="5dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/rotation_icon_no" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageButton
+                        android:id="@+id/rotationIcon"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@android:color/transparent"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/icon_rotation_no" />
+
+                    <TextView
+                        android:id="@+id/rotationTxt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="회전"
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -42,14 +58,30 @@
                 android:layout_weight="1"
                 android:gravity="center">
 
-                <ImageButton
-                    android:id="@+id/cropIcon"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:background="@android:color/transparent"
-                    android:padding="5dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/crop_icon_no" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageButton
+                        android:id="@+id/cropIcon"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@android:color/transparent"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/icon_crop_no" />
+
+                    <TextView
+                        android:id="@+id/cropTxt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="자르기"
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -101,7 +133,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/next_btn" />
+                    android:src="@drawable/btn_next" />
 
             </LinearLayout>
 

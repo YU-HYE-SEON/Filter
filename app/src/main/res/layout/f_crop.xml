@@ -29,17 +29,20 @@
 
                 <ImageButton
                     android:id="@+id/freeCutIcon"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:background="@android:color/transparent"
+                    android:padding="5dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/rotation_icon_no" />
+                    android:src="@drawable/icon_rotation_no" />
 
                 <TextView
+                    android:id="@+id/freeCutTxt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="자유"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
 
             </LinearLayout>
 
@@ -52,17 +55,20 @@
 
                 <ImageButton
                     android:id="@+id/OTORatioIcon"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:background="@android:color/transparent"
+                    android:padding="5dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/rotation_icon_no" />
+                    android:src="@drawable/icon_rotation_no" />
 
                 <TextView
+                    android:id="@+id/OTOTxt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="1:1"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
 
             </LinearLayout>
 
@@ -75,17 +81,20 @@
 
                 <ImageButton
                     android:id="@+id/TTFRatioIcon"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:background="@android:color/transparent"
+                    android:padding="5dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/rotation_icon_no" />
+                    android:src="@drawable/icon_rotation_no" />
 
                 <TextView
+                    android:id="@+id/TTFTxt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="3:4"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
 
             </LinearLayout>
 
@@ -98,17 +107,20 @@
 
                 <ImageButton
                     android:id="@+id/NTSRatioIcon"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:background="@android:color/transparent"
+                    android:padding="5dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/rotation_icon_no" />
+                    android:src="@drawable/icon_rotation_no" />
 
                 <TextView
+                    android:id="@+id/NTSTxt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="9:16"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
 
             </LinearLayout>
 
@@ -127,7 +139,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="17dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ai_close_btn"
+                android:src="@drawable/btn_close"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -154,7 +166,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/customseekbar_check_no"
+                android:src="@drawable/btn_check_white"
                 android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintRight_toRightOf="parent"

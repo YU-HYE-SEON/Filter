@@ -4,4 +4,10 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
     </style>
+
+    <style name="Theme.Filter.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#007AFF</item>
+        <item name="postSplashScreenTheme">@style/Theme.Filter</item>
+    </style>
+
 </resources>

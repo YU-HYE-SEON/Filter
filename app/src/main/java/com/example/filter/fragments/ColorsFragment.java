@@ -1,11 +1,13 @@
 package com.example.filter.fragments;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +24,9 @@ public class ColorsFragment extends Fragment {
     private ImageView brightnessIcon, exposureIcon, contrastIcon,
             highlightIcon, shadowIcon, temperatureIcon, tintIcon,
             saturationIcon, sharpnessIcon, blurIcon, vignetteIcon, noiseIcon;
+    private TextView brightnessTxt, exposureTxt, contrastTxt,
+            highlightTxt, shadowTxt, temperatureTxt, tintTxt,
+            saturationTxt, sharpnessTxt, blurTxt, vignetteTxt, noiseTxt;
     private ImageView nextBtn;
     private ConstraintLayout bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
@@ -45,6 +50,19 @@ public class ColorsFragment extends Fragment {
         vignetteIcon = view.findViewById(R.id.vignetteIcon);
         noiseIcon = view.findViewById(R.id.noiseIcon);
         nextBtn = view.findViewById(R.id.nextBtn);
+
+        brightnessTxt = view.findViewById(R.id.brightnessTxt);
+        exposureTxt = view.findViewById(R.id.exposureTxt);
+        contrastTxt = view.findViewById(R.id.contrastTxt);
+        highlightTxt = view.findViewById(R.id.highlightTxt);
+        shadowTxt = view.findViewById(R.id.shadowTxt);
+        temperatureTxt = view.findViewById(R.id.temperatureTxt);
+        tintTxt = view.findViewById(R.id.tintTxt);
+        saturationTxt = view.findViewById(R.id.saturationTxt);
+        sharpnessTxt = view.findViewById(R.id.sharpnessTxt);
+        blurTxt = view.findViewById(R.id.blurTxt);
+        vignetteTxt = view.findViewById(R.id.vignetteTxt);
+        noiseTxt = view.findViewById(R.id.noiseTxt);
 
         bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
         undoColor = requireActivity().findViewById(R.id.undoColor);
@@ -256,21 +274,101 @@ public class ColorsFragment extends Fragment {
         FilterActivity a = (FilterActivity) getActivity();
         if (a == null) return;
 
-        setIcon(brightnessIcon, a.getCurrentValue("밝기") != 0, R.drawable.brightness_icon_yes, R.drawable.brightness_icon_no);
-        setIcon(exposureIcon, a.getCurrentValue("노출") != 0, R.drawable.exposure_icon_yes, R.drawable.exposure_icon_no);
-        setIcon(contrastIcon, a.getCurrentValue("대비") != 0, R.drawable.contrast_icon_yes, R.drawable.contrast_icon_no);
-        setIcon(highlightIcon, a.getCurrentValue("하이라이트") != 0, R.drawable.highlight_icon_yes, R.drawable.highlight_icon_no);
-        setIcon(shadowIcon, a.getCurrentValue("그림자") != 0, R.drawable.shadow_icon_yes, R.drawable.shadow_icon_no);
-        setIcon(temperatureIcon, a.getCurrentValue("온도") != 0, R.drawable.temperature_icon_yes, R.drawable.temperature_icon_no);
-        setIcon(tintIcon, a.getCurrentValue("색조") != 0, R.drawable.hue_icon_yes, R.drawable.hue_icon_no);
-        setIcon(saturationIcon, a.getCurrentValue("채도") != 0, R.drawable.saturation_icon_yes, R.drawable.saturation_icon_no);
-        setIcon(sharpnessIcon, a.getCurrentValue("선명하게") != 0, R.drawable.sharpness_icon_yes, R.drawable.sharpness_icon_no);
-        setIcon(blurIcon, a.getCurrentValue("흐리게") != 0, R.drawable.blur_icon_yes, R.drawable.blur_icon_no);
-        setIcon(vignetteIcon, a.getCurrentValue("비네트") != 0, R.drawable.vignette_icon_yes, R.drawable.vignette_icon_no);
-        setIcon(noiseIcon, a.getCurrentValue("노이즈") != 0, R.drawable.noise_icon_no, R.drawable.noise_icon_no);
-    }
+        if (a.getCurrentValue("밝기") != 0) {
+            brightnessIcon.setImageResource(R.drawable.icon_brightness_yes);
+            brightnessTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            brightnessIcon.setImageResource(R.drawable.icon_brightness_no);
+            brightnessTxt.setTextColor(Color.WHITE);
+        }
 
-    private void setIcon(ImageView iv, boolean on, int yesRes, int noRes) {
-        if (iv != null) iv.setImageResource(on ? yesRes : noRes);
+        if (a.getCurrentValue("노출") != 0) {
+            exposureIcon.setImageResource(R.drawable.icon_exposure_yes);
+            exposureTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            exposureIcon.setImageResource(R.drawable.icon_exposure_no);
+            exposureTxt.setTextColor(Color.WHITE);
+        }
+
+        //
+        if (a.getCurrentValue("대비") != 0) {
+            contrastIcon.setImageResource(R.drawable.icon_contrast_yes);
+            contrastTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            contrastIcon.setImageResource(R.drawable.icon_contrast_no);
+            contrastTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("하이라이트") != 0) {
+            highlightIcon.setImageResource(R.drawable.icon_highlight_yes);
+            highlightTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            highlightIcon.setImageResource(R.drawable.icon_highlight_no);
+            highlightTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("그림자") != 0) {
+            shadowIcon.setImageResource(R.drawable.icon_shadow_yes);
+            shadowTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            shadowIcon.setImageResource(R.drawable.icon_shadow_no);
+            shadowTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("온도") != 0) {
+            temperatureIcon.setImageResource(R.drawable.icon_temperature_yes);
+            temperatureTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            temperatureIcon.setImageResource(R.drawable.icon_temperature_no);
+            temperatureTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("색조") != 0) {
+            tintIcon.setImageResource(R.drawable.icon_tint_yes);
+            tintTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            tintIcon.setImageResource(R.drawable.icon_tint_no);
+            tintTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("채도") != 0) {
+            saturationIcon.setImageResource(R.drawable.icon_saturation_yes);
+            saturationTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            saturationIcon.setImageResource(R.drawable.icon_saturation_no);
+            saturationTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("선명하게") != 0) {
+            sharpnessIcon.setImageResource(R.drawable.icon_sharpness_yes);
+            sharpnessTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            sharpnessIcon.setImageResource(R.drawable.icon_sharpness_no);
+            sharpnessTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("흐리게") != 0) {
+            blurIcon.setImageResource(R.drawable.icon_blur_yes);
+            blurTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            blurIcon.setImageResource(R.drawable.icon_blur_no);
+            blurTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("비네트") != 0) {
+            vignetteIcon.setImageResource(R.drawable.icon_vignette_yes);
+            vignetteTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            vignetteIcon.setImageResource(R.drawable.icon_vignette_no);
+            vignetteTxt.setTextColor(Color.WHITE);
+        }
+
+        if (a.getCurrentValue("노이즈") != 0) {
+            noiseIcon.setImageResource(R.drawable.icon_noise_yes);
+            noiseTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            noiseIcon.setImageResource(R.drawable.icon_noise_no);
+            noiseTxt.setTextColor(Color.WHITE);
+        }
     }
 }

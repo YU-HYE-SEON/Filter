@@ -63,7 +63,7 @@
             android:id="@+id/retryBtn"
             android:layout_width="120dp"
             android:layout_height="30dp"
-            android:background="@drawable/ai_btn_bg"
+            android:background="@drawable/btn_ai_bg"
             android:clickable="true"
             android:focusable="true"
             app:layout_constraintBottom_toBottomOf="parent"

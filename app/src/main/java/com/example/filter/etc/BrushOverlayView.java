@@ -172,7 +172,7 @@ public class BrushOverlayView extends View {
     private void loadCrayonShaderAlphaMask() {
         if (crayonShader != null) return;
 
-        Drawable d = AppCompatResources.getDrawable(getContext(), R.drawable.crayon_texture);
+        Drawable d = AppCompatResources.getDrawable(getContext(), R.drawable.texture_crayon);
 
         if (d == null) return;
 

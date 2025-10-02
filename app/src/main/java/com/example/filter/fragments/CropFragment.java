@@ -1,6 +1,7 @@
 package com.example.filter.fragments;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Bundle;
@@ -8,7 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,11 +20,9 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class CropFragment extends Fragment {
     private ImageButton freeCutIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
+    private TextView freeCutTxt, OTOTxt, TTFTxt, NTSTxt;
     private ImageButton cancelBtn, checkBtn;
 
     @Nullable
@@ -35,6 +34,10 @@ public class CropFragment extends Fragment {
         OTORatioIcon = view.findViewById(R.id.OTORatioIcon);
         TTFRatioIcon = view.findViewById(R.id.TTFRatioIcon);
         NTSRatioIcon = view.findViewById(R.id.NTSRatioIcon);
+        freeCutTxt = view.findViewById(R.id.freeCutTxt);
+        OTOTxt = view.findViewById(R.id.OTOTxt);
+        TTFTxt = view.findViewById(R.id.TTFTxt);
+        NTSTxt = view.findViewById(R.id.NTSTxt);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
@@ -221,23 +224,32 @@ public class CropFragment extends Fragment {
     }
 
     private void updateIconUI(FilterActivity.CropMode mode) {
-        freeCutIcon.setImageResource(R.drawable.rotation_icon_no);
-        OTORatioIcon.setImageResource(R.drawable.rotation_icon_no);
-        TTFRatioIcon.setImageResource(R.drawable.rotation_icon_no);
-        NTSRatioIcon.setImageResource(R.drawable.rotation_icon_no);
+        freeCutIcon.setImageResource(R.drawable.icon_rotation_no);
+        OTORatioIcon.setImageResource(R.drawable.icon_rotation_no);
+        TTFRatioIcon.setImageResource(R.drawable.icon_rotation_no);
+        NTSRatioIcon.setImageResource(R.drawable.icon_rotation_no);
+
+        freeCutTxt.setTextColor(Color.WHITE);
+        OTOTxt.setTextColor(Color.WHITE);
+        TTFTxt.setTextColor(Color.WHITE);
+        NTSTxt.setTextColor(Color.WHITE);
 
         switch (mode) {
             case FREE:
-                freeCutIcon.setImageResource(R.drawable.rotation_icon_yes);
+                freeCutIcon.setImageResource(R.drawable.icon_rotation_yes);
+                freeCutTxt.setTextColor(Color.parseColor("#C2FA7A"));
                 break;
             case OTO:
-                OTORatioIcon.setImageResource(R.drawable.rotation_icon_yes);
+                OTORatioIcon.setImageResource(R.drawable.icon_rotation_yes);
+                OTOTxt.setTextColor(Color.parseColor("#C2FA7A"));
                 break;
             case TTF:
-                TTFRatioIcon.setImageResource(R.drawable.rotation_icon_yes);
+                TTFRatioIcon.setImageResource(R.drawable.icon_rotation_yes);
+                TTFTxt.setTextColor(Color.parseColor("#C2FA7A"));
                 break;
             case NTS:
-                NTSRatioIcon.setImageResource(R.drawable.rotation_icon_yes);
+                NTSRatioIcon.setImageResource(R.drawable.icon_rotation_yes);
+                NTSTxt.setTextColor(Color.parseColor("#C2FA7A"));
                 break;
         }
     }

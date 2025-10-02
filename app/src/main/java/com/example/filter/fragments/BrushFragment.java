@@ -115,6 +115,7 @@ public class BrushFragment extends Fragment {
     /// UI ///
     private ConstraintLayout topArea;
     private ImageButton pen, glowPen, crayon, eraser;
+    private TextView penTxt, glowPenTxt, crayonTxt, eraserTxt;
     private ImageButton cancelBtn, checkBtn;
     private FrameLayout brushPanel;
     private FrameLayout brushOverlay, stickerOverlay;
@@ -235,6 +236,10 @@ public class BrushFragment extends Fragment {
         glowPen = view.findViewById(R.id.glowPen);
         crayon = view.findViewById(R.id.crayon);
         eraser = view.findViewById(R.id.eraser);
+        penTxt = view.findViewById(R.id.penTxt);
+        glowPenTxt = view.findViewById(R.id.glowPenTxt);
+        crayonTxt = view.findViewById(R.id.crayonTxt);
+        eraserTxt = view.findViewById(R.id.eraserTxt);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
@@ -267,10 +272,17 @@ public class BrushFragment extends Fragment {
                     glowPen.setEnabled(false);
                     crayon.setEnabled(false);
                     eraser.setEnabled(false);
+
                     pen.setAlpha(0.2f);
                     glowPen.setAlpha(0.2f);
                     crayon.setAlpha(0.2f);
                     eraser.setAlpha(0.2f);
+
+                    penTxt.setAlpha(0.2f);
+                    glowPenTxt.setAlpha(0.2f);
+                    crayonTxt.setAlpha(0.2f);
+                    eraserTxt.setAlpha(0.2f);
+
                     lassoOverlay.setVisibility(View.VISIBLE);
 
                     FilterActivity act = (FilterActivity) requireActivity();
@@ -292,10 +304,12 @@ public class BrushFragment extends Fragment {
                     lassoOverlay.setLassoListener(null);
                     lassoOverlay.setDrawingEnabled(false);
                     lassoOverlay.setLassoVisible(false);
+
                     pen.setEnabled(true);
                     glowPen.setEnabled(true);
                     crayon.setEnabled(true);
                     eraser.setEnabled(true);
+
                     setModeAlpha(lastMode);
                 }
             });
@@ -1046,7 +1060,7 @@ public class BrushFragment extends Fragment {
     }
 
     private Drawable buildTiledCheckerboard(int cornerPx) {
-        Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.transparent_bg);
+        Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.brush_transparent_bg);
         BitmapShader shader = new BitmapShader(bmp, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
         Matrix m = new Matrix();
@@ -1160,7 +1174,7 @@ public class BrushFragment extends Fragment {
     private BitmapShader ensureCrayonPreviewShader() {
         if (crayonPreviewShader != null) return crayonPreviewShader;
 
-        Drawable d = requireContext().getDrawable(R.drawable.crayon_texture);
+        Drawable d = requireContext().getDrawable(R.drawable.texture_crayon);
         if (d == null) return null;
 
         Bitmap src;
@@ -2087,26 +2101,41 @@ public class BrushFragment extends Fragment {
         if (pen == null) return;
         int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
         ImageViewCompat.setImageTintList(pen, ColorStateList.valueOf(opaque));
+        penTxt.setTextColor(argb);
     }
 
     private void tintGlowButton(int argb) {
         if (glowPen == null) return;
         int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
         ImageViewCompat.setImageTintList(glowPen, ColorStateList.valueOf(opaque));
+        glowPenTxt.setTextColor(argb);
     }
 
     private void tintCrayonButton(int argb) {
         if (crayon == null) return;
         int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
         ImageViewCompat.setImageTintList(crayon, ColorStateList.valueOf(opaque));
+        crayonTxt.setTextColor(argb);
     }
 
     private void setModeAlpha(BrushOverlayView.BrushMode mode) {
         float on = 1f, off = 0.2f;
-        if (pen != null) pen.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
-        if (glowPen != null) glowPen.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
-        if (crayon != null) crayon.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);
-        if (eraser != null) eraser.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
+        if (pen != null) {
+            pen.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
+            penTxt.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
+        }
+        if (glowPen != null) {
+            glowPen.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
+            glowPenTxt.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
+        }
+        if (crayon != null) {
+            crayon.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);
+            crayonTxt.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);
+        }
+        if (eraser != null) {
+            eraser.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
+            eraserTxt.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
+        }
     }
 
     /// 단위 변환 ///

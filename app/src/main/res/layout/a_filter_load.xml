@@ -70,7 +70,7 @@
                 android:id="@+id/squareCut"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:src="@drawable/square_no"
+                android:src="@drawable/icon_square_no"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
@@ -81,7 +81,7 @@
                 android:id="@+id/starCut"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:src="@drawable/star_no"
+                android:src="@drawable/icon_star_no"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/squareCut"
@@ -92,7 +92,7 @@
                 android:id="@+id/triangleCut"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:src="@drawable/triangle_no"
+                android:src="@drawable/icon_triangle_no"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/starCut"
@@ -103,7 +103,7 @@
                 android:id="@+id/circleCut"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:src="@drawable/circle_no"
+                android:src="@drawable/icon_circle_no"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/triangleCut"
@@ -114,7 +114,7 @@
                 android:id="@+id/heartCut"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:src="@drawable/heart_no"
+                android:src="@drawable/icon_heart_no"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/circleCut"
@@ -148,15 +148,17 @@
 
                     <ImageView
                         android:id="@+id/lassoCut"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:src="@drawable/rotation_icon_no" />
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:padding="5dp"
+                        android:src="@drawable/icon_rotation_no" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="올가미"
-                        android:textColor="@color/white" />
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 
@@ -169,15 +171,17 @@
 
                     <ImageView
                         android:id="@+id/shapeCut"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:src="@drawable/rotation_icon_no" />
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:padding="5dp"
+                        android:src="@drawable/icon_rotation_no" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="모양 컷"
-                        android:textColor="@color/white" />
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 
@@ -196,7 +200,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:padding="17dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ai_close_btn"
+                    android:src="@drawable/btn_close"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -223,7 +227,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:padding="12dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/customseekbar_check_no"
+                    android:src="@drawable/btn_check_white"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />

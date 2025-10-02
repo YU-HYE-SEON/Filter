@@ -196,19 +196,19 @@ public class ShapeOverlayView extends View {
         @DrawableRes int resId = 0;
         switch (type) {
             case SQUARE:
-                resId = R.drawable.square_no;
+                resId = R.drawable.icon_square_no;
                 break;
             case STAR:
-                resId = R.drawable.star_no;
+                resId = R.drawable.icon_star_no;
                 break;
             case TRIANGLE:
-                resId = R.drawable.triangle_no;
+                resId = R.drawable.icon_triangle_no;
                 break;
             case CIRCLE:
-                resId = R.drawable.circle_no;
+                resId = R.drawable.icon_circle_no;
                 break;
             case HEART:
-                resId = R.drawable.heart_no;
+                resId = R.drawable.icon_heart_no;
                 break;
             case NONE:
             default:

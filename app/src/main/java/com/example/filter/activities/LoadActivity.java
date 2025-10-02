@@ -192,12 +192,12 @@ public class LoadActivity extends BaseActivity {
         lassoCut.setOnClickListener(v -> {
             if (lassoModeOn) {
                 lassoModeOn = false;
-                lassoCut.setImageResource(R.drawable.rotation_icon_no);
+                lassoCut.setImageResource(R.drawable.icon_rotation_no);
                 lassoOverlay.setLassoVisible(false);
             } else {
                 lassoModeOn = true;
-                lassoCut.setImageResource(R.drawable.rotation_icon_yes);
-                shapeCut.setImageResource(R.drawable.rotation_icon_no);
+                lassoCut.setImageResource(R.drawable.icon_rotation_yes);
+                shapeCut.setImageResource(R.drawable.icon_rotation_no);
                 shapeOverlay.setShape(ShapeType.NONE);
                 updateOverlaysImageBounds();
                 lassoOverlay.setLassoVisible(true);
@@ -216,14 +216,14 @@ public class LoadActivity extends BaseActivity {
         shapeCut.setOnClickListener(v -> {
             if (shapeModeOn) {
                 shapeModeOn = false;
-                shapeCut.setImageResource(R.drawable.rotation_icon_no);
+                shapeCut.setImageResource(R.drawable.icon_rotation_no);
                 shapeOverlay.setShape(ShapeType.NONE);
                 updateShapeIcons(null);
                 visibleOff();
             } else {
                 shapeModeOn = true;
-                shapeCut.setImageResource(R.drawable.rotation_icon_yes);
-                lassoCut.setImageResource(R.drawable.rotation_icon_no);
+                shapeCut.setImageResource(R.drawable.icon_rotation_yes);
+                lassoCut.setImageResource(R.drawable.icon_rotation_no);
                 lassoOverlay.setLassoVisible(false);
                 visibleOn();
                 shapeOverlay.setShape(ShapeType.NONE);
@@ -401,21 +401,21 @@ public class LoadActivity extends BaseActivity {
         circleCut.setVisibility(View.INVISIBLE);
         heartCut.setVisibility(View.INVISIBLE);
 
-        squareCut.setImageResource(R.drawable.square_no);
-        starCut.setImageResource(R.drawable.star_no);
-        triangleCut.setImageResource(R.drawable.triangle_no);
-        circleCut.setImageResource(R.drawable.circle_no);
-        heartCut.setImageResource(R.drawable.heart_no);
+        squareCut.setImageResource(R.drawable.icon_square_no);
+        starCut.setImageResource(R.drawable.icon_star_no);
+        triangleCut.setImageResource(R.drawable.icon_triangle_no);
+        circleCut.setImageResource(R.drawable.icon_circle_no);
+        heartCut.setImageResource(R.drawable.icon_heart_no);
 
         shapeOverlay.setShape(ShapeType.NONE);
     }
 
     private void updateShapeIcons(ShapeType type) {
-        squareCut.setImageResource(type == ShapeType.SQUARE ? R.drawable.square_yes : R.drawable.square_no);
-        starCut.setImageResource(type == ShapeType.STAR ? R.drawable.star_yes : R.drawable.star_no);
-        triangleCut.setImageResource(type == ShapeType.TRIANGLE ? R.drawable.triangle_yes : R.drawable.triangle_no);
-        circleCut.setImageResource(type == ShapeType.CIRCLE ? R.drawable.circle_yes : R.drawable.circle_no);
-        heartCut.setImageResource(type == ShapeType.HEART ? R.drawable.heart_yes : R.drawable.heart_no);
+        squareCut.setImageResource(type == ShapeType.SQUARE ? R.drawable.icon_square_yes : R.drawable.icon_square_no);
+        starCut.setImageResource(type == ShapeType.STAR ? R.drawable.icon_star_yes : R.drawable.icon_star_no);
+        triangleCut.setImageResource(type == ShapeType.TRIANGLE ? R.drawable.icon_triangle_yes : R.drawable.icon_triangle_no);
+        circleCut.setImageResource(type == ShapeType.CIRCLE ? R.drawable.icon_circle_yes : R.drawable.icon_circle_no);
+        heartCut.setImageResource(type == ShapeType.HEART ? R.drawable.icon_heart_yes : R.drawable.icon_heart_no);
     }
 
     private void toggleShape(ShapeType target) {

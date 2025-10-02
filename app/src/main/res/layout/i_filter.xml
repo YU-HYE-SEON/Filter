@@ -1,36 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/filterItem"
-    android:layout_width="150dp"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="10dp">
 
-    <androidx.cardview.widget.CardView
+    <ImageView
+        android:id="@+id/filterImage"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
-        app:cardBackgroundColor="@android:color/transparent"
-        app:cardCornerRadius="15dp"
-        app:cardElevation="0dp">
+        android:layout_height="0dp"
+        android:background="#BDBDBD"
+        app:layout_constraintBottom_toTopOf="@+id/filterInfo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/filterImage"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/filterInfo"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/filterImage"
+        app:layout_constraintStart_toStartOf="@+id/filterImage"
+        app:layout_constraintTop_toBottomOf="@+id/filterImage">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:background="#BDBDBD" />
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-    </androidx.cardview.widget.CardView>
+            <TextView
+                android:id="@+id/filterTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="필터이름"
+                android:textColor="#000000"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/filterTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/pretendard_regular"
-        android:paddingTop="8dp"
-        android:text="필터 이름"
-        android:textColor="@color/black"
-        android:textSize="12sp" />
+            <TextView
+                android:id="@+id/by"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="by. "
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/filterTitle"
+                app:layout_constraintTop_toBottomOf="@+id/filterTitle" />
 
-</LinearLayout>
+            <TextView
+                android:id="@+id/nickname"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="닉네임"
+                android:textAlignment="textStart"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="@+id/by"
+                app:layout_constraintStart_toEndOf="@+id/by"
+                app:layout_constraintTop_toTopOf="@+id/by" />
+
+            <TextView
+                android:id="@+id/price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="000"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toTopOf="@+id/count"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00"
+                android:textAlignment="textEnd"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="@+id/countTxt"
+                app:layout_constraintEnd_toStartOf="@+id/countTxt"
+                app:layout_constraintTop_toTopOf="@+id/countTxt" />
+
+            <TextView
+                android:id="@+id/countTxt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="회 사용"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="@+id/price"
+                app:layout_constraintTop_toBottomOf="@+id/price" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

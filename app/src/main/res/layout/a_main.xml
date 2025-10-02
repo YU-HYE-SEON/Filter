@@ -6,230 +6,91 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <ScrollView
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/titleArea"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:overScrollMode="never"
-        android:scrollbars="none"
-        app:layout_constraintBottom_toTopOf="@+id/navigationbar"
+        android:layout_height="wrap_content"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/scrollView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="15dp"
-            android:paddingBottom="30dp">
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:fontFamily="@font/pretendard_bold"
+            android:text="Feel'em"
+            android:textColor="#007AFF"
+            android:textSize="35sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/titleArea"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+        <ImageButton
+            android:id="@+id/notice"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="20dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_notice_no"
+            app:layout_constraintBottom_toBottomOf="@+id/title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/title" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    android:fontFamily="@font/pretendard_bold"
-                    android:text="Feel'em"
-                    android:textColor="#007AFF"
-                    android:textSize="35sp"
-                    android:textStyle="bold"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+        <EditText
+            android:id="@+id/searchTxt"
+            android:layout_width="0dp"
+            android:layout_height="45dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/border10"
+            android:hint="검색어를 입력해 주세요."
+            android:inputType="text"
+            android:paddingStart="15dp"
+            android:paddingEnd="55dp"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/notice"
+            app:layout_constraintStart_toStartOf="@+id/title"
+            app:layout_constraintTop_toBottomOf="@+id/title" />
 
-                <ImageButton
-                    android:id="@+id/notice"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:scaleType="fitCenter"
-                    android:background="@android:color/transparent"
-                    android:src="@drawable/notice_no"
-                    android:layout_marginEnd="20dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+        <ImageButton
+            android:id="@+id/searchBtn"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="15dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_search"
+            app:layout_constraintBottom_toBottomOf="@+id/searchTxt"
+            app:layout_constraintEnd_toEndOf="@+id/searchTxt"
+            app:layout_constraintTop_toTopOf="@+id/searchTxt" />
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/constraint1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="22dp"
-                android:layout_marginEnd="22dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/titleArea">
-
-                <TextView
-                    android:id="@+id/txt1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:fontFamily="@font/pretendard_bold"
-                    android:text="맞춤 추천 필터"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recommendFilter"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:overScrollMode="never"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                    app:layout_constraintTop_toBottomOf="@+id/txt1"
-                    tools:listitem="@layout/i_filter" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/constraint2"
-                android:layout_width="match_parent"
-                android:layout_height="335dp"
-                android:layout_marginTop="25dp"
-                android:background="@drawable/border_home_contents2"
-                android:paddingStart="25dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/constraint1">
-
-                <TextView
-                    android:id="@+id/txt2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:fontFamily="@font/pretendard_bold"
-                    android:text="취향 저격 스튜디오"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    app:layout_constraintBottom_toTopOf="@+id/recommendStudio"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recommendStudio"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="15dp"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:overScrollMode="never"
-                    android:paddingEnd="5dp"
-                    app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/txt2"
-                    app:spanCount="3"
-                    tools:itemCount="6"
-                    tools:layout_editor_absoluteX="10dp"
-                    tools:listitem="@layout/i_studio" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/constraint3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="22dp"
-                android:layout_marginTop="25dp"
-                android:layout_marginEnd="22dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/constraint2">
-
-                <TextView
-                    android:id="@+id/txt3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:fontFamily="@font/pretendard_bold"
-                    android:text="떠오르는 트렌디 필터"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/HOTFilter"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:overScrollMode="never"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                    app:layout_constraintTop_toBottomOf="@+id/txt3"
-                    tools:layout_editor_absoluteX="0dp"
-                    tools:listitem="@layout/i_filter" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/constraint4"
-                android:layout_width="match_parent"
-                android:layout_height="335dp"
-                android:layout_marginTop="25dp"
-                android:background="@drawable/border_home_contents3"
-                android:paddingLeft="25sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/constraint3">
-
-                <TextView
-                    android:id="@+id/txt4"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:fontFamily="@font/pretendard_bold"
-                    android:text="최근 HOT한 스튜디오"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    app:layout_constraintBottom_toTopOf="@+id/HOTStudio"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/HOTStudio"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="15dp"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:overScrollMode="never"
-                    android:paddingEnd="5dp"
-                    app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/txt4"
-                    app:spanCount="3"
-                    tools:itemCount="6"
-                    tools:layout_editor_absoluteX="10dp"
-                    tools:listitem="@layout/i_studio" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:overScrollMode="never"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/titleArea">
 
     </ScrollView>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/navigationbar"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="70dp"
         android:background="@drawable/border_navigationbar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -239,45 +100,33 @@
             android:id="@+id/home"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:scaleType="fitCenter"
             android:background="@android:color/transparent"
-            android:src="@drawable/home_yes"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/search"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageButton
-            android:id="@+id/search"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
             android:scaleType="fitCenter"
-            android:background="@android:color/transparent"
-            android:src="@drawable/search_no"
+            android:src="@drawable/icon_home_yes"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/filter"
-            app:layout_constraintStart_toEndOf="@id/home"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
             android:id="@+id/filter"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:scaleType="fitCenter"
             android:background="@android:color/transparent"
-            android:src="@drawable/create_no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_create_no"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/bookmark"
+            app:layout_constraintStart_toEndOf="@id/home"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
             android:id="@+id/bookmark"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:scaleType="fitCenter"
             android:background="@android:color/transparent"
-            android:src="@drawable/bookmark_no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_bookmark_no"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/myPage"
             app:layout_constraintStart_toEndOf="@id/filter"
@@ -287,9 +136,9 @@
             android:id="@+id/myPage"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:scaleType="fitCenter"
             android:background="@android:color/transparent"
-            android:src="@drawable/mypage_no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_mypage_no"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/bookmark"

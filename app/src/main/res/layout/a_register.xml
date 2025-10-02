@@ -34,7 +34,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="18dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/back_btn2"
+            android:src="@drawable/btn_back_black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

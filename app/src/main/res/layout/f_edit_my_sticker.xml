@@ -52,7 +52,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="17dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ai_close_btn"
+                android:src="@drawable/btn_close"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -79,7 +79,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/customseekbar_check_no"
+                android:src="@drawable/btn_check_white"
                 android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintRight_toRightOf="parent"

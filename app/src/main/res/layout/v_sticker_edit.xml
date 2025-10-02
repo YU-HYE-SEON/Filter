@@ -11,7 +11,7 @@
         android:id="@+id/editFrame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/sticker_edit_frame"
+        android:src="@drawable/icon_sticker_edit_frame"
         android:visibility="invisible" />
 
     <ImageView
@@ -28,7 +28,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_gravity="top|start"
-        android:src="@drawable/sticker_delete_icon"
+        android:src="@drawable/icon_sticker_delete"
         android:translationX="-15dp"
         android:translationY="-15dp"
         android:visibility="invisible" />
@@ -38,7 +38,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_gravity="bottom|end"
-        android:src="@drawable/sticker_size_controller"
+        android:src="@drawable/icon_sticker_size_controller"
         android:translationX="15dp"
         android:translationY="15dp"
         android:visibility="invisible" />

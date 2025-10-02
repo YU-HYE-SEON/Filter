@@ -33,7 +33,7 @@
                     android:layout_height="70dp"
                     android:padding="5dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/mysticker_icon" />
+                    android:src="@drawable/icon_mysticker" />
 
             </LinearLayout>
 
@@ -49,7 +49,7 @@
                     android:layout_height="70dp"
                     android:padding="5dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/load_sticker_icon" />
+                    android:src="@drawable/icon_load_sticker" />
 
             </LinearLayout>
 
@@ -65,7 +65,7 @@
                     android:layout_height="70dp"
                     android:padding="5dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/brush_icon" />
+                    android:src="@drawable/icon_brush" />
 
             </LinearLayout>
 
@@ -81,7 +81,7 @@
                     android:layout_height="70dp"
                     android:padding="5dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/aisticker_icon" />
+                    android:src="@drawable/icon_aisticker" />
 
             </LinearLayout>
 

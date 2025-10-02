@@ -37,6 +37,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.11")
     implementation("com.google.mlkit:face-detection:16.1.5")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
