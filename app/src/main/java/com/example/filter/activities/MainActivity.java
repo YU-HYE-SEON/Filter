@@ -182,7 +182,7 @@ public class MainActivity extends BaseActivity {
             int idx = (page * size + i) % demoImgs.length;
             list.add(new FilterItem(demoImgs[idx],
                     "필터이름" + (page * size + i + 1),
-                    "닉네임" + (page * size + i + 1),
+                    "@" + "닉네임" + (page * size + i + 1),
                     "000",
                     0
             ));

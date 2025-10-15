@@ -8,15 +8,15 @@
         android:id="@+id/topArea"
         android:layout_width="match_parent"
         android:layout_height="120dp"
-        android:background="@android:color/transparent"
+        android:background="@drawable/border_detail_top_area"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
             android:id="@+id/backBtn"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="18dp"
             android:scaleType="centerCrop"
@@ -29,37 +29,37 @@
             android:id="@+id/nickname"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/pretendard_semibold"
+            android:fontFamily="@font/pretendard_bold"
             android:text="닉네임"
             android:textAlignment="textStart"
             android:textColor="@color/black"
-            android:textSize="20sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@+id/backBtn"
             app:layout_constraintStart_toEndOf="@+id/backBtn"
             app:layout_constraintTop_toTopOf="@+id/backBtn" />
 
         <TextView
-            android:id="@+id/reportBtn"
+            android:id="@+id/deleteBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/pretendard_regular"
-            android:text="@string/underline_report"
+            android:layout_marginEnd="16dp"
+            android:fontFamily="@font/pretendard_medium"
+            android:text="삭제"
             android:textAlignment="textStart"
-            android:textColor="@color/black"
-            android:textSize="20sp"
+            android:textColor="#FF5C8A"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="@+id/shareBtn"
             app:layout_constraintEnd_toStartOf="@+id/shareBtn"
             app:layout_constraintTop_toTopOf="@+id/shareBtn" />
 
-        <ImageButton
+        <ImageView
             android:id="@+id/shareBtn"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="18dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/btn_back_black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/btn_share"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -86,6 +86,8 @@
                 android:id="@+id/imgBox"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
                 app:layout_constraintBottom_toTopOf="@+id/bottomArea"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -96,7 +98,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
-                    android:background="#C8C8C8"
+                    android:background="#90989F"
                     android:scaleType="fitCenter"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -104,11 +106,13 @@
 
                 <ImageButton
                     android:id="@+id/originalBtn"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="10dp"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/icon_original"
+                    android:src="@drawable/icon_original_black"
                     app:layout_constraintBottom_toBottomOf="@+id/img"
                     app:layout_constraintEnd_toEndOf="@+id/img" />
 
@@ -118,124 +122,107 @@
                 android:id="@+id/bottomArea"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingTop="50dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
 
-                <TextView
-                    android:id="@+id/filterTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/pretendard_semibold"
-                    android:text="필터 이름"
-                    android:textAlignment="textStart"
-                    android:textColor="@color/black"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <ImageView
-                    android:id="@+id/bookmark"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:src="@drawable/icon_bookmark_no"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/tagBox"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginEnd="5dp"
+                    app:layout_constraintEnd_toStartOf="@id/bookmark"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/filterTitle">
+                    app:layout_constraintTop_toTopOf="parent">
 
                     <TextView
                         android:id="@+id/tag1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="#C8C8C8"
+                        android:background="@drawable/btn_tag"
                         android:breakStrategy="simple"
-                        android:fontFamily="@font/pretendard_regular"
+                        android:fontFamily="@font/pretendard_medium"
                         android:includeFontPadding="false"
-                        android:paddingStart="8dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="4dp"
-                        android:text="#태그1_가나다라_마바"
-                        android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:paddingStart="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="20dp"
+                        android:paddingBottom="10dp"
+                        android:text="태그1"
+                        android:textAlignment="textStart"
+                        android:textColor="#007AFF"
+                        android:textSize="12sp"
                         android:visibility="visible" />
 
                     <TextView
                         android:id="@+id/tag2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="#C8C8C8"
+                        android:background="@drawable/btn_tag"
                         android:breakStrategy="simple"
-                        android:fontFamily="@font/pretendard_regular"
+                        android:fontFamily="@font/pretendard_medium"
                         android:includeFontPadding="false"
-                        android:paddingStart="8dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="4dp"
-                        android:text="#태그2_사아자차카"
-                        android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:paddingStart="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="20dp"
+                        android:paddingBottom="10dp"
+                        android:text="태그2"
+                        android:textAlignment="textStart"
+                        android:textColor="#007AFF"
+                        android:textSize="12sp"
                         android:visibility="visible" />
 
                     <TextView
                         android:id="@+id/tag3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="#C8C8C8"
+                        android:background="@drawable/btn_tag"
                         android:breakStrategy="simple"
-                        android:fontFamily="@font/pretendard_regular"
+                        android:fontFamily="@font/pretendard_medium"
                         android:includeFontPadding="false"
-                        android:paddingStart="8dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="4dp"
-                        android:text="#태그3_타파하_까_따_빠_싸_짜_태그33_태그_333태그그"
-                        android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:paddingStart="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="20dp"
+                        android:paddingBottom="10dp"
+                        android:text="태그3"
+                        android:textAlignment="textStart"
+                        android:textColor="#007AFF"
+                        android:textSize="12sp"
                         android:visibility="visible" />
 
                     <TextView
                         android:id="@+id/tag4"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="#C8C8C8"
+                        android:background="@drawable/btn_tag"
                         android:breakStrategy="simple"
-                        android:fontFamily="@font/pretendard_regular"
+                        android:fontFamily="@font/pretendard_medium"
                         android:includeFontPadding="false"
-                        android:paddingStart="8dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="4dp"
-                        android:text="#태그11태그2태그33태그4태그55태태_그6태그7태_그8태그9태그0태그1태그2태그3태그4태그5태그6태그7태그_8_태그9태그0태그1태그2태그3태그4태그5태그6태그_7태_그8태_그9"
-                        android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:paddingStart="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="20dp"
+                        android:paddingBottom="10dp"
+                        android:text="태그4"
+                        android:textAlignment="textStart"
+                        android:textColor="#007AFF"
+                        android:textSize="12sp"
                         android:visibility="visible" />
 
                     <TextView
                         android:id="@+id/tag5"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="#C8C8C8"
+                        android:background="@drawable/btn_tag"
                         android:breakStrategy="simple"
-                        android:fontFamily="@font/pretendard_regular"
+                        android:fontFamily="@font/pretendard_medium"
                         android:includeFontPadding="false"
-                        android:paddingStart="8dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="4dp"
-                        android:text="#태그5"
-                        android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:paddingStart="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="20dp"
+                        android:paddingBottom="10dp"
+                        android:text="태그5"
+                        android:textAlignment="textStart"
+                        android:textColor="#007AFF"
+                        android:textSize="12sp"
                         android:visibility="visible" />
 
                     <androidx.constraintlayout.helper.widget.Flow
@@ -243,100 +230,109 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         app:constraint_referenced_ids="tag1,tag2,tag3,tag4,tag5"
+                        app:flow_horizontalBias="0"
                         app:flow_horizontalGap="12dp"
                         app:flow_horizontalStyle="packed"
                         app:flow_verticalGap="12dp"
                         app:flow_wrapMode="chain"
-                        app:flow_horizontalBias="0"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
+                <ImageView
+                    android:id="@+id/bookmark"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_bookmark_no_blue"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/tagBox" />
+
                 <TextView
-                    android:id="@+id/saveCount"
+                    android:id="@+id/filterTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    android:fontFamily="@font/pretendard_regular"
-                    android:text="0"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/pretendard_semibold"
+                    android:text="필터이름"
                     android:textAlignment="textStart"
                     android:textColor="@color/black"
-                    android:textSize="16sp"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tagBox" />
 
-                <TextView
-                    android:id="@+id/saveTxt"
-                    android:layout_width="wrap_content"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/countBox"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    android:fontFamily="@font/pretendard_regular"
-                    android:text=" 저장 · "
-                    android:textAlignment="textStart"
-                    android:textColor="@color/black"
-                    android:textSize="16sp"
-                    app:layout_constraintStart_toEndOf="@+id/saveCount"
-                    app:layout_constraintTop_toBottomOf="@+id/tagBox" />
+                    android:layout_marginTop="16dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/filterTitle">
 
-                <TextView
-                    android:id="@+id/useCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    android:fontFamily="@font/pretendard_regular"
-                    android:text="0"
-                    android:textAlignment="textStart"
-                    android:textColor="@color/black"
-                    android:textSize="16sp"
-                    app:layout_constraintStart_toEndOf="@+id/saveTxt"
-                    app:layout_constraintTop_toBottomOf="@+id/tagBox" />
+                    <TextView
+                        android:id="@+id/saveCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/pretendard_medium"
+                        android:text="0 저장"
+                        android:textAlignment="textStart"
+                        android:textColor="#90989F"
+                        android:textSize="12sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:id="@+id/useTxt"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    android:fontFamily="@font/pretendard_regular"
-                    android:text=" 사용"
-                    android:textAlignment="textStart"
-                    android:textColor="@color/black"
-                    android:textSize="16sp"
-                    app:layout_constraintStart_toEndOf="@+id/useCount"
-                    app:layout_constraintTop_toBottomOf="@+id/tagBox" />
+                    <TextView
+                        android:id="@+id/dot"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/pretendard_medium"
+                        android:text=" · "
+                        android:textAlignment="center"
+                        android:textColor="#90989F"
+                        android:textSize="12sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/saveCount"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/useCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/pretendard_medium"
+                        android:text="0 사용"
+                        android:textAlignment="textStart"
+                        android:textColor="#90989F"
+                        android:textSize="12sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/dot"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/reviewBox"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
-                    android:layout_marginTop="25dp"
+                    android:layout_marginTop="16dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/useTxt">
-
-                    <TextView
-                        android:id="@+id/reviewTxt"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/pretendard_semibold"
-                        android:text="후기 "
-                        android:textAlignment="textStart"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toBottomOf="@+id/countBox">
 
                     <TextView
                         android:id="@+id/reviewCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/pretendard_semibold"
-                        android:text="(0)"
+                        android:fontFamily="@font/pretendard_medium"
+                        android:text="후기 (0)"
                         android:textAlignment="textStart"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        app:layout_constraintStart_toEndOf="@+id/reviewTxt"
+                        android:textColor="#90989F"
+                        android:textSize="14sp"
+                        app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
@@ -347,7 +343,7 @@
                         android:text="@string/underline_more"
                         android:textAlignment="textStart"
                         android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -355,11 +351,11 @@
                         android:id="@+id/noReviewTxt"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/pretendard_regular"
+                        android:fontFamily="@font/roboto_medium"
                         android:text="아직 등록된 후기가 없습니다"
                         android:textAlignment="center"
-                        android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:textColor="#90989F"
+                        android:textSize="12sp"
                         android:visibility="visible"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -384,7 +380,7 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
-                            android:background="#C8C8C8"
+                            android:background="#90989F"
                             android:scaleType="centerCrop" />
 
                         <ImageView
@@ -392,7 +388,7 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
-                            android:background="#C8C8C8"
+                            android:background="#90989F"
                             android:scaleType="centerCrop" />
 
                     </LinearLayout>
@@ -415,7 +411,7 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
-                            android:background="#C8C8C8"
+                            android:background="#90989F"
                             android:scaleType="centerCrop" />
 
                         <LinearLayout
@@ -435,7 +431,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="match_parent"
                                     android:layout_weight="1"
-                                    android:background="#C8C8C8"
+                                    android:background="#90989F"
                                     android:scaleType="centerCrop" />
 
                                 <ImageView
@@ -443,7 +439,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="match_parent"
                                     android:layout_weight="1"
-                                    android:background="#C8C8C8"
+                                    android:background="#90989F"
                                     android:scaleType="centerCrop" />
 
                             </LinearLayout>
@@ -459,7 +455,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="match_parent"
                                     android:layout_weight="1"
-                                    android:background="#C8C8C8"
+                                    android:background="#90989F"
                                     android:scaleType="centerCrop" />
 
                                 <ImageView
@@ -467,7 +463,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="match_parent"
                                     android:layout_weight="1"
-                                    android:background="#C8C8C8"
+                                    android:background="#90989F"
                                     android:scaleType="centerCrop" />
 
                             </LinearLayout>
@@ -488,14 +484,14 @@
         android:id="@+id/btnBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/border_filter_detail_btn_box"
+        android:background="@color/white"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <androidx.appcompat.widget.AppCompatButton
+        <!--<androidx.appcompat.widget.AppCompatButton
             android:id="@+id/buyBtn"
             android:layout_width="0dp"
             android:layout_height="60dp"
@@ -503,6 +499,22 @@
             android:layout_marginEnd="4dp"
             android:text="구매 : 000P"
             android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/useBtn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />-->
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/changeBtn"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/btn_change"
+            android:fontFamily="@font/pretendard_semibold"
+            android:text="가격 수정"
+            android:textColor="#007AFF"
+            android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/useBtn"
             app:layout_constraintStart_toStartOf="parent"
@@ -514,11 +526,14 @@
             android:layout_height="60dp"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="16dp"
+            android:background="@drawable/btn_use"
+            android:fontFamily="@font/pretendard_semibold"
             android:text="사용하기"
-            android:textSize="20sp"
+            android:textColor="@color/white"
+            android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/buyBtn"
+            app:layout_constraintStart_toEndOf="@+id/changeBtn"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

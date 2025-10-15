@@ -1,12 +1,9 @@
 package com.example.filter.activities;
 
 import android.content.Intent;
-import android.graphics.text.LineBreaker;
-import android.os.Build;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.text.Layout;
-import android.text.SpannableString;
-import android.text.style.LeadingMarginSpan;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -15,25 +12,30 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 
 public class FilterDetailActivity extends BaseActivity {
-    private ImageButton backBtn, shareBtn, originalBtn;
-    private TextView nickname, reportBtn, filterTitle, moreBtn, noReviewTxt;
+    private ImageButton backBtn, originalBtn;
+    private ImageView shareBtn;
+    private TextView nickname, deleteBtn, filterTitle, moreBtn, noReviewTxt;
     private TextView tag1, tag2, tag3, tag4, tag5;
     private TextView saveCount, useCount, reviewCount;
     private ImageView img, bookmark;
     private LinearLayout reviewBox1, reviewBox2;
     private ImageView rb1Img1, rb1Img2, rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5;
     private ConstraintLayout tagBox, btnBox;
-    private AppCompatButton buyBtn, useBtn;
+    private AppCompatButton changeBtn, useBtn;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -43,7 +45,7 @@ public class FilterDetailActivity extends BaseActivity {
         shareBtn = findViewById(R.id.shareBtn);
         originalBtn = findViewById(R.id.originalBtn);
         nickname = findViewById(R.id.nickname);
-        reportBtn = findViewById(R.id.reportBtn);
+        deleteBtn = findViewById(R.id.deleteBtn);
         filterTitle = findViewById(R.id.filterTitle);
         moreBtn = findViewById(R.id.moreBtn);
         noReviewTxt = findViewById(R.id.noReviewTxt);
@@ -68,7 +70,7 @@ public class FilterDetailActivity extends BaseActivity {
         rb2Img4 = findViewById(R.id.rb2Img4);
         rb2Img5 = findViewById(R.id.rb2Img5);
         btnBox = findViewById(R.id.btnBox);
-        buyBtn = findViewById(R.id.buyBtn);
+        changeBtn = findViewById(R.id.changeBtn);
         useBtn = findViewById(R.id.useBtn);
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
@@ -83,22 +85,64 @@ public class FilterDetailActivity extends BaseActivity {
         if (intent != null) {
             String imgUrl = intent.getStringExtra("imgUrl");
             String title = intent.getStringExtra("filterTitle");
+            String nick = intent.getStringExtra("nickname");
+            int count = intent.getIntExtra("count", 0);
+
+            //if (imgUrl != null) Glide.with(this).load(imgUrl).fitCenter().into(img);
+            if (imgUrl != null) {
+                Glide.with(this)
+                        .asBitmap()
+                        .load(imgUrl)
+                        .fitCenter()
+                        .into(new CustomTarget<Bitmap>() {
+                            @Override
+                            public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                                img.setImageBitmap(resource);
+
+                                Palette.from(resource).maximumColorCount(8).generate(palette -> {
+                                    int dom = (palette != null) ? palette.getDominantColor(0xFF7F7F7F) : 0xFF7F7F7F;
+                                    double lum = ColorUtils.calculateLuminance(dom);
+                                    boolean isDark = lum < 0.5;
+
+                                    originalBtn.setImageResource(isDark
+                                            ? R.drawable.icon_original_white
+                                            : R.drawable.icon_original_black);
+                                });
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                            }
+                        });
+            }
+            if (title != null) filterTitle.setText(title);
+            if (nick != null) nickname.setText(nick);
+
+            //saveCount.setText(String.valueOf(save)+" 저장");
+            useCount.setText(String.valueOf(count) + " 사용");
+        }
+
+        /*Intent intent = getIntent();
+        if (intent != null) {
+            String imgUrl = intent.getStringExtra("imgUrl");
+            String title = intent.getStringExtra("filterTitle");
             String price = intent.getStringExtra("price");
             String nick = intent.getStringExtra("nickname");
             int count = intent.getIntExtra("count", 0);
 
             if (imgUrl != null) Glide.with(this).load(imgUrl).fitCenter().into(img);
             if (title != null) filterTitle.setText(title);
-            if (price != null) buyBtn.setText("구매 : " + price + "P");
+            if (price != null) changeBtn.setText("구매 : " + price + "P");
             if (nick != null) nickname.setText(nick);
             useCount.setText(String.valueOf(count));
-        }
+        }*/
 
-        applyHashtagHanging(tag1);
-        applyHashtagHanging(tag2);
-        applyHashtagHanging(tag3);
-        applyHashtagHanging(tag4);
-        applyHashtagHanging(tag5);
+        //applyHashtagHanging(tag1);
+        //applyHashtagHanging(tag2);
+        //applyHashtagHanging(tag3);
+        //applyHashtagHanging(tag4);
+        //applyHashtagHanging(tag5);
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
@@ -106,7 +150,7 @@ public class FilterDetailActivity extends BaseActivity {
         });
     }
 
-    private void applyHashtagHanging(TextView tv) {
+    /*private void applyHashtagHanging(TextView tv) {
         CharSequence original = tv.getText();
         if (original == null) return;
 
@@ -126,5 +170,5 @@ public class FilterDetailActivity extends BaseActivity {
         tv.setIncludeFontPadding(false);
 
         tv.requestLayout();
-    }
+    }*/
 }

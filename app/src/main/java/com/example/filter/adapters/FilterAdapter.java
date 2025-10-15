@@ -48,7 +48,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         holder.filterTitle.setText(ellipsize(item.filterTitle, 6));
         holder.nickname.setText(ellipsize(item.nickname, 6));
         holder.price.setText(String.valueOf(item.price));
-        holder.count.setText(String.valueOf(item.count));
+        holder.count.setText(String.valueOf(item.count + "회 사용"));
 
         Glide.with(holder.filterImage.getContext())
                 .load(item.filterImageUrl)
@@ -79,7 +79,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
             filterTitle = itemView.findViewById(R.id.filterTitle);
             nickname = itemView.findViewById(R.id.nickname);
             price = itemView.findViewById(R.id.price);
-            count = itemView.findViewById(R.id.count);
+            count = itemView.findViewById(R.id.countTxt);
 
             itemView.setOnClickListener(v -> {
                 int pos = getAdapterPosition();

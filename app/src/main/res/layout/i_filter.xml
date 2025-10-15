@@ -4,35 +4,45 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <ImageView
-        android:id="@+id/filterImage"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/imageBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:background="#BDBDBD"
-        android:scaleType="fitCenter"
+        android:layout_margin="8dp"
+        app:cardCornerRadius="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/filterImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:background="#BDBDBD"
+            android:scaleType="fitCenter" />
+
+    </com.google.android.material.card.MaterialCardView>
 
     <ImageView
         android:id="@+id/bookmark"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_marginTop="-6dp"
         android:layout_marginEnd="15dp"
-        android:src="@drawable/icon_bookmark_no"
-        app:layout_constraintEnd_toEndOf="@+id/filterImage"
-        app:layout_constraintTop_toTopOf="@+id/filterImage" />
+        android:elevation="4dp"
+        android:src="@drawable/icon_bookmark_no_gray"
+        app:layout_constraintEnd_toEndOf="@+id/imageBox"
+        app:layout_constraintTop_toTopOf="@+id/imageBox" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/filterInfo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="@+id/filterImage"
-        app:layout_constraintStart_toStartOf="@+id/filterImage"
-        app:layout_constraintTop_toBottomOf="@+id/filterImage">
+        app:layout_constraintEnd_toEndOf="@+id/imageBox"
+        app:layout_constraintStart_toStartOf="@+id/imageBox"
+        app:layout_constraintTop_toBottomOf="@+id/imageBox">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -46,63 +56,63 @@
                 android:id="@+id/filterTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="필터이름"
+                android:textAlignment="textStart"
                 android:textColor="#000000"
-                android:textSize="24sp"
-                android:textStyle="bold"
+                android:textSize="14sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/by"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="by. "
-                android:textSize="16sp"
-                android:layout_marginTop="5dp"
-                app:layout_constraintStart_toStartOf="@+id/filterTitle"
-                app:layout_constraintTop_toBottomOf="@+id/filterTitle" />
 
             <TextView
                 android:id="@+id/nickname"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:fontFamily="@font/pretendard_regular"
                 android:text="닉네임"
                 android:textAlignment="textStart"
-                android:textSize="16sp"
-                android:layout_marginTop="5dp"
-                app:layout_constraintTop_toBottomOf="@+id/filterTitle"
-                app:layout_constraintStart_toEndOf="@+id/by" />
+                android:textColor="#90989F"
+                android:textSize="10sp"
+                app:layout_constraintStart_toStartOf="@+id/filterTitle"
+                app:layout_constraintTop_toBottomOf="@+id/filterTitle" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_coin"
+                app:layout_constraintBottom_toBottomOf="@+id/price"
+                app:layout_constraintEnd_toStartOf="@+id/price"
+                app:layout_constraintTop_toTopOf="@+id/price" />
+
 
             <TextView
                 android:id="@+id/price"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_bold"
                 android:text="000"
-                android:textSize="20sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/filterTitle"
-                app:layout_constraintBottom_toBottomOf="@+id/filterTitle" />
-
-            <TextView
-                android:id="@+id/count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="00"
                 android:textAlignment="textEnd"
-                android:textSize="16sp"
-                app:layout_constraintBottom_toBottomOf="@+id/countTxt"
-                app:layout_constraintTop_toTopOf="@+id/countTxt"
-                app:layout_constraintEnd_toStartOf="@+id/countTxt" />
+                android:textColor="#007AFF"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="@+id/filterTitle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/filterTitle" />
 
             <TextView
                 android:id="@+id/countTxt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="회 사용"
-                android:textSize="16sp"
-                app:layout_constraintTop_toTopOf="@+id/nickname"
-                app:layout_constraintEnd_toEndOf="@+id/price" />
+                android:fontFamily="@font/pretendard_regular"
+                android:text="0회 사용"
+                android:textAlignment="textEnd"
+                android:textColor="#90989F"
+                android:textSize="10sp"
+                app:layout_constraintBottom_toBottomOf="@+id/nickname"
+                app:layout_constraintEnd_toEndOf="@+id/price"
+                app:layout_constraintTop_toTopOf="@+id/nickname" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

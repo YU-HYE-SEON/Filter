@@ -16,16 +16,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
+        <ImageView
             android:id="@+id/logo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="160dp"
+            android:layout_height="60dp"
             android:layout_marginStart="20dp"
-            android:fontFamily="@font/pretendard_bold"
-            android:text="Feel'em"
-            android:textColor="#007AFF"
-            android:textSize="35sp"
-            android:textStyle="bold"
+            android:src="@drawable/logo"
+            android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -37,23 +34,25 @@
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_notice_no"
-            app:layout_constraintBottom_toBottomOf="@+id/title"
+            app:layout_constraintBottom_toBottomOf="@+id/logo"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/title" />
+            app:layout_constraintTop_toTopOf="@+id/logo" />
 
         <EditText
             android:id="@+id/searchTxt"
             android:layout_width="0dp"
             android:layout_height="45dp"
             android:layout_marginTop="20dp"
-            android:background="@drawable/border_search"
-            android:hint="검색어를 입력해 주세요."
+            android:background="@drawable/search"
+            android:hint="나만의 Feel'em 찾아봐!"
             android:inputType="text"
             android:paddingStart="15dp"
             android:paddingEnd="55dp"
             android:scrollHorizontally="true"
             android:singleLine="true"
-            android:textSize="18sp"
+            android:textColorHint="#ACD4FF"
+            android:textSize="14sp"
+            android:fontFamily="@font/pretendard_regular"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/notice"
             app:layout_constraintStart_toStartOf="@+id/logo"
@@ -100,7 +99,7 @@
             android:id="@+id/home"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:layout_marginStart="40dp"
+            android:layout_marginStart="50dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_home_yes"
@@ -116,17 +115,17 @@
             android:scaleType="fitCenter"
             android:src="@drawable/icon_create_no"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/bookmark"
+            app:layout_constraintEnd_toStartOf="@id/archive"
             app:layout_constraintStart_toEndOf="@id/home"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/bookmark"
+            android:id="@+id/archive"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
-            android:src="@drawable/icon_bookmark_no"
+            android:src="@drawable/icon_archive_no"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/myPage"
             app:layout_constraintStart_toEndOf="@id/filter"
@@ -136,7 +135,7 @@
             android:id="@+id/myPage"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:layout_marginEnd="40dp"
+            android:layout_marginEnd="50dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_mypage_no"

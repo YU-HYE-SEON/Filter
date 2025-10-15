@@ -315,9 +315,9 @@ public class BrushFragment extends Fragment {
             });
         }
 
-        tintPenButton(lastPenColor);
-        tintGlowButton(lastGlowColor);
-        tintCrayonButton(lastCrayonColor);
+        //tintPenButton(lastPenColor);
+        //tintGlowButton(lastGlowColor);
+        //tintCrayonButton(lastCrayonColor);
 
         if (brushOverlay != null) {
             brushDraw = pickupExistingBrushOverlay(brushOverlay);
@@ -500,6 +500,7 @@ public class BrushFragment extends Fragment {
             brushDraw.setDrawingEnabled(!isPenPanelOpen);
 
             setModeAlpha(startMode);
+            setIcon(startMode);
             lastMode = startMode;
 
             brushClipListener = (v, a, b, c, d, e, f, g, h) -> {
@@ -1662,9 +1663,10 @@ public class BrushFragment extends Fragment {
             setLastColor(mode, chosen);
             setLastSize(mode, dia);
 
-            if (mode == BrushOverlayView.BrushMode.GLOW) tintGlowButton(chosen);
-            else if (mode == BrushOverlayView.BrushMode.CRAYON) tintCrayonButton(chosen);
-            else tintPenButton(chosen);
+            //if (mode == BrushOverlayView.BrushMode.GLOW) tintGlowButton(chosen);
+            //else if (mode == BrushOverlayView.BrushMode.CRAYON) tintCrayonButton(chosen);
+            //else tintPenButton(chosen);
+            setIcon(mode);
 
             brushState.color = chosen;
             brushState.sizePx = dia;
@@ -2097,7 +2099,7 @@ public class BrushFragment extends Fragment {
     }
 
     /// 버튼 UI ///
-    private void tintPenButton(int argb) {
+    /*private void tintPenButton(int argb) {
         if (pen == null) return;
         int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
         ImageViewCompat.setImageTintList(pen, ColorStateList.valueOf(opaque));
@@ -2116,6 +2118,48 @@ public class BrushFragment extends Fragment {
         int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
         ImageViewCompat.setImageTintList(crayon, ColorStateList.valueOf(opaque));
         crayonTxt.setTextColor(argb);
+    }*/
+    private void setIcon(BrushOverlayView.BrushMode mode) {
+        //if (eraser == null) return;
+        //int res = (mode == BrushOverlayView.BrushMode.ERASER) ? R.drawable.icon_eraser_yes : R.drawable.icon_eraser_no;
+        //eraser.setImageResource(res);
+
+        if (pen != null) {
+            if (mode == BrushOverlayView.BrushMode.PEN) {
+                pen.setImageResource(R.drawable.icon_pen_yes);
+                penTxt.setTextColor(Color.parseColor("#C2FA7A"));
+            } else {
+                pen.setImageResource(R.drawable.icon_pen_no);
+                penTxt.setTextColor(Color.parseColor("#90989F"));
+            }
+        }
+        if (glowPen != null) {
+            if (mode == BrushOverlayView.BrushMode.GLOW) {
+                glowPen.setImageResource(R.drawable.icon_glow_yes);
+                glowPenTxt.setTextColor(Color.parseColor("#C2FA7A"));
+            } else {
+                glowPen.setImageResource(R.drawable.icon_glow_no);
+                glowPenTxt.setTextColor(Color.parseColor("#90989F"));
+            }
+        }
+        if (crayon != null) {
+            if (mode == BrushOverlayView.BrushMode.CRAYON) {
+                crayon.setImageResource(R.drawable.icon_pen_yes);
+                crayonTxt.setTextColor(Color.parseColor("#C2FA7A"));
+            } else {
+                crayon.setImageResource(R.drawable.icon_pen_no);
+                crayonTxt.setTextColor(Color.parseColor("#90989F"));
+            }
+        }
+        if (eraser != null) {
+            if (mode == BrushOverlayView.BrushMode.ERASER) {
+                eraser.setImageResource(R.drawable.icon_eraser_yes);
+                eraserTxt.setTextColor(Color.parseColor("#C2FA7A"));
+            } else {
+                eraser.setImageResource(R.drawable.icon_eraser_no);
+                eraserTxt.setTextColor(Color.parseColor("#90989F"));
+            }
+        }
     }
 
     private void setModeAlpha(BrushOverlayView.BrushMode mode) {
@@ -2136,6 +2180,7 @@ public class BrushFragment extends Fragment {
             eraser.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
             eraserTxt.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
         }
+        setIcon(mode);
     }
 
     /// 단위 변환 ///
