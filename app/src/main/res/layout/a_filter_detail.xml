@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/topArea"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/backBtn"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="18dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/btn_back_black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/nickname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_semibold"
+            android:text="닉네임"
+            android:textAlignment="textStart"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/backBtn"
+            app:layout_constraintStart_toEndOf="@+id/backBtn"
+            app:layout_constraintTop_toTopOf="@+id/backBtn" />
+
+        <TextView
+            android:id="@+id/reportBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_regular"
+            android:text="@string/underline_report"
+            android:textAlignment="textStart"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/shareBtn"
+            app:layout_constraintEnd_toStartOf="@+id/shareBtn"
+            app:layout_constraintTop_toTopOf="@+id/shareBtn" />
+
+        <ImageButton
+            android:id="@+id/shareBtn"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="18dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/btn_back_black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toTopOf="@+id/btnBox"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/topArea">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/imgBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintBottom_toTopOf="@+id/bottomArea"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/img"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    android:background="#C8C8C8"
+                    android:scaleType="fitCenter"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageButton
+                    android:id="@+id/originalBtn"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_original"
+                    app:layout_constraintBottom_toBottomOf="@+id/img"
+                    app:layout_constraintEnd_toEndOf="@+id/img" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/bottomArea"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="50dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
+                <TextView
+                    android:id="@+id/filterTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_semibold"
+                    android:text="필터 이름"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/black"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/bookmark"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:src="@drawable/icon_bookmark_no"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/tagBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/filterTitle">
+
+                    <TextView
+                        android:id="@+id/tag1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#C8C8C8"
+                        android:breakStrategy="simple"
+                        android:fontFamily="@font/pretendard_regular"
+                        android:includeFontPadding="false"
+                        android:paddingStart="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="4dp"
+                        android:text="#태그1_가나다라_마바"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/tag2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#C8C8C8"
+                        android:breakStrategy="simple"
+                        android:fontFamily="@font/pretendard_regular"
+                        android:includeFontPadding="false"
+                        android:paddingStart="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="4dp"
+                        android:text="#태그2_사아자차카"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/tag3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#C8C8C8"
+                        android:breakStrategy="simple"
+                        android:fontFamily="@font/pretendard_regular"
+                        android:includeFontPadding="false"
+                        android:paddingStart="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="4dp"
+                        android:text="#태그3_타파하_까_따_빠_싸_짜_태그33_태그_333태그그"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/tag4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#C8C8C8"
+                        android:breakStrategy="simple"
+                        android:fontFamily="@font/pretendard_regular"
+                        android:includeFontPadding="false"
+                        android:paddingStart="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="4dp"
+                        android:text="#태그11태그2태그33태그4태그55태태_그6태그7태_그8태그9태그0태그1태그2태그3태그4태그5태그6태그7태그_8_태그9태그0태그1태그2태그3태그4태그5태그6태그_7태_그8태_그9"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/tag5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#C8C8C8"
+                        android:breakStrategy="simple"
+                        android:fontFamily="@font/pretendard_regular"
+                        android:includeFontPadding="false"
+                        android:paddingStart="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="4dp"
+                        android:text="#태그5"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:visibility="visible" />
+
+                    <androidx.constraintlayout.helper.widget.Flow
+                        android:id="@+id/tagFlow"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:constraint_referenced_ids="tag1,tag2,tag3,tag4,tag5"
+                        app:flow_horizontalGap="12dp"
+                        app:flow_horizontalStyle="packed"
+                        app:flow_verticalGap="12dp"
+                        app:flow_wrapMode="chain"
+                        app:flow_horizontalBias="0"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <TextView
+                    android:id="@+id/saveCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:fontFamily="@font/pretendard_regular"
+                    android:text="0"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tagBox" />
+
+                <TextView
+                    android:id="@+id/saveTxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:fontFamily="@font/pretendard_regular"
+                    android:text=" 저장 · "
+                    android:textAlignment="textStart"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    app:layout_constraintStart_toEndOf="@+id/saveCount"
+                    app:layout_constraintTop_toBottomOf="@+id/tagBox" />
+
+                <TextView
+                    android:id="@+id/useCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:fontFamily="@font/pretendard_regular"
+                    android:text="0"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    app:layout_constraintStart_toEndOf="@+id/saveTxt"
+                    app:layout_constraintTop_toBottomOf="@+id/tagBox" />
+
+                <TextView
+                    android:id="@+id/useTxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:fontFamily="@font/pretendard_regular"
+                    android:text=" 사용"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    app:layout_constraintStart_toEndOf="@+id/useCount"
+                    app:layout_constraintTop_toBottomOf="@+id/tagBox" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/reviewBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:layout_marginTop="25dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/useTxt">
+
+                    <TextView
+                        android:id="@+id/reviewTxt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/pretendard_semibold"
+                        android:text="후기 "
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black"
+                        android:textSize="20sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/reviewCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/pretendard_semibold"
+                        android:text="(0)"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black"
+                        android:textSize="20sp"
+                        app:layout_constraintStart_toEndOf="@+id/reviewTxt"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/moreBtn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/pretendard_regular"
+                        android:text="@string/underline_more"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/noReviewTxt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/pretendard_regular"
+                        android:text="아직 등록된 후기가 없습니다"
+                        android:textAlignment="center"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:visibility="visible"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/moreBtn" />
+
+                    <LinearLayout
+                        android:id="@+id/reviewBox1"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="25dp"
+                        android:layout_marginBottom="25dp"
+                        android:orientation="horizontal"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/moreBtn">
+
+                        <ImageView
+                            android:id="@+id/rb1Img1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="#C8C8C8"
+                            android:scaleType="centerCrop" />
+
+                        <ImageView
+                            android:id="@+id/rb1Img2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="#C8C8C8"
+                            android:scaleType="centerCrop" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/reviewBox2"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="25dp"
+                        android:layout_marginBottom="25dp"
+                        android:orientation="horizontal"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/moreBtn">
+
+                        <ImageView
+                            android:id="@+id/rb2Img1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="#C8C8C8"
+                            android:scaleType="centerCrop" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/rb2Img2"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:background="#C8C8C8"
+                                    android:scaleType="centerCrop" />
+
+                                <ImageView
+                                    android:id="@+id/rb2Img3"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:background="#C8C8C8"
+                                    android:scaleType="centerCrop" />
+
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/rb2Img4"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:background="#C8C8C8"
+                                    android:scaleType="centerCrop" />
+
+                                <ImageView
+                                    android:id="@+id/rb2Img5"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:background="#C8C8C8"
+                                    android:scaleType="centerCrop" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </ScrollView>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/btnBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/border_filter_detail_btn_box"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buyBtn"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="4dp"
+            android:text="구매 : 000P"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/useBtn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/useBtn"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="16dp"
+            android:text="사용하기"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/buyBtn"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

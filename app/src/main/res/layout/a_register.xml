@@ -78,7 +78,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:animateLayoutChanges="true"
-            android:background="@drawable/border5"
+            android:background="@drawable/border_register_scrollview"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -96,7 +96,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/border6"
+                android:background="@drawable/border_register_edit"
                 android:fontFamily="@font/pretendard_semibold"
                 android:hint="이름을 작성해 주세요 (최대 15자)"
                 android:inputType="text"
@@ -130,7 +130,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/border6"
+                android:background="@drawable/border_register_edit"
                 android:fontFamily="@font/pretendard_semibold"
                 android:hint="관련된 태그를 작성해 주세요"
                 android:inputType="text"
@@ -179,7 +179,7 @@
                     android:id="@+id/freeRadio"
                     android:layout_width="90dp"
                     android:layout_height="35dp"
-                    android:background="@drawable/border6"
+                    android:background="@drawable/border_register_edit"
                     android:checked="true"
                     android:fontFamily="@font/pretendard_semibold"
                     android:text="무료"
@@ -191,7 +191,7 @@
                     android:layout_width="90dp"
                     android:layout_height="35dp"
                     android:layout_marginStart="10dp"
-                    android:background="@drawable/border6"
+                    android:background="@drawable/border_register_edit"
                     android:fontFamily="@font/pretendard_semibold"
                     android:text="유료"
                     android:textColor="@color/black"
@@ -208,7 +208,7 @@
                 <LinearLayout
                     android:layout_width="150dp"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/border6"
+                    android:background="@drawable/border_register_edit"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -270,7 +270,7 @@
                     android:id="@+id/registerBtn"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
-                    android:background="@drawable/border4"
+                    android:background="@drawable/border_register_btn"
                     android:enabled="true"
                     android:fontFamily="@font/pretendard_semibold"
                     app:layout_constraintBottom_toBottomOf="parent"

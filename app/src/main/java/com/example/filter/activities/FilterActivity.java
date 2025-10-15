@@ -18,12 +18,14 @@ import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -34,6 +36,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -215,6 +218,10 @@ public class FilterActivity extends BaseActivity {
         redoSticker = findViewById(R.id.redoSticker);
         originalSticker = findViewById(R.id.originalSticker);
 
+
+        Window window = getWindow();
+        window.setNavigationBarColor(Color.BLACK);
+
         StickerStore.get().init(getApplicationContext());
 
         if (photoPreview != null) {
@@ -297,6 +304,7 @@ public class FilterActivity extends BaseActivity {
                 full.setVisibility(View.GONE);
                 filter.setVisibility(View.VISIBLE);
                 main.setBackgroundColor(Color.BLACK);
+                window.setNavigationBarColor(Color.BLACK);
             }
         });
     }
@@ -1037,7 +1045,6 @@ public class FilterActivity extends BaseActivity {
         this.colorEdited = edited;
         refreshOriginalColorButton();
     }
-
 
 
     public int getCurrentValue(String filterType) {

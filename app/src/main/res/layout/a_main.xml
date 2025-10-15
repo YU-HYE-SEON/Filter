@@ -12,13 +12,12 @@
         android:layout_height="wrap_content"
         android:paddingTop="20dp"
         android:paddingBottom="20dp"
-        app:layout_constraintBottom_toTopOf="@+id/scrollView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/title"
+            android:id="@+id/logo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
@@ -47,7 +46,7 @@
             android:layout_width="0dp"
             android:layout_height="45dp"
             android:layout_marginTop="20dp"
-            android:background="@drawable/border10"
+            android:background="@drawable/border_search"
             android:hint="검색어를 입력해 주세요."
             android:inputType="text"
             android:paddingStart="15dp"
@@ -57,8 +56,8 @@
             android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/notice"
-            app:layout_constraintStart_toStartOf="@+id/title"
-            app:layout_constraintTop_toBottomOf="@+id/title" />
+            app:layout_constraintStart_toStartOf="@+id/logo"
+            app:layout_constraintTop_toBottomOf="@+id/logo" />
 
         <ImageButton
             android:id="@+id/searchBtn"
@@ -74,23 +73,24 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <ScrollView
-        android:id="@+id/scrollView"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:clipToPadding="false"
         android:overScrollMode="never"
         android:scrollbars="none"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/titleArea">
-
-    </ScrollView>
+        app:layout_constraintTop_toBottomOf="@+id/titleArea" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/navigationbar"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
+        android:layout_height="80dp"
         android:background="@drawable/border_navigationbar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -100,11 +100,11 @@
             android:id="@+id/home"
             android:layout_width="30dp"
             android:layout_height="30dp"
+            android:layout_marginStart="40dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_home_yes"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/filter"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -136,12 +136,12 @@
             android:id="@+id/myPage"
             android:layout_width="30dp"
             android:layout_height="30dp"
+            android:layout_marginEnd="40dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_mypage_no"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/bookmark"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

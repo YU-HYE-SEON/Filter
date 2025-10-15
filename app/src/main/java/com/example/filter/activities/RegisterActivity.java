@@ -14,6 +14,7 @@ import android.text.TextWatcher;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -168,6 +169,21 @@ public class RegisterActivity extends BaseActivity {
                     scrollView.getPaddingRight(),
                     bottomPad
             );
+            return insets;
+        });
+
+        ViewGroup.MarginLayoutParams scv = (ViewGroup.MarginLayoutParams) scrollView.getLayoutParams();
+        final int bottomMargin = scv.bottomMargin;
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets sys = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            Insets nav = insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.navigationBars());
+
+            int bottomInset = Math.max(Math.max(sys.bottom, nav.bottom), ime.bottom);
+
+            scv.bottomMargin = bottomMargin + bottomInset;
+            scrollView.setLayoutParams(scv);
+
             return insets;
         });
 

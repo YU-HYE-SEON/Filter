@@ -10,7 +10,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="360dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/border1"
+        android:background="@drawable/border_dialog"
         android:gravity="center"
         android:orientation="vertical">
 

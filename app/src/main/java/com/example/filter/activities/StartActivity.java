@@ -38,7 +38,7 @@ public class StartActivity extends BaseActivity {
     private ConstraintLayout bg;
     private TextView txt, logo;
     private LinearLayout logoBox, btn;
-    private AppCompatButton googleLogin, naverLogin, kakaoTalkLogin;
+    private AppCompatButton googleLogin, kakaoTalkLogin;
     private boolean isLogin = false;
     private boolean isSignUp = false;
 
@@ -53,7 +53,6 @@ public class StartActivity extends BaseActivity {
         logo = findViewById(R.id.logo);
         btn = findViewById(R.id.btn);
         googleLogin = findViewById(R.id.googleLogin);
-        naverLogin = findViewById(R.id.naverLogin);
         kakaoTalkLogin = findViewById(R.id.kakaoTalkLogin);
 
         new Handler().postDelayed(() -> {
@@ -150,16 +149,6 @@ public class StartActivity extends BaseActivity {
         }, 1000);
 
         googleLogin.setOnClickListener(v -> {
-            if (!isSignUp && !isLogin) {
-                showSignUpDialog();
-            } else if (!isLogin) {
-                loginFail();
-            } else if (isLogin) {
-                loginSuccess();
-            }
-        });
-
-        naverLogin.setOnClickListener(v -> {
             if (!isSignUp && !isLogin) {
                 showSignUpDialog();
             } else if (!isLogin) {

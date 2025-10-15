@@ -1,46 +1,21 @@
 package com.example.filter.activities;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
 import android.content.Intent;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.LinearGradient;
-import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.RadialGradient;
 import android.graphics.Rect;
-import android.graphics.Shader;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.view.animation.DecelerateInterpolator;
-import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatButton;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.example.filter.R;
-import com.example.filter.dialogs.SignUpDialog;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SignUpActivity extends BaseActivity {
     private EditText nickname;
@@ -56,6 +31,16 @@ public class SignUpActivity extends BaseActivity {
         nickname = findViewById(R.id.nickname);
         alertTxt = findViewById(R.id.alertTxt);
         btn = findViewById(R.id.btn);
+
+        View root = findViewById(android.R.id.content);
+        root.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            root.getWindowVisibleDisplayFrame(r);
+            int screenHeight = root.getRootView().getHeight();
+            int keypadHeight = screenHeight - r.bottom;
+            boolean keypadVisible = keypadHeight > screenHeight * 0.15;
+            if (!keypadVisible) nickname.clearFocus();
+        });
 
         nickname.addTextChangedListener(new TextWatcher() {
             @Override
@@ -149,7 +134,7 @@ public class SignUpActivity extends BaseActivity {
         return false;
     }
 
-    private boolean isPointInsideView(MotionEvent ev, View v) {
+    /*private boolean isPointInsideView(MotionEvent ev, View v) {
         if (v == null) return false;
         Rect r = new Rect();
         boolean visible = v.getGlobalVisibleRect(r);
@@ -157,13 +142,21 @@ public class SignUpActivity extends BaseActivity {
         final int x = (int) ev.getRawX();
         final int y = (int) ev.getRawY();
         return r.contains(x, y);
+    }*/
+
+    private boolean isPoint(MotionEvent ev) {
+        if (nickname == null) return false;
+        Rect r = new Rect();
+        boolean visible = nickname.getGlobalVisibleRect(r);
+        if (!visible) return false;
+        final int x = (int) ev.getRawX();
+        final int y = (int) ev.getRawY();
+        return r.contains(x, y);
+
+        //return isPointInsideView(ev, nickname);
     }
 
-    private boolean isPointInsideAnyEditText(MotionEvent ev) {
-        return isPointInsideView(ev, nickname);
-    }
-
-    private void hideKeyboardAndClearFocus() {
+    private void hideKeypadAndClearFocus() {
         View v = getCurrentFocus();
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (imm != null && v != null) {
@@ -183,10 +176,10 @@ public class SignUpActivity extends BaseActivity {
                 if (maybeTap) {
                     View focused = getCurrentFocus();
                     boolean focusedIsEdit = focused instanceof EditText;
-                    boolean tapInsideAnyEdit = isPointInsideAnyEditText(ev);
+                    boolean tapInsideEdit = isPoint(ev);
 
-                    if (focusedIsEdit && !tapInsideAnyEdit) {
-                        hideKeyboardAndClearFocus();
+                    if (focusedIsEdit && !tapInsideEdit) {
+                        hideKeypadAndClearFocus();
                     }
                 }
                 break;

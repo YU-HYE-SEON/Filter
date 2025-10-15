@@ -8,6 +8,10 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
@@ -17,8 +21,8 @@ import java.io.File;
 public class SavePhotoActivity extends BaseActivity {
     private ImageButton backBtn;
     private ImageView photo;
-    private ImageView backToHomeBtn;
-    private ImageView registerBtn;
+    private ConstraintLayout bottomArea;
+    private ImageView backToHomeBtn, registerBtn;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -26,8 +30,18 @@ public class SavePhotoActivity extends BaseActivity {
         setContentView(R.layout.a_save_photo);
         backBtn = findViewById(R.id.backBtn);
         photo = findViewById(R.id.photo);
+        bottomArea = findViewById(R.id.bottomArea);
         backToHomeBtn = findViewById(R.id.backToHomeBtn);
         registerBtn = findViewById(R.id.registerBtn);
+
+        ViewCompat.setOnApplyWindowInsetsListener(bottomArea, (v, insets) -> {
+            Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) v.getLayoutParams();
+            lp.bottomMargin = 0;
+            v.setLayoutParams(lp);
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), nav.bottom);
+            return insets;
+        });
 
         String imagePath = getIntent().getStringExtra("saved_image");
         if (imagePath != null) {
@@ -42,7 +56,7 @@ public class SavePhotoActivity extends BaseActivity {
             }
         }
 
-        backBtn.setOnClickListener(v->{
+        backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
             finish();
         });

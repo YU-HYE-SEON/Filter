@@ -1,16 +1,21 @@
 package com.example.filter.fragments;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
@@ -35,6 +40,9 @@ public class AIStickerViewFragment extends Fragment {
         aiStickerView = view.findViewById(R.id.aiStickerView);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
+
+        Window window = requireActivity().getWindow();
+        window.setNavigationBarColor(Color.parseColor("#007AFF"));
 
         checkBtn.setVisibility(View.INVISIBLE);
 
@@ -159,9 +167,10 @@ public class AIStickerViewFragment extends Fragment {
             FrameLayout full = requireActivity().findViewById(R.id.fullScreenFragmentContainer);
             ConstraintLayout filter = requireActivity().findViewById(R.id.filterActivity);
             ConstraintLayout main = requireActivity().findViewById(R.id.main);
+
             if (full != null) full.setVisibility(View.GONE);
             if (filter != null) filter.setVisibility(View.VISIBLE);
-            if (main != null) main.setBackgroundColor(android.graphics.Color.BLACK);
+            if (main != null) main.setBackgroundColor(Color.BLACK);
         }
 
         requireActivity().getSupportFragmentManager()

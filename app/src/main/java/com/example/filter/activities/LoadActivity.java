@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -14,17 +15,20 @@ import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 
 import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
@@ -86,6 +90,9 @@ public class LoadActivity extends BaseActivity {
         heartCut = findViewById(R.id.heartCut);
         cancelBtn = findViewById(R.id.cancelBtn);
         checkBtn = findViewById(R.id.checkBtn);
+
+        Window window = getWindow();
+        window.setNavigationBarColor(Color.BLACK);
 
         Uri photoUri = getIntent().getData();
         if (photoUri != null) {
