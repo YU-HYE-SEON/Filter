@@ -7,8 +7,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.TextView;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 
@@ -22,34 +21,16 @@ public class StickersDialog extends Dialog {
     }
 
     private StickersDialogListener listener;
-    private CharSequence messageText = null;
-    private CharSequence button1Text = null;
-    private CharSequence button2Text = null;
 
     public StickersDialog(@NonNull Context context, StickersDialogListener listener) {
         super(context);
         this.listener = listener;
     }
 
-    public StickersDialog withMessage(CharSequence text) {
-        this.messageText = text;
-        return this;
-    }
-
-    public StickersDialog withButton1Text(CharSequence text) {
-        this.button1Text = text;
-        return this;
-    }
-
-    public StickersDialog withButton2Text(CharSequence text) {
-        this.button2Text = text;
-        return this;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dialog);
+        setContentView(R.layout.dialog_sticker);
 
         setCancelable(false);
         setCanceledOnTouchOutside(false);
@@ -62,17 +43,12 @@ public class StickersDialog extends Dialog {
         int dialogWidth = displayMetrics.widthPixels;
         lp.width = dialogWidth;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        lp.dimAmount = 0.4f;
+        lp.dimAmount = 0.7f;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().setAttributes(lp);
 
-        TextView textView = findViewById(R.id.message);
-        Button changeBtn = findViewById(R.id.button1);
-        Button keepBtn = findViewById(R.id.button2);
-
-        if (textView != null && messageText != null) textView.setText(messageText);
-        if (changeBtn != null && button1Text != null) changeBtn.setText(button1Text);
-        if (keepBtn != null && button2Text != null) keepBtn.setText(button2Text);
+        ImageButton changeBtn = findViewById(R.id.changeBtn);
+        ImageButton keepBtn = findViewById(R.id.keepBtn);
 
         keepBtn.setOnClickListener(v -> {
             dismiss();

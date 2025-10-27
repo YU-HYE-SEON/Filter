@@ -69,6 +69,7 @@
             android:layout_height="0dp"
             android:clipChildren="true"
             android:clipToPadding="true"
+            android:visibility="visible"
             app:layout_constraintBottom_toTopOf="@id/bottomArea1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -111,6 +112,17 @@
                 android:visibility="gone" />
 
         </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/faceOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="#A1A1A1"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/bottomArea1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/photoPreviewContainer" />
 
         <!-- 하단부 ~ -->
         <androidx.constraintlayout.widget.ConstraintLayout

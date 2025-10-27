@@ -20,16 +20,8 @@ public class GridSpaceItemDecoration extends RecyclerView.ItemDecoration {
 
     @Override
     public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-        RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) view.getLayoutParams();
-
-        int column = 0;
-        if (lp instanceof StaggeredGridLayoutManager.LayoutParams) {
-            column = ((StaggeredGridLayoutManager.LayoutParams) lp).getSpanIndex();
-        }
-
-        if (column == 0) outRect.right = hSpacing / 2;
-        else outRect.left = hSpacing / 2;
-
+        outRect.left = hSpacing / 2;
+        outRect.right = hSpacing / 2;
         outRect.top = vSpacing / 2;
         outRect.bottom = vSpacing / 2;
     }

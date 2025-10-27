@@ -8,13 +8,18 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -23,13 +28,17 @@ import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
+import com.example.filter.fragments.SearchFragment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends BaseActivity {
+    private ConstraintLayout mainActivity;
+    private ImageView logo;
     private EditText searchTxt;
-    private boolean maybeTap = false;
+    //private boolean maybeTap = false;
     private ImageButton filter;
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -46,21 +55,38 @@ public class MainActivity extends BaseActivity {
                     }
                 }
             });
+    private TextView textView;
     private RecyclerView recyclerView;
     private FilterAdapter filterAdapter;
-    private boolean isLoading = false;
+    private static final int MAX_ITEMS = 50;
+    /*private boolean isLoading = false;
     private int page = 0;
-    private final int PAGE_SIZE = 10;
+    private final int PAGE_SIZE = 10;*/
+    private ActivityResultLauncher<Intent> detailActivityLauncher;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_main);
+        mainActivity = findViewById(R.id.mainActivity);
+        logo = findViewById(R.id.logo);
         searchTxt = findViewById(R.id.searchTxt);
+        textView = findViewById(R.id.textView);
         recyclerView = findViewById(R.id.recyclerView);
         filter = findViewById(R.id.filter);
 
-        View root = findViewById(android.R.id.content);
+        detailActivityLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        String deletedId = result.getData().getStringExtra("deleted_filter_id");
+                        if (deletedId != null && filterAdapter != null) {
+                            filterAdapter.removeItemById(deletedId);
+                        }
+                    }
+                });
+
+        /*View root = findViewById(android.R.id.content);
         root.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             Rect r = new Rect();
             root.getWindowVisibleDisplayFrame(r);
@@ -68,6 +94,20 @@ public class MainActivity extends BaseActivity {
             int keypadHeight = screenHeight - r.bottom;
             boolean keypadVisible = keypadHeight > screenHeight * 0.15;
             if (!keypadVisible) searchTxt.clearFocus();
+        });*/
+
+        searchTxt.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(500)) return;
+
+            FrameLayout frameLayout = findViewById(R.id.frameLayout);
+
+            frameLayout.setVisibility(View.VISIBLE);
+            mainActivity.setVisibility(View.GONE);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.frameLayout, new SearchFragment())
+                    .addToBackStack(null)
+                    .commit();
         });
 
         StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
@@ -75,11 +115,35 @@ public class MainActivity extends BaseActivity {
         recyclerView.setLayoutManager(sglm);
 
         filterAdapter = new FilterAdapter();
+        filterAdapter.setMaxItems(MAX_ITEMS);
         recyclerView.setAdapter(filterAdapter);
-        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(14), dp(18)));
-        loadNextPage();
+        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
 
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        filterAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                updateRecyclerVisibility();
+            }
+
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                super.onItemRangeInserted(positionStart, itemCount);
+                updateRecyclerVisibility();
+            }
+
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                super.onItemRangeRemoved(positionStart, itemCount);
+                updateRecyclerVisibility();
+            }
+        });
+
+        updateRecyclerVisibility();
+
+        //loadNextPage();
+
+        /*recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 if (dy <= 0 || isLoading) return;
@@ -90,77 +154,128 @@ public class MainActivity extends BaseActivity {
 
                 if (last >= total - 4) loadNextPage();
             }
+        });*/
+
+        filterAdapter.setOnItemClickListener((v, item, displayedTitle, displayedNickname) -> {
+            Intent intent = new Intent(MainActivity.this, FilterDetailActivity.class);
+            intent.putExtra("filterId", item.id);
+            //intent.putExtra("nickname", item.nickname);
+            intent.putExtra("nickname", displayedNickname);
+            intent.putExtra("imgUrl", item.filterImageUrl);
+            //intent.putExtra("filterTitle", item.filterTitle);
+            intent.putExtra("filterTitle", displayedTitle);
+            intent.putExtra("tags", item.tags);
+            intent.putExtra("price", item.price);
+            intent.putExtra("count", item.count);
+            detailActivityLauncher.launch(intent);
         });
 
-        filterAdapter.setOnItemClickListener((v, item) -> {
-            Intent intent = new Intent(MainActivity.this, FilterDetailActivity.class);
-            intent.putExtra("imgUrl", item.filterImageUrl);
-            intent.putExtra("filterTitle", item.filterTitle);
-            intent.putExtra("price", item.price);
-            intent.putExtra("nickname", item.nickname);
-            intent.putExtra("count", item.count);
-            startActivity(intent);
+        logo.setOnClickListener(v -> {
+            recyclerView.post(() -> {
+                sglm.invalidateSpanAssignments();
+                recyclerView.smoothScrollToPosition(0);
+                recyclerView.postDelayed(() -> sglm.scrollToPositionWithOffset(0, 0), 800);
+            });
         });
 
         filter.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
+            filter.setEnabled(false);
 
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
             galleryLauncher.launch(intent);
+
+            filter.postDelayed(() -> filter.setEnabled(true), 500);
         });
+
+        handleIntent(getIntent());
     }
 
-    private boolean isPoint(MotionEvent ev) {
-        if (searchTxt == null) return false;
-        Rect r = new Rect();
-        boolean visible = searchTxt.getGlobalVisibleRect(r);
-        if (!visible) return false;
-        final int x = (int) ev.getRawX();
-        final int y = (int) ev.getRawY();
-        return r.contains(x, y);
-    }
-
-    private void hideKeypadAndClearFocus() {
-        View v = getCurrentFocus();
-        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        if (imm != null && v != null) {
-            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-        }
-        if (searchTxt != null) searchTxt.clearFocus();
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIntent(intent);
     }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        switch (ev.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN: {
-                maybeTap = true;
-                break;
-            }
-            case MotionEvent.ACTION_UP: {
-                if (maybeTap) {
-                    View focused = getCurrentFocus();
-                    boolean focusedIsEdit = focused instanceof EditText;
-                    boolean tapInsideEdit = isPoint(ev);
-
-                    if (focusedIsEdit && !tapInsideEdit) {
-                        hideKeypadAndClearFocus();
-                    }
-                }
-                break;
-            }
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frameLayout);
+        if (fragment instanceof SearchFragment) {
+            ((SearchFragment) fragment).onParentTouchEvent(ev);
         }
         return super.dispatchTouchEvent(ev);
     }
 
-    private void loadNextPage() {
+    private void handleIntent(Intent intent) {
+        if (intent == null) return;
+
+        String newImagePath = intent.getStringExtra("new_filter_image");
+
+        if (newImagePath != null) {
+            String nickname = intent.getStringExtra("new_filter_nickname");
+            String title = intent.getStringExtra("new_filter_title");
+            String tags = intent.getStringExtra("new_filter_tags");
+            String point = intent.getStringExtra("new_filter_point");
+
+            String newId = UUID.randomUUID().toString();
+            if (title == null) title = "New Filter";
+            if (point == null) point = "0";
+            if (nickname == null) nickname = "@" + "닉네임";
+
+            FilterItem newItem = new FilterItem(
+                    newId,
+                    nickname,
+                    newImagePath,
+                    title,
+                    tags,
+                    point,
+                    0,
+                    false
+            );
+
+            if (filterAdapter != null) {
+                filterAdapter.prepend(newItem);
+            }
+
+            if (recyclerView != null) {
+                recyclerView.smoothScrollToPosition(0);
+            }
+
+            setIntent(new Intent());
+        }
+    }
+
+    private void updateRecyclerVisibility() {
+        if (filterAdapter.getItemCount() == 0) {
+            recyclerView.setVisibility(View.INVISIBLE);
+            textView.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            textView.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    /*private void loadNextPage() {
         if (isLoading) return;
+        if (filterAdapter.getItemCount() >= MAX_ITEMS) return;
         isLoading = true;
 
         List<FilterItem> fetched = mockFetch(page, PAGE_SIZE);
-        filterAdapter.append(fetched);
+
+        int remaining = MAX_ITEMS - filterAdapter.getItemCount();
+        if (fetched.size() > remaining) {
+            fetched = fetched.subList(0, remaining);
+        }
+
+        //filterAdapter.append(fetched);
+        filterAdapter.validateAndAppend(fetched);
         page++;
         isLoading = false;
+
+        if (filterAdapter.getItemCount() < MAX_ITEMS) {
+            recyclerView.postDelayed(this::loadNextPage, 100);
+        }
     }
 
     private List<FilterItem> mockFetch(int page, int size) {
@@ -180,15 +295,20 @@ public class MainActivity extends BaseActivity {
 
         for (int i = 0; i < size; i++) {
             int idx = (page * size + i) % demoImgs.length;
-            list.add(new FilterItem(demoImgs[idx],
-                    "필터이름" + (page * size + i + 1),
+            String mockId = UUID.randomUUID().toString();
+            list.add(new FilterItem(
+                    mockId,
                     "@" + "닉네임" + (page * size + i + 1),
+                    demoImgs[idx],
+                    "필터이름" + (page * size + i + 1),
+                    null,
                     "000",
-                    0
+                    0,
+                    true
             ));
         }
         return list;
-    }
+    }*/
 
     private int dp(int v) {
         return Math.round(getResources().getDisplayMetrics().density * v);

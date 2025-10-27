@@ -1,14 +1,13 @@
 package com.example.filter.fragments;
 
-import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -20,62 +19,70 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class RotationFragment extends Fragment {
-    private ImageButton leftRotationIcon, rightRotationIcon, horizontalFlip, verticalFlip;
+    private LinearLayout leftRotationBtn, rightRotationBtn, horizontalFlipBtn, verticalFlipBtn;
+    private ImageView leftRotationIcon, rightRotationIcon, horizontalFlip, verticalFlip;
     private TextView leftRotationTxt, rightRotationTxt, horizontalFlipTxt, verticalFlipTxt;
     private ImageButton cancelBtn, checkBtn;
+    private int currentRotationDeg = 0;
+    private boolean flippedH = false;
+    private boolean flippedV = false;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_rotation, container, false);
 
+        leftRotationBtn = view.findViewById(R.id.leftRotationBtn);
         leftRotationIcon = view.findViewById(R.id.leftRotationIcon);
-        rightRotationIcon = view.findViewById(R.id.rightRotationIcon);
-        horizontalFlip = view.findViewById(R.id.horizontalFlip);
-        verticalFlip = view.findViewById(R.id.verticalFlip);
         leftRotationTxt = view.findViewById(R.id.leftRotationTxt);
+
+        rightRotationBtn = view.findViewById(R.id.rightRotationBtn);
+        rightRotationIcon = view.findViewById(R.id.rightRotationIcon);
         rightRotationTxt = view.findViewById(R.id.rightRotationTxt);
+
+        horizontalFlipBtn = view.findViewById(R.id.horizontalFlipBtn);
+        horizontalFlip = view.findViewById(R.id.horizontalFlip);
         horizontalFlipTxt = view.findViewById(R.id.horizontalFlipTxt);
+
+        verticalFlipBtn = view.findViewById(R.id.verticalFlipBtn);
+        verticalFlip = view.findViewById(R.id.verticalFlip);
         verticalFlipTxt = view.findViewById(R.id.verticalFlipTxt);
+
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
-        final long[] lastTap = {0};
+        FilterActivity activity = (FilterActivity) requireActivity();
 
-        attachPressEffect(leftRotationIcon, leftRotationTxt, () -> {
-            long now = SystemClock.uptimeMillis();
-            if (now - lastTap[0] < 120) return;
-            lastTap[0] = now;
+        currentRotationDeg = activity.getAccumRotationDeg();
+        flippedH = activity.isAccumFlipH();
+        flippedV = activity.isAccumFlipV();
 
-            FilterActivity a = (FilterActivity) getActivity();
-            if (a != null) a.rotatePhoto(-90);
+        updateIcon(activity);
+
+        leftRotationBtn.setOnClickListener(v -> {
+            activity.rotatePhoto(-90);
+            currentRotationDeg = (currentRotationDeg - 90 + 360) % 360;
+            activity.setLastRotationDirection(true, false);
+            updateIcon(activity);
         });
 
-        attachPressEffect(rightRotationIcon, rightRotationTxt, () -> {
-            long now = SystemClock.uptimeMillis();
-            if (now - lastTap[0] < 120) return;
-            lastTap[0] = now;
-
-            FilterActivity a = (FilterActivity) getActivity();
-            if (a != null) a.rotatePhoto(90);
+        rightRotationBtn.setOnClickListener(v -> {
+            activity.rotatePhoto(90);
+            currentRotationDeg = (currentRotationDeg + 90) % 360;
+            activity.setLastRotationDirection(false, true);
+            updateIcon(activity);
         });
 
-        attachPressEffect(horizontalFlip, horizontalFlipTxt, () -> {
-            long now = SystemClock.uptimeMillis();
-            if (now - lastTap[0] < 120) return;
-            lastTap[0] = now;
-
-            FilterActivity a = (FilterActivity) getActivity();
-            if (a != null) a.flipPhoto(true);
+        horizontalFlipBtn.setOnClickListener(v -> {
+            activity.flipPhoto(true);
+            flippedH = !flippedH;
+            updateIcon(activity);
         });
 
-        attachPressEffect(verticalFlip, verticalFlipTxt, () -> {
-            long now = SystemClock.uptimeMillis();
-            if (now - lastTap[0] < 120) return;
-            lastTap[0] = now;
-
-            FilterActivity a = (FilterActivity) getActivity();
-            if (a != null) a.flipPhoto(false);
+        verticalFlipBtn.setOnClickListener(v -> {
+            activity.flipPhoto(false);
+            flippedV = !flippedV;
+            updateIcon(activity);
         });
 
         cancelBtn.setOnClickListener(new View.OnClickListener() {
@@ -84,8 +91,14 @@ public class RotationFragment extends Fragment {
                 if (ClickUtils.isFastClick(500)) return;
 
                 FilterActivity activity = (FilterActivity) getActivity();
+
                 if (activity != null) {
                     activity.restoreOriginalPhoto();
+
+                    flippedH = false;
+                    flippedV = false;
+                    updateIcon(activity);
+
                     activity.getSupportFragmentManager()
                             .beginTransaction()
                             .setCustomAnimations(R.anim.slide_up, 0)
@@ -115,57 +128,47 @@ public class RotationFragment extends Fragment {
         return view;
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private void attachPressEffect(ImageButton btn, TextView targetTxt, Runnable onUpInside) {
-        btn.setClickable(true);
-        btn.setFocusable(true);
-        btn.setOnTouchListener((v, ev) -> {
-            switch (ev.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN: {
-                    btn.setImageResource(R.drawable.icon_rotation_yes);
-                    if (targetTxt != null) {
-                        targetTxt.setTextColor(Color.parseColor("#C2FA7A"));
-                    }
-                    v.setPressed(true);
-                    return true;
-                }
+    private void updateIcon(FilterActivity activity) {
+        boolean lastPressedLeft = activity.isLastRotationLeft();
+        boolean lastPressedRight = activity.isLastRotationRight();
 
-                /*case MotionEvent.ACTION_MOVE: {
-                    boolean inside = isPointInsideView(v, ev);
-                    btn.setImageResource(inside ? R.drawable.rotation_icon_yes : R.drawable.rotation_icon_no);
-                    v.setPressed(inside);
-                    return true;
-                }*/
+        if (currentRotationDeg == 0) {
+            leftRotationIcon.setImageResource(R.drawable.icon_rotation_left_no);
+            leftRotationTxt.setTextColor(Color.parseColor("#90989F"));
 
-                case MotionEvent.ACTION_UP: {
-                    boolean inside = isPointInsideView(v, ev);
-                    btn.setImageResource(R.drawable.icon_rotation_no);
-                    if (targetTxt != null) {
-                        targetTxt.setTextColor(Color.WHITE);
-                    }
-                    v.setPressed(false);
-                    if (inside && onUpInside != null) {
-                        onUpInside.run();
-                    }
-                    return true;
-                }
+            rightRotationIcon.setImageResource(R.drawable.icon_rotation_right_no);
+            rightRotationTxt.setTextColor(Color.parseColor("#90989F"));
+        } else if (lastPressedLeft) {
+            leftRotationIcon.setImageResource(R.drawable.icon_rotation_left_yes);
+            leftRotationTxt.setTextColor(Color.parseColor("#C2FA7A"));
 
-                case MotionEvent.ACTION_CANCEL: {
-                    btn.setImageResource(R.drawable.icon_rotation_no);
-                    if (targetTxt != null) {
-                        targetTxt.setTextColor(Color.WHITE);
-                    }
-                    v.setPressed(false);
-                    return true;
-                }
-            }
-            return false;
-        });
-    }
+            rightRotationIcon.setImageResource(R.drawable.icon_rotation_right_no);
+            rightRotationTxt.setTextColor(Color.parseColor("#90989F"));
+        } else if (lastPressedRight) {
+            rightRotationIcon.setImageResource(R.drawable.icon_rotation_right_yes);
+            rightRotationTxt.setTextColor(Color.parseColor("#C2FA7A"));
 
-    private boolean isPointInsideView(View v, MotionEvent ev) {
-        float x = ev.getX();
-        float y = ev.getY();
-        return (x >= 0 && y >= 00 && x <= v.getWidth() && y <= v.getHeight());
+            leftRotationIcon.setImageResource(R.drawable.icon_rotation_left_no);
+            leftRotationTxt.setTextColor(Color.parseColor("#90989F"));
+        }
+
+        if (flippedH) {
+            horizontalFlip.setImageResource(R.drawable.icon_flip_horizontal_yes);
+            horizontalFlipTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            horizontalFlip.setImageResource(R.drawable.icon_flip_horizontal_no);
+            horizontalFlipTxt.setTextColor(Color.parseColor("#90989F"));
+        }
+
+        if (flippedV) {
+            verticalFlip.setImageResource(R.drawable.icon_flip_vertical_yes);
+            verticalFlipTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            verticalFlip.setImageResource(R.drawable.icon_flip_vertical_no);
+            verticalFlipTxt.setTextColor(Color.parseColor("#90989F"));
+        }
+
+        boolean anyYes = (flippedH || flippedV);
+        activity.setRotationEdited(anyYes);
     }
 }

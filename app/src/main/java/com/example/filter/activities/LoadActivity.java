@@ -24,6 +24,7 @@ import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -52,8 +53,10 @@ public class LoadActivity extends BaseActivity {
     private ImageView loadImage;
     private ShapeOverlayView shapeOverlay;
     private LassoOverlayView lassoOverlay;
+    private LinearLayout lassoCutBtn, shapeCutBtn;
     private ImageView lassoCut, shapeCut;
     private ImageView squareCut, starCut, triangleCut, circleCut, heartCut;
+    private TextView lassoCutTxt, shapeCutTxt;
     private ImageButton cancelBtn, checkBtn;
     private boolean shapeModeOn = false;
     private boolean lassoModeOn = false;
@@ -81,8 +84,12 @@ public class LoadActivity extends BaseActivity {
         loadImage = findViewById(R.id.loadImage);
         shapeOverlay = findViewById(R.id.shapeOverlay);
         lassoOverlay = findViewById(R.id.lassoOverlay);
+        lassoCutBtn = findViewById(R.id.lassoCutBtn);
         lassoCut = findViewById(R.id.lassoCut);
+        lassoCutTxt = findViewById(R.id.lassoCutTxt);
+        shapeCutBtn = findViewById(R.id.shapeCutBtn);
         shapeCut = findViewById(R.id.shapeCut);
+        shapeCutTxt = findViewById(R.id.shapeCutTxt);
         squareCut = findViewById(R.id.squareCut);
         starCut = findViewById(R.id.starCut);
         triangleCut = findViewById(R.id.triangleCut);
@@ -196,16 +203,22 @@ public class LoadActivity extends BaseActivity {
 
         shapeOverlay.setMaskScale(0.3f);
 
-        lassoCut.setOnClickListener(v -> {
+        lassoCutBtn.setOnClickListener(v -> {
             if (lassoModeOn) {
                 lassoModeOn = false;
                 lassoCut.setImageResource(R.drawable.icon_rotation_no);
+                lassoCutTxt.setTextColor(Color.WHITE);
                 lassoOverlay.setLassoVisible(false);
             } else {
                 lassoModeOn = true;
                 lassoCut.setImageResource(R.drawable.icon_rotation_yes);
+                lassoCutTxt.setTextColor(Color.parseColor("#C2FA7A"));
+
+                shapeModeOn = false;
                 shapeCut.setImageResource(R.drawable.icon_rotation_no);
+                shapeCutTxt.setTextColor(Color.WHITE);
                 shapeOverlay.setShape(ShapeType.NONE);
+
                 updateOverlaysImageBounds();
                 lassoOverlay.setLassoVisible(true);
                 lassoOverlay.getViewTreeObserver().addOnGlobalLayoutListener(
@@ -220,18 +233,25 @@ public class LoadActivity extends BaseActivity {
             }
         });
 
-        shapeCut.setOnClickListener(v -> {
+        shapeCutBtn.setOnClickListener(v -> {
             if (shapeModeOn) {
                 shapeModeOn = false;
                 shapeCut.setImageResource(R.drawable.icon_rotation_no);
+                shapeCutTxt.setTextColor(Color.WHITE);
                 shapeOverlay.setShape(ShapeType.NONE);
+
                 updateShapeIcons(null);
                 visibleOff();
             } else {
                 shapeModeOn = true;
                 shapeCut.setImageResource(R.drawable.icon_rotation_yes);
+                shapeCutTxt.setTextColor(Color.parseColor("#C2FA7A"));
+
+                lassoModeOn = false;
                 lassoCut.setImageResource(R.drawable.icon_rotation_no);
+                lassoCutTxt.setTextColor(Color.WHITE);
                 lassoOverlay.setLassoVisible(false);
+
                 visibleOn();
                 shapeOverlay.setShape(ShapeType.NONE);
                 updateShapeIcons(null);
@@ -321,13 +341,6 @@ public class LoadActivity extends BaseActivity {
                 final String uiMsg = msg;
                 runOnUiThread(() -> {
                     showToast(uiMsg);
-
-                    if ("내 스티커에 저장을 완료했습니다".equals(uiMsg)) {
-                        getSupportFragmentManager().beginTransaction()
-                                .setCustomAnimations(R.anim.slide_up, 0)
-                                .replace(R.id.bottomArea2, new MyStickersFragment())
-                                .commit();
-                    }
                 });
             }).start();
         });
@@ -590,13 +603,12 @@ public class LoadActivity extends BaseActivity {
         topArea.addView(tv);
         tv.animate().alpha(1f).setDuration(150).start();
 
-        setAllControlsEnabled(true);
-
         tv.postDelayed(() -> tv.animate()
                 .alpha(0f)
                 .setDuration(200)
                 .withEndAction(() -> {
                     if (tv.getParent() == topArea) topArea.removeView(tv);
+                    setAllControlsEnabled(true);
                 })
                 .start(), 2000);
     }
@@ -607,7 +619,7 @@ public class LoadActivity extends BaseActivity {
 
     private void setAllControlsEnabled(boolean enabled) {
         View[] cuts = new View[]{
-                cancelBtn, checkBtn, lassoCut, shapeCut, squareCut, starCut, triangleCut, circleCut, heartCut
+                cancelBtn, checkBtn, lassoCutBtn, shapeCutBtn, squareCut, starCut, triangleCut, circleCut, heartCut
         };
         for (View v : cuts) {
             if (v == null) continue;

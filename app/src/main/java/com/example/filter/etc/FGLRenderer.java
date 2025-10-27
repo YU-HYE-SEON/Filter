@@ -31,7 +31,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     //프래그먼트 쉐이더의 변수들 ID 참조용 핸들
     private int textureHandle, brightnessHandle, exposureHandle, contrastHandle,
-            highlightHandle, shadowHandle, temperatureHandle, tintHandle,
+            highlightHandle, shadowHandle, temperatureHandle, hueHandle,
             saturationHandle, sharpnessHandle, blurHandle,
             vignetteHandle, noiseHandle, resolutionHandle;
     private final FloatBuffer vertexBuffer, texCoordBuffer; //버텍스 위치/텍스쳐 좌표 데이터를 GPU에 전달할 때 사용하는 버퍼
@@ -39,12 +39,12 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     //최종 적용 조절값
     private float updateBrightness = 0f, updateExposure = 0f, updateContrast = 0f, updateHighlight = 0f,
-            updateShadow = 0f, updateTemperature = 0f, updateTint = 0f, updateSaturation = 1.0f,
+            updateShadow = 0f, updateTemperature = 0f, updateHue = 0f, updateSaturation = 1.0f,
             updateSharpness = 0f, updateBlur = 0f, updateVignette = 0f, updateNoise = 0f;
 
     //최종 적용 전 실시간 미리보기용 조절값 (onDrawFrame에서 사용)
     private float tempBrightness = 0f, tempExposure = 0f, tempContrast = 0f, tempHighlight = 0f,
-            tempShadow = 0f, tempTemperature = 0f, tempTint = 0f, tempSaturation = 1.0f,
+            tempShadow = 0f, tempTemperature = 0f, tempHue = 0f, tempSaturation = 1.0f,
             tempSharpness = 0f, tempBlur = 0f, tempVignette = 0f, tempNoise = 0f;
 
     //화면(사각형)을 그릴 정점 좌표 (x,y)
@@ -183,7 +183,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         highlightHandle = GLES20.glGetUniformLocation(program, "uHighlight");
         shadowHandle = GLES20.glGetUniformLocation(program, "uShadow");
         temperatureHandle = GLES20.glGetUniformLocation(program, "uTemperature");
-        tintHandle = GLES20.glGetUniformLocation(program, "uTint");
+        hueHandle = GLES20.glGetUniformLocation(program, "uHue");
         saturationHandle = GLES20.glGetUniformLocation(program, "uSaturation");
         sharpnessHandle = GLES20.glGetUniformLocation(program, "uSharpness");
         blurHandle = GLES20.glGetUniformLocation(program, "uBlur");
@@ -244,7 +244,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             GLES20.glUniform1f(highlightHandle, tempHighlight);
             GLES20.glUniform1f(shadowHandle, tempShadow);
             GLES20.glUniform1f(temperatureHandle, tempTemperature);
-            GLES20.glUniform1f(tintHandle, tempTint);
+            GLES20.glUniform1f(hueHandle, tempHue);
             GLES20.glUniform1f(saturationHandle, tempSaturation);
             GLES20.glUniform1f(sharpnessHandle, tempSharpness);
             GLES20.glUniform1f(blurHandle, tempBlur);
@@ -270,18 +270,19 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                     ensureOffscreenTarget(w, h);
 
                     GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, offFbo);
-                    GLES20.glViewport(0, 0, w, h);
+                    GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
+                    //GLES20.glViewport(0, 0, w, h);
 
                     GLES20.glClearColor(0f, 0f, 0f, 1f);
                     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
                     GLES20.glUseProgram(program);
 
-                    float[] scaledVertices2 = new float[] {
+                    float[] scaledVertices2 = new float[]{
                             -1.0f * scaleFactor + translateX, -1.0f * scaleFactor + translateY,
                             1.0f * scaleFactor + translateX, -1.0f * scaleFactor + translateY,
-                            -1.0f * scaleFactor + translateX,  1.0f * scaleFactor + translateY,
-                            1.0f * scaleFactor + translateX,  1.0f * scaleFactor + translateY
+                            -1.0f * scaleFactor + translateX, 1.0f * scaleFactor + translateY,
+                            1.0f * scaleFactor + translateX, 1.0f * scaleFactor + translateY
                     };
                     vertexBuffer.put(scaledVertices2).position(0);
 
@@ -294,23 +295,23 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
                     GLES20.glUniform1i(textureHandle, 0);
 
-                    GLES20.glUniform1f(brightnessHandle,  0f);
-                    GLES20.glUniform1f(exposureHandle,    0f);
-                    GLES20.glUniform1f(contrastHandle,    0f);
-                    GLES20.glUniform1f(highlightHandle,   0f);
-                    GLES20.glUniform1f(shadowHandle,      0f);
+                    GLES20.glUniform1f(brightnessHandle, 0f);
+                    GLES20.glUniform1f(exposureHandle, 0f);
+                    GLES20.glUniform1f(contrastHandle, 0f);
+                    GLES20.glUniform1f(highlightHandle, 0f);
+                    GLES20.glUniform1f(shadowHandle, 0f);
                     GLES20.glUniform1f(temperatureHandle, 0f);
-                    GLES20.glUniform1f(tintHandle,        0f);
-                    GLES20.glUniform1f(saturationHandle,  1.0f);
-                    GLES20.glUniform1f(sharpnessHandle,   0f);
-                    GLES20.glUniform1f(blurHandle,        0f);
-                    GLES20.glUniform1f(vignetteHandle,    0f);
-                    GLES20.glUniform1f(noiseHandle,       0f);
-                    GLES20.glUniform2f(resolutionHandle,  bitmap.getWidth(), bitmap.getHeight());
+                    GLES20.glUniform1f(hueHandle, 0f);
+                    GLES20.glUniform1f(saturationHandle, 1.0f);
+                    GLES20.glUniform1f(sharpnessHandle, 0f);
+                    GLES20.glUniform1f(blurHandle, 0f);
+                    GLES20.glUniform1f(vignetteHandle, 0f);
+                    GLES20.glUniform1f(noiseHandle, 0f);
+                    GLES20.glUniform2f(resolutionHandle, bitmap.getWidth(), bitmap.getHeight());
 
                     GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
-                    int[] rgba = new int[w * h];
+                    /*int[] rgba = new int[w * h];
                     int[] argb = new int[w * h];
                     IntBuffer ib = IntBuffer.wrap(rgba);
                     ib.position(0);
@@ -320,22 +321,49 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                         for (int j = 0; j < w; j++) {
                             int idx = i * w + j;
                             int p = rgba[idx];
-                            int r = (p      ) & 0xff;
-                            int g = (p >>  8) & 0xff;
+                            int r = (p) & 0xff;
+                            int g = (p >> 8) & 0xff;
                             int b = (p >> 16) & 0xff;
                             int a = (p >> 24) & 0xff;
                             int flip = (h - i - 1) * w + j;
                             argb[flip] = (a << 24) | (r << 16) | (g << 8) | b;
                         }
                     }
-                    captured = Bitmap.createBitmap(argb, w, h, Bitmap.Config.ARGB_8888);
+                    captured = Bitmap.createBitmap(argb, w, h, Bitmap.Config.ARGB_8888);*/
+                    int rw = viewportWidth;
+                    int rh = viewportHeight;
+                    int rx = viewportX;
+                    int ry = viewportY;
+
+                    int[] rgba = new int[rw * rh];
+                    int[] argb = new int[rw * rh];
+                    IntBuffer ib = IntBuffer.wrap(rgba);
+                    ib.position(0);
+
+                    GLES20.glFinish();
+                    GLES20.glReadPixels(rx, ry, rw, rh, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, ib);
+
+                    for (int i = 0; i < rh; i++) {
+                        for (int j = 0; j < rw; j++) {
+                            int idx = i * rw + j;
+                            int p = rgba[idx];
+                            int r = (p      ) & 0xff;
+                            int g = (p >>  8) & 0xff;
+                            int b = (p >> 16) & 0xff;
+                            int a = (p >> 24) & 0xff;
+                            int flip = (rh - i - 1) * rw + j;
+                            argb[flip] = (a << 24) | (r << 16) | (g << 8) | b;
+                        }
+                    }
+                    captured = Bitmap.createBitmap(argb, rw, rh, Bitmap.Config.ARGB_8888);
 
                     GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
                     GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
 
                     captureUnfilteredNext = false;
                 } else {
-                    captured = createBitmapFromGLSurface(0, 0, w, h);
+                    //captured = createBitmapFromGLSurface(0, 0, w, h);
+                    captured = createBitmapFromGLSurface(viewportX, viewportY, viewportWidth, viewportHeight);
                 }
 
                 if (listener != null) {
@@ -426,7 +454,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             case "온도":
                 return Math.round(tempTemperature * 100);
             case "색조":
-                return Math.round(tempTint * 100);
+                return Math.round(tempHue * 100);
             case "채도":
                 return Math.round((tempSaturation - 1.0f) * 100);
             case "선명하게":
@@ -463,7 +491,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                 tempTemperature = value / 100f;
                 break;
             case "색조":
-                tempTint = value / 100f;
+                tempHue = value / 100f;
                 break;
             case "채도":
                 tempSaturation = (value / 100f) + 1.0f;
@@ -514,8 +542,8 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                 tempTemperature = updateTemperature;
                 break;
             case "색조":
-                updateTint = value / 100f;
-                tempTint = updateTint;
+                updateHue = value / 100f;
+                tempHue = updateHue;
                 break;
             case "채도":
                 updateSaturation = (value / 100f) + 1.0f;
@@ -564,7 +592,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                 tempTemperature = updateTemperature;
                 break;
             case "색조":
-                tempTint = updateTint;
+                tempHue = updateHue;
                 break;
             case "채도":
                 tempSaturation = updateSaturation;
@@ -605,8 +633,8 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         updateTemperature = 0f;
         tempTemperature = 0f;
 
-        updateTint = 0f;
-        tempTint = 0f;
+        updateHue = 0f;
+        tempHue = 0f;
 
         updateSaturation = 1.0f;
         tempSaturation = 1.0f;
@@ -659,13 +687,6 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             }
         }
         return Bitmap.createBitmap(argbBuffer, width, height, Bitmap.Config.ARGB_8888);
-    }
-
-    //이미지 캡쳐할 때 뷰포트 여백 (가로사진->위아래 여백 / 세로사진->왼오 여백) 자르기
-    public Bitmap cropCenterRegion(Bitmap fullBitmap, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
-        int correctedY = fullBitmap.getHeight() - viewportY - viewportHeight;
-
-        return Bitmap.createBitmap(fullBitmap, viewportX, correctedY, viewportWidth, viewportHeight);
     }
 
     //오프스크린 렌더링 방식을 사용하기 위함 (사용자 눈에 직접 보이지 않게 처리)
@@ -731,9 +752,21 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
     //메모리 차원에서 오프스크린 렌더링에 사용된 데이터들 삭제
     private void releaseOffscreenTarget() {
         int[] ids = new int[1];
-        if (offTex != 0) { ids[0] = offTex; GLES20.glDeleteTextures(1, ids, 0); offTex = 0; }
-        if (offRbo != 0) { ids[0] = offRbo; GLES20.glDeleteRenderbuffers(1, ids, 0); offRbo = 0; }
-        if (offFbo != 0) { ids[0] = offFbo; GLES20.glDeleteFramebuffers(1, ids, 0); offFbo = 0; }
+        if (offTex != 0) {
+            ids[0] = offTex;
+            GLES20.glDeleteTextures(1, ids, 0);
+            offTex = 0;
+        }
+        if (offRbo != 0) {
+            ids[0] = offRbo;
+            GLES20.glDeleteRenderbuffers(1, ids, 0);
+            offRbo = 0;
+        }
+        if (offFbo != 0) {
+            ids[0] = offFbo;
+            GLES20.glDeleteFramebuffers(1, ids, 0);
+            offFbo = 0;
+        }
         offW = offH = 0;
     }
 }

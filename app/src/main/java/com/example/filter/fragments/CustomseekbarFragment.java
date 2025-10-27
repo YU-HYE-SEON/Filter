@@ -19,8 +19,7 @@ import com.example.filter.R;
 
 public class CustomseekbarFragment extends Fragment {
     private TextView filterText;
-    private ImageButton cancelBtn;
-    private ImageButton checkBtn;
+    private ImageButton cancelBtn, checkBtn;
     private CustomSeekbar customSeekbar;
     private Fragment previousFragment;
     private ImageButton undoColor, redoColor;

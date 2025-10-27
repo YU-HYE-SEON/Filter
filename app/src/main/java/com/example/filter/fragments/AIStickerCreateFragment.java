@@ -1,7 +1,9 @@
 package com.example.filter.fragments;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.Editable;
@@ -50,6 +52,7 @@ public class AIStickerCreateFragment extends Fragment {
     private boolean upTYReady = false;
     private int lastParentH = -1;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -144,8 +147,13 @@ public class AIStickerCreateFragment extends Fragment {
     }
 
     private void setupKeyboardVisibilityListener(View root) {
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            boolean nowVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
+        root.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            root.getWindowVisibleDisplayFrame(r);
+            int screenH = root.getRootView().getHeight();
+            int keypadH = screenH - r.bottom;
+
+            boolean nowVisible = keypadH > screenH * 0.15f;
             if (nowVisible != imeVisible) {
                 if (!nowVisible) {
                     clearFocusAndHideIme();
@@ -159,7 +167,6 @@ public class AIStickerCreateFragment extends Fragment {
                 }
                 imeVisible = nowVisible;
             }
-            return insets;
         });
     }
 
@@ -188,6 +195,7 @@ public class AIStickerCreateFragment extends Fragment {
                 | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setupCreateButtonPressEffect() {
         createBtn.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
@@ -318,16 +326,6 @@ public class AIStickerCreateFragment extends Fragment {
         if (getContext() == null) return dp;
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
                 getContext().getResources().getDisplayMetrics());
-    }
-
-    private void recalcBaseIfNeeded() {
-        if (contentBox == null) return;
-        contentBox.post(() -> {
-            View parent = (View) contentBox.getParent();
-            baseTY = (parent.getHeight() - contentBox.getHeight()) / 2f - contentBox.getTop();
-            if (!imeVisible && !isUp) contentBox.setTranslationY(baseTY);
-            baseReady = true;
-        });
     }
 
     @Override

@@ -1,11 +1,14 @@
 package com.example.filter.fragments;
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,7 +21,8 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class ToolsFragment extends Fragment {
-    private ImageButton rotationIcon, cropIcon, nextBtn;
+    private LinearLayout rotationBtn, cropBtn, nextBtn;
+    private ImageView rotationIcon, cropIcon;
     private TextView rotationTxt, cropTxt;
     private ConstraintLayout bottomArea1;
     //private ImageButton undoColor, redoColor, originalColor;
@@ -28,6 +32,8 @@ public class ToolsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_tools, container, false);
 
+        rotationBtn = view.findViewById(R.id.rotationBtn);
+        cropBtn = view.findViewById(R.id.cropBtn);
         rotationIcon = view.findViewById(R.id.rotationIcon);
         cropIcon = view.findViewById(R.id.cropIcon);
         rotationTxt = view.findViewById(R.id.rotationTxt);
@@ -54,7 +60,7 @@ public class ToolsFragment extends Fragment {
             cropTxt.setTextColor(Color.WHITE);
         }
 
-        rotationIcon.setOnClickListener(new View.OnClickListener() {
+        rotationBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;
@@ -67,7 +73,7 @@ public class ToolsFragment extends Fragment {
             }
         });
 
-        cropIcon.setOnClickListener(new View.OnClickListener() {
+        cropBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(500)) return;

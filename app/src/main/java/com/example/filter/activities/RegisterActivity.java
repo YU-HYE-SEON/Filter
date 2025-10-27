@@ -37,6 +37,11 @@ import androidx.annotation.Nullable;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.UUID;
+
 public class RegisterActivity extends BaseActivity {
     private View topArea, photoView, contentContainer;
     private ImageView photo;
@@ -60,6 +65,7 @@ public class RegisterActivity extends BaseActivity {
     private boolean maybeTap = false;
     private int touchSlop;
     private boolean forceScroll = false;
+    private Bitmap finalBitmap;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -221,9 +227,9 @@ public class RegisterActivity extends BaseActivity {
 
         String imagePath = getIntent().getStringExtra("final_image");
         if (imagePath != null) {
-            Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
-            if (bitmap != null) {
-                photo.setImageBitmap(bitmap);
+            finalBitmap = BitmapFactory.decodeFile(imagePath);
+            if (finalBitmap != null) {
+                photo.setImageBitmap(finalBitmap);
             }
         }
 
@@ -383,9 +389,35 @@ public class RegisterActivity extends BaseActivity {
                 }
             }
 
-            Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
+            String uniqueFileName = "filter_" + UUID.randomUUID().toString() + ".png";
+            File imageFile = new File(getCacheDir(), uniqueFileName);
+            String newImagePath = imageFile.getAbsolutePath();
+
+            try (FileOutputStream out = new FileOutputStream(imageFile)) {
+                finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
+            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            //mainIntent.putExtra("new_filter_nickname", "@" + "닉네임");
+            mainIntent.putExtra("new_filter_image", newImagePath);
+            mainIntent.putExtra("new_filter_title", title);
+            mainIntent.putExtra("new_filter_tags", tagStr);
+            mainIntent.putExtra("new_filter_point", isFree ? "0" : pointStr);
+            startActivity(mainIntent);
+
+            Intent detailIntent = new Intent(RegisterActivity.this, FilterDetailActivity.class);
+            detailIntent.putExtra("filterId", UUID.randomUUID().toString());
+            //detailIntent.putExtra("nickname", "@" + "닉네임");
+            detailIntent.putExtra("imgUrl", newImagePath);
+            detailIntent.putExtra("filterTitle", title);
+            detailIntent.putExtra("tags", tagStr);
+            //detailIntent.putExtra("price", isFree ? "0" : pointStr);
+            startActivity(detailIntent);
+
             finish();
         });
 
@@ -473,12 +505,10 @@ public class RegisterActivity extends BaseActivity {
         if (forceScroll) {
             if (Math.abs(dy) > dp(1)) {
                 scrollView.smoothScrollBy(0, dy);
-                //animateScrollToY(dy, 220);
             }
         } else {
             if (dy > SAFE_SLACK_PX) {
                 scrollView.smoothScrollBy(0, dy);
-                //animateScrollToY(dy, 220);
             }
         }
     }

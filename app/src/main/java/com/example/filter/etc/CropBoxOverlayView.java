@@ -5,9 +5,14 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.core.content.ContextCompat;
+
+import com.example.filter.R;
 
 public class CropBoxOverlayView extends View {
     private Rect cropRect;
@@ -66,11 +71,11 @@ public class CropBoxOverlayView extends View {
 
         if (fixedAspectRatio && aspectRatioX > 0 && aspectRatioY > 0) {
             float targetRatio = aspectRatioX / aspectRatioY;
-            int boxWidth = (int) (viewportWidth * 0.8f);
+            int boxWidth = (int) viewportWidth;
             int boxHeight = (int) (boxWidth / targetRatio);
 
             if (boxHeight > viewportHeight) {
-                boxHeight = (int) (viewportHeight * 0.8f);
+                boxHeight = (int) viewportHeight;
                 boxWidth = (int) (boxHeight * targetRatio);
             }
 
@@ -113,7 +118,7 @@ public class CropBoxOverlayView extends View {
         }
 
         int centerX = viewportX + viewportWidth / 2;
-        int centerY = viewportY +viewportHeight / 2;
+        int centerY = viewportY + viewportHeight / 2;
 
         cropRect = new Rect(
                 centerX - width / 2,
@@ -133,7 +138,14 @@ public class CropBoxOverlayView extends View {
         canvas.drawRect(0, cropRect.top, cropRect.left, cropRect.bottom, shadePaint);
         canvas.drawRect(cropRect.right, cropRect.top, getWidth(), cropRect.bottom, shadePaint);
 
-        canvas.drawRect(cropRect, borderPaint);
+        Drawable overlay = ContextCompat.getDrawable(getContext(), R.drawable.crop_box);
+        if (overlay != null) {
+            int expand = (int) (2 * getResources().getDisplayMetrics().density + 0.5f);
+            overlay.setBounds(cropRect.left - expand, cropRect.top - expand, cropRect.right + expand, cropRect.bottom + expand);
+            overlay.draw(canvas);
+        } else {
+            canvas.drawRect(cropRect, borderPaint);
+        }
     }
 
     public Rect getCropRect() {
@@ -327,6 +339,26 @@ public class CropBoxOverlayView extends View {
         }
     }
 
+    private void moveCropRect(float dx, float dy) {
+        if (cropRect == null) return;
+
+        int newLeft = cropRect.left + (int) dx;
+        int newTop = cropRect.top + (int) dy;
+        int newRight = cropRect.right + (int) dx;
+        int newBottom = cropRect.bottom + (int) dy;
+
+        int offsetX = 0;
+        int offsetY = 0;
+
+        if (newLeft < viewportX) offsetX = viewportX - newLeft;
+        if (newRight > viewportX + viewportWidth) offsetX = viewportX + viewportWidth - newRight;
+        if (newTop < viewportY) offsetY = viewportY - newTop;
+        if (newBottom > viewportY + viewportHeight)
+            offsetY = viewportY + viewportHeight - newBottom;
+
+        cropRect.offset((int) dx + offsetX, (int) dy + offsetY);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (cropRect == null) return false;
@@ -350,31 +382,54 @@ public class CropBoxOverlayView extends View {
                 float dy = y - lastY;
 
                 if (currentMode == Mode.RESIZE) {
-                    switch (currentHandle) {
-                        case LEFT:
-                            if (!fixedAspectRatio) resizeLeft(dx);
-                            break;
-                        case RIGHT:
-                            if (!fixedAspectRatio) resizeRight(dx);
-                            break;
-                        case TOP:
-                            if (!fixedAspectRatio) resizeTop(dy);
-                            break;
-                        case BOTTOM:
-                            if (!fixedAspectRatio) resizeBottom(dy);
-                            break;
-                        case TOP_LEFT:
-                            resizeTopLeft(dx, dy);
-                            break;
-                        case TOP_RIGHT:
-                            resizeTopRight(dx, dy);
-                            break;
-                        case BOTTOM_LEFT:
-                            resizeBottomLeft(dx, dy);
-                            break;
-                        case BOTTOM_RIGHT:
-                            resizeBottomRight(dx, dy);
-                            break;
+                    if (fixedAspectRatio) {
+                        switch (currentHandle) {
+                            case LEFT:
+                            case RIGHT:
+                            case TOP:
+                            case BOTTOM:
+                                moveCropRect(dx, dy);
+                                break;
+                            case TOP_LEFT:
+                                resizeTopLeft(dx, dy);
+                                break;
+                            case TOP_RIGHT:
+                                resizeTopRight(dx, dy);
+                                break;
+                            case BOTTOM_LEFT:
+                                resizeBottomLeft(dx, dy);
+                                break;
+                            case BOTTOM_RIGHT:
+                                resizeBottomRight(dx, dy);
+                                break;
+                        }
+                    } else {
+                        switch (currentHandle) {
+                            case LEFT:
+                                resizeLeft(dx);
+                                break;
+                            case RIGHT:
+                                resizeRight(dx);
+                                break;
+                            case TOP:
+                                resizeTop(dy);
+                                break;
+                            case BOTTOM:
+                                resizeBottom(dy);
+                                break;
+                            case TOP_LEFT:
+                                resizeTopLeft(dx, dy);
+                                break;
+                            case TOP_RIGHT:
+                                resizeTopRight(dx, dy);
+                                break;
+                            case BOTTOM_LEFT:
+                                resizeBottomLeft(dx, dy);
+                                break;
+                            case BOTTOM_RIGHT:
+                                resizeBottomRight(dx, dy);
+                                break;
+                        }
                     }
                     lastX = x;
                     lastY = y;

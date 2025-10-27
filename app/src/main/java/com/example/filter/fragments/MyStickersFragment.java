@@ -498,5 +498,10 @@ public class MyStickersFragment extends Fragment {
                 child.setOnClickListener(null);
             }
         }
+
+        if (StickersFragment.faceBox != null) {
+            StickersFragment.faceBox.clearBoxes();
+            StickersFragment.faceBox.setVisibility(View.GONE);
+        }
     }
 }

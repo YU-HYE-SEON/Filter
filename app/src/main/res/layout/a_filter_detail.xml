@@ -8,7 +8,6 @@
         android:id="@+id/topArea"
         android:layout_width="match_parent"
         android:layout_height="120dp"
-        android:background="@drawable/border_detail_top_area"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -70,8 +69,6 @@
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
         android:scrollbars="none"
         app:layout_constraintBottom_toTopOf="@+id/btnBox"
         app:layout_constraintEnd_toEndOf="parent"
@@ -80,7 +77,10 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@drawable/border_detail_top_area"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/imgBox"

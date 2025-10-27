@@ -45,11 +45,10 @@
 
                 <ImageButton
                     android:id="@+id/cancelBtn"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
                     android:layout_marginLeft="16dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:padding="17dp"
+                    android:background="@android:color/transparent"
                     android:scaleType="fitCenter"
                     android:src="@drawable/btn_close"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -72,11 +71,10 @@
 
                 <ImageButton
                     android:id="@+id/checkBtn"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
                     android:layout_marginRight="16dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:padding="12dp"
+                    android:background="@android:color/transparent"
                     android:scaleType="fitCenter"
                     android:src="@drawable/btn_check_white"
                     android:visibility="visible"

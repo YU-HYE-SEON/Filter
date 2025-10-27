@@ -9,7 +9,7 @@ uniform float uContrast;//대비
 uniform float uHighlight;//하이라이트
 uniform float uShadow;//그림자
 uniform float uTemperature;//온도
-uniform float uTint;//색조
+uniform float uHue;//색조
 uniform float uSaturation;//채도
 uniform float uSharpness;//선명하게
 uniform float uBlur;//흐리게
@@ -41,7 +41,7 @@ vec3 applyToneOps(vec3 c) {
     //온도 & 색조
     c.r += uTemperature * 0.1;
     c.b -= uTemperature * 0.1;
-    c.g -= uTint * 0.1;
+    c.g -= uHue * 0.1;
 
     return c;
 }
@@ -73,7 +73,7 @@ void main() {
     //온도 & 색조
     color.r += uTemperature * 0.1;
     color.b -= uTemperature * 0.1;
-    color.g -= uTint * 0.1;
+    color.g -= uHue * 0.1;
 
     //흐리게 & 선명하게
     vec2 offset = 1.0 / uResolution;

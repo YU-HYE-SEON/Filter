@@ -2,7 +2,6 @@ package com.example.filter.fragments;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
@@ -50,16 +49,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.ViewCompat;
-import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
 import com.example.filter.dialogs.BrushToStickerDialog;
 import com.example.filter.etc.BrushOverlayView;
 import com.example.filter.etc.BrushPrefs;
-import com.example.filter.etc.BrushStateViewModel;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.LassoOverlayView;
 import com.example.filter.etc.StickerItem;
@@ -114,8 +110,9 @@ public class BrushFragment extends Fragment {
 
     /// UI ///
     private ConstraintLayout topArea;
-    private ImageButton pen, glowPen, crayon, eraser;
-    private TextView penTxt, glowPenTxt, crayonTxt, eraserTxt;
+    private LinearLayout penBtn, glowBtn, crayonBtn, eraserBtn;
+    private ImageView pen, glow, crayon, eraser;
+    private TextView penTxt, glowTxt, crayonTxt, eraserTxt;
     private ImageButton cancelBtn, checkBtn;
     private FrameLayout brushPanel;
     private FrameLayout brushOverlay, stickerOverlay;
@@ -184,7 +181,6 @@ public class BrushFragment extends Fragment {
 
     /// 브러쉬 ///
     private BrushOverlayView brushDraw;
-    private BrushStateViewModel brushState;
     private BrushOverlayView.BrushMode lastMode = BrushOverlayView.BrushMode.PEN;
     private View.OnLayoutChangeListener brushClipListener;
     private int baselineStrokeCount = 0;
@@ -197,14 +193,15 @@ public class BrushFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        brushState = new ViewModelProvider(requireActivity()).get(BrushStateViewModel.class);
+        final int DEFAULT_BRUSH_COLOR = 0xFFFFFFFF;
+        final int DEFAULT_BRUSH_SIZE_PX = dp(10);
 
-        int prefPenColor = BrushPrefs.getPenColor(requireContext(), brushState.color);
-        int prefPenSize = BrushPrefs.getPenSize(requireContext(), brushState.sizePx > 0 ? brushState.sizePx : dp(10));
-        int prefGlowColor = BrushPrefs.getGlowColor(requireContext(), brushState.color);
-        int prefGlowSize = BrushPrefs.getGlowSize(requireContext(), brushState.sizePx > 0 ? brushState.sizePx : dp(10));
-        int prefCrayonColor = BrushPrefs.getCrayonColor(requireContext(), brushState.color);
-        int prefCrayonSize = BrushPrefs.getCrayonSize(requireContext(), brushState.sizePx > 0 ? brushState.sizePx : dp(10));
+        int prefPenColor = BrushPrefs.getPenColor(requireContext(), DEFAULT_BRUSH_COLOR);
+        int prefPenSize = BrushPrefs.getPenSize(requireContext(), DEFAULT_BRUSH_SIZE_PX);
+        int prefGlowColor = BrushPrefs.getGlowColor(requireContext(), DEFAULT_BRUSH_COLOR);
+        int prefGlowSize = BrushPrefs.getGlowSize(requireContext(), DEFAULT_BRUSH_SIZE_PX);
+        int prefCrayonColor = BrushPrefs.getCrayonColor(requireContext(), DEFAULT_BRUSH_COLOR);
+        int prefCrayonSize = BrushPrefs.getCrayonSize(requireContext(), DEFAULT_BRUSH_SIZE_PX);
 
         if (savedInstanceState != null) {
             lastPenColor = savedInstanceState.getInt("lastPenColor", prefPenColor);
@@ -221,9 +218,6 @@ public class BrushFragment extends Fragment {
             lastCrayonColor = prefCrayonColor;
             lastCrayonSizePx = prefCrayonSize;
         }
-
-        brushState.color = lastPenColor;
-        brushState.sizePx = lastPenSizePx;
     }
 
     @Nullable
@@ -232,14 +226,22 @@ public class BrushFragment extends Fragment {
         View view = inflater.inflate(R.layout.f_brush, container, false);
         this.inflater = inflater;
 
+        penBtn = view.findViewById(R.id.penBtn);
         pen = view.findViewById(R.id.pen);
-        glowPen = view.findViewById(R.id.glowPen);
-        crayon = view.findViewById(R.id.crayon);
-        eraser = view.findViewById(R.id.eraser);
         penTxt = view.findViewById(R.id.penTxt);
-        glowPenTxt = view.findViewById(R.id.glowPenTxt);
+
+        glowBtn = view.findViewById(R.id.glowBtn);
+        glow = view.findViewById(R.id.glow);
+        glowTxt = view.findViewById(R.id.glowTxt);
+
+        crayonBtn = view.findViewById(R.id.crayonBtn);
+        crayon = view.findViewById(R.id.crayon);
         crayonTxt = view.findViewById(R.id.crayonTxt);
+
+        eraserBtn = view.findViewById(R.id.eraserBtn);
+        eraser = view.findViewById(R.id.eraser);
         eraserTxt = view.findViewById(R.id.eraserTxt);
+
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
@@ -269,17 +271,17 @@ public class BrushFragment extends Fragment {
             checkBox.setOnCheckedChangeListener((btn, isChecked) -> {
                 if (isChecked) {
                     pen.setEnabled(false);
-                    glowPen.setEnabled(false);
+                    glow.setEnabled(false);
                     crayon.setEnabled(false);
                     eraser.setEnabled(false);
 
                     pen.setAlpha(0.2f);
-                    glowPen.setAlpha(0.2f);
+                    glow.setAlpha(0.2f);
                     crayon.setAlpha(0.2f);
                     eraser.setAlpha(0.2f);
 
                     penTxt.setAlpha(0.2f);
-                    glowPenTxt.setAlpha(0.2f);
+                    glowTxt.setAlpha(0.2f);
                     crayonTxt.setAlpha(0.2f);
                     eraserTxt.setAlpha(0.2f);
 
@@ -306,7 +308,7 @@ public class BrushFragment extends Fragment {
                     lassoOverlay.setLassoVisible(false);
 
                     pen.setEnabled(true);
-                    glowPen.setEnabled(true);
+                    glow.setEnabled(true);
                     crayon.setEnabled(true);
                     eraser.setEnabled(true);
 
@@ -314,10 +316,6 @@ public class BrushFragment extends Fragment {
                 }
             });
         }
-
-        //tintPenButton(lastPenColor);
-        //tintGlowButton(lastGlowColor);
-        //tintCrayonButton(lastCrayonColor);
 
         if (brushOverlay != null) {
             brushDraw = pickupExistingBrushOverlay(brushOverlay);
@@ -464,8 +462,6 @@ public class BrushFragment extends Fragment {
                             }
 
                             sessionEraseOps.addAll(ops);
-                            //if (!ops.isEmpty()) act.recordBrushErase(ops);
-
                             activeErases.clear();
                         }
                     }
@@ -513,7 +509,7 @@ public class BrushFragment extends Fragment {
             brushOverlay.addOnLayoutChangeListener(brushClipListener);
         }
 
-        pen.setOnClickListener(v -> {
+        penBtn.setOnClickListener(v -> {
             if (isPenPanelOpen) return;
             if (brushDraw != null) {
                 brushDraw.setBrush(lastPenColor, lastPenSizePx, BrushOverlayView.BrushMode.PEN);
@@ -525,7 +521,7 @@ public class BrushFragment extends Fragment {
             showPanel(lastMode);
         });
 
-        glowPen.setOnClickListener(v -> {
+        glowBtn.setOnClickListener(v -> {
             if (isPenPanelOpen) return;
             if (brushDraw != null) {
                 brushDraw.setBrush(lastGlowColor, lastGlowSizePx, BrushOverlayView.BrushMode.GLOW);
@@ -537,7 +533,7 @@ public class BrushFragment extends Fragment {
             showPanel(lastMode);
         });
 
-        crayon.setOnClickListener(v -> {
+        crayonBtn.setOnClickListener(v -> {
             if (isPenPanelOpen) return;
             if (brushDraw != null) {
                 brushDraw.setBrush(lastCrayonColor, lastCrayonSizePx, BrushOverlayView.BrushMode.CRAYON);
@@ -549,7 +545,7 @@ public class BrushFragment extends Fragment {
             showPanel(lastMode);
         });
 
-        eraser.setOnClickListener(v -> {
+        eraserBtn.setOnClickListener(v -> {
             if (isPenPanelOpen) return;
             if (brushDraw != null) {
                 int lastEraserSize = BrushPrefs.getEraserSize(requireContext(), dp(10));
@@ -1001,8 +997,7 @@ public class BrushFragment extends Fragment {
     }
 
     private void initSeekbarDrawables(View panel) {
-        satTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{Color.BLACK, Color.WHITE});
+        satTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{Color.BLACK, Color.WHITE});
         satTrack.setCornerRadius(dp(999));
         satThumb = (GradientDrawable) buildRoundThumb(THUMB_DIAMETER_DP, Color.WHITE, THUMB_STROKE_DP);
         satTrack.mutate();
@@ -1013,8 +1008,7 @@ public class BrushFragment extends Fragment {
         sSat.setThumb(satThumb);
 
         alphaChecker = buildTiledCheckerboard(dp(999));
-        alphaTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{Color.WHITE, Color.WHITE});
+        alphaTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{Color.WHITE, Color.WHITE});
         alphaTrack.setCornerRadius(dp(999));
         alphaLayer = new LayerDrawable(new Drawable[]{alphaChecker, alphaTrack});
         alphaThumb = (GradientDrawable) buildRoundThumb(THUMB_DIAMETER_DP, Color.WHITE, THUMB_STROKE_DP);
@@ -1026,8 +1020,7 @@ public class BrushFragment extends Fragment {
         sAlpha.setThumb(alphaThumb);
 
         sizeChecker = buildTiledCheckerboard(dp(999));
-        sizeTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{Color.WHITE, Color.WHITE});
+        sizeTrack = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{Color.WHITE, Color.WHITE});
         sizeTrack.setCornerRadius(dp(999));
         sizeLayer = new LayerDrawable(new Drawable[]{sizeChecker, sizeTrack});
         sizeThumb = (GradientDrawable) buildRoundThumb(THUMB_DIAMETER_DP, Color.WHITE, THUMB_STROKE_DP);
@@ -1433,7 +1426,7 @@ public class BrushFragment extends Fragment {
                     colorPalette.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     Bitmap hd = makeRectHSVPalette(Math.max(1, colorPalette.getWidth()), Math.max(1, colorPalette.getHeight()));
                     colorPalette.setPaletteDrawable(new BitmapDrawable(getResources(), hd));
-                    colorPalette.post(() -> pushColorToUI(panel, colorPalette, initColor, null, true, mode));
+                    colorPalette.postDelayed(() -> pushColorToUI(panel, colorPalette, initColor, null, true, mode), 0);
                 }
             });
 
@@ -1480,8 +1473,6 @@ public class BrushFragment extends Fragment {
 
             float[] hsv = new float[3];
             Color.colorToHSV(0xFF000000 | (rgb & 0x00FFFFFF), hsv);
-            //baseHS[0] = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
-            //baseHS[1] = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
 
             if (satVal != null)
                 setTextIfChangedKeepCursor(satVal, String.valueOf(Math.round(hsv[2] * 100)));
@@ -1516,8 +1507,6 @@ public class BrushFragment extends Fragment {
 
             float[] hsv = new float[3];
             Color.colorToHSV(0xFF000000 | ((r << 16) | (g << 8) | b), hsv);
-            //baseHS[0] = (hsv[2] == 0f && hasLastHS) ? lastHue : hsv[0];
-            //baseHS[1] = (hsv[2] == 0f && hasLastHS) ? lastSat : hsv[1];
 
             if (satVal != null) {
                 setTextIfChangedKeepCursor(satVal, String.valueOf(Math.round(hsv[2] * 100)));
@@ -1662,14 +1651,7 @@ public class BrushFragment extends Fragment {
             int dia = getDiameterFromSeekbar(panel);
             setLastColor(mode, chosen);
             setLastSize(mode, dia);
-
-            //if (mode == BrushOverlayView.BrushMode.GLOW) tintGlowButton(chosen);
-            //else if (mode == BrushOverlayView.BrushMode.CRAYON) tintCrayonButton(chosen);
-            //else tintPenButton(chosen);
             setIcon(mode);
-
-            brushState.color = chosen;
-            brushState.sizePx = dia;
 
             if (mode == BrushOverlayView.BrushMode.GLOW) {
                 BrushPrefs.saveGlow(requireContext(), chosen, dia);
@@ -2099,31 +2081,7 @@ public class BrushFragment extends Fragment {
     }
 
     /// 버튼 UI ///
-    /*private void tintPenButton(int argb) {
-        if (pen == null) return;
-        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
-        ImageViewCompat.setImageTintList(pen, ColorStateList.valueOf(opaque));
-        penTxt.setTextColor(argb);
-    }
-
-    private void tintGlowButton(int argb) {
-        if (glowPen == null) return;
-        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
-        ImageViewCompat.setImageTintList(glowPen, ColorStateList.valueOf(opaque));
-        glowPenTxt.setTextColor(argb);
-    }
-
-    private void tintCrayonButton(int argb) {
-        if (crayon == null) return;
-        int opaque = (argb & 0x00FFFFFF) | 0xFF000000;
-        ImageViewCompat.setImageTintList(crayon, ColorStateList.valueOf(opaque));
-        crayonTxt.setTextColor(argb);
-    }*/
     private void setIcon(BrushOverlayView.BrushMode mode) {
-        //if (eraser == null) return;
-        //int res = (mode == BrushOverlayView.BrushMode.ERASER) ? R.drawable.icon_eraser_yes : R.drawable.icon_eraser_no;
-        //eraser.setImageResource(res);
-
         if (pen != null) {
             if (mode == BrushOverlayView.BrushMode.PEN) {
                 pen.setImageResource(R.drawable.icon_pen_yes);
@@ -2133,13 +2091,13 @@ public class BrushFragment extends Fragment {
                 penTxt.setTextColor(Color.parseColor("#90989F"));
             }
         }
-        if (glowPen != null) {
+        if (glow != null) {
             if (mode == BrushOverlayView.BrushMode.GLOW) {
-                glowPen.setImageResource(R.drawable.icon_glow_yes);
-                glowPenTxt.setTextColor(Color.parseColor("#C2FA7A"));
+                glow.setImageResource(R.drawable.icon_glow_yes);
+                glowTxt.setTextColor(Color.parseColor("#C2FA7A"));
             } else {
-                glowPen.setImageResource(R.drawable.icon_glow_no);
-                glowPenTxt.setTextColor(Color.parseColor("#90989F"));
+                glow.setImageResource(R.drawable.icon_glow_no);
+                glowTxt.setTextColor(Color.parseColor("#90989F"));
             }
         }
         if (crayon != null) {
@@ -2168,9 +2126,9 @@ public class BrushFragment extends Fragment {
             pen.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
             penTxt.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
         }
-        if (glowPen != null) {
-            glowPen.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
-            glowPenTxt.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
+        if (glow != null) {
+            glow.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
+            glowTxt.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
         }
         if (crayon != null) {
             crayon.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);

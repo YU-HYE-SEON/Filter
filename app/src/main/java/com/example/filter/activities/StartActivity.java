@@ -8,9 +8,11 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.ComposeShader;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
@@ -87,6 +89,11 @@ public class StartActivity extends BaseActivity {
                         bg.setBackground(bgDrawable);
                         bgDrawable.setStretch(1.6f, 1.0f);
 
+                        //float cx = bg.getWidth() / 2f;
+                        //float r0 = 1f;
+                        //float r1 = bg.getWidth() * 2.5f;
+                        //bgDrawable.setStretch(bg.getWidth(), 1.0f);
+
                         ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
                         anim.setDuration(1500);
                         anim.setInterpolator(new AccelerateDecelerateInterpolator());
@@ -94,10 +101,13 @@ public class StartActivity extends BaseActivity {
                             float t = (float) a.getAnimatedValue();
                             float y = bg.getHeight() / 2f;
                             float bgY = (y) + (-y * 1.7f) * t;
+                            //float bgY = (y) + (-y * 2.5f) * t;
                             float radius = bg.getWidth() + bg.getWidth() * t;
+                            //float radius = r0 + (r1 - r0) * t;
                             float glow = new DecelerateInterpolator(2f).getInterpolation(Math.min(1f, t * 1.6f));
 
                             bgDrawable.update(bg.getWidth() / 2f, bgY, radius, glow);
+                            //bgDrawable.update(cx, bgY, radius, glow);
                         });
                         anim.start();
                     });
@@ -230,11 +240,11 @@ public class StartActivity extends BaseActivity {
             glowPaint.setStyle(Paint.Style.FILL);
         }
 
-        public void update(float cx, float cy, float r, float glow) {
+        public void update(float cx, float cy, float r, float g) {
             this.centerX = cx;
             this.centerY = cy;
             this.radius = r;
-            this.glow = glow;
+            this.glow = g;
             invalidateSelf();
         }
 
@@ -250,6 +260,33 @@ public class StartActivity extends BaseActivity {
 
             int a = (int) (255 * glow);
             int accentWithA = Color.argb(a, Color.red(accentColor), Color.green(accentColor), Color.blue(accentColor));
+
+            /*float halfW = radius * stretchX;
+            float halfH = radius * stretchY;
+            float left = centerX - halfW;
+            float top = centerY - halfH;
+            float right = centerX + halfW;
+            float bottom = centerY + halfH;
+            float softness = 0.15f;
+
+            Shader fadeX = new LinearGradient(
+                    left, centerY, right, centerY,
+                    new int[]{Color.TRANSPARENT, accentWithA, accentWithA, Color.TRANSPARENT},
+                    new float[]{0f, 0.5f - softness, 0.5f + softness, 1f},
+                    Shader.TileMode.CLAMP
+            );
+
+            Shader fadeY = new LinearGradient(
+                    centerX, top, centerX, bottom,
+                    new int[]{Color.TRANSPARENT, accentWithA, accentWithA, Color.TRANSPARENT},
+                    new float[]{0f, 0.5f - softness, 0.5f + softness, 1f},
+                    Shader.TileMode.CLAMP
+            );
+
+            ComposeShader boxGlow = new ComposeShader(fadeX, fadeY, PorterDuff.Mode.MULTIPLY);
+            glowPaint.setShader(boxGlow);
+
+            canvas.drawRect(left, top, right, bottom, glowPaint);*/
 
             Shader shader = new RadialGradient(
                     centerX, centerY, radius,

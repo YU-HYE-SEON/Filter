@@ -9,6 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -21,8 +23,9 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 
 public class CropFragment extends Fragment {
-    private ImageButton freeCutIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
-    private TextView freeCutTxt, OTOTxt, TTFTxt, NTSTxt;
+    private LinearLayout freeCropBtn, OTORatioBtn, TTFRatioBtn, NTSRatioBtn;
+    private ImageView freeCropIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
+    private TextView freeCropTxt, OTOTxt, TTFTxt, NTSTxt;
     private ImageButton cancelBtn, checkBtn;
 
     @Nullable
@@ -30,60 +33,60 @@ public class CropFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_crop, container, false);
 
-        freeCutIcon = view.findViewById(R.id.freeCutIcon);
+        freeCropBtn = view.findViewById(R.id.freeCropBtn);
+        freeCropIcon = view.findViewById(R.id.freeCropIcon);
+        freeCropTxt = view.findViewById(R.id.freeCropTxt);
+
+        OTORatioBtn = view.findViewById(R.id.OTORatioBtn);
         OTORatioIcon = view.findViewById(R.id.OTORatioIcon);
-        TTFRatioIcon = view.findViewById(R.id.TTFRatioIcon);
-        NTSRatioIcon = view.findViewById(R.id.NTSRatioIcon);
-        freeCutTxt = view.findViewById(R.id.freeCutTxt);
         OTOTxt = view.findViewById(R.id.OTOTxt);
+
+        TTFRatioBtn = view.findViewById(R.id.TTFRatioBtn);
+        TTFRatioIcon = view.findViewById(R.id.TTFRatioIcon);
         TTFTxt = view.findViewById(R.id.TTFTxt);
+
+        NTSRatioBtn = view.findViewById(R.id.NTSRatioBtn);
+        NTSRatioIcon = view.findViewById(R.id.NTSRatioIcon);
         NTSTxt = view.findViewById(R.id.NTSTxt);
+
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
         FilterActivity activity = (FilterActivity) requireActivity();
 
-        freeCutIcon.setOnClickListener(new View.OnClickListener() {
+        freeCropBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
-
                 activity.setCurrentCropMode(FilterActivity.CropMode.FREE);
                 updateIconUI(FilterActivity.CropMode.FREE);
                 activity.showCropOverlay(true, false, 0, 0, false);
             }
         });
 
-        OTORatioIcon.setOnClickListener(new View.OnClickListener() {
+        OTORatioBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
-
                 activity.setCurrentCropMode(FilterActivity.CropMode.OTO);
                 updateIconUI(FilterActivity.CropMode.OTO);
-                activity.showCropOverlay(false, true, 1, 1, false);
+                activity.showCropOverlay(true, true, 1, 1, false);
             }
         });
 
-        TTFRatioIcon.setOnClickListener(new View.OnClickListener() {
+        TTFRatioBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
-
                 activity.setCurrentCropMode(FilterActivity.CropMode.TTF);
                 updateIconUI(FilterActivity.CropMode.TTF);
-                activity.showCropOverlay(false, true, 3, 4, false);
+                activity.showCropOverlay(true, true, 3, 4, false);
             }
         });
 
-        NTSRatioIcon.setOnClickListener(new View.OnClickListener() {
+        NTSRatioBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
-
                 activity.setCurrentCropMode(FilterActivity.CropMode.NTS);
                 updateIconUI(FilterActivity.CropMode.NTS);
-                activity.showCropOverlay(false, true, 9, 16, false);
+                activity.showCropOverlay(true, true, 9, 16, false);
             }
         });
 
@@ -162,7 +165,7 @@ public class CropFragment extends Fragment {
                 activity.lockInCurrentCropMode();
 
                 activity.getRenderer().setOnBitmapCaptureListener(fullBitmap -> {
-                    int x = cropRect.left;
+                    /*int x = cropRect.left;
                     int y = cropRect.top;
                     int width = cropRect.width();
                     int height = cropRect.height();
@@ -172,6 +175,28 @@ public class CropFragment extends Fragment {
                             || width <= 0 || height <= 0
                             || x + width > fullBitmap.getWidth()
                             || y + height > fullBitmap.getHeight()) {
+                        return;
+                    }*/
+                    int x = cropRect.left - vpX;
+                    int y = cropRect.top - vpY;
+                    int width = cropRect.width();
+                    int height = cropRect.height();
+
+                    int bmpW = fullBitmap.getWidth();
+                    int bmpH = fullBitmap.getHeight();
+
+                    if (x < 0) {
+                        width += x;
+                        x = 0;
+                    }
+                    if (y < 0) {
+                        height += y;
+                        y = 0;
+                    }
+                    if (x + width > bmpW) width = bmpW - x;
+                    if (y + height > bmpH) height = bmpH - y;
+
+                    if (width <= 0 || height <= 0) {
                         return;
                     }
 
@@ -212,43 +237,43 @@ public class CropFragment extends Fragment {
                 activity.showCropOverlay(true, false, 0, 0, true);
                 break;
             case OTO:
-                activity.showCropOverlay(false, true, 1, 1, true);
+                activity.showCropOverlay(true, true, 1, 1, true);
                 break;
             case TTF:
-                activity.showCropOverlay(false, true, 3, 4, true);
+                activity.showCropOverlay(true, true, 3, 4, true);
                 break;
             case NTS:
-                activity.showCropOverlay(false, true, 9, 16, true);
+                activity.showCropOverlay(true, true, 9, 16, true);
                 break;
         }
     }
 
     private void updateIconUI(FilterActivity.CropMode mode) {
-        freeCutIcon.setImageResource(R.drawable.icon_rotation_no);
-        OTORatioIcon.setImageResource(R.drawable.icon_rotation_no);
-        TTFRatioIcon.setImageResource(R.drawable.icon_rotation_no);
-        NTSRatioIcon.setImageResource(R.drawable.icon_rotation_no);
+        freeCropIcon.setImageResource(R.drawable.icon_crop_free_no);
+        OTORatioIcon.setImageResource(R.drawable.icon_crop_oto_no);
+        TTFRatioIcon.setImageResource(R.drawable.icon_crop_ttf_no);
+        NTSRatioIcon.setImageResource(R.drawable.icon_crop_nts_no);
 
-        freeCutTxt.setTextColor(Color.WHITE);
-        OTOTxt.setTextColor(Color.WHITE);
-        TTFTxt.setTextColor(Color.WHITE);
-        NTSTxt.setTextColor(Color.WHITE);
+        freeCropTxt.setTextColor(Color.parseColor("#90989F"));
+        OTOTxt.setTextColor(Color.parseColor("#90989F"));
+        TTFTxt.setTextColor(Color.parseColor("#90989F"));
+        NTSTxt.setTextColor(Color.parseColor("#90989F"));
 
         switch (mode) {
             case FREE:
-                freeCutIcon.setImageResource(R.drawable.icon_rotation_yes);
-                freeCutTxt.setTextColor(Color.parseColor("#C2FA7A"));
+                freeCropIcon.setImageResource(R.drawable.icon_crop_free_yes);
+                freeCropTxt.setTextColor(Color.parseColor("#C2FA7A"));
                 break;
             case OTO:
-                OTORatioIcon.setImageResource(R.drawable.icon_rotation_yes);
+                OTORatioIcon.setImageResource(R.drawable.icon_crop_oto_yes);
                 OTOTxt.setTextColor(Color.parseColor("#C2FA7A"));
                 break;
             case TTF:
-                TTFRatioIcon.setImageResource(R.drawable.icon_rotation_yes);
+                TTFRatioIcon.setImageResource(R.drawable.icon_crop_ttf_yes);
                 TTFTxt.setTextColor(Color.parseColor("#C2FA7A"));
                 break;
             case NTS:
-                NTSRatioIcon.setImageResource(R.drawable.icon_rotation_yes);
+                NTSRatioIcon.setImageResource(R.drawable.icon_crop_nts_yes);
                 NTSTxt.setTextColor(Color.parseColor("#C2FA7A"));
                 break;
         }

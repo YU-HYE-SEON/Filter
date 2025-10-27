@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -21,13 +22,16 @@ import com.example.filter.etc.ClickUtils;
 
 public class ColorsFragment extends Fragment {
     private String filterType;
+    private LinearLayout brightnessBtn, exposureBtn, contrastBtn,
+            highlightBtn, shadowBtn, temperatureBtn, hueBtn,
+            saturationBtn, sharpnessBtn, blurBtn, vignetteBtn, noiseBtn;
     private ImageView brightnessIcon, exposureIcon, contrastIcon,
-            highlightIcon, shadowIcon, temperatureIcon, tintIcon,
+            highlightIcon, shadowIcon, temperatureIcon, hueIcon,
             saturationIcon, sharpnessIcon, blurIcon, vignetteIcon, noiseIcon;
     private TextView brightnessTxt, exposureTxt, contrastTxt,
-            highlightTxt, shadowTxt, temperatureTxt, tintTxt,
+            highlightTxt, shadowTxt, temperatureTxt, hueTxt,
             saturationTxt, sharpnessTxt, blurTxt, vignetteTxt, noiseTxt;
-    private ImageView nextBtn;
+    private LinearLayout nextBtn;
     private ConstraintLayout bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
     private ImageButton undoSticker, redoSticker, originalSticker;
@@ -37,32 +41,55 @@ public class ColorsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_colors, container, false);
 
+        brightnessBtn = view.findViewById(R.id.brightnessBtn);
         brightnessIcon = view.findViewById(R.id.brightnessIcon);
-        exposureIcon = view.findViewById(R.id.exposureIcon);
-        contrastIcon = view.findViewById(R.id.contrastIcon);
-        highlightIcon = view.findViewById(R.id.highlightIcon);
-        shadowIcon = view.findViewById(R.id.shadowIcon);
-        temperatureIcon = view.findViewById(R.id.temperatureIcon);
-        tintIcon = view.findViewById(R.id.tintIcon);
-        saturationIcon = view.findViewById(R.id.saturationIcon);
-        sharpnessIcon = view.findViewById(R.id.sharpnessIcon);
-        blurIcon = view.findViewById(R.id.blurIcon);
-        vignetteIcon = view.findViewById(R.id.vignetteIcon);
-        noiseIcon = view.findViewById(R.id.noiseIcon);
-        nextBtn = view.findViewById(R.id.nextBtn);
-
         brightnessTxt = view.findViewById(R.id.brightnessTxt);
+
+        exposureBtn = view.findViewById(R.id.exposureBtn);
+        exposureIcon = view.findViewById(R.id.exposureIcon);
         exposureTxt = view.findViewById(R.id.exposureTxt);
+
+        contrastBtn = view.findViewById(R.id.contrastBtn);
+        contrastIcon = view.findViewById(R.id.contrastIcon);
         contrastTxt = view.findViewById(R.id.contrastTxt);
+
+        highlightBtn = view.findViewById(R.id.highlightBtn);
+        highlightIcon = view.findViewById(R.id.highlightIcon);
         highlightTxt = view.findViewById(R.id.highlightTxt);
+
+        shadowBtn = view.findViewById(R.id.shadowBtn);
+        shadowIcon = view.findViewById(R.id.shadowIcon);
         shadowTxt = view.findViewById(R.id.shadowTxt);
+
+        temperatureBtn = view.findViewById(R.id.temperatureBtn);
+        temperatureIcon = view.findViewById(R.id.temperatureIcon);
         temperatureTxt = view.findViewById(R.id.temperatureTxt);
-        tintTxt = view.findViewById(R.id.tintTxt);
+
+        hueBtn = view.findViewById(R.id.hueBtn);
+        hueIcon = view.findViewById(R.id.hueIcon);
+        hueTxt = view.findViewById(R.id.hueTxt);
+
+        saturationBtn = view.findViewById(R.id.saturationBtn);
+        saturationIcon = view.findViewById(R.id.saturationIcon);
         saturationTxt = view.findViewById(R.id.saturationTxt);
+
+        sharpnessBtn = view.findViewById(R.id.sharpnessBtn);
+        sharpnessIcon = view.findViewById(R.id.sharpnessIcon);
         sharpnessTxt = view.findViewById(R.id.sharpnessTxt);
+
+        blurBtn = view.findViewById(R.id.blurBtn);
+        blurIcon = view.findViewById(R.id.blurIcon);
         blurTxt = view.findViewById(R.id.blurTxt);
+
+        vignetteBtn = view.findViewById(R.id.vignetteBtn);
+        vignetteIcon = view.findViewById(R.id.vignetteIcon);
         vignetteTxt = view.findViewById(R.id.vignetteTxt);
+
+        noiseBtn = view.findViewById(R.id.noiseBtn);
+        noiseIcon = view.findViewById(R.id.noiseIcon);
         noiseTxt = view.findViewById(R.id.noiseTxt);
+
+        nextBtn = view.findViewById(R.id.nextBtn);
 
         bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
         undoColor = requireActivity().findViewById(R.id.undoColor);
@@ -71,7 +98,6 @@ public class ColorsFragment extends Fragment {
         undoSticker = requireActivity().findViewById(R.id.undoSticker);
         redoSticker = requireActivity().findViewById(R.id.redoSticker);
         originalSticker = requireActivity().findViewById(R.id.originalSticker);
-
 
         bottomArea1.setVisibility(View.VISIBLE);
         undoSticker.setVisibility(View.INVISIBLE);
@@ -89,7 +115,6 @@ public class ColorsFragment extends Fragment {
         }
 
         undoColor.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
             if (activity != null) {
                 activity.previewOriginalColors(false);
                 activity.undoColor();
@@ -98,7 +123,6 @@ public class ColorsFragment extends Fragment {
         });
 
         redoColor.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
             if (activity != null) {
                 activity.previewOriginalColors(false);
                 activity.redoColor();
@@ -115,40 +139,40 @@ public class ColorsFragment extends Fragment {
                 int id = view.getId();
 
                 switch (id) {
-                    case R.id.brightnessIcon:
+                    case R.id.brightnessBtn:
                         filterType = "밝기";
                         break;
-                    case R.id.exposureIcon:
+                    case R.id.exposureBtn:
                         filterType = "노출";
                         break;
-                    case R.id.contrastIcon:
+                    case R.id.contrastBtn:
                         filterType = "대비";
                         break;
-                    case R.id.highlightIcon:
+                    case R.id.highlightBtn:
                         filterType = "하이라이트";
                         break;
-                    case R.id.shadowIcon:
+                    case R.id.shadowBtn:
                         filterType = "그림자";
                         break;
-                    case R.id.temperatureIcon:
+                    case R.id.temperatureBtn:
                         filterType = "온도";
                         break;
-                    case R.id.tintIcon:
+                    case R.id.hueBtn:
                         filterType = "색조";
                         break;
-                    case R.id.saturationIcon:
+                    case R.id.saturationBtn:
                         filterType = "채도";
                         break;
-                    case R.id.sharpnessIcon:
+                    case R.id.sharpnessBtn:
                         filterType = "선명하게";
                         break;
-                    case R.id.blurIcon:
+                    case R.id.blurBtn:
                         filterType = "흐리게";
                         break;
-                    case R.id.vignetteIcon:
+                    case R.id.vignetteBtn:
                         filterType = "비네트";
                         break;
-                    case R.id.noiseIcon:
+                    case R.id.noiseBtn:
                         filterType = "노이즈";
                         break;
                 }
@@ -192,25 +216,22 @@ public class ColorsFragment extends Fragment {
                         ConstraintLayout bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
                         bottomArea1.setVisibility(View.INVISIBLE);
                     }
-                }).withMessage("스티커를 추가하면 사진 비율이 고정됩니다.\n현재 비율을 유지하시겠습니까?")
-                        .withButton1Text("변경")
-                        .withButton2Text("유지")
-                        .show();
+                }).show();
             }
         });
 
-        brightnessIcon.setOnClickListener(listener);
-        exposureIcon.setOnClickListener(listener);
-        contrastIcon.setOnClickListener(listener);
-        highlightIcon.setOnClickListener(listener);
-        shadowIcon.setOnClickListener(listener);
-        temperatureIcon.setOnClickListener(listener);
-        tintIcon.setOnClickListener(listener);
-        saturationIcon.setOnClickListener(listener);
-        sharpnessIcon.setOnClickListener(listener);
-        blurIcon.setOnClickListener(listener);
-        vignetteIcon.setOnClickListener(listener);
-        noiseIcon.setOnClickListener(listener);
+        brightnessBtn.setOnClickListener(listener);
+        exposureBtn.setOnClickListener(listener);
+        contrastBtn.setOnClickListener(listener);
+        highlightBtn.setOnClickListener(listener);
+        shadowBtn.setOnClickListener(listener);
+        temperatureBtn.setOnClickListener(listener);
+        hueBtn.setOnClickListener(listener);
+        saturationBtn.setOnClickListener(listener);
+        sharpnessBtn.setOnClickListener(listener);
+        blurBtn.setOnClickListener(listener);
+        vignetteBtn.setOnClickListener(listener);
+        noiseBtn.setOnClickListener(listener);
 
         updateColorIcons();
 
@@ -279,7 +300,7 @@ public class ColorsFragment extends Fragment {
             brightnessTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             brightnessIcon.setImageResource(R.drawable.icon_brightness_no);
-            brightnessTxt.setTextColor(Color.WHITE);
+            brightnessTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("노출") != 0) {
@@ -287,16 +308,15 @@ public class ColorsFragment extends Fragment {
             exposureTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             exposureIcon.setImageResource(R.drawable.icon_exposure_no);
-            exposureTxt.setTextColor(Color.WHITE);
+            exposureTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
-        //
         if (a.getCurrentValue("대비") != 0) {
             contrastIcon.setImageResource(R.drawable.icon_contrast_yes);
             contrastTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             contrastIcon.setImageResource(R.drawable.icon_contrast_no);
-            contrastTxt.setTextColor(Color.WHITE);
+            contrastTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("하이라이트") != 0) {
@@ -304,7 +324,7 @@ public class ColorsFragment extends Fragment {
             highlightTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             highlightIcon.setImageResource(R.drawable.icon_highlight_no);
-            highlightTxt.setTextColor(Color.WHITE);
+            highlightTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("그림자") != 0) {
@@ -312,7 +332,7 @@ public class ColorsFragment extends Fragment {
             shadowTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             shadowIcon.setImageResource(R.drawable.icon_shadow_no);
-            shadowTxt.setTextColor(Color.WHITE);
+            shadowTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("온도") != 0) {
@@ -320,15 +340,15 @@ public class ColorsFragment extends Fragment {
             temperatureTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             temperatureIcon.setImageResource(R.drawable.icon_temperature_no);
-            temperatureTxt.setTextColor(Color.WHITE);
+            temperatureTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("색조") != 0) {
-            tintIcon.setImageResource(R.drawable.icon_tint_yes);
-            tintTxt.setTextColor(Color.parseColor("#C2FA7A"));
+            hueIcon.setImageResource(R.drawable.icon_hue_yes);
+            hueTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
-            tintIcon.setImageResource(R.drawable.icon_tint_no);
-            tintTxt.setTextColor(Color.WHITE);
+            hueIcon.setImageResource(R.drawable.icon_hue_no);
+            hueTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("채도") != 0) {
@@ -336,7 +356,7 @@ public class ColorsFragment extends Fragment {
             saturationTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             saturationIcon.setImageResource(R.drawable.icon_saturation_no);
-            saturationTxt.setTextColor(Color.WHITE);
+            saturationTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("선명하게") != 0) {
@@ -344,7 +364,7 @@ public class ColorsFragment extends Fragment {
             sharpnessTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             sharpnessIcon.setImageResource(R.drawable.icon_sharpness_no);
-            sharpnessTxt.setTextColor(Color.WHITE);
+            sharpnessTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("흐리게") != 0) {
@@ -352,7 +372,7 @@ public class ColorsFragment extends Fragment {
             blurTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             blurIcon.setImageResource(R.drawable.icon_blur_no);
-            blurTxt.setTextColor(Color.WHITE);
+            blurTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("비네트") != 0) {
@@ -360,7 +380,7 @@ public class ColorsFragment extends Fragment {
             vignetteTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             vignetteIcon.setImageResource(R.drawable.icon_vignette_no);
-            vignetteTxt.setTextColor(Color.WHITE);
+            vignetteTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
         if (a.getCurrentValue("노이즈") != 0) {
@@ -368,7 +388,7 @@ public class ColorsFragment extends Fragment {
             noiseTxt.setTextColor(Color.parseColor("#C2FA7A"));
         } else {
             noiseIcon.setImageResource(R.drawable.icon_noise_no);
-            noiseTxt.setTextColor(Color.WHITE);
+            noiseTxt.setTextColor(Color.parseColor("#90989F"));
         }
     }
 }

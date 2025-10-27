@@ -27,58 +27,76 @@
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="face" />
 
-        <!--<activity
+        <activity
             android:name=".activities.StartActivity"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.Filter.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>-->
-        <activity
-        android:name=".activities.MainActivity"
-        android:exported="true"
-        android:theme="@style/Base.Theme.Filter">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
+        </activity>
+        <!--<activity
+            android:name=".activities.MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Base.Theme.Filter">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-    </activity>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>-->
+
         <activity
             android:name=".activities.SignUpActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
         <activity
             android:name=".activities.LoginFailActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
-        <activity
+
+        <!--<activity
             android:name=".activities.StartActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Base.Theme.Filter" />-->
+        <activity
+            android:name=".activities.MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
+
         <activity
             android:name=".activities.FilterDetailActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
         <activity
             android:name=".activities.FilterActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter"
             android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".activities.LoadActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
         <activity
             android:name=".activities.SavePhotoActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
         <activity
             android:name=".activities.RegisterActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter"
             android:windowSoftInputMode="stateHidden|adjustResize" />
     </application>

@@ -8,10 +8,10 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/aiStickerCreate"
-        android:focusableInTouchMode="true"
-        android:clickable="true"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusableInTouchMode="true">
 
         <LinearLayout
             android:id="@+id/contentBox"
@@ -66,28 +66,30 @@
                 android:background="@drawable/border_dialog"
                 android:fontFamily="@font/roboto_medium"
                 android:gravity="top|start"
-                android:scrollbars="vertical"
                 android:includeFontPadding="false"
                 android:inputType="textMultiLine"
-                android:minLines="1"
                 android:maxLines="18"
+                android:minLines="1"
                 android:overScrollMode="always"
                 android:paddingLeft="20dp"
                 android:paddingTop="10dp"
                 android:paddingRight="14dp"
                 android:paddingBottom="10dp"
+                android:scrollbars="vertical"
                 android:textColor="@color/black"
                 android:textSize="20sp" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp">
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="30dp">
 
                 <ImageButton
                     android:id="@+id/createBtn"
-                    android:layout_width="110dp"
-                    android:layout_height="30dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
                     android:background="@drawable/btn_ai_bg"
                     android:clickable="true"
                     android:focusable="true"

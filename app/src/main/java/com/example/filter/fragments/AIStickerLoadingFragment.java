@@ -10,6 +10,8 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -42,7 +44,7 @@ public class AIStickerLoadingFragment extends Fragment {
     private static final String IMAGE_PATH = "image_path";
     private TextView loadingTxt;
     private LinearLayout charRow;
-    private final List<ObjectAnimator> anims = new ArrayList<>();
+    private final List<ValueAnimator> anims = new ArrayList<>();
     private static final long STEP_MS = 400;
     private static final float AMPLITUDE_DP = 80;
 
@@ -166,30 +168,27 @@ public class AIStickerLoadingFragment extends Fragment {
     private void startWaveAnimation() {
         float ampPx = dp(AMPLITUDE_DP);
         int n = charRow.getChildCount();
-        long total = STEP_MS * n;
+        long step = STEP_MS;
+        long total = (long) (STEP_MS * n * 0.7f);
 
         for (int i = 0; i < n; i++) {
             View ch = charRow.getChildAt(i);
-
-            float tStart = (i * STEP_MS) / (float) total;
-            float tPeak = ((i * STEP_MS) + (STEP_MS / 2f)) / (float) total;
-            float tEnd = ((i + 1) * STEP_MS) / (float) total;
+            long startDelay = i * step / 2;
 
             Keyframe k0 = Keyframe.ofFloat(0f, 0f);
-            Keyframe k1 = Keyframe.ofFloat(tStart, 0f);
-            Keyframe k2 = Keyframe.ofFloat(tPeak, -ampPx);
-            Keyframe k3 = Keyframe.ofFloat(tEnd, 0f);
-            Keyframe k4 = Keyframe.ofFloat(1f, 0f);
+            Keyframe k1 = Keyframe.ofFloat(0.35f, -ampPx);
+            Keyframe k2 = Keyframe.ofFloat(0.65f, 0f);
+            Keyframe k3 = Keyframe.ofFloat(1f, 0f);
 
-            PropertyValuesHolder ty = PropertyValuesHolder.ofKeyframe("translationY", k0, k1, k2, k3, k4);
+            PropertyValuesHolder ty = PropertyValuesHolder.ofKeyframe("translationY", k0, k1, k2, k3);
 
             ObjectAnimator a = ObjectAnimator.ofPropertyValuesHolder(ch, ty);
             a.setDuration(total);
-            a.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+            a.setStartDelay(startDelay);
+            a.setInterpolator(new AccelerateDecelerateInterpolator());
             a.setRepeatCount(ValueAnimator.INFINITE);
             a.setRepeatMode(ValueAnimator.RESTART);
             a.start();
-
             anims.add(a);
         }
     }
@@ -206,7 +205,7 @@ public class AIStickerLoadingFragment extends Fragment {
                     .beginTransaction()
                     .replace(R.id.aiStickerView, new AIStickerFailFragment())
                     .commit();
-        }, 3000);
+        }, 5000);
     }
 
     @Override
@@ -214,7 +213,7 @@ public class AIStickerLoadingFragment extends Fragment {
         super.onDestroyView();
         if (inflight != null) inflight.cancel();
 
-        for (ObjectAnimator a : anims) a.cancel();
+        for (ValueAnimator a : anims) a.cancel();
         anims.clear();
     }
 }

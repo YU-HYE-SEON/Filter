@@ -18,7 +18,6 @@ import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.MotionEvent;
@@ -34,18 +33,16 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 import com.example.filter.etc.FGLRenderer;
-import com.example.filter.R;
 import com.example.filter.etc.StickerStore;
 import com.example.filter.fragments.ColorsFragment;
 import com.example.filter.fragments.StickersFragment;
@@ -57,7 +54,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class FilterActivity extends BaseActivity {
     /// UI ///
@@ -102,6 +98,7 @@ public class FilterActivity extends BaseActivity {
     private float rotationDegree = 0;
     private boolean flipHorizontal = false, flipVertical = false;
     private int accumRotationDeg = 0;
+    private boolean lastRotationLeft = false, lastRotationRight = false;
     private boolean accumFlipH = false, accumFlipV = false;
     private boolean rotationEdited = false;
 
@@ -249,6 +246,17 @@ public class FilterActivity extends BaseActivity {
                     .commit();
         }
 
+        /*faceBox = new FaceBoxOverlayView(this);
+        FrameLayout container = findViewById(R.id.photoPreviewContainer);
+        container.addView(faceBox, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        photoPreview.queueEvent(() -> {
+            Bitmap bmp = renderer.getCurrentBitmap();
+            runOnUiThread(() -> detectFaces(bmp));
+        });*/
+
         scaleDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
@@ -391,26 +399,28 @@ public class FilterActivity extends BaseActivity {
         saveBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
 
-            renderer.setOnBitmapCaptureListener(fullBitmap -> {
-                runOnUiThread(() -> {
+            renderer.setOnBitmapCaptureListener(new FGLRenderer.OnBitmapCaptureListener() {
+                @Override
+                public void onBitmapCaptured(Bitmap bitmap) {
+                    int vX = renderer.getViewportX();
+                    int vY = renderer.getViewportY();
+                    int vW = renderer.getViewportWidth();
+                    int vH = renderer.getViewportHeight();
+
                     try {
-                        Bitmap composed = fullBitmap.copy(Bitmap.Config.ARGB_8888, true);
-                        Canvas canvas = new Canvas(composed);
+                        Bitmap finalBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
+                        Canvas finalCanvas = new Canvas(finalBitmap);
 
-                        if (brushOverlay != null) brushOverlay.draw(canvas);
-                        if (stickerOverlay != null) stickerOverlay.draw(canvas);
-
-                        Bitmap cropped = renderer.cropCenterRegion(
-                                composed,
-                                renderer.getViewportX(),
-                                renderer.getViewportY(),
-                                renderer.getViewportWidth(),
-                                renderer.getViewportHeight()
-                        );
+                        finalCanvas.drawBitmap(bitmap, 0, 0, null);
+                        finalCanvas.save();
+                        finalCanvas.translate(-vX, -vY);
+                        if (stickerOverlay != null) stickerOverlay.draw(finalCanvas);
+                        if (brushOverlay != null) brushOverlay.draw(finalCanvas);
+                        finalCanvas.restore();
 
                         File tempFile = new File(getCacheDir(), "temp_captured_image.png");
                         try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                            cropped.compress(Bitmap.CompressFormat.PNG, 100, out);
+                            finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
                         Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
@@ -420,8 +430,9 @@ public class FilterActivity extends BaseActivity {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                });
+                }
             });
+
             renderer.captureBitmap();
         });
     }
@@ -859,6 +870,36 @@ public class FilterActivity extends BaseActivity {
         applyTransform();
     }
 
+    public void setRotationEdited(boolean edited) {
+        this.rotationEdited = edited;
+    }
+
+
+    public int getAccumRotationDeg() {
+        return accumRotationDeg;
+    }
+
+    public void setLastRotationDirection(boolean left, boolean right) {
+        this.lastRotationLeft = left;
+        this.lastRotationRight = right;
+    }
+
+    public boolean isLastRotationLeft() {
+        return lastRotationLeft;
+    }
+
+    public boolean isLastRotationRight() {
+        return lastRotationRight;
+    }
+
+    public boolean isAccumFlipH() {
+        return accumFlipH;
+    }
+
+    public boolean isAccumFlipV() {
+        return accumFlipV;
+    }
+
     public void commitTransformations() {
         commitTransformations(false);
     }
@@ -904,6 +945,11 @@ public class FilterActivity extends BaseActivity {
             if (pendingFlipH) accumFlipH = !accumFlipH;
             if (pendingFlipV) accumFlipV = !accumFlipV;
             refreshRotationEditedFlag();
+
+            if (normDeg(accumRotationDeg) == 0 && !isAccumFlipH() && !isAccumFlipV()) {
+                lastRotationLeft = false;
+                lastRotationRight = false;
+            }
         }
 
         rotationDegree = 0f;
@@ -953,6 +999,9 @@ public class FilterActivity extends BaseActivity {
         rotationDegree = 0;
         flipHorizontal = false;
         flipVertical = false;
+        lastRotationLeft = false;
+        lastRotationRight = false;
+
         if (originalBitmap != null) {
             renderer.setBitmap(originalBitmap);
             photoPreview.requestRender();
@@ -1647,7 +1696,7 @@ public class FilterActivity extends BaseActivity {
         imagePickerLauncher.launch(intent);
     }
 
-    private void showExitConfirmDialog() {
+    public void showExitConfirmDialog() {
         new FilterEixtDialog(this, new FilterEixtDialog.FilterEixtDialogListener() {
             @Override
             public void onKeep() {

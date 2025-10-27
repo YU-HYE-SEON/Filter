@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -22,6 +23,7 @@ import androidx.palette.graphics.Palette;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 
@@ -83,16 +85,18 @@ public class FilterDetailActivity extends BaseActivity {
 
         Intent intent = getIntent();
         if (intent != null) {
+            String filterId = intent.getStringExtra("filterId");
+            String nick = intent.getStringExtra("nickname");
             String imgUrl = intent.getStringExtra("imgUrl");
             String title = intent.getStringExtra("filterTitle");
-            String nick = intent.getStringExtra("nickname");
+            String tagsStr = intent.getStringExtra("tags");
             int count = intent.getIntExtra("count", 0);
 
-            //if (imgUrl != null) Glide.with(this).load(imgUrl).fitCenter().into(img);
             if (imgUrl != null) {
                 Glide.with(this)
                         .asBitmap()
                         .load(imgUrl)
+                        .signature(new ObjectKey(filterId))
                         .fitCenter()
                         .into(new CustomTarget<Bitmap>() {
                             @Override
@@ -121,6 +125,30 @@ public class FilterDetailActivity extends BaseActivity {
 
             //saveCount.setText(String.valueOf(save)+" 저장");
             useCount.setText(String.valueOf(count) + " 사용");
+
+            TextView[] tagViews = {tag1, tag2, tag3, tag4, tag5};
+
+            for (TextView tagView : tagViews) {
+                tagView.setVisibility(View.GONE);
+            }
+
+            if (tagsStr != null && !tagsStr.trim().isEmpty()) {
+                String[] tags = tagsStr.trim().split("\\s+");
+
+                for (int i = 0; i < Math.min(tags.length, tagViews.length); i++) {
+                    if (tags[i] != null && !tags[i].isEmpty()) {
+                        tagViews[i].setText(tags[i]);
+                        tagViews[i].setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+
+            deleteBtn.setOnClickListener(v -> {
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("deleted_filter_id", filterId);
+                setResult(RESULT_OK, resultIntent);
+                finish();
+            });
         }
 
         /*Intent intent = getIntent();
@@ -138,37 +166,9 @@ public class FilterDetailActivity extends BaseActivity {
             useCount.setText(String.valueOf(count));
         }*/
 
-        //applyHashtagHanging(tag1);
-        //applyHashtagHanging(tag2);
-        //applyHashtagHanging(tag3);
-        //applyHashtagHanging(tag4);
-        //applyHashtagHanging(tag5);
-
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
             finish();
         });
     }
-
-    /*private void applyHashtagHanging(TextView tv) {
-        CharSequence original = tv.getText();
-        if (original == null) return;
-
-        int indent = (int) Math.ceil(tv.getPaint().measureText("#"));
-
-        SpannableString span = new SpannableString(original);
-        span.setSpan(new LeadingMarginSpan.Standard(0, indent), 0, span.length(), 0);
-        tv.setText(span, TextView.BufferType.SPANNABLE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            tv.setBreakStrategy(LineBreaker.BREAK_STRATEGY_SIMPLE);
-            tv.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE);
-        }
-
-        tv.setSingleLine(false);
-        tv.setEllipsize(null);
-        tv.setHorizontallyScrolling(false);
-        tv.setIncludeFontPadding(false);
-
-        tv.requestLayout();
-    }*/
 }
