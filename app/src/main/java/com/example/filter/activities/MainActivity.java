@@ -1,12 +1,10 @@
 package com.example.filter.activities;
 
 import android.content.Intent;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -16,7 +14,6 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
@@ -28,10 +25,8 @@ import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
-import com.example.filter.fragments.SearchFragment;
+import com.example.filter.fragments.SearchMainFragment;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends BaseActivity {
@@ -105,7 +100,7 @@ public class MainActivity extends BaseActivity {
             mainActivity.setVisibility(View.GONE);
 
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.frameLayout, new SearchFragment())
+                    .replace(R.id.frameLayout, new SearchMainFragment())
                     .addToBackStack(null)
                     .commit();
         });
@@ -201,8 +196,8 @@ public class MainActivity extends BaseActivity {
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frameLayout);
-        if (fragment instanceof SearchFragment) {
-            ((SearchFragment) fragment).onParentTouchEvent(ev);
+        if (fragment instanceof SearchMainFragment) {
+            ((SearchMainFragment) fragment).onParentTouchEvent(ev);
         }
         return super.dispatchTouchEvent(ev);
     }
