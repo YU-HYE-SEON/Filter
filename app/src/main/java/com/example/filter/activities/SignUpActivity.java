@@ -16,6 +16,17 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.example.filter.R;
+import com.example.filter.etc.UserApi;
+import com.google.gson.JsonObject;
+
+import org.json.JSONObject;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SignUpActivity extends BaseActivity {
     private EditText nickname;
@@ -62,12 +73,7 @@ public class SignUpActivity extends BaseActivity {
                     alertTxt.setText("10자 이내로 입력해주세요");
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setEnabled(false);
-                } /*else if () {
-                    alertTxt.setTextColor(Color.RED);
-                    alertTxt.setText("이미 사용중인 닉네임입니다");
-                    alertTxt.setVisibility(View.VISIBLE);
-                    btn.setEnabled(false);
-                }*/ else if (bad != null) {
+                } else if (bad != null) {
                     alertTxt.setTextColor(Color.RED);
                     alertTxt.setText(bad + "은 사용할 수 없는 문자입니다");
                     alertTxt.setVisibility(View.VISIBLE);
@@ -77,21 +83,64 @@ public class SignUpActivity extends BaseActivity {
                     alertTxt.setText("닉네임을 입력해주세요");
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setEnabled(false);
-                } else {
-                    alertTxt.setTextColor(Color.BLUE);
+                } /*else if () {
+                    alertTxt.setTextColor(Color.RED);
+                    alertTxt.setText("이미 사용중인 닉네임입니다");
+                    alertTxt.setVisibility(View.VISIBLE);
+                    btn.setEnabled(false);
+                }*/ else {
+                    checkNicknameDuplicate(input);
+                    /*alertTxt.setTextColor(Color.BLUE);
                     alertTxt.setText("사용 가능한 닉네임입니다");
                     alertTxt.setVisibility(View.VISIBLE);
-                    btn.setEnabled(true);
+                    btn.setEnabled(true);*/
                 }
             }
         });
 
         btn.setOnClickListener(v -> {
-            Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
+            /*Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
             //Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
             //intent.putExtra("nickname", nickname.getText().toString());
             startActivity(intent);
-            finish();
+            finish();*/
+            String nicknameStr = nickname.getText().toString();
+            if (nicknameStr.isEmpty()) return;
+
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl("http://13.124.105.243/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            UserApi api = retrofit.create(UserApi.class);
+
+            // JSON 바디 생성
+            JsonObject json = new JsonObject();
+            json.addProperty("nickname", nicknameStr);
+
+            Call<ResponseBody> call = api.setNickname(json); // POST /api/v1/users/nickname
+            call.enqueue(new Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    if (response.isSuccessful()) {
+                        //Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
+                        Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity  .class);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        alertTxt.setTextColor(Color.RED);
+                        alertTxt.setText("닉네임 등록 실패");
+                        alertTxt.setVisibility(View.VISIBLE);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    alertTxt.setTextColor(Color.RED);
+                    alertTxt.setText("네트워크 오류");
+                    alertTxt.setVisibility(View.VISIBLE);
+                }
+            });
         });
     }
 
@@ -132,6 +181,57 @@ public class SignUpActivity extends BaseActivity {
             return true;
         }
         return false;
+    }
+
+    private void checkNicknameDuplicate(String nicknameStr) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://13.124.105.243/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        UserApi api = retrofit.create(UserApi.class);
+        api.checkNickname(nicknameStr).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                try {
+                    if (response.isSuccessful()) {
+                        String body = response.body() != null ? response.body().string() : "";
+                        JSONObject json = new JSONObject(body);
+                        boolean exists = json.optBoolean("exists", false);
+
+                        if (exists) {
+                            alertTxt.setTextColor(Color.RED);
+                            alertTxt.setText("이미 사용중인 닉네임입니다");
+                            alertTxt.setVisibility(View.VISIBLE);
+                            btn.setEnabled(false);
+                        } else {
+                            alertTxt.setTextColor(Color.BLUE);
+                            alertTxt.setText("사용 가능한 닉네임입니다");
+                            alertTxt.setVisibility(View.VISIBLE);
+                            btn.setEnabled(true);
+                        }
+                    } else {
+                        alertTxt.setTextColor(Color.RED);
+                        alertTxt.setText("서버 오류: " + response.code());
+                        alertTxt.setVisibility(View.VISIBLE);
+                        btn.setEnabled(false);
+                    }
+                } catch (Exception e) {
+                    alertTxt.setTextColor(Color.RED);
+                    alertTxt.setText("응답 처리 중 오류 발생");
+                    alertTxt.setVisibility(View.VISIBLE);
+                    btn.setEnabled(false);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                alertTxt.setTextColor(Color.RED);
+                alertTxt.setText("네트워크 오류");
+                alertTxt.setVisibility(View.VISIBLE);
+                btn.setEnabled(false);
+            }
+        });
     }
 
     /*private boolean isPointInsideView(MotionEvent ev, View v) {
