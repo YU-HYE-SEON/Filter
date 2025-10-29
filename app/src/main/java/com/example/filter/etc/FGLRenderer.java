@@ -23,7 +23,7 @@ import javax.microedition.khronos.opengles.GL10;
 public class FGLRenderer implements GLSurfaceView.Renderer {
     private final Context context;  //리소스 접근 위해 사용
     private GLSurfaceView glSurfaceView;    //화면에 그려지는 OpenGL의 뷰 (현재 불러온 사진 이미지 + 필터 적용)
-    private Bitmap bitmap;  //렌더링할 이미지, openGL의 텍스쳐로 변환
+    private volatile Bitmap bitmap;  //렌더링할 이미지, openGL의 텍스쳐로 변환
     private int viewportX, viewportY, viewportWidth, viewportHeight;    //화면에 실제로 보여지는 영역
     private int textureId = 0;  //텍스쳐 객체 고유 ID 참조용, 0:생성한 텍스쳐 없음
     private int program;    //쉐이더 프로그램 ID, 쉐이더 프로그램 = (버텍스 쉐이더(정점 위치 계산) + 프래그먼트 쉐이더(픽셀 색상 계산))

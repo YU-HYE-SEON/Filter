@@ -5,5 +5,6 @@
     <item name="tag_brush_layer" type="id" />
     <item name="tag_face_checked" type="id" />
     <item name="tag_sticker_id" type="id" />
+    <item name="tag_original_width" type="id" />
     <item name="tag_face_group_id" type="id" />
 </resources>

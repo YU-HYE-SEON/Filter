@@ -26,6 +26,7 @@
             android:background="@drawable/search"
             android:fontFamily="@font/pretendard_regular"
             android:hint="나만의 Feel'em 찾아봐!"
+            android:imeOptions="actionSearch"
             android:inputType="text"
             android:paddingStart="15dp"
             android:paddingEnd="55dp"
@@ -33,7 +34,6 @@
             android:singleLine="true"
             android:textColorHint="#ACD4FF"
             android:textSize="14sp"
-            android:imeOptions="actionSearch"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -93,6 +93,23 @@
                 android:textSize="12sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+           <!-- <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:overScrollMode="never"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="80dp"
+                android:scrollbars="none"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />-->
 
             <LinearLayout
                 android:layout_width="wrap_content"

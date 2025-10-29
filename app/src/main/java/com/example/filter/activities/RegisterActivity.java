@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -36,23 +37,39 @@ import androidx.annotation.Nullable;
 
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.FilterApi;
+import com.example.filter.etc.FilterDtoCreateRequest;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
 
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class RegisterActivity extends BaseActivity {
+    String originalPath, imagePath;
     private View topArea, photoView, contentContainer;
     private ImageView photo;
     private NestedScrollView scrollView;
-    private EditText titleEditText, tagEditText, pointEditText;
+    private EditText titleEditText, tagEditText, priceEditText;
     private TextView alertTxt1, alertTxt2, alertTxt3, tagTxt, saleTxt;
     private RadioGroup saleRadioGroup;
     private RadioButton freeRadio, paidRadio;
     private ImageButton registerBtn, backBtn;
     private boolean isFree = true;
-    private boolean isPointFirstEdited = false;
+    private boolean isPriceFirstEdited = false;
 
     private enum Anchor {NONE, TAG_TXT, SALE_TXT, REGISTER_BTN}
 
@@ -66,6 +83,8 @@ public class RegisterActivity extends BaseActivity {
     private int touchSlop;
     private boolean forceScroll = false;
     private Bitmap finalBitmap;
+    private List<FilterDtoCreateRequest.Sticker> stickerList;
+    private FilterDtoCreateRequest.ColorAdjustments adj;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -82,7 +101,7 @@ public class RegisterActivity extends BaseActivity {
         contentContainer = findViewById(R.id.contentContainer);
         titleEditText = findViewById(R.id.titleEditText);
         tagEditText = findViewById(R.id.tagEditText);
-        pointEditText = findViewById(R.id.pointEditText);
+        priceEditText = findViewById(R.id.priceEditText);
         alertTxt1 = findViewById(R.id.alertTxt1);
         alertTxt2 = findViewById(R.id.alertTxt2);
         alertTxt3 = findViewById(R.id.alertTxt3);
@@ -93,6 +112,20 @@ public class RegisterActivity extends BaseActivity {
         paidRadio = findViewById(R.id.paidRadio);
         registerBtn = findViewById(R.id.registerBtn);
         backBtn = findViewById(R.id.backBtn);
+
+        adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
+        stickerList = (List<FilterDtoCreateRequest.Sticker>) getIntent().getSerializableExtra("stickers");
+
+        if (adj != null) {
+            Log.d("ColorAdjustments",
+                    "[등록화면]\n" +
+                            "밝기: " + adj.brightness + " 노출: " + adj.exposure +
+                            " 대비: " + adj.contrast + " 하이라이트: " + adj.highlight +
+                            " 그림자: " + adj.shadow + " 온도: " + adj.temperature +
+                            " 색조: " + adj.hue + " 채도: " + adj.saturation +
+                            " 선명하게: " + adj.sharpen + " 흐리게: " + adj.blur +
+                            " 비네트: " + adj.vignette + " 노이즈: " + adj.noise);
+        }
 
         scrollView.setOnTouchListener((v, ev) -> {
             Rect btnRect = new Rect();
@@ -225,7 +258,9 @@ public class RegisterActivity extends BaseActivity {
             wasKeyboardVisible = keyboardVisible;
         });
 
-        String imagePath = getIntent().getStringExtra("final_image");
+        originalPath = getIntent().getStringExtra("original_image_path");
+        imagePath = getIntent().getStringExtra("final_image");
+
         if (imagePath != null) {
             finalBitmap = BitmapFactory.decodeFile(imagePath);
             if (finalBitmap != null) {
@@ -288,36 +323,36 @@ public class RegisterActivity extends BaseActivity {
 
             if (checkedId == R.id.freeRadio) {
                 isFree = true;
-                pointEditText.setText("0");
-                pointEditText.setTextColor(Color.parseColor("#888888"));
-                pointEditText.setEnabled(false);
+                priceEditText.setText("0");
+                priceEditText.setTextColor(Color.parseColor("#888888"));
+                priceEditText.setEnabled(false);
                 alertTxt3.setText("무료 필터의 경우 가격을 측정할 수 없습니다.");
                 alertTxt3.setVisibility(View.VISIBLE);
             } else if (checkedId == R.id.paidRadio) {
                 isFree = false;
-                isPointFirstEdited = false;
-                pointEditText.setTextColor(Color.BLACK);
-                pointEditText.setEnabled(true);
-                pointEditText.setText("0");
-                pointEditText.setSelection(pointEditText.getText().length());
+                isPriceFirstEdited = false;
+                priceEditText.setTextColor(Color.BLACK);
+                priceEditText.setEnabled(true);
+                priceEditText.setText("0");
+                priceEditText.setSelection(priceEditText.getText().length());
             }
         });
 
-        pointEditText.setOnClickListener(v -> {
-            if (!pointEditText.isEnabled()) {
+        priceEditText.setOnClickListener(v -> {
+            if (!priceEditText.isEnabled()) {
                 paidRadio.setChecked(true);
             }
-            focusWithAnchor(pointEditText, Anchor.REGISTER_BTN, false);
+            focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, false);
         });
-        pointEditText.setOnFocusChangeListener((v, hasFocus) -> {
+        priceEditText.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (!pointEditText.isEnabled()) {
+                if (!priceEditText.isEnabled()) {
                     paidRadio.setChecked(true);
                 }
-                focusWithAnchor(pointEditText, Anchor.REGISTER_BTN, false);
+                focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, false);
             }
         });
-        pointEditText.addTextChangedListener(new TextWatcher() {
+        priceEditText.addTextChangedListener(new TextWatcher() {
             private boolean selfChange = false;
 
             @Override
@@ -338,16 +373,16 @@ public class RegisterActivity extends BaseActivity {
                     String newText = t.replaceFirst("^0+(?=\\d)", "");
                     if (newText.isEmpty()) newText = "0";
                     selfChange = true;
-                    pointEditText.setText(newText);
-                    pointEditText.setSelection(newText.length());
+                    priceEditText.setText(newText);
+                    priceEditText.setSelection(newText.length());
                     selfChange = false;
-                    isPointFirstEdited = true;
+                    isPriceFirstEdited = true;
                     return;
                 }
 
                 try {
-                    int point = Integer.parseInt(t);
-                    if (point < 10 || point > 300 || point % 10 != 0) {
+                    int price = Integer.parseInt(t);
+                    if (price < 10 || price > 300 || price % 10 != 0) {
                         alertTxt3.setText("판매 불가한 가격입니다.");
                         alertTxt3.setVisibility(View.VISIBLE);
                     } else {
@@ -366,7 +401,7 @@ public class RegisterActivity extends BaseActivity {
             String title = titleEditText.getText().toString().trim();
             String tagStr = tagEditText.getText().toString().trim();
             String[] tags = tagStr.isEmpty() ? new String[]{} : tagStr.split("\\s+");
-            String pointStr = pointEditText.getText().toString().trim();
+            String priceStr = priceEditText.getText().toString().trim();
 
             if (title.isEmpty() || title.length() > 15) {
                 alertTxt1.setText(title.isEmpty() ? "필터 이름을 입력해주세요." : "작성 가능한 이름은 최대 15자 입니다.");
@@ -378,13 +413,13 @@ public class RegisterActivity extends BaseActivity {
                 return;
             } else if (!isFree) {
                 try {
-                    int point = Integer.parseInt(pointStr);
-                    if (point < 10 || point > 300 || point % 10 != 0) {
-                        focusWithAnchor(pointEditText, Anchor.REGISTER_BTN, true);
+                    int price = Integer.parseInt(priceStr);
+                    if (price < 10 || price > 300 || price % 10 != 0) {
+                        focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, true);
                         return;
                     }
                 } catch (NumberFormatException e) {
-                    focusWithAnchor(pointEditText, Anchor.REGISTER_BTN, true);
+                    focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, true);
                     return;
                 }
             }
@@ -400,13 +435,31 @@ public class RegisterActivity extends BaseActivity {
                 return;
             }
 
+            String idToken = getSharedPreferences("Auth", MODE_PRIVATE).getString("idToken", null);
+            if (idToken != null) {
+                FilterDtoCreateRequest request = new FilterDtoCreateRequest();
+                request.colorAdjustments = adj;
+                request.stickers = stickerList;
+                sendFilterToServer(idToken, title, tagStr, isFree ? "0" : priceStr, imageFile, request);
+            } else {
+                Log.e("스티커테스트", "idToken이 없습니다. 로그인 필요");
+            }
+
             Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
             mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             //mainIntent.putExtra("new_filter_nickname", "@" + "닉네임");
             mainIntent.putExtra("new_filter_image", newImagePath);
             mainIntent.putExtra("new_filter_title", title);
             mainIntent.putExtra("new_filter_tags", tagStr);
-            mainIntent.putExtra("new_filter_point", isFree ? "0" : pointStr);
+            mainIntent.putExtra("new_filter_price", isFree ? "0" : priceStr);
+
+            if (stickerList != null) {
+                mainIntent.putExtra("new_filter_stickers",(Serializable) stickerList);
+            }
+            if (adj != null) {
+                mainIntent.putExtra("color_adjustments", adj);
+            }
+
             startActivity(mainIntent);
 
             Intent detailIntent = new Intent(RegisterActivity.this, FilterDetailActivity.class);
@@ -415,7 +468,17 @@ public class RegisterActivity extends BaseActivity {
             detailIntent.putExtra("imgUrl", newImagePath);
             detailIntent.putExtra("filterTitle", title);
             detailIntent.putExtra("tags", tagStr);
-            //detailIntent.putExtra("price", isFree ? "0" : pointStr);
+            //detailIntent.putExtra("price", isFree ? "0" : priceStr);
+
+            if (stickerList != null) {
+                detailIntent.putExtra("stickers", (Serializable) stickerList);
+            }
+            if (adj != null) {
+                detailIntent.putExtra("color_adjustments", adj);
+            }
+
+            detailIntent.putExtra("original_image_path", originalPath);
+
             startActivity(detailIntent);
 
             finish();
@@ -548,7 +611,7 @@ public class RegisterActivity extends BaseActivity {
     private boolean isPointInsideAnyEditText(MotionEvent ev) {
         return isPointInsideView(ev, titleEditText)
                 || isPointInsideView(ev, tagEditText)
-                || isPointInsideView(ev, pointEditText);
+                || isPointInsideView(ev, priceEditText);
     }
 
     @Override
@@ -602,10 +665,61 @@ public class RegisterActivity extends BaseActivity {
     private void clearAllEditFocus() {
         if (titleEditText != null) titleEditText.clearFocus();
         if (tagEditText != null) tagEditText.clearFocus();
-        if (pointEditText != null) pointEditText.clearFocus();
+        if (priceEditText != null) priceEditText.clearFocus();
     }
 
     private int dp(int value) {
         return (int) (getResources().getDisplayMetrics().density * value);
+    }
+
+    private void sendFilterToServer(String idToken, String title, String tags, String price, File imageFile, FilterDtoCreateRequest request) {
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(interceptor)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://13.124.105.243/")  // 서버 주소
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        FilterApi api = retrofit.create(FilterApi.class);
+
+        request.name = title;
+        request.price = Integer.parseInt(price);
+        request.originalImageUrl = originalPath;
+        request.editedImageUrl = imagePath;
+        request.tags = List.of(tags.split("\\s+"));
+        //request.aspectX = 4;
+        //request.aspectY = 5;
+
+        request.stickers = stickerList;
+
+        String accessToken = getSharedPreferences("Auth", MODE_PRIVATE)
+                .getString("accessToken", "");
+
+        Call<ResponseBody> call = api.uploadFilter("Bearer " + accessToken, request);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    Log.d("스티커테스트", "필터 업로드 성공");
+                } else {
+                    try {
+                        Log.e("스티커테스트", "서버 응답 에러: " + response.errorBody().string());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("스티커테스트", "Retrofit 업로드 실패", t);
+            }
+        });
     }
 }

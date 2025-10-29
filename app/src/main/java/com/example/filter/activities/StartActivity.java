@@ -4,20 +4,20 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
-import android.graphics.ComposeShader;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -28,6 +28,8 @@ import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.splashscreen.SplashScreen;
@@ -35,8 +37,35 @@ import androidx.core.splashscreen.SplashScreen;
 import com.example.filter.R;
 import com.example.filter.dialogs.PopUpDialog;
 import com.example.filter.dialogs.SignUpDialog;
+import com.example.filter.etc.AuthApi;
+import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.TokenRequest;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
+
+
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class StartActivity extends BaseActivity {
+    private GoogleSignInOptions gso;
+    private GoogleSignInClient mGoogleSignInClient;
+    private ActivityResultLauncher<Intent> signInLauncher;
     private ConstraintLayout bg;
     private TextView txt, logo;
     private LinearLayout logoBox, btn;
@@ -56,6 +85,43 @@ public class StartActivity extends BaseActivity {
         btn = findViewById(R.id.btn);
         googleLogin = findViewById(R.id.googleLogin);
         kakaoTalkLogin = findViewById(R.id.kakaoTalkLogin);
+
+        signInLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    try {
+                        /*Log.d("GoogleLogin", "resultCode = " + result.getResultCode());
+
+                        if (result.getData() == null) {
+                            Log.e("GoogleLogin", "result.getData() == null");
+                        } else {
+                            Log.d("GoogleLogin", "result.getData(): " + result.getData().toString());
+                        }*/
+
+                        if (result.getResultCode() == Activity.RESULT_OK) {
+                            Task<GoogleSignInAccount> task =
+                                    GoogleSignIn.getSignedInAccountFromIntent(result.getData());
+                            handleSignInResult(task);
+                        } else {
+                            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
+                            if (task.isComplete()) {
+                                Exception e = task.getException();
+                                if (e != null) Log.e("GoogleLogin", "로그인 실패 원인", e);
+                            } else {
+                                Log.e("GoogleLogin", "ActivityResult 실패 또는 취소됨 (사용자가 뒤로가기 눌렀거나 OAuth 오류)");
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e("GoogleLogin", "ActivityResult 처리 중 예외 발생", e);
+                    }
+                });
+
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestIdToken(getString(R.string.server_client_id))
+                .build();
+
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
         new Handler().postDelayed(() -> {
             Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
@@ -159,22 +225,164 @@ public class StartActivity extends BaseActivity {
         }, 1000);
 
         googleLogin.setOnClickListener(v -> {
-            if (!isSignUp && !isLogin) {
+            if (ClickUtils.isFastClick(800)) return;
+            googleLogin.setEnabled(false);
+            signIn();
+
+            /*if (!isSignUp && !isLogin) {
                 showSignUpDialog();
             } else if (!isLogin) {
                 loginFail();
             } else if (isLogin) {
                 loginSuccess();
-            }
+            }*/
         });
 
         kakaoTalkLogin.setOnClickListener(v -> {
-            if (!isSignUp && !isLogin) {
+            /*if (!isSignUp && !isLogin) {
                 showSignUpDialog();
             } else if (!isLogin) {
                 loginFail();
             } else if (isLogin) {
                 loginSuccess();
+            }*/
+        });
+    }
+
+    private void signIn() {
+        try {
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            if (signInIntent == null) {
+                Log.e("GoogleLogin", "signInIntent가 null입니다. GoogleSignInClient가 초기화되지 않았을 가능성");
+                return;
+            }
+            signInLauncher.launch(signInIntent);
+        } catch (Exception e) {
+            Log.e("GoogleLogin", "signIn() 중 예외 발생", e);
+        }
+    }
+
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+
+            String idToken = account.getIdToken();
+            //String email = account.getEmail();
+            //String displayName = account.getDisplayName();
+
+            if (account == null || idToken == null) {
+                Log.e("GoogleLogin", "GoogleSignInAccount 혹은 idToken이 null");
+                return;
+            }
+
+            if (account != null) {
+                Log.d("GoogleLogin", "ID Token: " + idToken);
+
+                getSharedPreferences("Auth", MODE_PRIVATE)
+                        .edit()
+                        .putString("idToken", idToken)
+                        .apply();
+            }
+
+            Log.d("GoogleLogin", "GoogleSignIn 성공");
+            Log.d("GoogleLogin", "idToken: " + idToken);
+
+            sendTokenToBackend(idToken);
+
+        } catch (ApiException e) {
+            Log.e("GoogleLogin", "GoogleSignIn 실패", e);
+        }
+    }
+
+    private void sendTokenToBackend(String idToken) {
+        Log.d("GoogleLogin", "백엔드 전송 시작");
+
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(interceptor)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://13.124.105.243/")  // 꼭 슬래시 포함
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        AuthApi api = retrofit.create(AuthApi.class);
+
+        TokenRequest body = new TokenRequest(idToken);
+        Log.d("GoogleLogin", "요청 바디: " + new Gson().toJson(body));
+
+        Call<ResponseBody> call = api.verifyGoogleToken(body);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                googleLogin.setEnabled(true);
+                Log.d("GoogleLogin", "Retrofit 응답 수신됨");
+                //Log.d("GoogleLogin", "HTTP 코드: " + response.code());
+
+                if (response.isSuccessful()) {
+                    try {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        Log.e("GoogleLogin", "서버 응답 본문: " + responseBody); // 👈 추가
+
+                        JSONObject json = new JSONObject(responseBody);
+
+                        boolean hasNickname = json.optBoolean("hasNickname", false);
+                        boolean loginSuccess = json.optBoolean("loginSuccess", true);
+                        String accessToken = json.optString("accessToken", "");
+                        String refreshToken = json.optString("refreshToken", "");
+                        String token = json.optString("token", ""); // 혹시 서버가 이렇게 보낼 수도 있음
+
+                        // 토큰 저장
+                        if (!accessToken.isEmpty() || !token.isEmpty()) {
+                            getSharedPreferences("Auth", MODE_PRIVATE)
+                                    .edit()
+                                    .putString("accessToken", !accessToken.isEmpty() ? accessToken : token)
+                                    .putString("refreshToken", refreshToken)
+                                    .apply();
+
+                            Log.d("GoogleLogin", "토큰 저장 완료: " + (!accessToken.isEmpty() ? accessToken : token));
+                        }
+
+                        if (!hasNickname) {
+                            isSignUp = false;
+                            isLogin = false;
+                            showSignUpDialog();
+                            return;
+                        }
+
+                        if (hasNickname && loginSuccess) {
+                            isSignUp = true;
+                            isLogin = true;
+                            loginSuccess();
+                        } else if (hasNickname) {
+                            isSignUp = true;
+                            isLogin = false;
+                            loginFail();
+                        }
+                    } catch (Exception e) {
+                        Log.e("GoogleLogin", "JSON 파싱 실패", e);
+                    }
+                } else {
+                    Log.e("GoogleLogin", "서버 에러 코드: " + response.code());
+                    if (response.errorBody() != null) {
+                        try {
+                            Log.e("GoogleLogin", "서버 에러 본문: " + response.errorBody().string());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                googleLogin.setEnabled(true);
+                Log.e("GoogleLogin", "Retrofit 통신 실패", t);
+                loginFail();
             }
         });
     }

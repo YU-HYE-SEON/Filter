@@ -15,8 +15,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.FilterDtoCreateRequest;
 
 import java.io.File;
+import java.io.Serializable;
+import java.util.List;
 
 public class SavePhotoActivity extends BaseActivity {
     private ImageButton backBtn;
@@ -43,11 +46,14 @@ public class SavePhotoActivity extends BaseActivity {
             return insets;
         });
 
-        String imagePath = getIntent().getStringExtra("saved_image");
-        if (imagePath != null) {
-            File file = new File(imagePath);
+        String originalPath = getIntent().getStringExtra("original_image_path");
+        String savedImagePath = getIntent().getStringExtra("saved_image");
+        String mergedOverlayPath = getIntent().getStringExtra("merged_overlay_path");
+
+        if (savedImagePath != null) {
+            File file = new File(savedImagePath);
             if (file.exists()) {
-                Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+                Bitmap bitmap = BitmapFactory.decodeFile(savedImagePath);
                 if (bitmap != null) {
                     photo.setImageBitmap(bitmap);
                     //사진 저장 메서드 호출
@@ -75,7 +81,20 @@ public class SavePhotoActivity extends BaseActivity {
             if (ClickUtils.isFastClick(500)) return;
 
             Intent intent = new Intent(SavePhotoActivity.this, RegisterActivity.class);
-            intent.putExtra("final_image", imagePath);
+            intent.putExtra("final_image", savedImagePath);
+            intent.putExtra("original_image_path", originalPath);
+
+            if (mergedOverlayPath != null) {
+                intent.putExtra("merged_overlay_path", mergedOverlayPath);
+            }
+
+            FilterDtoCreateRequest.ColorAdjustments adj =
+                    (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
+            if (adj != null) intent.putExtra("color_adjustments", adj);
+
+            List<FilterDtoCreateRequest.Sticker> stickers = (List<FilterDtoCreateRequest.Sticker>) getIntent().getSerializableExtra("stickers");
+            if (stickers != null) intent.putExtra("stickers", (Serializable) stickers);
+
             startActivity(intent);
         });
     }

@@ -23,10 +23,13 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.example.filter.R;
 import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.FilterDtoCreateRequest;
 import com.example.filter.etc.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.fragments.SearchMainFragment;
 
+import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends BaseActivity {
@@ -162,6 +165,14 @@ public class MainActivity extends BaseActivity {
             intent.putExtra("tags", item.tags);
             intent.putExtra("price", item.price);
             intent.putExtra("count", item.count);
+
+            if (item.colorAdjustments != null) {
+                intent.putExtra("color_adjustments", item.colorAdjustments);
+            }
+            /*if (item.stickers != null) {
+                intent.putExtra("stickers",(Serializable) item.stickers);
+            }*/
+
             detailActivityLauncher.launch(intent);
         });
 
@@ -211,11 +222,14 @@ public class MainActivity extends BaseActivity {
             String nickname = intent.getStringExtra("new_filter_nickname");
             String title = intent.getStringExtra("new_filter_title");
             String tags = intent.getStringExtra("new_filter_tags");
-            String point = intent.getStringExtra("new_filter_point");
+            String price = intent.getStringExtra("new_filter_price");
+            FilterDtoCreateRequest.ColorAdjustments adj =
+                    (FilterDtoCreateRequest.ColorAdjustments) intent.getSerializableExtra("color_adjustments");
+            List<FilterDtoCreateRequest.Sticker> stickers = (List<FilterDtoCreateRequest.Sticker>) intent.getSerializableExtra("new_filter_stickers");
 
             String newId = UUID.randomUUID().toString();
             if (title == null) title = "New Filter";
-            if (point == null) point = "0";
+            if (price == null) price = "0";
             if (nickname == null) nickname = "@" + "닉네임";
 
             FilterItem newItem = new FilterItem(
@@ -224,9 +238,11 @@ public class MainActivity extends BaseActivity {
                     newImagePath,
                     title,
                     tags,
-                    point,
+                    price,
                     0,
-                    false
+                    false,
+                    adj,
+                    stickers
             );
 
             if (filterAdapter != null) {

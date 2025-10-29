@@ -43,6 +43,7 @@ import com.example.filter.etc.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.CropBoxOverlayView;
 import com.example.filter.etc.FGLRenderer;
+import com.example.filter.etc.FilterDtoCreateRequest;
 import com.example.filter.etc.StickerStore;
 import com.example.filter.fragments.ColorsFragment;
 import com.example.filter.fragments.StickersFragment;
@@ -51,6 +52,7 @@ import com.example.filter.fragments.ToolsFragment;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -399,6 +401,8 @@ public class FilterActivity extends BaseActivity {
         saveBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
 
+            List<FilterDtoCreateRequest.Sticker> stickerList = calculateStickerInfo();
+
             renderer.setOnBitmapCaptureListener(new FGLRenderer.OnBitmapCaptureListener() {
                 @Override
                 public void onBitmapCaptured(Bitmap bitmap) {
@@ -425,6 +429,27 @@ public class FilterActivity extends BaseActivity {
 
                         Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
                         intent.putExtra("saved_image", tempFile.getAbsolutePath());
+                        intent.putExtra("original_image_path", getIntent().getData().toString());
+
+                        FilterDtoCreateRequest.ColorAdjustments adj = new FilterDtoCreateRequest.ColorAdjustments();
+                        adj.brightness = renderer.getCurrentValue("밝기") / 100f;
+                        adj.exposure = renderer.getCurrentValue("노출") / 100f;
+                        adj.contrast = renderer.getCurrentValue("대비") / 100f;
+                        adj.highlight = renderer.getCurrentValue("하이라이트") / 100f;
+                        adj.shadow = renderer.getCurrentValue("그림자") / 100f;
+                        adj.temperature = renderer.getCurrentValue("온도") / 100f;
+                        adj.hue = renderer.getCurrentValue("색조") / 100f;
+                        //adj.saturation = renderer.getCurrentValue("채도") / 100f;
+                        adj.saturation = (renderer.getCurrentValue("채도") / 100f) + 1.0f;
+                        adj.sharpen = renderer.getCurrentValue("선명하게") / 100f;
+                        adj.blur = renderer.getCurrentValue("흐리게") / 100f;
+                        adj.vignette = renderer.getCurrentValue("비네트") / 100f;
+                        adj.noise = renderer.getCurrentValue("노이즈") / 100f;
+
+                        intent.putExtra("color_adjustments", adj);
+
+                        intent.putExtra("stickers", (Serializable) stickerList);
+
                         startActivity(intent);
 
                     } catch (Exception e) {
@@ -1207,6 +1232,51 @@ public class FilterActivity extends BaseActivity {
     }
 
     /// 브러쉬, 스티커 ///
+    private List<FilterDtoCreateRequest.Sticker> calculateStickerInfo() {
+        List<FilterDtoCreateRequest.Sticker> stickerList = new ArrayList<>();
+        if (stickerOverlay != null && renderer != null) {
+            int vpX = renderer.getViewportX();
+            int vpY = renderer.getViewportY();
+            int vpW = renderer.getViewportWidth();
+            int vpH = renderer.getViewportHeight();
+
+            float photoCenterX = vpX + vpW / 2f;
+            float photoCenterY = vpY + vpH / 2f;
+
+            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                View stickerView = stickerOverlay.getChildAt(i);
+
+                Object stickerIdTag = stickerView.getTag(R.id.tag_sticker_id);
+                if (!(stickerIdTag instanceof Integer)) continue;
+
+                int stickerId = (Integer) stickerIdTag;
+
+                float stickerCenterX = stickerView.getX() + stickerView.getWidth() / 2f;
+                float stickerCenterY = stickerView.getY() + stickerView.getHeight() / 2f;
+
+                float absX = (stickerCenterX - photoCenterX) / (vpW / 2f);
+                float absY = (stickerCenterY - photoCenterY) / (vpH / 2f);
+
+                Float originalWidth = (Float) stickerView.getTag(R.id.tag_original_width);
+                float relScale = 1.0f;
+                if (originalWidth != null && originalWidth > 0) {
+                    relScale = stickerView.getWidth() / originalWidth;
+                }
+
+                FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
+                s.stickerId = stickerId;
+                s.placementType = "ABSOLUTE";
+                s.x = absX;
+                s.y = absY;
+                s.scale = relScale;
+                s.rotation = stickerView.getRotation();
+
+                stickerList.add(s);
+            }
+        }
+        return stickerList;
+    }
+
     public void applyBrushClipRect(BrushOverlayView brush) {
         if (renderer == null || brush == null) return;
         int x = renderer.getViewportX();
