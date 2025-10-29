@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
-import com.example.filter.etc.StickerItem;
+import com.example.filter.items.StickerItem;
 
 import java.io.File;
 import java.util.List;

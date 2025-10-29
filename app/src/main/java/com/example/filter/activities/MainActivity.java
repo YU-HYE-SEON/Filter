@@ -23,12 +23,11 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.example.filter.R;
 import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.FilterDtoCreateRequest;
-import com.example.filter.etc.FilterItem;
+import com.example.filter.apis.FilterDtoCreateRequest;
+import com.example.filter.items.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.fragments.SearchMainFragment;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 

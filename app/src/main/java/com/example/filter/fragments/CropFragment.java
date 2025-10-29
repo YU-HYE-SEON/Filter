@@ -20,7 +20,7 @@ import androidx.fragment.app.Fragment;
 import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.CropBoxOverlayView;
+import com.example.filter.overlayviews.CropBoxOverlayView;
 
 public class CropFragment extends Fragment {
     private LinearLayout freeCropBtn, OTORatioBtn, TTFRatioBtn, NTSRatioBtn;

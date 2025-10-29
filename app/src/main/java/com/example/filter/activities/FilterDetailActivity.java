@@ -39,8 +39,7 @@
     import com.bumptech.glide.signature.ObjectKey;
     import com.example.filter.R;
     import com.example.filter.etc.ClickUtils;
-    import com.example.filter.etc.FilterDtoCreateRequest;
-    import com.example.filter.fragments.RotationFragment;
+    import com.example.filter.apis.FilterDtoCreateRequest;
 
     import java.io.Serializable;
     import java.util.List;

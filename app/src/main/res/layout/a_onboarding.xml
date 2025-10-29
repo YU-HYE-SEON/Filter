@@ -4,6 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
+    android:id="@+id/rootView"
+    android:alpha="0"
     android:fitsSystemWindows="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -76,6 +79,7 @@
         android:layout_marginBottom="30dp"
         android:background="@drawable/border_onboarding_btn"
         android:text="Feel'em 시작하기"
+        android:textAllCaps="false"
         android:textSize="16dp"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"

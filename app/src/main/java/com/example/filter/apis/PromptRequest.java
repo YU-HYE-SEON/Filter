@@ -1,4 +1,4 @@
-package com.example.filter.etc;
+package com.example.filter.apis;
 
 public class PromptRequest {
     private String prompt_ko;

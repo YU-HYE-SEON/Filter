@@ -1,27 +1,16 @@
 package com.example.filter.adapters;
 
-import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
-import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
-import com.example.filter.etc.FilterItem;
-import com.example.filter.etc.OnBoardingItem;
+import com.example.filter.items.OnBoardingItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +53,10 @@ public class OnBoardingAdapter extends RecyclerView.Adapter<OnBoardingAdapter.VH
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
         OnBoardingItem item = items.get(position);
+
+        Glide.with(holder.image.getContext())
+                .load(item.getImageResId())
+                .into(holder.image);
 
         if (item.isSelected()) {
             holder.image2.setAlpha(0.7f);

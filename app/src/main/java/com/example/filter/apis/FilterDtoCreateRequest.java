@@ -1,4 +1,4 @@
-package com.example.filter.etc;
+package com.example.filter.apis;
 
 import java.io.Serializable;
 import java.util.List;

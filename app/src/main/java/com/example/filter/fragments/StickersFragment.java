@@ -32,7 +32,7 @@ import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
 import com.example.filter.activities.LoadActivity;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.FaceBoxOverlayView;
+import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceContour;

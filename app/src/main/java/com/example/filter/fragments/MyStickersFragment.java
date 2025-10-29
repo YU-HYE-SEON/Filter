@@ -25,7 +25,7 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.adapters.MyStickersAdapter;
 import com.example.filter.dialogs.MyStickerDeleteDialog;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.StickerItem;
+import com.example.filter.items.StickerItem;
 import com.example.filter.etc.StickerStore;
 
 import java.io.File;

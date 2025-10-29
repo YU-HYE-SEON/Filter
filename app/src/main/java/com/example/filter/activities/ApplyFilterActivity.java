@@ -29,8 +29,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
-import com.example.filter.etc.FilterDtoCreateRequest;
-import com.example.filter.etc.ImageUtils;
+import com.example.filter.apis.FilterDtoCreateRequest;
 
 import java.util.List;
 

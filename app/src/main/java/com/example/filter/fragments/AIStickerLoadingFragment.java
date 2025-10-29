@@ -6,12 +6,12 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -20,9 +20,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
-import com.example.filter.etc.ApiService;
-import com.example.filter.etc.PromptRequest;
-import com.example.filter.etc.RetrofitClient;
+import com.example.filter.apis.AIStickerApi;
+import com.example.filter.apis.PromptRequest;
+import com.example.filter.apis.AIStickreRetrofitClient;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -74,13 +74,16 @@ public class AIStickerLoadingFragment extends Fragment {
     }
 
     private void requestSticker(String baseUrl, String prompt) {
-        ApiService api = RetrofitClient.create(baseUrl).create(ApiService.class);
+        AIStickerApi api = AIStickreRetrofitClient.create(baseUrl).create(AIStickerApi.class);
         inflight = api.generateSticker(new PromptRequest(prompt));
 
         inflight.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> resp) {
                 if (!isAdded()) return;
+                Log.d("AISticker", "HTTP Code: " + resp.code());
+                Log.d("AISticker", "Response success: " + resp.isSuccessful());
+
                 if (resp.isSuccessful() && resp.body() != null) {
                     try (InputStream is = resp.body().byteStream()) {
                         File out = new File(requireContext().getCacheDir(),
@@ -91,6 +94,9 @@ public class AIStickerLoadingFragment extends Fragment {
                             while ((n = is.read(buf)) != -1) fos.write(buf, 0, n);
                             fos.flush();
                         }
+
+                        Log.d("AISticker", "✅ 스티커 이미지 저장 완료: " + out.getAbsolutePath());
+
                         if (!isAdded()) return;
                         getParentFragmentManager()
                                 .beginTransaction()
@@ -98,9 +104,21 @@ public class AIStickerLoadingFragment extends Fragment {
                                 .commit();
                     } catch (Exception e) {
                         e.printStackTrace();
+
+                        Log.e("AISticker", "❌ 이미지 저장 중 오류", e);
+
                         goToFailDelayed();
                     }
                 } else {
+                    // ✅ 실패 이유 출력
+                    try {
+                        String errorBody = resp.errorBody() != null ? resp.errorBody().string() : "null";
+                        Log.e("AISticker", "❌ 스티커 생성 실패 - code: " + resp.code());
+                        Log.e("AISticker", "❌ 에러 본문: " + errorBody);
+                    } catch (Exception e) {
+                        Log.e("AISticker", "❌ 에러 본문 파싱 실패", e);
+                    }
+
                     goToFailDelayed();
                 }
             }
@@ -108,6 +126,9 @@ public class AIStickerLoadingFragment extends Fragment {
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 if (!isAdded() || call.isCanceled()) return;
+
+                Log.e("AISticker", "❌ 네트워크/통신 오류: " + t.getMessage(), t);
+
                 t.printStackTrace();
                 goToFailDelayed();
             }

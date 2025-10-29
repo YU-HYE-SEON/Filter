@@ -3,6 +3,8 @@ package com.example.filter.etc;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.example.filter.items.StickerItem;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

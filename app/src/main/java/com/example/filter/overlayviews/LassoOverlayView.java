@@ -1,4 +1,4 @@
-package com.example.filter.etc;
+package com.example.filter.overlayviews;
 
 import android.content.Context;
 import android.graphics.*;

@@ -1,4 +1,4 @@
-    package com.example.filter.etc;
+    package com.example.filter.items;
 
     import androidx.annotation.Nullable;
 

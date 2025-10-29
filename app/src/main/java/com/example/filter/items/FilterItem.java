@@ -1,4 +1,6 @@
-package com.example.filter.etc;
+package com.example.filter.items;
+
+import com.example.filter.apis.FilterDtoCreateRequest;
 
 import java.util.List;
 

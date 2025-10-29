@@ -42,13 +42,13 @@
                 android:background="@android:color/transparent"
                 android:scaleType="matrix" />
 
-            <com.example.filter.etc.LassoOverlayView
+            <com.example.filter.overlayviews.LassoOverlayView
                 android:id="@+id/lassoOverlay"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:visibility="gone" />
 
-            <com.example.filter.etc.ShapeOverlayView
+            <com.example.filter.overlayviews.ShapeOverlayView
                 android:id="@+id/shapeOverlay"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

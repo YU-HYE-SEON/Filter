@@ -24,10 +24,7 @@ import androidx.fragment.app.Fragment;
 import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.FaceBoxOverlayView;
 import com.google.mlkit.vision.face.Face;
-
-import java.util.List;
 
 public class EditMyStickerFragment extends Fragment {
     private ConstraintLayout topArea;

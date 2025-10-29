@@ -3,6 +3,8 @@ package com.example.filter.etc;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.example.filter.overlayviews.BrushOverlayView;
+
 public final class BrushPrefs {
     private static final String P = "brush_prefs";
     private static final String K_PEN_COLOR = "pen_color";

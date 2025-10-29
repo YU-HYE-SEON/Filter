@@ -37,8 +37,9 @@ import androidx.annotation.Nullable;
 
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.FilterApi;
-import com.example.filter.etc.FilterDtoCreateRequest;
+import com.example.filter.apis.FilterApi;
+import com.example.filter.apis.FilterDtoCreateRequest;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,9 +48,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
-import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
-import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
@@ -673,6 +672,18 @@ public class RegisterActivity extends BaseActivity {
     }
 
     private void sendFilterToServer(String idToken, String title, String tags, String price, File imageFile, FilterDtoCreateRequest request) {
+        request.name = title;
+        request.price = Integer.parseInt(price);
+        request.originalImageUrl = originalPath;
+        request.editedImageUrl = imagePath;
+        request.tags = List.of(tags.split("\\s+"));
+        //request.aspectX = 4;
+        //request.aspectY = 5;
+
+        request.stickers = stickerList;
+
+        Log.d("스티커테스트", "보내는 데이터: " + new Gson().toJson(request));
+
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
@@ -688,18 +699,10 @@ public class RegisterActivity extends BaseActivity {
 
         FilterApi api = retrofit.create(FilterApi.class);
 
-        request.name = title;
-        request.price = Integer.parseInt(price);
-        request.originalImageUrl = originalPath;
-        request.editedImageUrl = imagePath;
-        request.tags = List.of(tags.split("\\s+"));
-        //request.aspectX = 4;
-        //request.aspectY = 5;
-
-        request.stickers = stickerList;
-
         String accessToken = getSharedPreferences("Auth", MODE_PRIVATE)
                 .getString("accessToken", "");
+
+        Log.d("스티커테스트", "accessToken: " + accessToken);
 
         Call<ResponseBody> call = api.uploadFilter("Bearer " + accessToken, request);
         call.enqueue(new Callback<ResponseBody>() {

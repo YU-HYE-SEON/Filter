@@ -39,11 +39,11 @@ import androidx.fragment.app.FragmentManager;
 
 import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
-import com.example.filter.etc.BrushOverlayView;
+import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.CropBoxOverlayView;
+import com.example.filter.overlayviews.CropBoxOverlayView;
 import com.example.filter.etc.FGLRenderer;
-import com.example.filter.etc.FilterDtoCreateRequest;
+import com.example.filter.apis.FilterDtoCreateRequest;
 import com.example.filter.etc.StickerStore;
 import com.example.filter.fragments.ColorsFragment;
 import com.example.filter.fragments.StickersFragment;

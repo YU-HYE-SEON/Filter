@@ -103,7 +103,7 @@
                 android:clipChildren="false"
                 android:clipToPadding="false" />
 
-            <com.example.filter.etc.LassoOverlayView
+            <com.example.filter.overlayviews.LassoOverlayView
                 android:id="@+id/lassoOverlay"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

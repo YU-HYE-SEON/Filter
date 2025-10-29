@@ -12,48 +12,24 @@
         android:clickable="true"
         android:elevation="8dp"
         android:focusable="true"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="40dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
         <ImageButton
-            android:id="@+id/cameraModeBtn"
+            android:id="@+id/galleryModeBtn"
             android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="30dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="32dp"
             android:background="@drawable/border_search"
-            app:layout_constraintBottom_toTopOf="@+id/galleryModeBtn"
+            app:layout_constraintBottom_toTopOf="@+id/cameraModeBtn"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/cameraModeTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="카메라로 사용하기"
-            android:textAlignment="center"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="@+id/cameraModeBtn"
-            app:layout_constraintEnd_toEndOf="@+id/cameraModeBtn"
-            app:layout_constraintStart_toStartOf="@+id/cameraModeBtn"
-            app:layout_constraintTop_toTopOf="@+id/cameraModeBtn" />
-
-        <ImageButton
-            android:id="@+id/galleryModeBtn"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="20dp"
-            android:background="@drawable/border_search"
-            app:layout_constraintBottom_toTopOf="@+id/alertTxt"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cameraModeBtn" />
 
         <TextView
             android:id="@+id/galleryModeTxt"
@@ -69,22 +45,49 @@
             app:layout_constraintStart_toStartOf="@+id/galleryModeBtn"
             app:layout_constraintTop_toTopOf="@+id/galleryModeBtn" />
 
-        <TextView
-            android:id="@+id/alertTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"
-            android:gravity="center"
-            android:text="구매하지 않은 필터는 체험만 가능합니다."
-            android:textAlignment="center"
-            android:textColor="#FF0000"
-            android:textSize="16sp"
-            android:visibility="invisible"
+        <ImageButton
+            android:id="@+id/cameraModeBtn"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="32dp"
+            android:background="@drawable/border_search"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/galleryModeBtn" />
+
+        <TextView
+            android:id="@+id/cameraModeTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="카메라로 사용하기"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="@+id/cameraModeBtn"
+            app:layout_constraintEnd_toEndOf="@+id/cameraModeBtn"
+            app:layout_constraintStart_toStartOf="@+id/cameraModeBtn"
+            app:layout_constraintTop_toTopOf="@+id/cameraModeBtn" />
+
+        <TextView
+            android:id="@+id/alertTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="9dp"
+            android:layout_marginBottom="9dp"
+            android:gravity="center"
+            android:text="구매하지 않은 필터는 체험만 가능합니다."
+            android:textAlignment="center"
+            android:textColor="#FF5C8A"
+            android:textSize="12sp"
+            android:fontFamily=""
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cameraModeBtn" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

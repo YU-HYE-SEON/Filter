@@ -22,14 +22,19 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
+import com.example.filter.adapters.SearchKeywordAdapter;
 
 public class SearchMainFragment extends Fragment {
     private EditText searchTxt;
     private ImageButton searchBtn;
-    private ConstraintLayout searchMain, searchHistory;
-    private TextView keywordTxt;
+    private ConstraintLayout searchMain;
+    private TextView allDelete;
+    private RecyclerView recyclerView;
+    private SearchKeywordAdapter adapter;
     private TextView keyword1, keyword2, keyword3, keyword4, keyword5, keyword6, keyword7, keyword8, keyword9, keyword10;
     private FrameLayout searchFrame;
     private boolean maybeTap = false;
@@ -41,8 +46,8 @@ public class SearchMainFragment extends Fragment {
 
         searchTxt = view.findViewById(R.id.searchTxt);
         searchBtn = view.findViewById(R.id.searchBtn);
-        searchHistory = view.findViewById(R.id.searchHistory);
-        keywordTxt = view.findViewById(R.id.keywordTxt);
+        allDelete = view.findViewById(R.id.allDelete);
+        recyclerView = view.findViewById(R.id.recyclerView);
         keyword1 = view.findViewById(R.id.keyword1);
         keyword2 = view.findViewById(R.id.keyword2);
         keyword3 = view.findViewById(R.id.keyword3);
@@ -73,6 +78,12 @@ public class SearchMainFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
+        recyclerView.setLayoutManager(layoutManager);
+
+        adapter = new SearchKeywordAdapter();
+        recyclerView.setAdapter(adapter);
+
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -102,14 +113,21 @@ public class SearchMainFragment extends Fragment {
             return false;
         });
 
-        searchHistory.setOnClickListener(v -> {
-            String keyword = keywordTxt.getText().toString();
-            navigateToSearch(keyword);
+        allDelete.setOnClickListener(v -> {
+            if (adapter != null) {
+                adapter.clearAll();
+            }
         });
 
         View.OnClickListener keywordClickListener = v -> {
             TextView clickedTextView = (TextView) v;
             String keyword = clickedTextView.getText().toString();
+
+            if (keyword != null && !keyword.isEmpty() && adapter != null) {
+                adapter.addItem(keyword);
+                recyclerView.scrollToPosition(0);
+            }
+
             navigateToSearch(keyword);
         };
 
@@ -127,6 +145,12 @@ public class SearchMainFragment extends Fragment {
 
     private void handleSearch() {
         String keyword = searchTxt.getText().toString();
+
+        if (keyword != null && !keyword.isEmpty() && adapter != null) {
+            adapter.addItem(keyword);
+            recyclerView.scrollToPosition(0);
+        }
+
         navigateToSearch(keyword);
     }
 

@@ -15,7 +15,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -29,17 +28,15 @@ import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.ContextCompat;
 
 import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.LassoOverlayView;
-import com.example.filter.etc.ShapeOverlayView;
-import com.example.filter.etc.ShapeOverlayView.ShapeType;
-import com.example.filter.etc.StickerItem;
+import com.example.filter.overlayviews.LassoOverlayView;
+import com.example.filter.overlayviews.ShapeOverlayView;
+import com.example.filter.overlayviews.ShapeOverlayView.ShapeType;
+import com.example.filter.items.StickerItem;
 import com.example.filter.etc.StickerStore;
-import com.example.filter.fragments.MyStickersFragment;
 
 import java.io.File;
 import java.io.FileOutputStream;

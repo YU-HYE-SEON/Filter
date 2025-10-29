@@ -1,4 +1,4 @@
-package com.example.filter.etc;
+package com.example.filter.apis;
 
 import com.google.gson.JsonObject;
 
@@ -10,7 +10,7 @@ import retrofit2.http.POST;
 import retrofit2.http.Query;
 
 public interface UserApi {
-    @GET("api/v1/users/exists")
+    @GET("/api/v1/users/exists")
     Call<ResponseBody> checkNickname(@Query("nickname") String nickname);
 
     @POST("/api/v1/users/nickname")

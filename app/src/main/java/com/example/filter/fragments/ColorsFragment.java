@@ -202,11 +202,6 @@ public class ColorsFragment extends Fragment {
                 new StickersDialog(requireContext(), new StickersDialog.StickersDialogListener() {
                     @Override
                     public void onKeep() {
-
-                    }
-
-                    @Override
-                    public void onChange() {
                         requireActivity().getSupportFragmentManager()
                                 .beginTransaction()
                                 .setCustomAnimations(R.anim.slide_up, 0)
@@ -215,6 +210,11 @@ public class ColorsFragment extends Fragment {
 
                         ConstraintLayout bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
                         bottomArea1.setVisibility(View.INVISIBLE);
+                    }
+
+                    @Override
+                    public void onChange() {
+
                     }
                 }).show();
             }

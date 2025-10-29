@@ -19,7 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
-import com.example.filter.etc.FaceBoxOverlayView;
+import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceContour;
