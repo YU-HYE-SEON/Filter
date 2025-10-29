@@ -284,7 +284,7 @@ public class StartActivity extends BaseActivity {
                         .apply();
             }
 
-            Log.d("GoogleLogin", "GoogleSignIn 성공");
+            Log.d("Go//////ogleLogin", "GoogleSignIn 성공");
             Log.d("GoogleLogin", "idToken: " + idToken);
 
             sendTokenToBackend(idToken);
@@ -326,27 +326,14 @@ public class StartActivity extends BaseActivity {
                 if (response.isSuccessful()) {
                     try {
                         String responseBody = response.body() != null ? response.body().string() : "";
-                        Log.e("GoogleLogin", "서버 응답 본문: " + responseBody); // 👈 추가
-
+                        Log.e("GoogleLogin", "서버가 보낸 실제 응답 (HTML 예상): " + responseBody);
                         JSONObject json = new JSONObject(responseBody);
+                        //loginFail();
 
                         boolean hasNickname = json.optBoolean("hasNickname", false);
-                        boolean loginSuccess = json.optBoolean("loginSuccess", true);
-                        String accessToken = json.optString("accessToken", "");
-                        String refreshToken = json.optString("refreshToken", "");
-                        String token = json.optString("token", ""); // 혹시 서버가 이렇게 보낼 수도 있음
+                        boolean loginSuccess = json.optBoolean("loginSuccess", false);
 
-                        // 토큰 저장
-                        if (!accessToken.isEmpty() || !token.isEmpty()) {
-                            getSharedPreferences("Auth", MODE_PRIVATE)
-                                    .edit()
-                                    .putString("accessToken", !accessToken.isEmpty() ? accessToken : token)
-                                    .putString("refreshToken", refreshToken)
-                                    .apply();
-
-                            Log.d("GoogleLogin", "토큰 저장 완료: " + (!accessToken.isEmpty() ? accessToken : token));
-                        }
-
+                        //닉네임 없음 → 회원가입 팝업
                         if (!hasNickname) {
                             isSignUp = false;
                             isLogin = false;
@@ -354,17 +341,25 @@ public class StartActivity extends BaseActivity {
                             return;
                         }
 
+                        //닉네임 있음, 로그인 성공
                         if (hasNickname && loginSuccess) {
                             isSignUp = true;
                             isLogin = true;
                             loginSuccess();
-                        } else if (hasNickname) {
+                            return;
+                        }
+
+                        //닉네임 있음, 로그인 실패
+                        if (hasNickname && !loginSuccess) {
                             isSignUp = true;
                             isLogin = false;
                             loginFail();
+                            return;
                         }
+
                     } catch (Exception e) {
                         Log.e("GoogleLogin", "JSON 파싱 실패", e);
+                        loginFail();
                     }
                 } else {
                     Log.e("GoogleLogin", "서버 에러 코드: " + response.code());
