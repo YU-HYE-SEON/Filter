@@ -1,11 +1,11 @@
 package com.example.filter.apis;
 
 public class PromptRequest {
-    private String prompt_ko;
+    private String prompt;
 
     public PromptRequest(String promptKo) {
-        this.prompt_ko = promptKo;
+        this.prompt = promptKo;
     }
 
-    public String getPrompt_ko() { return prompt_ko; }
+    public String getPrompt() { return prompt; }
 }

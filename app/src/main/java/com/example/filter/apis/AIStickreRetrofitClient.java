@@ -19,7 +19,7 @@ public class AIStickreRetrofitClient {
                 .build();
 
         return new Retrofit.Builder()
-                .baseUrl("http://13.124.105.243/")
+                .baseUrl(baseUrl)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();

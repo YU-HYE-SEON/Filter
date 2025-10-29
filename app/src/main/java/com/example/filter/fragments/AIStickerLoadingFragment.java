@@ -4,6 +4,8 @@ import android.animation.Keyframe;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,16 +23,14 @@ import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
 import com.example.filter.apis.AIStickerApi;
+import com.example.filter.apis.AIStickerResponse;
 import com.example.filter.apis.PromptRequest;
 import com.example.filter.apis.AIStickreRetrofitClient;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -40,7 +40,7 @@ public class AIStickerLoadingFragment extends Fragment {
     private static final String PROMPT = "prompt";
     private String baseUrl;
     private String prompt;
-    private Call<ResponseBody> inflight;
+    private Call<AIStickerResponse> inflight;
     private static final String IMAGE_PATH = "image_path";
     private TextView loadingTxt;
     private LinearLayout charRow;
@@ -74,43 +74,59 @@ public class AIStickerLoadingFragment extends Fragment {
     }
 
     private void requestSticker(String baseUrl, String prompt) {
-        AIStickerApi api = AIStickreRetrofitClient.create(baseUrl).create(AIStickerApi.class);
-        inflight = api.generateSticker(new PromptRequest(prompt));
+        SharedPreferences prefs = requireContext().getSharedPreferences("Auth", Context.MODE_PRIVATE);
+        String accessToken = prefs.getString("accessToken", null);
 
-        inflight.enqueue(new Callback<ResponseBody>() {
+        if (accessToken == null) {
+            Log.e("AISticker", "❌ accessToken이 SharedPreferences에 없습니다");
+        } else {
+            Log.d("AISticker", "✅ Authorization 헤더에 토큰 추가: " + accessToken);
+        }
+
+        AIStickerApi api = AIStickreRetrofitClient.create(baseUrl).create(AIStickerApi.class);
+        inflight = api.generateSticker("Bearer " + accessToken, new PromptRequest(prompt));
+
+        inflight.enqueue(new Callback<AIStickerResponse>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> resp) {
+            public void onResponse(Call<AIStickerResponse> call, Response<AIStickerResponse> resp) {
                 if (!isAdded()) return;
                 Log.d("AISticker", "HTTP Code: " + resp.code());
                 Log.d("AISticker", "Response success: " + resp.isSuccessful());
 
                 if (resp.isSuccessful() && resp.body() != null) {
-                    try (InputStream is = resp.body().byteStream()) {
-                        File out = new File(requireContext().getCacheDir(),
-                                "sticker_" + System.currentTimeMillis() + ".png");
-                        try (FileOutputStream fos = new FileOutputStream(out)) {
+                    String imageUrl = resp.body().getImageUrl();
+                    Log.d("AISticker", "✅ 서버에서 받은 imageUrl: " + imageUrl);
+
+                    // 👉 이미지 다운로드 및 캐시 저장
+                    new Thread(() -> {
+                        try {
+                            java.net.URL url = new java.net.URL(imageUrl);
+                            java.io.InputStream is = url.openStream();
+                            File out = new File(requireContext().getCacheDir(),
+                                    "sticker_" + System.currentTimeMillis() + ".png");
+                            java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
                             byte[] buf = new byte[8 * 1024];
                             int n;
                             while ((n = is.read(buf)) != -1) fos.write(buf, 0, n);
-                            fos.flush();
+                            fos.close();
+                            is.close();
+
+                            Log.d("AISticker", "✅ 이미지 다운로드 완료: " + out.getAbsolutePath());
+
+                            requireActivity().runOnUiThread(() -> {
+                                if (!isAdded()) return;
+                                getParentFragmentManager()
+                                        .beginTransaction()
+                                        .replace(R.id.aiStickerView,
+                                                AIStickerSuccessFragment.newWithImagePath(out.getAbsolutePath(), baseUrl, prompt))
+                                        .commit();
+                            });
+                        } catch (Exception e) {
+                            Log.e("AISticker", "❌ 이미지 다운로드 실패", e);
+                            goToFailDelayed();
                         }
-
-                        Log.d("AISticker", "✅ 스티커 이미지 저장 완료: " + out.getAbsolutePath());
-
-                        if (!isAdded()) return;
-                        getParentFragmentManager()
-                                .beginTransaction()
-                                .replace(R.id.aiStickerView, AIStickerSuccessFragment.newWithImagePath(out.getAbsolutePath(), baseUrl, prompt))
-                                .commit();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-
-                        Log.e("AISticker", "❌ 이미지 저장 중 오류", e);
-
-                        goToFailDelayed();
-                    }
+                    }).start();
                 } else {
-                    // ✅ 실패 이유 출력
                     try {
                         String errorBody = resp.errorBody() != null ? resp.errorBody().string() : "null";
                         Log.e("AISticker", "❌ 스티커 생성 실패 - code: " + resp.code());
@@ -118,18 +134,14 @@ public class AIStickerLoadingFragment extends Fragment {
                     } catch (Exception e) {
                         Log.e("AISticker", "❌ 에러 본문 파싱 실패", e);
                     }
-
                     goToFailDelayed();
                 }
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
+            public void onFailure(Call<AIStickerResponse> call, Throwable t) {
                 if (!isAdded() || call.isCanceled()) return;
-
-                Log.e("AISticker", "❌ 네트워크/통신 오류: " + t.getMessage(), t);
-
-                t.printStackTrace();
+                Log.e("AISticker", "❌ 네트워크 오류: " + t.getMessage(), t);
                 goToFailDelayed();
             }
         });

@@ -17,6 +17,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.filter.R;
 
 import java.io.File;
@@ -59,11 +61,22 @@ public class AIStickerSuccessFragment extends Fragment {
         prompt    = args.getString(PROMPT, "");
 
         if (imagePath != null) {
-            File f = new File(imagePath);
-            if (f.exists()) {
-                Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
-                aiStickerImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                aiStickerImage.setImageBitmap(bmp);
+            if (imagePath.startsWith("http")) {
+                // ✅ S3 URL 로드
+                Glide.with(this)
+                        .load(imagePath)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        /*.placeholder(R.drawable.loading_placeholder) // 로딩 중 이미지 (optional)*/
+                        /*.error(R.drawable.error_placeholder)         // 실패 시 이미지 (optional)*/
+                        .into(aiStickerImage);
+            } else {
+                // ✅ 로컬 파일 경로 로드 (기존 방식 유지)
+                File f = new File(imagePath);
+                if (f.exists()) {
+                    Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
+                    aiStickerImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    aiStickerImage.setImageBitmap(bmp);
+                }
             }
         }
 
