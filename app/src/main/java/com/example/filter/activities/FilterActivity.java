@@ -52,7 +52,6 @@ import com.example.filter.fragments.ToolsFragment;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,6 +85,7 @@ public class FilterActivity extends BaseActivity {
     private boolean needResetCropRectOnce = false;
     private Bitmap cropSessionEntryBitmap = null;
     private boolean isCropSessionLatched = false;
+    public RectF appliedCropRectN = null;
 
     /// transform, gesture ///
     private float scaleFactor = 1.0f;
@@ -248,17 +248,6 @@ public class FilterActivity extends BaseActivity {
                     .commit();
         }
 
-        /*faceBox = new FaceBoxOverlayView(this);
-        FrameLayout container = findViewById(R.id.photoPreviewContainer);
-        container.addView(faceBox, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        ));
-        photoPreview.queueEvent(() -> {
-            Bitmap bmp = renderer.getCurrentBitmap();
-            runOnUiThread(() -> detectFaces(bmp));
-        });*/
-
         scaleDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
@@ -401,8 +390,6 @@ public class FilterActivity extends BaseActivity {
         saveBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
 
-            List<FilterDtoCreateRequest.Sticker> stickerList = calculateStickerInfo();
-
             renderer.setOnBitmapCaptureListener(new FGLRenderer.OnBitmapCaptureListener() {
                 @Override
                 public void onBitmapCaptured(Bitmap bitmap) {
@@ -412,25 +399,7 @@ public class FilterActivity extends BaseActivity {
                     int vH = renderer.getViewportHeight();
 
                     try {
-                        Bitmap finalBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
-                        Canvas finalCanvas = new Canvas(finalBitmap);
-
-                        finalCanvas.drawBitmap(bitmap, 0, 0, null);
-                        finalCanvas.save();
-                        finalCanvas.translate(-vX, -vY);
-                        if (stickerOverlay != null) stickerOverlay.draw(finalCanvas);
-                        if (brushOverlay != null) brushOverlay.draw(finalCanvas);
-                        finalCanvas.restore();
-
-                        File tempFile = new File(getCacheDir(), "temp_captured_image.png");
-                        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                            finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                        }
-
-                        Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
-                        intent.putExtra("saved_image", tempFile.getAbsolutePath());
-                        intent.putExtra("original_image_path", getIntent().getData().toString());
-
+                        //조정값
                         FilterDtoCreateRequest.ColorAdjustments adj = new FilterDtoCreateRequest.ColorAdjustments();
                         adj.brightness = renderer.getCurrentValue("밝기") / 100f;
                         adj.exposure = renderer.getCurrentValue("노출") / 100f;
@@ -446,9 +415,68 @@ public class FilterActivity extends BaseActivity {
                         adj.vignette = renderer.getCurrentValue("비네트") / 100f;
                         adj.noise = renderer.getCurrentValue("노이즈") / 100f;
 
-                        intent.putExtra("color_adjustments", adj);
+                        //브러쉬 오버레이 굽기
+                        Bitmap brushBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
+                        Canvas brushCanvas = new Canvas(brushBitmap);
+                        brushCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                        brushCanvas.save();
+                        brushCanvas.translate(-vX, -vY);
+                        if (brushOverlay != null) brushOverlay.draw(brushCanvas);
+                        brushCanvas.restore();
 
-                        intent.putExtra("stickers", (Serializable) stickerList);
+                        File tempBrushFile = new File(getCacheDir(), "brush_image.png");
+                        try (FileOutputStream out = new FileOutputStream(tempBrushFile)) {
+                            brushBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        }
+
+                        //스티커 오버레이 굽기
+                        Bitmap stickerBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
+                        Canvas stickerCanvas = new Canvas(stickerBitmap);
+                        stickerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                        stickerCanvas.save();
+                        stickerCanvas.translate(-vX, -vY);
+                        if (stickerOverlay != null) stickerOverlay.draw(stickerCanvas);
+                        stickerCanvas.restore();
+
+                        File tempStickerFile = new File(getCacheDir(), "sticker_image.png");
+                        try (FileOutputStream out = new FileOutputStream(tempStickerFile)) {
+                            stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        }
+
+                        //브러쉬와 스티커 포함된 최종 편집된 이미지
+                        Bitmap finalBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
+                        Canvas finalCanvas = new Canvas(finalBitmap);
+
+                        finalCanvas.drawBitmap(bitmap, 0, 0, null);
+                        finalCanvas.save();
+                        finalCanvas.translate(-vX, -vY);
+                        if (stickerOverlay != null) stickerOverlay.draw(finalCanvas);
+                        if (brushOverlay != null) brushOverlay.draw(finalCanvas);
+                        finalCanvas.restore();
+
+                        File tempFile = new File(getCacheDir(), "temp_captured_image.png");
+                        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+                            finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        }
+
+                        //데이터 전달
+                        Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
+                        intent.putExtra("saved_image", tempFile.getAbsolutePath());
+                        intent.putExtra("original_image_path", getIntent().getData().toString());
+
+                        if (appliedCropRectN != null) {
+                            intent.putExtra("cropRectN_l", appliedCropRectN.left);
+                            intent.putExtra("cropRectN_t", appliedCropRectN.top);
+                            intent.putExtra("cropRectN_r", appliedCropRectN.right);
+                            intent.putExtra("cropRectN_b", appliedCropRectN.bottom);
+                        }
+                        intent.putExtra("accumRotationDeg", accumRotationDeg);
+                        intent.putExtra("accumFlipH", accumFlipH);
+                        intent.putExtra("accumFlipV", accumFlipV);
+
+                        intent.putExtra("color_adjustments", adj);
+                        intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath());
+                        intent.putExtra("sticker_image_path", tempStickerFile.getAbsolutePath());
 
                         startActivity(intent);
 
@@ -1232,51 +1260,6 @@ public class FilterActivity extends BaseActivity {
     }
 
     /// 브러쉬, 스티커 ///
-    private List<FilterDtoCreateRequest.Sticker> calculateStickerInfo() {
-        List<FilterDtoCreateRequest.Sticker> stickerList = new ArrayList<>();
-        if (stickerOverlay != null && renderer != null) {
-            int vpX = renderer.getViewportX();
-            int vpY = renderer.getViewportY();
-            int vpW = renderer.getViewportWidth();
-            int vpH = renderer.getViewportHeight();
-
-            float photoCenterX = vpX + vpW / 2f;
-            float photoCenterY = vpY + vpH / 2f;
-
-            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                View stickerView = stickerOverlay.getChildAt(i);
-
-                Object stickerIdTag = stickerView.getTag(R.id.tag_sticker_id);
-                if (!(stickerIdTag instanceof Integer)) continue;
-
-                int stickerId = (Integer) stickerIdTag;
-
-                float stickerCenterX = stickerView.getX() + stickerView.getWidth() / 2f;
-                float stickerCenterY = stickerView.getY() + stickerView.getHeight() / 2f;
-
-                float absX = (stickerCenterX - photoCenterX) / (vpW / 2f);
-                float absY = (stickerCenterY - photoCenterY) / (vpH / 2f);
-
-                Float originalWidth = (Float) stickerView.getTag(R.id.tag_original_width);
-                float relScale = 1.0f;
-                if (originalWidth != null && originalWidth > 0) {
-                    relScale = stickerView.getWidth() / originalWidth;
-                }
-
-                FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-                s.stickerId = stickerId;
-                s.placementType = "ABSOLUTE";
-                s.x = absX;
-                s.y = absY;
-                s.scale = relScale;
-                s.rotation = stickerView.getRotation();
-
-                stickerList.add(s);
-            }
-        }
-        return stickerList;
-    }
-
     public void applyBrushClipRect(BrushOverlayView brush) {
         if (renderer == null || brush == null) return;
         int x = renderer.getViewportX();

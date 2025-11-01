@@ -62,7 +62,7 @@ public class FilterEixtDialog extends Dialog {
         int dialogWidth = displayMetrics.widthPixels;
         lp.width = dialogWidth;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        lp.dimAmount = 0.4f;
+        lp.dimAmount = 0.7f;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().setAttributes(lp);
 

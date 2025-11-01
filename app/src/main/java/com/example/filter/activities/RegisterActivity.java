@@ -58,7 +58,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RegisterActivity extends BaseActivity {
-    String originalPath, imagePath;
+    String originalPath, imagePath, brushImagePath, stickerImagePath;
     private View topArea, photoView, contentContainer;
     private ImageView photo;
     private NestedScrollView scrollView;
@@ -82,7 +82,6 @@ public class RegisterActivity extends BaseActivity {
     private int touchSlop;
     private boolean forceScroll = false;
     private Bitmap finalBitmap;
-    private List<FilterDtoCreateRequest.Sticker> stickerList;
     private FilterDtoCreateRequest.ColorAdjustments adj;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -111,20 +110,6 @@ public class RegisterActivity extends BaseActivity {
         paidRadio = findViewById(R.id.paidRadio);
         registerBtn = findViewById(R.id.registerBtn);
         backBtn = findViewById(R.id.backBtn);
-
-        adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
-        stickerList = (List<FilterDtoCreateRequest.Sticker>) getIntent().getSerializableExtra("stickers");
-
-        if (adj != null) {
-            Log.d("ColorAdjustments",
-                    "[등록화면]\n" +
-                            "밝기: " + adj.brightness + " 노출: " + adj.exposure +
-                            " 대비: " + adj.contrast + " 하이라이트: " + adj.highlight +
-                            " 그림자: " + adj.shadow + " 온도: " + adj.temperature +
-                            " 색조: " + adj.hue + " 채도: " + adj.saturation +
-                            " 선명하게: " + adj.sharpen + " 흐리게: " + adj.blur +
-                            " 비네트: " + adj.vignette + " 노이즈: " + adj.noise);
-        }
 
         scrollView.setOnTouchListener((v, ev) -> {
             Rect btnRect = new Rect();
@@ -259,6 +244,19 @@ public class RegisterActivity extends BaseActivity {
 
         originalPath = getIntent().getStringExtra("original_image_path");
         imagePath = getIntent().getStringExtra("final_image");
+
+        float cropN_l = getIntent().getFloatExtra("cropRectN_l", -1f);
+        float cropN_t = getIntent().getFloatExtra("cropRectN_t", -1f);
+        float cropN_r = getIntent().getFloatExtra("cropRectN_r", -1f);
+        float cropN_b = getIntent().getFloatExtra("cropRectN_b", -1f);
+
+        int accumRotationDeg = getIntent().getIntExtra("accumRotationDeg", 0);
+        boolean accumFlipH = getIntent().getBooleanExtra("accumFlipH", false);
+        boolean accumFlipV = getIntent().getBooleanExtra("accumFlipV", false);
+
+        adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
+        brushImagePath = getIntent().getStringExtra("brush_image_path");
+        stickerImagePath = getIntent().getStringExtra("sticker_image_path");
 
         if (imagePath != null) {
             finalBitmap = BitmapFactory.decodeFile(imagePath);
@@ -423,9 +421,18 @@ public class RegisterActivity extends BaseActivity {
                 }
             }
 
-            String uniqueFileName = "filter_" + UUID.randomUUID().toString() + ".png";
+            String filterId = UUID.randomUUID().toString();
+            String uniqueFileName = "filter_" + filterId + ".png";
+            String brushFileName = "brush_" + filterId + ".png";
+            String stickerFileName = "sticker_" + filterId + ".png";
+
             File imageFile = new File(getCacheDir(), uniqueFileName);
+            File brushFile = new File(getCacheDir(), brushFileName);
+            File stickerFile = new File(getCacheDir(), stickerFileName);
+
             String newImagePath = imageFile.getAbsolutePath();
+            String brushPath = brushFile.getAbsolutePath();
+            String stickerPath = stickerFile.getAbsolutePath();
 
             try (FileOutputStream out = new FileOutputStream(imageFile)) {
                 finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
@@ -433,12 +440,28 @@ public class RegisterActivity extends BaseActivity {
                 e.printStackTrace();
                 return;
             }
+            Bitmap brushBitmap = BitmapFactory.decodeFile(brushImagePath);
+            Bitmap stickerBitmap = BitmapFactory.decodeFile(stickerImagePath);
+            try {
+                if (brushBitmap != null) {
+                    try (FileOutputStream out = new FileOutputStream(brushFile)) {
+                        brushBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    }
+                }
+
+                if (stickerBitmap != null) {
+                    try (FileOutputStream out = new FileOutputStream(stickerFile)) {
+                        stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             String idToken = getSharedPreferences("Auth", MODE_PRIVATE).getString("idToken", null);
             if (idToken != null) {
                 FilterDtoCreateRequest request = new FilterDtoCreateRequest();
                 request.colorAdjustments = adj;
-                request.stickers = stickerList;
                 sendFilterToServer(idToken, title, tagStr, isFree ? "0" : priceStr, imageFile, request);
             } else {
                 Log.e("스티커테스트", "idToken이 없습니다. 로그인 필요");
@@ -447,36 +470,39 @@ public class RegisterActivity extends BaseActivity {
             Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
             mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             //mainIntent.putExtra("new_filter_nickname", "@" + "닉네임");
+            mainIntent.putExtra("filterId", filterId);
             mainIntent.putExtra("new_filter_image", newImagePath);
             mainIntent.putExtra("new_filter_title", title);
             mainIntent.putExtra("new_filter_tags", tagStr);
             mainIntent.putExtra("new_filter_price", isFree ? "0" : priceStr);
 
-            if (stickerList != null) {
-                mainIntent.putExtra("new_filter_stickers",(Serializable) stickerList);
-            }
-            if (adj != null) {
-                mainIntent.putExtra("color_adjustments", adj);
-            }
+            mainIntent.putExtra("color_adjustments", adj);
+            mainIntent.putExtra("brush_image_path", brushPath);
+            mainIntent.putExtra("sticker_image_path", stickerPath);
 
             startActivity(mainIntent);
 
             Intent detailIntent = new Intent(RegisterActivity.this, FilterDetailActivity.class);
-            detailIntent.putExtra("filterId", UUID.randomUUID().toString());
-            //detailIntent.putExtra("nickname", "@" + "닉네임");
+            detailIntent.putExtra("filterId", filterId);
+            detailIntent.putExtra("nickname", "@" + "닉네임");
+            detailIntent.putExtra("original_image_path", originalPath);
             detailIntent.putExtra("imgUrl", newImagePath);
             detailIntent.putExtra("filterTitle", title);
             detailIntent.putExtra("tags", tagStr);
             //detailIntent.putExtra("price", isFree ? "0" : priceStr);
 
-            if (stickerList != null) {
-                detailIntent.putExtra("stickers", (Serializable) stickerList);
-            }
-            if (adj != null) {
-                detailIntent.putExtra("color_adjustments", adj);
-            }
+            detailIntent.putExtra("cropRectN_l", cropN_l);
+            detailIntent.putExtra("cropRectN_t", cropN_t);
+            detailIntent.putExtra("cropRectN_r", cropN_r);
+            detailIntent.putExtra("cropRectN_b", cropN_b);
 
-            detailIntent.putExtra("original_image_path", originalPath);
+            detailIntent.putExtra("accumRotationDeg", accumRotationDeg);
+            detailIntent.putExtra("accumFlipH", accumFlipH);
+            detailIntent.putExtra("accumFlipV", accumFlipV);
+
+            detailIntent.putExtra("color_adjustments", adj);
+            detailIntent.putExtra("brush_image_path", brushPath);
+            detailIntent.putExtra("sticker_image_path", stickerPath);
 
             startActivity(detailIntent);
 
@@ -575,7 +601,7 @@ public class RegisterActivity extends BaseActivity {
         }
     }
 
-    private void animateScrollToY(int dy, long durationMs) {
+    /*private void animateScrollToY(int dy, long durationMs) {
         if (Math.abs(dy) < dp(1)) return;
 
         final int startY = scrollView.getScrollY();
@@ -586,7 +612,7 @@ public class RegisterActivity extends BaseActivity {
         va.setInterpolator(new FastOutSlowInInterpolator());
         va.addUpdateListener(a -> scrollView.scrollTo(0, (int) a.getAnimatedValue()));
         va.start();
-    }
+    }*/
 
     private void showKeyboard(View view) {
         view.post(() -> {
@@ -679,8 +705,6 @@ public class RegisterActivity extends BaseActivity {
         request.tags = List.of(tags.split("\\s+"));
         //request.aspectX = 4;
         //request.aspectY = 5;
-
-        request.stickers = stickerList;
 
         Log.d("스티커테스트", "보내는 데이터: " + new Gson().toJson(request));
 

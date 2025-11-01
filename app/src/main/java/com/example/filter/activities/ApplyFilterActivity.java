@@ -1,57 +1,78 @@
 package com.example.filter.activities;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.apis.FilterDtoCreateRequest;
-
-import java.util.List;
+import com.example.filter.etc.ImageUtils;
 
 public class ApplyFilterActivity extends BaseActivity {
     private ImageButton backBtn;
+    private FrameLayout photoContainer, brushOverlay, stickerOverlay;
+    private View photoMask;
     private ConstraintLayout bottomArea;
-    private ImageView toArchiveBtn, toReviewBtn;
-
+    private ImageButton toArchiveBtn, toReviewBtn;
     private GLSurfaceView glSurfaceView;
     private FGLRenderer renderer;
+    private String brushPath, stickerPath;
     private FilterDtoCreateRequest.ColorAdjustments adj;
-    private List<FilterDtoCreateRequest.Sticker> stickerList;
     private Bitmap finalBitmapWithStickers = null;
+    private FrameLayout reviewPopOff;
+    private View reviewPopOn, dimBackground;
+    private ConstraintLayout reviewPop;
+    private ImageView snsIcon;
+    private TextView snsId;
+    private ImageButton reviewBtn;
+    private boolean isReviewPopVisible = false;
+    private String filterId, imgUrl, title, nick;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_apply_photo);
         backBtn = findViewById(R.id.backBtn);
+        photoContainer = findViewById(R.id.photoContainer);
+        brushOverlay = findViewById(R.id.brushOverlay);
+        stickerOverlay = findViewById(R.id.stickerOverlay);
+        photoMask = findViewById(R.id.photoMask);
         bottomArea = findViewById(R.id.bottomArea);
         toArchiveBtn = findViewById(R.id.toArchiveBtn);
         toReviewBtn = findViewById(R.id.toReviewBtn);
+        reviewPopOff = findViewById(R.id.reviewPopOff);
+
+        setupReviewPop();
 
         glSurfaceView = new GLSurfaceView(this);
         glSurfaceView.setEGLContextClientVersion(2);
@@ -62,47 +83,45 @@ public class ApplyFilterActivity extends BaseActivity {
         glSurfaceView.setRenderer(renderer);
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
-        FrameLayout photoContainer = findViewById(R.id.photoContainer);
         photoContainer.addView(glSurfaceView, 0);
 
-        View photoMask = findViewById(R.id.photoMask);
+        photoMask.bringToFront();
 
         photoContainer.post(() -> {
             photoMask.post(() -> updatePhotoMask(photoMask));
         });
 
-        //디바이스 사진 저장
         renderer.setOnBitmapCaptureListener(baseBitmap -> {
-            if (baseBitmap != null) {
+            try {
                 Bitmap finalBitmap = baseBitmap.copy(Bitmap.Config.ARGB_8888, true);
                 Canvas canvas = new Canvas(finalBitmap);
 
-                if (stickerList != null && !stickerList.isEmpty()) {
-                    int photoW = canvas.getWidth();
-                    int photoH = canvas.getHeight();
-                    float photoCenterX = photoW / 2f;
-                    float photoCenterY = photoH / 2f;
+                int vX = renderer.getViewportX();
+                int vY = renderer.getViewportY();
+                int vW = renderer.getViewportWidth();
+                int vH = renderer.getViewportHeight();
 
-                    Log.d("ApplyFilter", "사진 크기: " + photoW + "x" + photoH + ", 스티커 " + stickerList.size() + "개 그리기 시작");
+                Bitmap overlayBitmap = Bitmap.createBitmap(
+                        photoContainer.getWidth(),
+                        photoContainer.getHeight(),
+                        Bitmap.Config.ARGB_8888
+                );
+                Canvas overlayCanvas = new Canvas(overlayBitmap);
+                brushOverlay.draw(overlayCanvas);
+                stickerOverlay.draw(overlayCanvas);
 
-                    for (FilterDtoCreateRequest.Sticker s : stickerList) {
-                        drawStickerOnCanvas(canvas, s, photoW, photoH, photoCenterX, photoCenterY);
-                    }
-                }
+                Rect src = new Rect(vX, vY, vX + vW, vY + vH);
+                Rect dst = new Rect(0, 0, finalBitmap.getWidth(), finalBitmap.getHeight());
+                canvas.drawBitmap(overlayBitmap, src, dst, null);
+                overlayBitmap.recycle();
 
                 finalBitmapWithStickers = finalBitmap;
 
+                //사진 저장 메서드 호출
                 //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        });
-
-        ViewCompat.setOnApplyWindowInsetsListener(bottomArea, (v, insets) -> {
-            Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-            ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) v.getLayoutParams();
-            lp.bottomMargin = 0;
-            v.setLayoutParams(lp);
-            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), nav.bottom);
-            return insets;
         });
 
         Uri imageUri = getIntent().getData();
@@ -118,33 +137,107 @@ public class ApplyFilterActivity extends BaseActivity {
             }
         }
 
+        filterId = getIntent().getStringExtra("filterId");
+        imgUrl = getIntent().getStringExtra("filterImage");
+        title = getIntent().getStringExtra("filterTitle");
+        nick = getIntent().getStringExtra("nickname");
 
         adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
-        stickerList = (List<FilterDtoCreateRequest.Sticker>) getIntent().getSerializableExtra("stickers");
+        brushPath = getIntent().getStringExtra("brush_image_path");
+        stickerPath = getIntent().getStringExtra("sticker_image_path");
 
-        if (adj != null) {
-            applyAdjustments(adj);
-        } else if (stickerList != null && !stickerList.isEmpty()) {
-            glSurfaceView.postDelayed(() -> renderer.captureBitmap(), 100);
-        }
+        if (adj != null) applyAdjustments(adj);
+        if (brushPath != null) applyBrushStickerImage(brushOverlay, brushPath);
+        if (stickerPath != null) applyBrushStickerImage(stickerOverlay, stickerPath);
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(500)) return;
             finish();
         });
+    }
 
-        toArchiveBtn.setOnClickListener(v -> {
+    private void setupReviewPop() {
+        FrameLayout rootView = findViewById(R.id.reviewPopOff);
+        reviewPopOn = getLayoutInflater().inflate(R.layout.f_review_pop, null);
+        reviewPop = reviewPopOn.findViewById(R.id.reviewPop);
+        snsIcon = reviewPopOn.findViewById(R.id.snsIcon);
+        snsId = reviewPopOn.findViewById(R.id.snsId);
+        reviewBtn = reviewPopOn.findViewById(R.id.reviewBtn);
 
-        });
+        dimBackground = new View(this);
+        dimBackground.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+        dimBackground.setBackgroundColor(Color.parseColor("#B3000000"));
+        dimBackground.setVisibility(View.GONE);
+
+        rootView.addView(dimBackground);
+        rootView.addView(reviewPopOn);
+        reviewPopOn.setVisibility(View.GONE);
+        reviewPopOn.setTranslationY(800);
+
+        dimBackground.setOnClickListener(v -> hideReviewPop());
 
         toReviewBtn.setOnClickListener(v -> {
-
+            if (isReviewPopVisible) return;
+            showReviewPop();
         });
+
+        reviewBtn.setOnClickListener(v -> {
+            if (finalBitmapWithStickers == null) return;
+
+            String savedPath = ImageUtils.saveBitmapToCache(ApplyFilterActivity.this, finalBitmapWithStickers);
+
+            Intent intent = new Intent(ApplyFilterActivity.this, ReviewActivity.class);
+            intent.putExtra("filterId", filterId);
+            intent.putExtra("filterImage", imgUrl);
+            intent.putExtra("filterTitle", title);
+            intent.putExtra("nickname", nick);
+            intent.putExtra("reviewImg", savedPath);
+
+            //setResult(RESULT_OK, intent);
+            startActivity(intent);
+            hideReviewPop();
+            finish();
+        });
+    }
+
+    private void showReviewPop() {
+        isReviewPopVisible = true;
+        dimBackground.setVisibility(View.VISIBLE);
+        reviewPopOn.setVisibility(View.VISIBLE);
+        reviewPopOn.animate()
+                .translationY(0)
+                .setDuration(300)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .setListener(null)
+                .start();
+    }
+
+    private void hideReviewPop() {
+        reviewPopOn.animate()
+                .translationY(800)
+                .setDuration(250)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        reviewPopOn.setVisibility(View.GONE);
+                        dimBackground.setVisibility(View.GONE);
+                        isReviewPopVisible = false;
+                    }
+                })
+                .start();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (dimBackground != null && dimBackground.getVisibility() == View.VISIBLE) {
+            dimBackground.setVisibility(View.GONE);
+            isReviewPopVisible = false;
+        }
     }
 
     private void updatePhotoMask(View mask) {
@@ -184,15 +277,6 @@ public class ApplyFilterActivity extends BaseActivity {
     }
 
     private void applyAdjustments(FilterDtoCreateRequest.ColorAdjustments a) {
-        Log.d("ColorAdjustments",
-                "[적용화면]\n" +
-                        "밝기: " + adj.brightness + " 노출: " + adj.exposure +
-                        " 대비: " + adj.contrast + " 하이라이트: " + adj.highlight +
-                        " 그림자: " + adj.shadow + " 온도: " + adj.temperature +
-                        " 색조: " + adj.hue + " 채도: " + adj.saturation +
-                        " 선명하게: " + adj.sharpen + " 흐리게: " + adj.blur +
-                        " 비네트: " + adj.vignette + " 노이즈: " + adj.noise);
-
         renderer.updateValue("밝기", a.brightness * 100f);
         renderer.updateValue("노출", a.exposure * 100f);
         renderer.updateValue("대비", a.contrast * 100f);
@@ -207,45 +291,22 @@ public class ApplyFilterActivity extends BaseActivity {
         renderer.updateValue("노이즈", a.noise * 100f);
 
         glSurfaceView.requestRender();
-        glSurfaceView.postDelayed(() -> renderer.captureBitmap(), 100);
+        glSurfaceView.postDelayed(() -> {
+            renderer.captureBitmap();
+        }, 150);
     }
 
-    private void drawStickerOnCanvas(Canvas canvas, FilterDtoCreateRequest.Sticker sticker,
-                                     int photoW, int photoH,
-                                     float photoCenterX, float photoCenterY) {
-        if (sticker == null) return;
-
-        String resName = "sticker_id_" + sticker.stickerId;
-        int resId = getResources().getIdentifier(resName, "drawable", getPackageName());
-
-        if (resId == 0) {
-            Log.e("스티커테스트", "스티커 리소스를 찾을 수 없습니다: ID=" + sticker.stickerId + ", 이름=" + resName);
-            return;
-        }
-        Bitmap stickerBmp = BitmapFactory.decodeResource(getResources(), resId);
-        if (stickerBmp == null) {
-            Log.e("스티커테스트", "스티커 비트맵 로드 실패: ID=" + sticker.stickerId);
-            return;
-        }
-
-        int targetW = (int) (sticker.scale * photoW);
-
-        float originalAspect = (float) stickerBmp.getHeight() / stickerBmp.getWidth();
-        int targetH = (int) (targetW * originalAspect);
-
-        float targetCenterX = photoCenterX + (sticker.x * (photoW / 2f));
-        float targetCenterY = photoCenterY + (sticker.y * (photoH / 2f));
-
-        Matrix matrix = new Matrix();
-
-        matrix.postScale((float) targetW / stickerBmp.getWidth(),
-                (float) targetH / stickerBmp.getHeight());
-
-        matrix.postRotate(sticker.rotation, targetW / 2f, targetH / 2f);
-
-        matrix.postTranslate(targetCenterX - (targetW / 2f),
-                targetCenterY - (targetH / 2f));
-
-        canvas.drawBitmap(stickerBmp, matrix, null);
+    private void applyBrushStickerImage(FrameLayout overlay, String path) {
+        ImageView imageView = new ImageView(this);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageView.setAdjustViewBounds(true);
+        imageView.setImageBitmap(BitmapFactory.decodeFile(path));
+        imageView.setLayoutParams(
+                new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                )
+        );
+        overlay.addView(imageView);
     }
 }

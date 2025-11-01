@@ -10,9 +10,9 @@ import retrofit2.http.POST;
 import retrofit2.http.Query;
 
 public interface UserApi {
-    @GET("/api/v1/users/exists")
+    @GET("api/v1/users/exists")
     Call<ResponseBody> checkNickname(@Query("nickname") String nickname);
 
-    @POST("/api/v1/users/nickname")
+    @POST("api/v1/users/nickname")
     Call<ResponseBody> setNickname(@Body JsonObject nicknameBody);
 }

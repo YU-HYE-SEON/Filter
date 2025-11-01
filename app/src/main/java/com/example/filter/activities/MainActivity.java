@@ -46,6 +46,8 @@ public class MainActivity extends BaseActivity {
                     if (photoUri != null) {
                         Intent intent = new Intent(MainActivity.this, FilterActivity.class);
                         intent.setData(photoUri);
+
+
                         startActivity(intent);
                     } else {
                         Toast.makeText(this, "사진 선택 실패: URI 없음", Toast.LENGTH_SHORT).show();
@@ -79,6 +81,7 @@ public class MainActivity extends BaseActivity {
                         String deletedId = result.getData().getStringExtra("deleted_filter_id");
                         if (deletedId != null && filterAdapter != null) {
                             filterAdapter.removeItemById(deletedId);
+                            filterAdapter.notifyDataSetChanged();
                         }
                     }
                 });
@@ -168,9 +171,8 @@ public class MainActivity extends BaseActivity {
             if (item.colorAdjustments != null) {
                 intent.putExtra("color_adjustments", item.colorAdjustments);
             }
-            /*if (item.stickers != null) {
-                intent.putExtra("stickers",(Serializable) item.stickers);
-            }*/
+            intent.putExtra("brush_image_path", item.brushPath);
+            intent.putExtra("sticker_image_path", item.stickerPath);
 
             detailActivityLauncher.launch(intent);
         });
@@ -215,7 +217,10 @@ public class MainActivity extends BaseActivity {
     private void handleIntent(Intent intent) {
         if (intent == null) return;
 
+        String filterId = intent.getStringExtra("filterId");
         String newImagePath = intent.getStringExtra("new_filter_image");
+        String brushPath = intent.getStringExtra("brush_image_path");
+        String stickerPath = intent.getStringExtra("sticker_image_path");
 
         if (newImagePath != null) {
             String nickname = intent.getStringExtra("new_filter_nickname");
@@ -224,9 +229,8 @@ public class MainActivity extends BaseActivity {
             String price = intent.getStringExtra("new_filter_price");
             FilterDtoCreateRequest.ColorAdjustments adj =
                     (FilterDtoCreateRequest.ColorAdjustments) intent.getSerializableExtra("color_adjustments");
-            List<FilterDtoCreateRequest.Sticker> stickers = (List<FilterDtoCreateRequest.Sticker>) intent.getSerializableExtra("new_filter_stickers");
 
-            String newId = UUID.randomUUID().toString();
+            String newId = filterId;
             if (title == null) title = "New Filter";
             if (price == null) price = "0";
             if (nickname == null) nickname = "@" + "닉네임";
@@ -241,7 +245,8 @@ public class MainActivity extends BaseActivity {
                     0,
                     false,
                     adj,
-                    stickers
+                    brushPath,
+                    stickerPath
             );
 
             if (filterAdapter != null) {

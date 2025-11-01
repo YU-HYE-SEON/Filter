@@ -401,6 +401,11 @@ public class StartActivity extends BaseActivity {
     private void showSignUpDialog() {
         new SignUpDialog(this, new SignUpDialog.SignUpDialogListener() {
             @Override
+            public void onClose() {
+
+            }
+
+            @Override
             public void onSignUp() {
                 Intent intent = new Intent(StartActivity.this, SignUpActivity.class);
                 startActivity(intent);

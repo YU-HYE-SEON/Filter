@@ -28,7 +28,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_gravity="top|start"
-        android:src="@drawable/icon_sticker_delete"
+        android:src="@drawable/icon_rotation_controller"
         android:translationX="-15dp"
         android:translationY="-15dp"
         android:visibility="invisible" />
@@ -38,7 +38,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_gravity="bottom|end"
-        android:src="@drawable/icon_sticker_size_controller"
+        android:src="@drawable/icon_size_controller"
         android:translationX="15dp"
         android:translationY="15dp"
         android:visibility="invisible" />

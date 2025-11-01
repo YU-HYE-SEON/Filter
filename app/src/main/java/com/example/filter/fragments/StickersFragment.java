@@ -245,6 +245,7 @@ public class StickersFragment extends Fragment {
                 .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
                 .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
                 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .setMinFaceSize(0.1f)
                 .build();
 
         FaceDetector detector = FaceDetection.getClient(options);

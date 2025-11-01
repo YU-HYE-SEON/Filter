@@ -9,6 +9,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -34,6 +36,21 @@ public class ImageUtils {
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(context, "저장 실패", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public static String saveBitmapToCache(Context ctx, Bitmap bitmap) {
+        File cacheDir = new File(ctx.getCacheDir(), "reviews");
+        if (!cacheDir.exists()) cacheDir.mkdirs();
+
+        File file = new File(cacheDir, "review_" + System.currentTimeMillis() + ".png");
+        try (FileOutputStream out = new FileOutputStream(file)) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            out.flush();
+            return file.getAbsolutePath();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

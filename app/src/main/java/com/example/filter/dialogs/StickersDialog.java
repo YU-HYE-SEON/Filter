@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatButton;
 
 import com.example.filter.R;
 
@@ -47,8 +48,8 @@ public class StickersDialog extends Dialog {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().setAttributes(lp);
 
-        ImageButton changeBtn = findViewById(R.id.changeBtn);
-        ImageButton keepBtn = findViewById(R.id.keepBtn);
+        AppCompatButton changeBtn = findViewById(R.id.changeBtn);
+        AppCompatButton keepBtn = findViewById(R.id.keepBtn);
 
         keepBtn.setOnClickListener(v -> {
             dismiss();

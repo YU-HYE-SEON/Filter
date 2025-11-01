@@ -3,6 +3,7 @@ package com.example.filter.fragments;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +15,7 @@ import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -52,7 +54,7 @@ public class EditMyStickerFragment extends Fragment {
     private static final float EPS_POS = 0.5f;
     private static final float EPS_ROT = 0.5f;
     private static final int EPS_SIZE = 1;
-    private static final float FACE_STICKER_SCALE_BOOST = 1.5f;
+    private static final float FACE_STICKER_SCALE_BOOST = 1.0f;
     //private FaceBoxOverlayView faceBox;
     private boolean isToastVisible = false;
 
@@ -322,6 +324,8 @@ public class EditMyStickerFragment extends Fragment {
             if (checkBox.isChecked() && photoPreviewContainer != null && faceOverlay != null) {
                 requireActivity().getSupportFragmentManager().setFragmentResultListener(
                         "stickerMeta", this, (key, meta) -> {
+                            if (!isAdded()) return;
+
                             float relX = meta.getFloat("relX");
                             float relY = meta.getFloat("relY");
                             float relW = meta.getFloat("relW");
@@ -335,75 +339,89 @@ public class EditMyStickerFragment extends Fragment {
                             View stickerToClone = stickerWrapper;
                             removeStickerWrapper();
 
-                            FilterActivity activity = (FilterActivity) requireActivity();
+                            FilterActivity activity = (FilterActivity) getActivity();
                             if (activity == null) return;
 
                             activity.getPhotoPreview().queueEvent(() -> {
                                 Bitmap bmp = activity.getRenderer().getCurrentBitmap();
                                 if (bmp == null) {
                                     Log.e("얼굴인식", "메인 사진 비트맵 없음");
+
+                                    if (isAdded()) {
+                                        activity.runOnUiThread(() -> {
+                                            showToast("얼굴을 감지하지 못했습니다");
+                                            sLastReturnOriginAction = "mystickers_check";
+                                            requireActivity().getSupportFragmentManager().popBackStack();
+                                        });
+                                    }
                                     return;
                                 }
                                 activity.runOnUiThread(() -> StickersFragment.detectFaces(bmp, (faces, originalBitmap) -> {
+                                    if (!isAdded()) return;
+
                                     Log.d("얼굴인식", "메인 사진에서 " + faces.size() + "개의 얼굴 감지. 스티커 배치 시작.");
-                                    if (faces.isEmpty()) return;
 
-                                    FrameLayout stickerOverlay = activity.findViewById(R.id.stickerOverlay);
-                                    if (stickerOverlay == null) return;
+                                    if (faces.isEmpty()) {
+                                        showToast("얼굴을 감지하지 못했습니다");
+                                    } else {
+                                        FrameLayout stickerOverlay = activity.findViewById(R.id.stickerOverlay);
+                                        if (stickerOverlay != null) {
+                                            int vpX = activity.getRenderer().getViewportX();
+                                            int vpY = activity.getRenderer().getViewportY();
+                                            int vpW = activity.getRenderer().getViewportWidth();
+                                            int vpH = activity.getRenderer().getViewportHeight();
+                                            int bmpW = originalBitmap.getWidth();
+                                            int bmpH = originalBitmap.getHeight();
 
-                                    int vpX = activity.getRenderer().getViewportX();
-                                    int vpY = activity.getRenderer().getViewportY();
-                                    int vpW = activity.getRenderer().getViewportWidth();
-                                    int vpH = activity.getRenderer().getViewportHeight();
-                                    int bmpW = originalBitmap.getWidth();
-                                    int bmpH = originalBitmap.getHeight();
+                                            float scale = Math.min((float) vpW / bmpW, (float) vpH / bmpH);
+                                            float offsetX = vpX + (vpW - bmpW * scale) / 2f;
+                                            float offsetY = vpY + (vpH - bmpH * scale) / 2f;
 
-                                    float scale = Math.min((float) vpW / bmpW, (float) vpH / bmpH);
-                                    float offsetX = vpX + (vpW - bmpW * scale) / 2f;
-                                    float offsetY = vpY + (vpH - bmpH * scale) / 2f;
+                                            for (Face face : faces) {
+                                                Rect box = face.getBoundingBox();
 
-                                    for (Face face : faces) {
-                                        Rect box = face.getBoundingBox();
+                                                float faceTiltAngle = face.getHeadEulerAngleZ();
+                                                //faceTiltAngle = Math.max(-40f, Math.min(40f, faceTiltAngle));
+                                                //float finalRotation = rot - faceTiltAngle;
+                                                float finalRotation = rot;
 
-                                        float faceTiltAngle = face.getHeadEulerAngleZ();
+                                                float stickerCenterX_bmp = box.left + relX * box.width();
+                                                float stickerCenterY_bmp = box.top + relY * box.height();
+                                                float stickerW_bmp = Math.round(relW * box.width() * FACE_STICKER_SCALE_BOOST);
+                                                float stickerH_bmp = Math.round(relH * box.height() * FACE_STICKER_SCALE_BOOST);
 
-                                        float stickerCenterX_bmp = box.left + relX * box.width();
-                                        float stickerCenterY_bmp = box.top + relY * box.height();
-                                        //int stickerW_bmp = Math.round(relW * box.width());
-                                        //int stickerH_bmp = Math.round(relH * box.height());
-                                        float stickerW_bmp = Math.round(relW * box.width() * FACE_STICKER_SCALE_BOOST);
-                                        float stickerH_bmp = Math.round(relH * box.height() * FACE_STICKER_SCALE_BOOST);
+                                                if (stickerW_bmp <= 0 || stickerH_bmp <= 0)
+                                                    continue;
 
-                                        if (stickerW_bmp <= 0 || stickerH_bmp <= 0)
-                                            continue;
+                                                float stickerCenterX_view = (stickerCenterX_bmp * scale) + offsetX;
+                                                float stickerCenterY_view = (stickerCenterY_bmp * scale) + offsetY;
+                                                int stickerW_view = Math.round(stickerW_bmp * scale);
+                                                int stickerH_view = Math.round(stickerH_bmp * scale);
 
-                                        float stickerCenterX_view = (stickerCenterX_bmp * scale) + offsetX;
-                                        float stickerCenterY_view = (stickerCenterY_bmp * scale) + offsetY;
-                                        int stickerW_view = Math.round(stickerW_bmp * scale);
-                                        int stickerH_view = Math.round(stickerH_bmp * scale);
+                                                float stickerX_view = stickerCenterX_view - (stickerW_view / 2f);
+                                                float stickerY_view = stickerCenterY_view - (stickerH_view / 2f);
 
-                                        float stickerX_view = stickerCenterX_view - (stickerW_view / 2f);
-                                        float stickerY_view = stickerCenterY_view - (stickerH_view / 2f);
+                                                View newSticker = cloneSticker(stickerToClone);
+                                                if (newSticker == null) continue;
 
-                                        View newSticker = cloneSticker(stickerToClone);
-                                        if (newSticker == null) continue;
+                                                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(stickerW_view, stickerH_view);
+                                                newSticker.setLayoutParams(lp);
+                                                newSticker.setX(stickerX_view);
+                                                newSticker.setY(stickerY_view);
+                                                newSticker.setRotation(finalRotation);
+                                                newSticker.setTag("sessionAdded");
 
-                                        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(stickerW_view, stickerH_view);
-                                        newSticker.setLayoutParams(lp);
-                                        newSticker.setX(stickerX_view);
-                                        newSticker.setY(stickerY_view);
-                                        //newSticker.setRotation(rot);
-                                        newSticker.setRotation(rot + faceTiltAngle);
-                                        newSticker.setTag("sessionAdded");
+                                                MyStickersFragment.hideControllers(newSticker);
+                                                MyStickersFragment.setStickerActive(newSticker, true);
 
-                                        MyStickersFragment.hideControllers(newSticker);
-                                        MyStickersFragment.setStickerActive(newSticker, true);
-
-                                        stickerOverlay.addView(newSticker);
+                                                stickerOverlay.addView(newSticker);
+                                            }
+                                            activity.recordStickerPlacement(sessionBaseline);
+                                        }
+                                        showToast("얼굴 인식 성공");
                                     }
-
-                                    activity.recordStickerPlacement(sessionBaseline);
-
+                                    sLastReturnOriginAction = "mystickers_check";
+                                    requireActivity().getSupportFragmentManager().popBackStack();
                                 }));
                             });
                         });
@@ -735,7 +753,7 @@ public class EditMyStickerFragment extends Fragment {
         });*/
     }
 
-    /*private void showToast(String message) {
+    private void showToast(String message) {
         isToastVisible = true;
 
         View old = topArea.findViewWithTag("inline_banner");
@@ -776,7 +794,7 @@ public class EditMyStickerFragment extends Fragment {
                     isToastVisible = false;
                 })
                 .start(), 2000);
-    }*/
+    }
 
     private void setView(boolean isCheck) {
         if (isCheck) {

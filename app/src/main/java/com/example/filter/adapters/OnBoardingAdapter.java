@@ -59,7 +59,7 @@ public class OnBoardingAdapter extends RecyclerView.Adapter<OnBoardingAdapter.VH
                 .into(holder.image);
 
         if (item.isSelected()) {
-            holder.image2.setAlpha(0.7f);
+            holder.image2.setAlpha(0.3f);
             holder.image2.setVisibility(View.VISIBLE);
         } else {
             holder.image2.setVisibility(View.INVISIBLE);

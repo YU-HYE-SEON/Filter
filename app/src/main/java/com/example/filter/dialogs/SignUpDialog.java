@@ -5,16 +5,20 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatButton;
 
 import com.example.filter.R;
 
 public class SignUpDialog extends Dialog {
     public interface SignUpDialogListener {
+        void onClose();
+
         void onSignUp();
 
         void onPopUp1();
@@ -41,17 +45,25 @@ public class SignUpDialog extends Dialog {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.copyFrom(getWindow().getAttributes());
 
-        lp.width = WindowManager.LayoutParams.WRAP_CONTENT;
+        DisplayMetrics displayMetrics = getContext().getResources().getDisplayMetrics();
+        int dialogWidth = displayMetrics.widthPixels;
+        lp.width = dialogWidth;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        lp.dimAmount = 0.4f;
+        lp.dimAmount = 0.7f;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().setAttributes(lp);
 
-        Button btn = findViewById(R.id.btn);
+        AppCompatButton closeBtn = findViewById(R.id.closeBtn);
+        AppCompatButton signUpBtn = findViewById(R.id.signUpBtn);
         TextView txt2 = findViewById(R.id.txt2);
         TextView txt4 = findViewById(R.id.txt4);
 
-        btn.setOnClickListener(v -> {
+        closeBtn.setOnClickListener(v -> {
+            dismiss();
+            if (listener != null) listener.onClose();
+        });
+
+        signUpBtn.setOnClickListener(v -> {
             dismiss();
             if (listener != null) listener.onSignUp();
         });

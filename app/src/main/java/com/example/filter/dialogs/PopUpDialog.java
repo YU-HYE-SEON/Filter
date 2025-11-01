@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -49,9 +50,11 @@ public class PopUpDialog extends Dialog {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.copyFrom(getWindow().getAttributes());
 
-        lp.width = WindowManager.LayoutParams.WRAP_CONTENT;
+        DisplayMetrics displayMetrics = getContext().getResources().getDisplayMetrics();
+        int dialogWidth = displayMetrics.widthPixels;
+        lp.width = dialogWidth;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        lp.dimAmount = 0.4f;
+        lp.dimAmount = 0.7f;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().setAttributes(lp);
 

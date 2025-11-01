@@ -5,110 +5,140 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingStart="15dp"
+    android:paddingEnd="15dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="320dp"
-        android:layout_height="180dp"
-        android:background="@drawable/border_dialog"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:background="@drawable/dialog">
 
         <TextView
-            android:id="@+id/message"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:fontFamily="@font/roboto_medium"
-            android:gravity="center"
-            android:paddingTop="20dp"
-            android:paddingBottom="20dp"
-            android:text="가입 내역이 없습니다.\n회원가입 하시겠습니까?"
+            android:id="@+id/message1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:fontFamily="@font/pretendard_bold"
+            android:text="회원가입 하시겠습니까?"
             android:textAlignment="center"
             android:textColor="@color/black"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/line"
+            android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <View
-            android:id="@+id/line"
-            android:layout_width="match_parent"
-            android:layout_height="1.5dp"
-            android:background="#BDBDBD"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.65" />
-
-        <Button
-            android:id="@+id/btn"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:fontFamily="@font/roboto_medium"
-            android:text="회원 가입"
+        <TextView
+            android:id="@+id/message2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/pretendard_medium"
+            android:text="가입 내역이 없습니다."
             android:textAlignment="center"
-            android:textColor="@color/black"
+            android:textColor="#90909F"
             android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/line" />
+            app:layout_constraintTop_toBottomOf="@+id/message1" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/btns"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/message2">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/closeBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/btn_sign_up_close"
+                android:fontFamily="@font/pretendard_semibold"
+                android:text="닫기"
+                android:textAlignment="center"
+                android:textColor="#007AFF"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/signUpBtn"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/signUpBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:background="@drawable/btn_sign_up"
+                android:fontFamily="@font/pretendard_semibold"
+                android:text="가입하기"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/closeBtn"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <TextView
             android:id="@+id/txt1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:fontFamily="@font/pretendard_medium"
             android:text="회원가입 시 "
-            android:textColor="@color/white"
-            android:textSize="13sp" />
+            android:textColor="#90989F"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/txt2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:fontFamily="@font/pretendard_medium"
             android:text="이용약관"
             android:textColor="#73B6FD"
-            android:textSize="13sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/txt3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:fontFamily="@font/pretendard_medium"
             android:text=" 및 "
-            android:textColor="@color/white"
-            android:textSize="13sp" />
+            android:textColor="#90989F"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/txt4"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:fontFamily="@font/pretendard_medium"
             android:text="개인정보처리방침"
             android:textColor="#73B6FD"
-            android:textSize="13sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/txt5"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:fontFamily="@font/pretendard_medium"
             android:text=" 동의로 간주됩니다."
-            android:textColor="@color/white"
-            android:textSize="13sp" />
+            android:textColor="#90989F"
+            android:textSize="12sp" />
 
     </LinearLayout>
 

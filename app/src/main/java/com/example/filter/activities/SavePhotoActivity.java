@@ -16,10 +16,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.FilterDtoCreateRequest;
+import com.example.filter.etc.ImageUtils;
 
 import java.io.File;
-import java.io.Serializable;
-import java.util.List;
 
 public class SavePhotoActivity extends BaseActivity {
     private ImageButton backBtn;
@@ -48,7 +47,18 @@ public class SavePhotoActivity extends BaseActivity {
 
         String originalPath = getIntent().getStringExtra("original_image_path");
         String savedImagePath = getIntent().getStringExtra("saved_image");
-        String mergedOverlayPath = getIntent().getStringExtra("merged_overlay_path");
+
+        float cropN_l = getIntent().getFloatExtra("cropRectN_l", -1f);
+        float cropN_t = getIntent().getFloatExtra("cropRectN_t", -1f);
+        float cropN_r = getIntent().getFloatExtra("cropRectN_r", -1f);
+        float cropN_b = getIntent().getFloatExtra("cropRectN_b", -1f);
+
+        int accumRotationDeg = getIntent().getIntExtra("accumRotationDeg", 0);
+        boolean accumFlipH = getIntent().getBooleanExtra("accumFlipH", false);
+        boolean accumFlipV = getIntent().getBooleanExtra("accumFlipV", false);
+
+        String brushImagePath = getIntent().getStringExtra("brush_image_path");
+        String stickerImagePath = getIntent().getStringExtra("sticker_image_path");
 
         if (savedImagePath != null) {
             File file = new File(savedImagePath);
@@ -84,16 +94,21 @@ public class SavePhotoActivity extends BaseActivity {
             intent.putExtra("final_image", savedImagePath);
             intent.putExtra("original_image_path", originalPath);
 
-            if (mergedOverlayPath != null) {
-                intent.putExtra("merged_overlay_path", mergedOverlayPath);
-            }
+            intent.putExtra("cropRectN_l", cropN_l);
+            intent.putExtra("cropRectN_t", cropN_t);
+            intent.putExtra("cropRectN_r", cropN_r);
+            intent.putExtra("cropRectN_b", cropN_b);
+
+            intent.putExtra("accumRotationDeg", accumRotationDeg);
+            intent.putExtra("accumFlipH", accumFlipH);
+            intent.putExtra("accumFlipV", accumFlipV);
+
+            intent.putExtra("brush_image_path", brushImagePath);
+            intent.putExtra("sticker_image_path", stickerImagePath);
 
             FilterDtoCreateRequest.ColorAdjustments adj =
                     (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
             if (adj != null) intent.putExtra("color_adjustments", adj);
-
-            List<FilterDtoCreateRequest.Sticker> stickers = (List<FilterDtoCreateRequest.Sticker>) getIntent().getSerializableExtra("stickers");
-            if (stickers != null) intent.putExtra("stickers", (Serializable) stickers);
 
             startActivity(intent);
         });
