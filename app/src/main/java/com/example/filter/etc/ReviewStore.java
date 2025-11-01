@@ -17,4 +17,18 @@ public class ReviewStore extends Application {
         List<ReviewItem> list = reviewMap.computeIfAbsent(key, k -> new ArrayList<>());
         list.add(0, item);
     }
+
+    public static void removeReview(String key, String imageUrl) {
+        List<ReviewItem> list = reviewMap.get(key);
+        if (list == null) return;
+
+        Iterator<ReviewItem> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            ReviewItem item = iterator.next();
+            if (item.imageUrl.equals(imageUrl)) {
+                iterator.remove();
+                break;
+            }
+        }
+    }
 }

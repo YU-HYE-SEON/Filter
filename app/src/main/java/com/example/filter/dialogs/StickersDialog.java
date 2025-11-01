@@ -7,7 +7,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
-import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatButton;

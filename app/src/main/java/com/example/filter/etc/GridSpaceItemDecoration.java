@@ -5,7 +5,6 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 public class GridSpaceItemDecoration extends RecyclerView.ItemDecoration {
     private final int spanCount;

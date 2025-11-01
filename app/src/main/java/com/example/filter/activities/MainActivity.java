@@ -28,9 +28,6 @@ import com.example.filter.items.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.fragments.SearchMainFragment;
 
-import java.util.List;
-import java.util.UUID;
-
 public class MainActivity extends BaseActivity {
     private ConstraintLayout mainActivity;
     private ImageView logo;
@@ -81,7 +78,6 @@ public class MainActivity extends BaseActivity {
                         String deletedId = result.getData().getStringExtra("deleted_filter_id");
                         if (deletedId != null && filterAdapter != null) {
                             filterAdapter.removeItemById(deletedId);
-                            filterAdapter.notifyDataSetChanged();
                         }
                     }
                 });
@@ -156,21 +152,20 @@ public class MainActivity extends BaseActivity {
             }
         });*/
 
-        filterAdapter.setOnItemClickListener((v, item, displayedTitle, displayedNickname) -> {
+        filterAdapter.setOnItemClickListener((v, item, title, nickname) -> {
             Intent intent = new Intent(MainActivity.this, FilterDetailActivity.class);
             intent.putExtra("filterId", item.id);
             //intent.putExtra("nickname", item.nickname);
-            intent.putExtra("nickname", displayedNickname);
+            intent.putExtra("nickname", nickname);
+            intent.putExtra("original_image_path", item.originalPath);
             intent.putExtra("imgUrl", item.filterImageUrl);
             //intent.putExtra("filterTitle", item.filterTitle);
-            intent.putExtra("filterTitle", displayedTitle);
+            intent.putExtra("filterTitle", title);
             intent.putExtra("tags", item.tags);
             intent.putExtra("price", item.price);
             intent.putExtra("count", item.count);
 
-            if (item.colorAdjustments != null) {
-                intent.putExtra("color_adjustments", item.colorAdjustments);
-            }
+            intent.putExtra("color_adjustments", item.colorAdjustments);
             intent.putExtra("brush_image_path", item.brushPath);
             intent.putExtra("sticker_image_path", item.stickerPath);
 
@@ -217,7 +212,18 @@ public class MainActivity extends BaseActivity {
     private void handleIntent(Intent intent) {
         if (intent == null) return;
 
+        String deletedId = intent.getStringExtra("DELETED_ID_FROM_DETAIL");
+        if (deletedId != null) {
+            if (filterAdapter != null) {
+                filterAdapter.removeItemById(deletedId);
+            }
+            intent.removeExtra("DELETED_ID_FROM_DETAIL");
+            setIntent(new Intent());
+            return;
+        }
+
         String filterId = intent.getStringExtra("filterId");
+        String originalPath = intent.getStringExtra("original_image_path");
         String newImagePath = intent.getStringExtra("new_filter_image");
         String brushPath = intent.getStringExtra("brush_image_path");
         String stickerPath = intent.getStringExtra("sticker_image_path");
@@ -238,6 +244,7 @@ public class MainActivity extends BaseActivity {
             FilterItem newItem = new FilterItem(
                     newId,
                     nickname,
+                    originalPath,
                     newImagePath,
                     title,
                     tags,

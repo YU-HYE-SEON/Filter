@@ -6,17 +6,18 @@ import java.util.List;
 
 public class FilterItem {
     public final String id;
-    public final String nickname, filterImageUrl, filterTitle, tags, price;
+    public final String nickname, originalPath, filterImageUrl, filterTitle, tags, price;
     public final String brushPath, stickerPath;
     public final int count;
     public final boolean isMockData;
     public final FilterDtoCreateRequest.ColorAdjustments colorAdjustments;
 
-    public FilterItem(String id, String nickname, String filterImageUrl, String filterTitle, String tags, String price, int count,
+    public FilterItem(String id, String nickname, String originalPath, String filterImageUrl, String filterTitle, String tags, String price, int count,
                       boolean isMockData, FilterDtoCreateRequest.ColorAdjustments colorAdjustments,
                       String brushPath, String stickerPath) {
         this.id = id;
         this.nickname = nickname;
+        this.originalPath = originalPath;
         this.filterImageUrl = filterImageUrl;
         this.filterTitle = filterTitle;
         this.tags = tags;

@@ -17,7 +17,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
@@ -27,10 +26,6 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
@@ -196,7 +191,6 @@ public class ApplyFilterActivity extends BaseActivity {
             intent.putExtra("nickname", nick);
             intent.putExtra("reviewImg", savedPath);
 
-            //setResult(RESULT_OK, intent);
             startActivity(intent);
             hideReviewPop();
             finish();

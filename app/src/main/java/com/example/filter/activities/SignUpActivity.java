@@ -87,7 +87,6 @@ public class SignUpActivity extends BaseActivity {
         });
 
         btn.setOnClickListener(v -> {
-            //Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
             Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
             //intent.putExtra("nickname", nickname.getText().toString());
             startActivity(intent);

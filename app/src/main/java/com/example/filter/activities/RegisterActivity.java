@@ -24,14 +24,11 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
-import android.animation.ValueAnimator;
-
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import androidx.annotation.Nullable;
 
@@ -44,7 +41,6 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
@@ -469,8 +465,9 @@ public class RegisterActivity extends BaseActivity {
 
             Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
             mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            //mainIntent.putExtra("new_filter_nickname", "@" + "닉네임");
             mainIntent.putExtra("filterId", filterId);
+            //mainIntent.putExtra("new_filter_nickname", "@" + "닉네임");
+            mainIntent.putExtra("original_image_path", originalPath);
             mainIntent.putExtra("new_filter_image", newImagePath);
             mainIntent.putExtra("new_filter_title", title);
             mainIntent.putExtra("new_filter_tags", tagStr);

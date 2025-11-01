@@ -235,6 +235,12 @@ public class FilterActivity extends BaseActivity {
 
         Uri photoUri = getIntent().getData();
         if (photoUri != null) {
+            final int takeFlags = getIntent().getFlags()
+                    & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            try {
+                getContentResolver().takePersistableUriPermission(photoUri, takeFlags);
+            } catch (SecurityException ignored) {}
+
             loadImageFromUri(photoUri);
         } else {
             finish();

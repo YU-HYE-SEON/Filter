@@ -48,7 +48,6 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.gson.Gson;
 
-
 import org.json.JSONObject;
 
 import java.io.IOException;

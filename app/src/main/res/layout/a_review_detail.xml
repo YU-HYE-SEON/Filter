@@ -55,7 +55,9 @@
             android:layout_height="match_parent"
             android:background="@drawable/border_detail_top_area"
             android:paddingLeft="18dp"
-            android:paddingRight="18dp">
+            android:paddingTop="9dp"
+            android:paddingRight="18dp"
+            android:paddingBottom="9dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/imgBox"
@@ -93,7 +95,6 @@
                     android:id="@+id/txt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
                     android:fontFamily="@font/pretendard_semibold"
                     android:text="Photograph by "
                     android:textAlignment="textStart"

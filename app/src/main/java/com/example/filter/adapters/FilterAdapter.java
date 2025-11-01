@@ -1,7 +1,6 @@
 package com.example.filter.adapters;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,14 +9,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
 import com.example.filter.items.FilterItem;
@@ -40,45 +34,8 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
     private int maxItems = Integer.MAX_VALUE;
     private Context context;
 
-
     public FilterAdapter() {
     }
-
-    public FilterAdapter(Context context) {
-        this.context = context.getApplicationContext();
-    }
-
-    public void validateAndAppend(List<FilterItem> itemsToValidate) {
-        if (context == null || itemsToValidate.isEmpty()) return;
-
-        //FilterItem item = itemsToValidate.get(0);
-
-        for (FilterItem item : itemsToValidate) {
-            Glide.with(context)
-                    .load(item.filterImageUrl)
-                    .signature(new ObjectKey(item.id))
-                    .listener(new RequestListener<Drawable>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                            return false;
-                        }
-
-                        @Override
-                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                            items.add(item);
-                            notifyItemInserted(items.size() - 1);
-                            return false;
-                        }
-                    })
-                    .preload();
-        }
-    }
-
-    /*public void append(List<FilterItem> more) {
-        int start = items.size();
-        items.addAll(more);
-        notifyItemRangeInserted(start, more.size());
-    }*/
 
     public void prepend(FilterItem item) {
         items.add(0, item);
@@ -103,7 +60,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
 
         if (targetIndex == -1) return;
         items.remove(targetIndex);
-        if (targetIndex < maxItems) notifyDataSetChanged();
+        notifyDataSetChanged();
 
     }
 

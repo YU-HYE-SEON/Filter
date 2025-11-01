@@ -169,10 +169,10 @@ public class FilterDetailActivity extends BaseActivity {
                             img.setImageBitmap(resource);
 
                             Palette.from(resource).maximumColorCount(8).generate(palette -> {
-                                int dom = (palette != null) ? palette.getDominantColor(0xFF7F7F7F) : 0xFF7F7F7F;
+                                int dom = palette.getDominantColor(0xFF7F7F7F);
                                 double lum = ColorUtils.calculateLuminance(dom);
-                                boolean isDark = lum < 0.5;
-
+                                double contrast = ColorUtils.calculateContrast(dom, Color.WHITE);
+                                boolean isDark = (lum < 0.4) && (contrast > 1.5);
                                 originalBtn.setImageResource(isDark
                                         ? R.drawable.icon_original_white
                                         : R.drawable.icon_original_black);
@@ -214,6 +214,13 @@ public class FilterDetailActivity extends BaseActivity {
             Intent resultIntent = new Intent();
             resultIntent.putExtra("deleted_filter_id", filterId);
             setResult(RESULT_OK, resultIntent);
+
+            Intent mainIntent = new Intent(FilterDetailActivity.this, MainActivity.class);
+            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            mainIntent.putExtra("DELETED_ID_FROM_DETAIL", filterId);
+
+            startActivity(mainIntent);
+
             finish();
         });
 
@@ -260,9 +267,7 @@ public class FilterDetailActivity extends BaseActivity {
         dimBackground.setOnClickListener(v -> hideChooseUseMode());
 
         galleryModeBtn.setOnClickListener(v -> {
-            //hideChooseUseMode();
             chooseUseModeOn.setVisibility(View.GONE);
-
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
             galleryLauncher.launch(intent);
@@ -388,13 +393,7 @@ public class FilterDetailActivity extends BaseActivity {
                     if (originalPath != null) {
                         v.setPressed(true);
                         originalBtn.setAlpha(0.4f);
-                        loadCroppedOriginalImage(originalPath, img);
-                        /*Glide.with(FilterDetailActivity.this)
-                                .load(originalPath)
-                                .dontAnimate()
-                                .placeholder(img.getDrawable())
-                                .fitCenter()
-                                .into(img);*/
+                        loadOriginalImage(originalPath, img);
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
@@ -415,7 +414,7 @@ public class FilterDetailActivity extends BaseActivity {
         });
     }
 
-    private void loadCroppedOriginalImage(String path, ImageView target) {
+    private void loadOriginalImage(String path, ImageView target) {
         Glide.with(this)
                 .asBitmap()
                 .load(path)
@@ -481,14 +480,14 @@ public class FilterDetailActivity extends BaseActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("originalPath", originalPath);
+        outState.putString("original_image_path", originalPath);
         outState.putString("imgUrl", imgUrl);
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        originalPath = savedInstanceState.getString("originalPath");
+        originalPath = savedInstanceState.getString("original_image_path");
         imgUrl = savedInstanceState.getString("imgUrl");
     }
 }

@@ -108,7 +108,6 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
         h.stickerImage.setOnClickListener(v -> {
             int old = selectedPos;
             selectedPos = position;
-            //notifyItemChanged(old);
             if (old != RecyclerView.NO_POSITION) notifyItemChanged(old);
             notifyItemChanged(selectedPos);
             if (clickListener != null) {
