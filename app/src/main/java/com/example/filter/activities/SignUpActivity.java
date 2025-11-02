@@ -16,6 +16,7 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.example.filter.R;
+import com.example.filter.etc.ClickUtils;
 
 public class SignUpActivity extends BaseActivity {
     private EditText nickname;
@@ -60,7 +61,9 @@ public class SignUpActivity extends BaseActivity {
                 if (lengthByCodePoint > 10) {
                     alertTxt.setTextColor(Color.RED);
                     alertTxt.setText("10자 이내로 입력해주세요");
+                    nickname.setBackgroundResource(R.drawable.edit_nick_x);
                     alertTxt.setVisibility(View.VISIBLE);
+                    btn.setVisibility(View.INVISIBLE);
                     btn.setEnabled(false);
                 } /*else if () {
                     alertTxt.setTextColor(Color.RED);
@@ -70,23 +73,30 @@ public class SignUpActivity extends BaseActivity {
                 }*/ else if (bad != null) {
                     alertTxt.setTextColor(Color.RED);
                     alertTxt.setText(bad + "은 사용할 수 없는 문자입니다");
+                    nickname.setBackgroundResource(R.drawable.edit_nick_x);
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setEnabled(false);
+                    btn.setVisibility(View.INVISIBLE);
                 } else if (lengthByCodePoint == 0) {
                     alertTxt.setTextColor(Color.RED);
                     alertTxt.setText("닉네임을 입력해주세요");
+                    nickname.setBackgroundResource(R.drawable.edit_nick_x);
                     alertTxt.setVisibility(View.VISIBLE);
+                    btn.setVisibility(View.INVISIBLE);
                     btn.setEnabled(false);
                 } else {
                     alertTxt.setTextColor(Color.BLUE);
                     alertTxt.setText("사용 가능한 닉네임입니다");
+                    nickname.setBackgroundResource(R.drawable.edit_nick_none);
                     alertTxt.setVisibility(View.VISIBLE);
+                    btn.setVisibility(View.VISIBLE);
                     btn.setEnabled(true);
                 }
             }
         });
 
         btn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
             Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
             //intent.putExtra("nickname", nickname.getText().toString());
             startActivity(intent);

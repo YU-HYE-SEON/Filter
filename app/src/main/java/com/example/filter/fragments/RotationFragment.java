@@ -88,7 +88,7 @@ public class RotationFragment extends Fragment {
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 FilterActivity activity = (FilterActivity) getActivity();
 
@@ -111,7 +111,7 @@ public class RotationFragment extends Fragment {
         checkBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 FilterActivity activity = (FilterActivity) getActivity();
                 if (activity != null) {

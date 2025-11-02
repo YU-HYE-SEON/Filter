@@ -224,7 +224,8 @@ public class StartActivity extends BaseActivity {
         }, 1000);
 
         googleLogin.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(800)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
+            ClickUtils.disableTemporarily(v, 800);
             googleLogin.setEnabled(false);
             signIn();
 

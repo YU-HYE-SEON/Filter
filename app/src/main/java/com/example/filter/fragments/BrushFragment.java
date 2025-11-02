@@ -559,7 +559,7 @@ public class BrushFragment extends Fragment {
         });
 
         cancelBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             if (currentToolPanel != null) hideToolPanel(false);
 
@@ -585,7 +585,7 @@ public class BrushFragment extends Fragment {
         });
 
         checkBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             if (currentToolPanel != null) hideToolPanel(false);
             if (brushDraw != null) {

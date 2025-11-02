@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.example.filter.R;
+import com.example.filter.etc.ClickUtils;
 
 public class LoginFailActivity extends BaseActivity {
     private TextView txt2, email;
@@ -22,6 +23,7 @@ public class LoginFailActivity extends BaseActivity {
         btn = findViewById(R.id.btn);
 
         btn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
     }

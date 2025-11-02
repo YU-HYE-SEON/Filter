@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
 import com.example.filter.adapters.OnBoardingAdapter;
+import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.items.OnBoardingItem;
 
@@ -81,6 +82,7 @@ public class OnBoardingActivity extends BaseActivity {
         });
 
         nextBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
             Intent intent = new Intent(OnBoardingActivity.this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);

@@ -79,7 +79,7 @@ public class AIStickerCreateFragment extends Fragment {
         warningTxt.setVisibility(View.INVISIBLE);
 
         createBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             String prompt = editText.getText() != null ? editText.getText().toString().trim() : "";
             if (prompt.isEmpty()) return;

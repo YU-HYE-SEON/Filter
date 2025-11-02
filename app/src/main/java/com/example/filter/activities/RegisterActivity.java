@@ -54,7 +54,11 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RegisterActivity extends BaseActivity {
-    String originalPath, imagePath, brushImagePath, stickerImagePath;
+    private String filterId, originalPath, newImagePath, imagePath, title, tagStr, priceStr,
+            brushImagePath, stickerImagePath, brushPath, stickerPath;
+    private float cropN_l, cropN_t, cropN_r, cropN_b;
+    private int accumRotationDeg;
+    private boolean accumFlipH, accumFlipV;
     private View topArea, photoView, contentContainer;
     private ImageView photo;
     private NestedScrollView scrollView;
@@ -136,7 +140,7 @@ public class RegisterActivity extends BaseActivity {
         });
 
         backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
 
@@ -241,14 +245,14 @@ public class RegisterActivity extends BaseActivity {
         originalPath = getIntent().getStringExtra("original_image_path");
         imagePath = getIntent().getStringExtra("final_image");
 
-        float cropN_l = getIntent().getFloatExtra("cropRectN_l", -1f);
-        float cropN_t = getIntent().getFloatExtra("cropRectN_t", -1f);
-        float cropN_r = getIntent().getFloatExtra("cropRectN_r", -1f);
-        float cropN_b = getIntent().getFloatExtra("cropRectN_b", -1f);
+        cropN_l = getIntent().getFloatExtra("cropRectN_l", -1f);
+        cropN_t = getIntent().getFloatExtra("cropRectN_t", -1f);
+        cropN_r = getIntent().getFloatExtra("cropRectN_r", -1f);
+        cropN_b = getIntent().getFloatExtra("cropRectN_b", -1f);
 
-        int accumRotationDeg = getIntent().getIntExtra("accumRotationDeg", 0);
-        boolean accumFlipH = getIntent().getBooleanExtra("accumFlipH", false);
-        boolean accumFlipV = getIntent().getBooleanExtra("accumFlipV", false);
+        accumRotationDeg = getIntent().getIntExtra("accumRotationDeg", 0);
+        accumFlipH = getIntent().getBooleanExtra("accumFlipH", false);
+        accumFlipV = getIntent().getBooleanExtra("accumFlipV", false);
 
         adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
         brushImagePath = getIntent().getStringExtra("brush_image_path");
@@ -388,13 +392,15 @@ public class RegisterActivity extends BaseActivity {
             }
         });
 
+        /// 중첩 클릭되면 안 됨 ///
         registerBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
+            ClickUtils.disableTemporarily(v, 800);
 
-            String title = titleEditText.getText().toString().trim();
-            String tagStr = tagEditText.getText().toString().trim();
+            title = titleEditText.getText().toString().trim();
+            tagStr = tagEditText.getText().toString().trim();
             String[] tags = tagStr.isEmpty() ? new String[]{} : tagStr.split("\\s+");
-            String priceStr = priceEditText.getText().toString().trim();
+            priceStr = priceEditText.getText().toString().trim();
 
             if (title.isEmpty() || title.length() > 15) {
                 alertTxt1.setText(title.isEmpty() ? "필터 이름을 입력해주세요." : "작성 가능한 이름은 최대 15자 입니다.");
@@ -417,7 +423,7 @@ public class RegisterActivity extends BaseActivity {
                 }
             }
 
-            String filterId = UUID.randomUUID().toString();
+            filterId = UUID.randomUUID().toString();
             String uniqueFileName = "filter_" + filterId + ".png";
             String brushFileName = "brush_" + filterId + ".png";
             String stickerFileName = "sticker_" + filterId + ".png";
@@ -426,9 +432,9 @@ public class RegisterActivity extends BaseActivity {
             File brushFile = new File(getCacheDir(), brushFileName);
             File stickerFile = new File(getCacheDir(), stickerFileName);
 
-            String newImagePath = imageFile.getAbsolutePath();
-            String brushPath = brushFile.getAbsolutePath();
-            String stickerPath = stickerFile.getAbsolutePath();
+            newImagePath = imageFile.getAbsolutePath();
+            brushPath = brushFile.getAbsolutePath();
+            stickerPath = stickerFile.getAbsolutePath();
 
             try (FileOutputStream out = new FileOutputStream(imageFile)) {
                 finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
@@ -464,49 +470,44 @@ public class RegisterActivity extends BaseActivity {
             }
 
             Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
-            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            mainIntent.putExtra("filterId", filterId);
-            //mainIntent.putExtra("new_filter_nickname", "@" + "닉네임");
-            mainIntent.putExtra("original_image_path", originalPath);
-            mainIntent.putExtra("new_filter_image", newImagePath);
-            mainIntent.putExtra("new_filter_title", title);
-            mainIntent.putExtra("new_filter_tags", tagStr);
-            mainIntent.putExtra("new_filter_price", isFree ? "0" : priceStr);
+            setIntent(mainIntent);
 
-            mainIntent.putExtra("color_adjustments", adj);
-            mainIntent.putExtra("brush_image_path", brushPath);
-            mainIntent.putExtra("sticker_image_path", stickerPath);
-
-            startActivity(mainIntent);
+            //Intent detailIntent2 = new Intent(RegisterActivity.this, FilterDetailActivity2.class);
+            //setIntent(detailIntent2);
 
             Intent detailIntent = new Intent(RegisterActivity.this, FilterDetailActivity.class);
-            detailIntent.putExtra("filterId", filterId);
-            detailIntent.putExtra("nickname", "@" + "닉네임");
-            detailIntent.putExtra("original_image_path", originalPath);
-            detailIntent.putExtra("imgUrl", newImagePath);
-            detailIntent.putExtra("filterTitle", title);
-            detailIntent.putExtra("tags", tagStr);
-            //detailIntent.putExtra("price", isFree ? "0" : priceStr);
-
-            detailIntent.putExtra("cropRectN_l", cropN_l);
-            detailIntent.putExtra("cropRectN_t", cropN_t);
-            detailIntent.putExtra("cropRectN_r", cropN_r);
-            detailIntent.putExtra("cropRectN_b", cropN_b);
-
-            detailIntent.putExtra("accumRotationDeg", accumRotationDeg);
-            detailIntent.putExtra("accumFlipH", accumFlipH);
-            detailIntent.putExtra("accumFlipV", accumFlipV);
-
-            detailIntent.putExtra("color_adjustments", adj);
-            detailIntent.putExtra("brush_image_path", brushPath);
-            detailIntent.putExtra("sticker_image_path", stickerPath);
-
-            startActivity(detailIntent);
+            setIntent(detailIntent);
 
             finish();
         });
 
         touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+    }
+
+
+    public void setIntent(Intent intent) {
+        intent.putExtra("filterId", filterId);
+        //intent.putExtra("nickname", "@" + "닉네임");
+        intent.putExtra("original_image_path", originalPath);
+        intent.putExtra("imgUrl", newImagePath);
+        intent.putExtra("filterTitle", title);
+        intent.putExtra("tags", tagStr);
+        intent.putExtra("price", isFree ? "0" : priceStr);
+
+        intent.putExtra("cropRectN_l", cropN_l);
+        intent.putExtra("cropRectN_t", cropN_t);
+        intent.putExtra("cropRectN_r", cropN_r);
+        intent.putExtra("cropRectN_b", cropN_b);
+
+        intent.putExtra("accumRotationDeg", accumRotationDeg);
+        intent.putExtra("accumFlipH", accumFlipH);
+        intent.putExtra("accumFlipV", accumFlipV);
+
+        intent.putExtra("color_adjustments", adj);
+        intent.putExtra("brush_image_path", brushPath);
+        intent.putExtra("sticker_image_path", stickerPath);
+
+        startActivity(intent);
     }
 
     private boolean isCoveredByScrollContent(View target, View scrollContent) {
@@ -597,19 +598,6 @@ public class RegisterActivity extends BaseActivity {
             }
         }
     }
-
-    /*private void animateScrollToY(int dy, long durationMs) {
-        if (Math.abs(dy) < dp(1)) return;
-
-        final int startY = scrollView.getScrollY();
-        final int targetY = Math.max(0, startY + dy);
-
-        ValueAnimator va = ValueAnimator.ofInt(startY, targetY);
-        va.setDuration(durationMs);
-        va.setInterpolator(new FastOutSlowInInterpolator());
-        va.addUpdateListener(a -> scrollView.scrollTo(0, (int) a.getAnimatedValue()));
-        va.start();
-    }*/
 
     private void showKeyboard(View view) {
         view.post(() -> {

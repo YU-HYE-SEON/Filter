@@ -47,7 +47,7 @@ public class ReviewDetailActivity extends BaseActivity {
         });
 
         backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
 

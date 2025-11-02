@@ -67,18 +67,18 @@ public class SavePhotoActivity extends BaseActivity {
                 if (bitmap != null) {
                     photo.setImageBitmap(bitmap);
                     //사진 저장 메서드 호출
-                    //ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, bitmap);
+                    ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, bitmap);
                 }
             }
         }
 
         backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
 
         backToHomeBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             Intent intent = new Intent(SavePhotoActivity.this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -87,8 +87,10 @@ public class SavePhotoActivity extends BaseActivity {
             finish();
         });
 
+        /// 중첩 클릭되면 안 됨 ///
         registerBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
+            ClickUtils.disableTemporarily(v, 800);
 
             Intent intent = new Intent(SavePhotoActivity.this, RegisterActivity.class);
             intent.putExtra("final_image", savedImagePath);

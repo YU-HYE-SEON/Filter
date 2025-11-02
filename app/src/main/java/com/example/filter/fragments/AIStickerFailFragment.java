@@ -33,7 +33,7 @@ public class AIStickerFailFragment extends Fragment {
         retryTextColorDefault = retryTxt.getCurrentTextColor();
 
         retryBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             if (!isAdded()) return;
             getParentFragmentManager()

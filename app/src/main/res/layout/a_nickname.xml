@@ -6,72 +6,68 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/txt1"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="20dp"
+        android:text="반가워요!\n닉네임을 설정해주세요."
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="30sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/txt1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="닉네임 설정"
-            android:textAlignment="center"
-            android:textColor="@color/black"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <EditText
+        android:id="@+id/nickname"
+        android:layout_width="350dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginBottom="485dp"
+        android:background="@drawable/edit_nick_none"
+        android:hint="별명, 애칭도 좋아요 :)"
+        android:inputType="text"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:scrollHorizontally="true"
+        android:singleLine="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txt1" />
 
-        <EditText
-            android:id="@+id/nickname"
-            android:layout_width="300dp"
-            android:layout_height="45dp"
-            android:layout_marginTop="30dp"
-            android:background="@drawable/border_before_main_btn"
-            android:inputType="text"
-            android:paddingLeft="20dp"
-            android:paddingRight="20dp"
-            android:scrollHorizontally="true"
-            android:singleLine="true"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txt1" />
-
-        <TextView
-            android:id="@+id/alertTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:text="사용 가능한 닉네임입니다"
-            android:textAlignment="center"
-            android:textColor="#73B6FD"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:visibility="invisible"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/nickname" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:id="@+id/alertTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="사용 가능한 닉네임입니다"
+        android:textAlignment="center"
+        android:textColor="#73B6FD"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nickname" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btn"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:layout_marginEnd="30dp"
-        android:layout_marginBottom="40dp"
-        android:background="@drawable/border_before_main_btn"
+        android:layout_width="0dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="81dp"
+        android:background="@drawable/btn_next_nickname"
         android:enabled="false"
         android:text="다음"
         android:textAlignment="center"
+        android:textColor="@color/white"
         android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="@+id/nickname"
+        app:layout_constraintStart_toStartOf="@+id/nickname"
+        app:layout_constraintTop_toBottomOf="@+id/nickname" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

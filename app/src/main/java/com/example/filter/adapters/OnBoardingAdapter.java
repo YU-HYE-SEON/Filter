@@ -1,11 +1,13 @@
 package com.example.filter.adapters;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -56,7 +58,28 @@ public class OnBoardingAdapter extends RecyclerView.Adapter<OnBoardingAdapter.VH
 
         Glide.with(holder.image.getContext())
                 .load(item.getImageResId())
-                .into(holder.image);
+                .centerInside()
+                .into(new com.bumptech.glide.request.target.CustomTarget<android.graphics.drawable.Drawable>() {
+                    @Override
+                    public void onResourceReady(@NonNull android.graphics.drawable.Drawable resource,
+                                                @Nullable com.bumptech.glide.request.transition.Transition<? super android.graphics.drawable.Drawable> transition) {
+                        holder.image.setImageDrawable(resource);
+
+                        int width = resource.getIntrinsicWidth();
+                        int height = resource.getIntrinsicHeight();
+
+                        if (width > 0 && height > 0) {
+                            float ratio = (float) width / height;
+                            int overlayRes = getClosestOverlayRes(ratio);
+                            holder.image2.setImageResource(overlayRes);
+                        }
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable android.graphics.drawable.Drawable placeholder) {
+                        holder.image.setImageDrawable(placeholder);
+                    }
+                });
 
         if (item.isSelected()) {
             holder.image2.setAlpha(0.3f);
@@ -75,6 +98,24 @@ public class OnBoardingAdapter extends RecyclerView.Adapter<OnBoardingAdapter.VH
                 listener.onSelectionChanged(count);
             }
         });
+    }
+
+    private int getClosestOverlayRes(float ratio) {
+        float ratio1_1 = 1f;
+        float ratio3_4 = 3f / 4f;
+        float ratio9_16 = 9f / 16f;
+
+        float diff1 = Math.abs(ratio - ratio1_1);
+        float diff2 = Math.abs(ratio - ratio3_4);
+        float diff3 = Math.abs(ratio - ratio9_16);
+
+        if (diff1 <= diff2 && diff1 <= diff3) {
+            return R.drawable.dim_onboarding_1_1;
+        } else if (diff2 <= diff1 && diff2 <= diff3) {
+            return R.drawable.dim_onboarding_3_4;
+        } else {
+            return R.drawable.dim_onboarding_9_16;
+        }
     }
 
     @Override

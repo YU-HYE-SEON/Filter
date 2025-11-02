@@ -38,24 +38,26 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
-import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.FilterDtoCreateRequest;
+import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
 
 import java.util.List;
 
-public class FilterDetailActivity extends BaseActivity {
+public class FilterDetailActivity2 extends BaseActivity {
+    private boolean isBuy = false;
     private ImageButton backBtn, originalBtn;
     private ImageView shareBtn;
-    private TextView nickname, deleteBtn, filterTitle, moreBtn, noReviewTxt;
+    private TextView nickname, reportBtn, filterTitle, moreBtn, noReviewTxt;
     private TextView tag1, tag2, tag3, tag4, tag5;
     private TextView saveCount, useCount, reviewCount;
     private ImageView img, bookmark;
     private LinearLayout reviewBox1, reviewBox2;
     private ImageView rb1Img1, rb1Img2, rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5;
     private ConstraintLayout tagBox, btnBox;
-    private AppCompatButton changeBtn, useBtn;
+    private AppCompatButton useBtn;
+    private ImageButton buyBtn;
     private FrameLayout chooseUseModeOff;
     private View chooseUseModeOn, dimBackground;
     private ConstraintLayout chooseUseMode;
@@ -70,7 +72,7 @@ public class FilterDetailActivity extends BaseActivity {
         if (result.getResultCode() == RESULT_OK && result.getData() != null) {
             Uri photoUri = result.getData().getData();
             if (photoUri != null) {
-                Intent intent = new Intent(FilterDetailActivity.this, ApplyFilterActivity.class);
+                Intent intent = new Intent(FilterDetailActivity2.this, ApplyFilterActivity.class);
                 intent.setData(photoUri);
 
                 intent.putExtra("color_adjustments", adj);
@@ -93,12 +95,12 @@ public class FilterDetailActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.a_filter_detail);
+        setContentView(R.layout.a_filter_detail2);
         backBtn = findViewById(R.id.backBtn);
         shareBtn = findViewById(R.id.shareBtn);
         originalBtn = findViewById(R.id.originalBtn);
         nickname = findViewById(R.id.nickname);
-        deleteBtn = findViewById(R.id.deleteBtn);
+        reportBtn = findViewById(R.id.reportBtn);
         filterTitle = findViewById(R.id.filterTitle);
         moreBtn = findViewById(R.id.moreBtn);
         noReviewTxt = findViewById(R.id.noReviewTxt);
@@ -123,7 +125,7 @@ public class FilterDetailActivity extends BaseActivity {
         rb2Img4 = findViewById(R.id.rb2Img4);
         rb2Img5 = findViewById(R.id.rb2Img5);
         btnBox = findViewById(R.id.btnBox);
-        changeBtn = findViewById(R.id.changeBtn);
+        buyBtn = findViewById(R.id.buyBtn);
         useBtn = findViewById(R.id.useBtn);
         chooseUseModeOff = findViewById(R.id.chooseUseModeOff);
 
@@ -211,12 +213,12 @@ public class FilterDetailActivity extends BaseActivity {
 
         setupOriginalButton();
 
-        deleteBtn.setOnClickListener(v -> {
+        reportBtn.setOnClickListener(v -> {
             Intent resultIntent = new Intent();
             resultIntent.putExtra("deleted_filter_id", filterId);
             setResult(RESULT_OK, resultIntent);
 
-            Intent mainIntent = new Intent(FilterDetailActivity.this, MainActivity.class);
+            Intent mainIntent = new Intent(FilterDetailActivity2.this, MainActivity.class);
             mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             mainIntent.putExtra("DELETED_ID_FROM_DETAIL", filterId);
 
@@ -227,7 +229,7 @@ public class FilterDetailActivity extends BaseActivity {
 
         moreBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            Intent intent2 = new Intent(FilterDetailActivity.this, ReviewActivity.class);
+            Intent intent2 = new Intent(FilterDetailActivity2.this, ReviewActivity.class);
             intent2.putExtra("filterId", filterId);
             intent2.putExtra("filterImage", imgUrl);
             intent2.putExtra("filterTitle", title);
@@ -238,6 +240,16 @@ public class FilterDetailActivity extends BaseActivity {
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             finish();
+        });
+
+        TextView buyTxt = findViewById(R.id.buyTxt);
+        buyTxt.setText(Integer.parseInt(price) + "P 구매");
+        buyBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            buyBtn.setImageResource(R.drawable.border_buy);
+            buyTxt.setText("구매 완료");
+            buyTxt.setTextColor(Color.WHITE);
+            isBuy = true;
         });
     }
 
@@ -271,10 +283,15 @@ public class FilterDetailActivity extends BaseActivity {
 
         galleryModeBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            chooseUseModeOn.setVisibility(View.GONE);
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setType("image/*");
-            galleryLauncher.launch(intent);
+
+            if (isBuy) {
+                chooseUseModeOn.setVisibility(View.GONE);
+                Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.setType("image/*");
+                galleryLauncher.launch(intent);
+            } else {
+                Toast.makeText(this, "구매 후 사용가능합니다", Toast.LENGTH_SHORT).show();
+            }
         });
 
             /*cameraModeBtn.setOnClickListener(v -> {
@@ -376,7 +393,7 @@ public class FilterDetailActivity extends BaseActivity {
             String reviewNick = data.getStringExtra("reviewNick");
             String reviewSnsId = data.getStringExtra("reviewSnsId");
 
-            Intent intent = new Intent(FilterDetailActivity.this, ReviewActivity.class);
+            Intent intent = new Intent(FilterDetailActivity2.this, ReviewActivity.class);
             intent.putExtra("filterId", filterId);
             intent.putExtra("filterImage", imgUrl);
             intent.putExtra("filterTitle", title);
@@ -406,7 +423,7 @@ public class FilterDetailActivity extends BaseActivity {
                     if (imgUrl != null) {
                         v.setPressed(false);
                         originalBtn.setAlpha(1f);
-                        Glide.with(FilterDetailActivity.this)
+                        Glide.with(FilterDetailActivity2.this)
                                 .load(imgUrl)
                                 .dontAnimate()
                                 .placeholder(img.getDrawable())

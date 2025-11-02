@@ -63,7 +63,7 @@ public class ToolsFragment extends Fragment {
         rotationBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
@@ -76,7 +76,7 @@ public class ToolsFragment extends Fragment {
         cropBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 if (!activity.isCropEdited()) {
                     activity.resetCropState();
@@ -94,7 +94,7 @@ public class ToolsFragment extends Fragment {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()

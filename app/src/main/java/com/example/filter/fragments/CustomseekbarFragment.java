@@ -98,7 +98,7 @@ public class CustomseekbarFragment extends Fragment {
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(v, 400)) return;
 
                 FilterActivity activity = (FilterActivity) getActivity();
 

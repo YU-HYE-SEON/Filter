@@ -6,7 +6,6 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -14,8 +13,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -42,11 +41,12 @@ public class AIStickerLoadingFragment extends Fragment {
     private String prompt;
     private Call<AIStickerResponse> inflight;
     private static final String IMAGE_PATH = "image_path";
-    private TextView loadingTxt;
+    private View logo;
+    private ImageView F, e1, e2, l, star, e3, m;
     private LinearLayout charRow;
     private final List<ValueAnimator> anims = new ArrayList<>();
-    private static final long STEP_MS = 400;
-    private static final float AMPLITUDE_DP = 80;
+    private static final long STEP_MS = 350;
+    private static final float AMPLITUDE_DP = 100;
 
     public static AIStickerLoadingFragment newInstance(String baseUrl, String prompt) {
         AIStickerLoadingFragment f = new AIStickerLoadingFragment();
@@ -61,7 +61,18 @@ public class AIStickerLoadingFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_aisticker_loading, container, false);
-        loadingTxt = view.findViewById(R.id.loadingTxt);
+        logo = view.findViewById(R.id.logo);
+        F = view.findViewById(R.id.F);
+        e1 = view.findViewById(R.id.e1);
+        e2 = view.findViewById(R.id.e2);
+        l = view.findViewById(R.id.l);
+        star = view.findViewById(R.id.star);
+        e3 = view.findViewById(R.id.e3);
+        m = view.findViewById(R.id.m);
+
+        float scale = 0.75f;
+        logo.setScaleX(scale);
+        logo.setScaleY(scale);
 
         baseUrl = requireArguments().getString(BASE_URL);
         prompt = requireArguments().getString(PROMPT, "");
@@ -148,64 +159,25 @@ public class AIStickerLoadingFragment extends Fragment {
     }
 
     private void buildAnimatedLoadingText() {
-        CharSequence text = loadingTxt.getText();
-        float sizePx = loadingTxt.getTextSize();
-        int color = loadingTxt.getCurrentTextColor();
-        Typeface tf = loadingTxt.getTypeface();
+        List<View> letters = new ArrayList<>();
+        letters.add(F);
+        letters.add(e1);
+        letters.add(e2);
+        letters.add(l);
+        letters.add(star);
+        letters.add(e3);
+        letters.add(m);
 
-        ViewGroup parent = (ViewGroup) loadingTxt.getParent();
-        parent.setClipChildren(false);
-        parent.setClipToPadding(false);
-        android.view.ViewParent p = parent.getParent();
-        if (p instanceof ViewGroup) {
-            ViewGroup gp = (ViewGroup) p;
-            gp.setClipChildren(false);
-            gp.setClipToPadding(false);
-        }
-
-        int idx = parent.indexOfChild(loadingTxt);
-        parent.removeViewAt(idx);
-
-        charRow = new LinearLayout(requireContext());
-        charRow.setOrientation(LinearLayout.HORIZONTAL);
-
-        charRow.setClipChildren(false);
-        charRow.setClipToPadding(false);
-
-        LinearLayout.LayoutParams lp =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
-        charRow.setLayoutParams(lp);
-
-        int pad = dp(AMPLITUDE_DP);
-        charRow.setPadding(0, pad, 0, pad);
-
-        parent.addView(charRow, idx);
-
-        for (int i = 0; i < text.length(); i++) {
-            TextView tv = new TextView(requireContext());
-            tv.setIncludeFontPadding(true);
-            tv.setText(String.valueOf(text.charAt(i)));
-            tv.setTextColor(color);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, sizePx);
-            tv.setTypeface(tf);
-            tv.setPadding(0, 0, dp(1), 0);
-            charRow.addView(tv);
-        }
-
-        charRow.post(this::startWaveAnimation);
+        startWaveAnimation(letters);
     }
 
-    private void startWaveAnimation() {
+    private void startWaveAnimation(List<View> views) {
         float ampPx = dp(AMPLITUDE_DP);
-        int n = charRow.getChildCount();
         long step = STEP_MS;
-        long total = (long) (STEP_MS * n * 0.7f);
+        long total = (long) (STEP_MS * views.size() * 0.7f);
 
-        for (int i = 0; i < n; i++) {
-            View ch = charRow.getChildAt(i);
+        for (int i = 0; i < views.size(); i++) {
+            View v = views.get(i);
             long startDelay = i * step / 2;
 
             Keyframe k0 = Keyframe.ofFloat(0f, 0f);
@@ -215,7 +187,7 @@ public class AIStickerLoadingFragment extends Fragment {
 
             PropertyValuesHolder ty = PropertyValuesHolder.ofKeyframe("translationY", k0, k1, k2, k3);
 
-            ObjectAnimator a = ObjectAnimator.ofPropertyValuesHolder(ch, ty);
+            ObjectAnimator a = ObjectAnimator.ofPropertyValuesHolder(v, ty);
             a.setDuration(total);
             a.setStartDelay(startDelay);
             a.setInterpolator(new AccelerateDecelerateInterpolator());

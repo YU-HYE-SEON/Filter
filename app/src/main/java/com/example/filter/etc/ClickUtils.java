@@ -1,14 +1,28 @@
 package com.example.filter.etc;
 
-public class ClickUtils {
-    private static long lastClickTime = 0;
+import android.view.View;
 
-    public static boolean isFastClick(long intervalMillis) {
+import java.util.HashMap;
+import java.util.Map;
+
+public class ClickUtils {
+    private static final Map<Integer, Long> lastClickMap = new HashMap<>();
+
+    public static boolean isFastClick(View v, long intervalMillis) {
+        int viewId = v.getId();
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastClickTime < intervalMillis) {
+        Long lastTime = lastClickMap.get(viewId);
+
+        if (lastTime != null && (currentTime - lastTime) < intervalMillis) {
             return true;
         }
-        lastClickTime = currentTime;
+
+        lastClickMap.put(viewId, currentTime);
         return false;
+    }
+
+    public static void disableTemporarily(View v, long intervalMillis) {
+        v.setEnabled(false);
+        v.postDelayed(() -> v.setEnabled(true), intervalMillis);
     }
 }

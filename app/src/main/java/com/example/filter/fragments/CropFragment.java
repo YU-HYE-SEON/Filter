@@ -95,8 +95,7 @@ public class CropFragment extends Fragment {
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
-
+                if (ClickUtils.isFastClick(view, 400)) return;
                 activity.setCurrentCropMode(FilterActivity.CropMode.NONE);
                 activity.restoreCropBeforeState();
                 activity.hideCropOverlay();
@@ -115,7 +114,7 @@ public class CropFragment extends Fragment {
         checkBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 activity.snapshotViewTransformForRestore();
                 activity.setCurrentCropMode(FilterActivity.CropMode.NONE);

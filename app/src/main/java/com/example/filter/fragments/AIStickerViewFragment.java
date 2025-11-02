@@ -100,7 +100,7 @@ public class AIStickerViewFragment extends Fragment {
                 });
 
         cancelBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             if (requireActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
                 requireActivity().getSupportFragmentManager().popBackStack();
@@ -110,7 +110,7 @@ public class AIStickerViewFragment extends Fragment {
         });
 
         checkBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             Fragment current = getChildFragmentManager().findFragmentById(R.id.aiStickerView);
             if (current instanceof AIStickerSuccessFragment) {

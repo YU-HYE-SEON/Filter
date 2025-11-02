@@ -93,8 +93,6 @@ public class MainActivity extends BaseActivity {
         });*/
 
         searchTxt.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
-
             FrameLayout frameLayout = findViewById(R.id.frameLayout);
 
             frameLayout.setVisibility(View.VISIBLE);
@@ -153,7 +151,7 @@ public class MainActivity extends BaseActivity {
         });*/
 
         filterAdapter.setOnItemClickListener((v, item, title, nickname) -> {
-            Intent intent = new Intent(MainActivity.this, FilterDetailActivity.class);
+            Intent intent = new Intent(MainActivity.this, FilterDetailActivity2.class);
             intent.putExtra("filterId", item.id);
             //intent.putExtra("nickname", item.nickname);
             intent.putExtra("nickname", nickname);
@@ -181,7 +179,7 @@ public class MainActivity extends BaseActivity {
         });
 
         filter.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             filter.setEnabled(false);
 
             Intent intent = new Intent(Intent.ACTION_PICK);
@@ -224,15 +222,15 @@ public class MainActivity extends BaseActivity {
 
         String filterId = intent.getStringExtra("filterId");
         String originalPath = intent.getStringExtra("original_image_path");
-        String newImagePath = intent.getStringExtra("new_filter_image");
+        String newImagePath = intent.getStringExtra("imgUrl");
         String brushPath = intent.getStringExtra("brush_image_path");
         String stickerPath = intent.getStringExtra("sticker_image_path");
 
         if (newImagePath != null) {
-            String nickname = intent.getStringExtra("new_filter_nickname");
-            String title = intent.getStringExtra("new_filter_title");
-            String tags = intent.getStringExtra("new_filter_tags");
-            String price = intent.getStringExtra("new_filter_price");
+            String nickname = intent.getStringExtra("nickname");
+            String title = intent.getStringExtra("filterTitle");
+            String tags = intent.getStringExtra("tags");
+            String price = intent.getStringExtra("price");
             FilterDtoCreateRequest.ColorAdjustments adj =
                     (FilterDtoCreateRequest.ColorAdjustments) intent.getSerializableExtra("color_adjustments");
 

@@ -276,12 +276,12 @@ public class LoadActivity extends BaseActivity {
         });
 
         cancelBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
 
         checkBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             setAllControlsEnabled(false);
 

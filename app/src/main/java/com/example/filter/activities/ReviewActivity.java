@@ -58,7 +58,7 @@ public class ReviewActivity extends BaseActivity {
         textView = findViewById(R.id.textView);
 
         backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
 
@@ -105,6 +105,8 @@ public class ReviewActivity extends BaseActivity {
         updateRecyclerVisibility();
 
         adapter.setOnItemClickListener((v, item) -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+
             Intent i = new Intent(ReviewActivity.this, ReviewDetailActivity.class);
             i.putExtra("reviewImg", item.imageUrl);
             i.putExtra("reviewNick", item.nickname);

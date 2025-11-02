@@ -115,13 +115,13 @@ public class MyStickersFragment extends Fragment {
         });
 
         deleteStickerIcon.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             if (!deleteStickerIcon.isEnabled()) return;
             confirmDeleteSelectedSticker();
         });
 
         cancelBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             if (stickerOverlay != null) {
                 for (int i = stickerOverlay.getChildCount() - 1; i >= baselineChildCount; i--) {
                     stickerOverlay.removeViewAt(i);
@@ -143,7 +143,7 @@ public class MyStickersFragment extends Fragment {
         });
 
         checkBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             if (stickerOverlay != null) {
                 for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                     View child = stickerOverlay.getChildAt(i);

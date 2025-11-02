@@ -239,7 +239,8 @@ public class FilterActivity extends BaseActivity {
                     & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             try {
                 getContentResolver().takePersistableUriPermission(photoUri, takeFlags);
-            } catch (SecurityException ignored) {}
+            } catch (SecurityException ignored) {
+            }
 
             loadImageFromUri(photoUri);
         } else {
@@ -392,9 +393,11 @@ public class FilterActivity extends BaseActivity {
         });
     }
 
+    /// 중첩 클릭되면 안 됨 ///
     private void setupSaveButton() {
         saveBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
+            ClickUtils.disableTemporarily(v, 800);
 
             renderer.setOnBitmapCaptureListener(new FGLRenderer.OnBitmapCaptureListener() {
                 @Override
@@ -523,7 +526,7 @@ public class FilterActivity extends BaseActivity {
 
 
         backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
             if (isBackEnabledFor(cur)) {
                 handleBackNavChain();

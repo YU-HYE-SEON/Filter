@@ -102,18 +102,14 @@ public class StickersFragment extends Fragment {
         FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {
             undoSticker.setOnClickListener(v -> {
-                if (ClickUtils.isFastClick(500)) return;
                 activity.previewOriginalStickers(false);
                 activity.undoSticker();
-
                 rewireOverlayClickListeners();
             });
 
             redoSticker.setOnClickListener(v -> {
-                if (ClickUtils.isFastClick(500)) return;
                 activity.previewOriginalStickers(false);
                 activity.redoSticker();
-
                 rewireOverlayClickListeners();
             });
 
@@ -134,7 +130,7 @@ public class StickersFragment extends Fragment {
         myStickerIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
                 int sessionBaseline = (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0;
@@ -172,7 +168,7 @@ public class StickersFragment extends Fragment {
         loadStickerIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 intent.setType("image/*");
@@ -183,7 +179,7 @@ public class StickersFragment extends Fragment {
         brushIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
                 int sessionBaseline = (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0;
@@ -209,7 +205,7 @@ public class StickersFragment extends Fragment {
         AIStickerIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 fullScreenFragmentContainer = requireActivity().findViewById(R.id.fullScreenFragmentContainer);
                 filterActivity = requireActivity().findViewById(R.id.filterActivity);
@@ -371,7 +367,7 @@ public class StickersFragment extends Fragment {
 
             Fragment cur = act.getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
             if (cur instanceof EditMyStickerFragment) return;
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
 
             if (stickerView.findViewById(R.id.stickerImage) == null ||
                     stickerView.findViewById(R.id.editFrame) == null ||

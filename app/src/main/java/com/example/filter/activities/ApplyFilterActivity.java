@@ -113,7 +113,7 @@ public class ApplyFilterActivity extends BaseActivity {
                 finalBitmapWithStickers = finalBitmap;
 
                 //사진 저장 메서드 호출
-                //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
+                ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -146,7 +146,7 @@ public class ApplyFilterActivity extends BaseActivity {
         if (stickerPath != null) applyBrushStickerImage(stickerOverlay, stickerPath);
 
         backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
     }
@@ -175,11 +175,16 @@ public class ApplyFilterActivity extends BaseActivity {
         dimBackground.setOnClickListener(v -> hideReviewPop());
 
         toReviewBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
             if (isReviewPopVisible) return;
             showReviewPop();
         });
 
+        /// 중첩 클릭되면 안 됨 ///
         reviewBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            ClickUtils.disableTemporarily(v, 800);
+
             if (finalBitmapWithStickers == null) return;
 
             String savedPath = ImageUtils.saveBitmapToCache(ApplyFilterActivity.this, finalBitmapWithStickers);

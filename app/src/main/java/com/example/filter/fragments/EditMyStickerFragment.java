@@ -265,7 +265,7 @@ public class EditMyStickerFragment extends Fragment {
         });
 
         cancelBtn.setOnClickListener(x -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(x, 400)) return;
 
             if (checkBox.isChecked() && photoPreviewContainer != null && faceOverlay != null) {
                 setView(false);
@@ -319,7 +319,7 @@ public class EditMyStickerFragment extends Fragment {
         });
 
         checkBtn.setOnClickListener(x -> {
-            if (ClickUtils.isFastClick(500)) return;
+            if (ClickUtils.isFastClick(x, 400)) return;
 
             if (checkBox.isChecked() && photoPreviewContainer != null && faceOverlay != null) {
                 requireActivity().getSupportFragmentManager().setFragmentResultListener(

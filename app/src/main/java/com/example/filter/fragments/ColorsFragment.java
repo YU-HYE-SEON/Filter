@@ -133,7 +133,7 @@ public class ColorsFragment extends Fragment {
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 filterType = "";
                 int id = view.getId();
@@ -197,7 +197,7 @@ public class ColorsFragment extends Fragment {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ClickUtils.isFastClick(500)) return;
+                if (ClickUtils.isFastClick(view, 400)) return;
 
                 new StickersDialog(requireContext(), new StickersDialog.StickersDialogListener() {
                     @Override
