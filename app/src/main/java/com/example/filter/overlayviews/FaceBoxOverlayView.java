@@ -21,12 +21,30 @@ public class FaceBoxOverlayView extends View {
     private final List<Rect> boxes = new ArrayList<>();
     private int imageW = 0, imageH = 0;
 
-    public FaceBoxOverlayView(Context c) { super(c); init(); }
-    public FaceBoxOverlayView(Context c, @Nullable AttributeSet a) { super(c, a); init(); }
+    public FaceBoxOverlayView(Context c) {
+        super(c);
+        init();
+    }
+
+    public FaceBoxOverlayView(Context c, @Nullable AttributeSet a) {
+        super(c, a);
+        init();
+    }
+
     private void init() {
         boxPaint.setStyle(Paint.Style.STROKE);
         boxPaint.setStrokeWidth(4f);
-        boxPaint.setColor(Color.TRANSPARENT);
+        boxPaint.setColor(Color.CYAN);
+    }
+
+    public void setFaceBox(Rect faceBox, int srcW, int srcH) {
+        boxes.clear();
+        if (faceBox != null) {
+            boxes.add(faceBox);
+        }
+        imageW = srcW;
+        imageH = srcH;
+        invalidate();
     }
 
     public void setFaceBoxes(List<Rect> faceBoxes, int srcW, int srcH) {
@@ -39,7 +57,7 @@ public class FaceBoxOverlayView extends View {
         invalidate();
     }
 
-        public void clearBoxes() {
+    public void clearBoxes() {
         boxes.clear();
         invalidate();
     }

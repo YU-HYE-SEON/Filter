@@ -33,12 +33,15 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
+import com.example.filter.fragments.FaceFragment;
 import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.overlayviews.CropBoxOverlayView;
@@ -48,6 +51,7 @@ import com.example.filter.etc.StickerStore;
 import com.example.filter.fragments.ColorsFragment;
 import com.example.filter.fragments.StickersFragment;
 import com.example.filter.fragments.ToolsFragment;
+import com.google.mlkit.vision.face.Face;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -129,6 +133,20 @@ public class FilterActivity extends BaseActivity {
     private boolean isPreviewingOriginalColors = false;
 
     /// 브러쉬, 스티커 ///
+    private static class FaceStickerEdit {
+        public String stickerId;
+        View view;               // 편집 대상 스티커
+        // before (undo에서 적용)
+        float bxRelX, bxRelY;    // 얼굴 중심에서의 상대 위치 (faceW/H 기준)
+        float bxRelW, bxRelH;    // 얼굴 박스 대비 스티커 W/H 비율
+        float bxRot;             // 회전각(이미 View에 적용했던 각도 그대로)
+
+        // after (redo에서 적용)
+        float axRelX, axRelY;
+        float axRelW, axRelH;
+        float axRot;
+    }
+
     private static class StickerOp {
         final ArrayList<View> views = new ArrayList<>();
         final ArrayList<Integer> positions = new ArrayList<>();
@@ -167,6 +185,7 @@ public class FilterActivity extends BaseActivity {
         Float zBeforeElevation = null;
         Float zAfterElevation = null;
         ArrayList<EraseOp> erases;
+        FaceStickerEdit faceEdit;
 
         boolean hasSticker() {
             return sticker != null && !sticker.views.isEmpty();
@@ -1269,6 +1288,39 @@ public class FilterActivity extends BaseActivity {
     }
 
     /// 브러쉬, 스티커 ///
+    public void recordFaceStickerEdit(View v,
+                                      // before
+                                      float bxRelX, float bxRelY, float bxRelW, float bxRelH, float bxRot,
+                                      // after
+                                      float axRelX, float axRelY, float axRelW, float axRelH, float axRot) {
+        // 변화가 없으면 기록 X
+        boolean samePos = Math.abs(bxRelX - axRelX) < 1e-3f && Math.abs(bxRelY - axRelY) < 1e-3f;
+        boolean sameSize = Math.abs(bxRelW - axRelW) < 1e-3f && Math.abs(bxRelH - axRelH) < 1e-3f;
+        boolean sameRot = Math.abs(bxRot - axRot) < 0.5f;
+        if (samePos && sameSize && sameRot) {
+            refreshStickerButtons();
+            return;
+        }
+
+        FaceStickerEdit fe = new FaceStickerEdit();
+        fe.view = v;
+        fe.bxRelX = bxRelX;
+        fe.bxRelY = bxRelY;
+        fe.bxRelW = bxRelW;
+        fe.bxRelH = bxRelH;
+        fe.bxRot = bxRot;
+        fe.axRelX = axRelX;
+        fe.axRelY = axRelY;
+        fe.axRelW = axRelW;
+        fe.axRelH = axRelH;
+        fe.axRot = axRot;
+
+        HistoryOp hop = new HistoryOp();
+        hop.faceEdit = fe;
+        pushHistory(hop);
+    }
+
+
     public void applyBrushClipRect(BrushOverlayView brush) {
         if (renderer == null || brush == null) return;
         int x = renderer.getViewportX();
@@ -1495,7 +1547,7 @@ public class FilterActivity extends BaseActivity {
             int insert = Math.min(op.zBeforePos, overlay.getChildCount());
             overlay.addView(op.zChangedView, insert);
             if (op.zBeforeElevation != null) {
-                androidx.core.view.ViewCompat.setZ(op.zChangedView, op.zBeforeElevation);
+                ViewCompat.setZ(op.zChangedView, op.zBeforeElevation);
             }
             overlay.invalidate();
         }
@@ -1775,6 +1827,10 @@ public class FilterActivity extends BaseActivity {
                 .show();
     }
 
+    private int dpToPx(int dp) {
+        float d = getResources().getDisplayMetrics().density;
+        return Math.round(dp * d);
+    }
 
     /// getter ///
     public FGLRenderer getRenderer() {

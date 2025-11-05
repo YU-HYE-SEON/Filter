@@ -5,11 +5,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,11 +33,9 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
-import com.google.mlkit.vision.face.FaceContour;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
-import com.google.mlkit.vision.face.FaceLandmark;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,9 +131,13 @@ public class StickersFragment extends Fragment {
                 FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
                 int sessionBaseline = (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0;
 
+                long sessionId = System.currentTimeMillis();
+
                 MyStickersFragment f = new MyStickersFragment();
                 Bundle args = new Bundle();
                 args.putInt("sessionBaseline", sessionBaseline);
+
+                args.putLong("sessionId", sessionId);
 
                 boolean skipDisableOnce = false;
                 args.putBoolean("skipDisableOnce", skipDisableOnce);
@@ -151,9 +151,7 @@ public class StickersFragment extends Fragment {
                 activity.getPhotoPreview().queueEvent(() -> {
                     Bitmap bmp = activity.getRenderer().getCurrentBitmap();
                     activity.runOnUiThread(() -> detectFaces(bmp, (faces, originalBitmap) -> {
-                        if (faces.isEmpty()) {
-                            Log.d("얼굴인식", "myStickerIcon: 프리뷰에서 얼굴 감지 실패");
-                        }
+                        if (faces.isEmpty()) return;
                     }));
                 });
 
@@ -241,7 +239,6 @@ public class StickersFragment extends Fragment {
                 .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
                 .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
                 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                .setMinFaceSize(0.1f)
                 .build();
 
         FaceDetector detector = FaceDetection.getClient(options);
@@ -253,16 +250,9 @@ public class StickersFragment extends Fragment {
                     for (int i = 0; i < faces.size(); i++) {
                         Face face = faces.get(i);
                         rects.add(face.getBoundingBox());
-                        Log.d("얼굴인식", "========================= photoPreview 속 Face [" + (i + 1) + "] =========================");
-                        getFaceLandmarks(face);
-                        getFaceContours(face);
-
-                        // --- 고개 각도 가져오기 (추가된 부분) ---
-                        float eulerX = face.getHeadEulerAngleX();
-                        float eulerY = face.getHeadEulerAngleY();
-                        float eulerZ = face.getHeadEulerAngleZ();
-
-                        Log.d("얼굴인식", "Face [" + (i + 1) + "] 고개 각도 (X: " + eulerX + ", Y: " + eulerY + ", Z: " + eulerZ + ")");
+                        //Log.d("얼굴인식", "========================= photoPreview 속 Face [" + (i + 1) + "] =========================");
+                        //getFaceLandmarks(face);
+                        //getFaceContours(face);
                     }
 
                     if (faceBox != null) {
@@ -293,7 +283,7 @@ public class StickersFragment extends Fragment {
                 });
     }
 
-    private static void logFaceLandmark(Face face, String label, int type) {
+    /*private static void logFaceLandmark(Face face, String label, int type) {
         FaceLandmark lm = face.getLandmark(type);
         if (lm == null) {
             Log.d("얼굴인식", label + " : 인식 실패");
@@ -332,7 +322,7 @@ public class StickersFragment extends Fragment {
 
     private static void getFaceContours(Face face) {
         logFaceContour(face, "FaceContour : ", FaceContour.FACE);
-    }
+    }*/
 
     @Override
     public void onResume() {

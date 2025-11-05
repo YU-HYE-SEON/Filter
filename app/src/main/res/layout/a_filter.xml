@@ -113,17 +113,6 @@
 
         </FrameLayout>
 
-        <FrameLayout
-            android:id="@+id/faceOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:background="#A1A1A1"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/bottomArea1"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/photoPreviewContainer" />
-
         <!-- 하단부 ~ -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/bottomArea1"
@@ -221,11 +210,11 @@
 
                 <CheckBox
                     android:id="@+id/checkBox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
                     android:layout_marginLeft="5dp"
-                    android:button="@drawable/checkbox_states"
-                    android:buttonTint="@null"
+                    android:background="@drawable/checkbox_states"
+                    android:button="@null"
                     android:checked="false" />
 
             </LinearLayout>
@@ -271,6 +260,14 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- 얼굴 인식 오버레이 -->
+    <FrameLayout
+        android:id="@+id/faceOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- AI 스티커 생성 뷰 -->
     <FrameLayout
         android:id="@+id/fullScreenFragmentContainer"
         android:layout_width="match_parent"

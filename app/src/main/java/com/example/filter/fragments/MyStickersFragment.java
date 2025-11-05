@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +45,7 @@ public class MyStickersFragment extends Fragment {
     private boolean skipDisableOnce = false;
     private static final int TAG_TEMP_PREVIEW = R.id.tag_prev_enabled;
     private ImageButton undoSticker, redoSticker, originalSticker;
+    private long sessionId = -1L;
 
     @Nullable
     @Override
@@ -66,8 +68,18 @@ public class MyStickersFragment extends Fragment {
 
         stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
 
+        getParentFragmentManager().setFragmentResultListener("stickerMeta", this, (key, meta) -> {
+            float relX = meta.getFloat("relX");
+            float relY = meta.getFloat("relY");
+            float relW = meta.getFloat("relW");
+            float relH = meta.getFloat("relH");
+            float rotation = meta.getFloat("rot");
+            Log.d("StickerMeta", "받은 값: relX=" + relX + ", relY=" + relY + ", relW=" + relW + ", relH=" + relH + ", rot=" + rotation);
+        });
+
         Bundle args = getArguments() != null ? getArguments() : new Bundle();
         baselineChildCount = args.getInt("sessionBaseline", (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0);
+        sessionId = args.getLong("sessionId", -1L);
         skipDisableOnce = args.getBoolean("skipDisableOnce", false);
 
         boolean cameFromEdit =
@@ -78,6 +90,8 @@ public class MyStickersFragment extends Fragment {
             skipDisableOnce = true;
             EditMyStickerFragment.sLastReturnOriginAction = null;
         }
+
+        boolean restoreAllActive = args.getBoolean("restoreAllActive", false);
 
         deleteStickerIcon.setEnabled(false);
         deleteStickerIcon.setAlpha(0.4f);
@@ -93,16 +107,31 @@ public class MyStickersFragment extends Fragment {
         myStickers.setItemAnimator(null);
 
         if (stickerOverlay != null) {
-            if (!skipDisableOnce) {
-                for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                    View child = stickerOverlay.getChildAt(i);
-                    MyStickersFragment.setStickerActive(child, false);
-                    hideControllers(child);
+            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                View child = stickerOverlay.getChildAt(i);
+                hideControllers(child);
+
+                if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
+                    child.setOnClickListener(null);
+                    child.setClickable(false);
+                    child.setLongClickable(false);
+                    child.setEnabled(false);
+                    continue;
                 }
-            } else {
-                for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                    View child = stickerOverlay.getChildAt(i);
-                    hideControllers(child);
+
+                boolean fromFaceFragment = args.getBoolean("fromFaceFragment", false);
+
+                if (restoreAllActive) {
+                    setStickerActive(child, true);
+                } else if (fromFaceFragment) {
+                    Object sid = child.getTag(R.id.tag_session_id);
+                    if (sid instanceof Long && ((Long) sid) == sessionId) {
+                        setStickerActive(child, true);
+                    } else {
+                        setStickerActive(child, false);
+                    }
+                } else if (!skipDisableOnce) {
+                    setStickerActive(child, false);
                 }
             }
         }
@@ -124,11 +153,17 @@ public class MyStickersFragment extends Fragment {
             if (ClickUtils.isFastClick(v, 400)) return;
             if (stickerOverlay != null) {
                 for (int i = stickerOverlay.getChildCount() - 1; i >= baselineChildCount; i--) {
-                    stickerOverlay.removeViewAt(i);
+                    View child = stickerOverlay.getChildAt(i);
+                    Object sid = child.getTag(R.id.tag_session_id);
+                    if (sid instanceof Long && ((Long) sid) == sessionId) {
+                        stickerOverlay.removeViewAt(i);
+                    }
                 }
                 for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                     setStickerActive(stickerOverlay.getChildAt(i), true);
                     hideControllers(stickerOverlay.getChildAt(i));
+
+                    stickerOverlay.getChildAt(i).setTag(R.id.tag_prev_enabled, null);
                 }
             }
             currentSelectedPos = RecyclerView.NO_POSITION;
@@ -192,6 +227,12 @@ public class MyStickersFragment extends Fragment {
             overlayViewLayout.setX(cx);
             overlayViewLayout.setY(cy);
             overlayViewLayout.setTag("sessionAdded");
+
+            overlayViewLayout.setTag(R.id.tag_session_id, sessionId);
+            if (overlayViewLayout.getTag(R.id.tag_sticker_id) == null) {
+                overlayViewLayout.setTag(R.id.tag_sticker_id, "sticker_" + System.currentTimeMillis());
+            }
+
             stickerOverlay.addView(overlayViewLayout);
 
             currentStickerView = overlayViewLayout;
@@ -231,6 +272,15 @@ public class MyStickersFragment extends Fragment {
         args.putString("origin", "mystickers");
         args.putInt("sessionBaseline", baselineChildCount);
 
+        args.putInt("stickerW", stickerLayout.getLayoutParams().width);
+        args.putInt("stickerH", stickerLayout.getLayoutParams().height);
+
+        long childSessionId = -1L;
+        Object s = stickerLayout.getTag(R.id.tag_session_id);
+        if (s instanceof Long) childSessionId = (Long) s;
+        else childSessionId = sessionId;
+        args.putLong("sessionId", childSessionId);
+
         int n = stickerOverlay.getChildCount();
         boolean[] prevEnabled = new boolean[n];
         for (int i = 0; i < n; i++) {
@@ -269,7 +319,7 @@ public class MyStickersFragment extends Fragment {
         return Math.round(dp * d);
     }
 
-    public void consumePendingAndScrollToStart() {
+    /*public void consumePendingAndScrollToStart() {
         if (adapter == null || myStickers == null) return;
         StickerItem newly;
         boolean inserted = false;
@@ -285,7 +335,7 @@ public class MyStickersFragment extends Fragment {
                 deleteStickerIcon.setAlpha(0.4f);
             }
         }
-    }
+    }*/
 
     @Override
     public void onResume() {
@@ -499,9 +549,9 @@ public class MyStickersFragment extends Fragment {
             }
         }
 
-        if (StickersFragment.faceBox != null) {
+        /*if (StickersFragment.faceBox != null) {
             StickersFragment.faceBox.clearBoxes();
             StickersFragment.faceBox.setVisibility(View.GONE);
-        }
+        }*/
     }
 }
