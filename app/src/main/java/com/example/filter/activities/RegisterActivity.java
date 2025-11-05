@@ -34,8 +34,8 @@ import androidx.annotation.Nullable;
 
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.apis.FilterApi;
-import com.example.filter.apis.FilterDtoCreateRequest;
+import com.example.filter.apis.service.FilterApi;
+import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.google.gson.Gson;
 
 import java.io.File;

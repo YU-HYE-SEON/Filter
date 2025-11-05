@@ -35,11 +35,12 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.example.filter.R;
+import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.dialogs.PopUpDialog;
 import com.example.filter.dialogs.SignUpDialog;
-import com.example.filter.apis.AuthApi;
+import com.example.filter.apis.service.AuthApi;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.apis.TokenRequest;
+import com.example.filter.apis.dto.TokenRequest;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -72,10 +73,39 @@ public class StartActivity extends BaseActivity {
     private boolean isLogin = false;
     private boolean isSignUp = false;
 
+    private void TestGoogleSignOut() {
+        // ✅ [1] GoogleSignInOptions 초기화
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestIdToken(getString(R.string.server_client_id))
+                .build();
+
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        // ✅ [2] 앱 실행 시 자동 로그아웃 (테스트용)
+        mGoogleSignInClient.signOut()
+                .addOnCompleteListener(this, task -> {
+                    Log.d("GoogleLogin", "✅ 앱 실행 시 자동 로그아웃 완료 (테스트용)");
+
+                    // SharedPreferences에 저장된 토큰/상태 초기화
+                    getSharedPreferences("Auth", MODE_PRIVATE)
+                            .edit()
+                            .clear()
+                            .apply();
+
+                    Log.d("GoogleLogin", "✅ SharedPreferences(Auth) 초기화 완료");
+                });
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
+
+        // ‼️ Test: 앱 실행 시 자동 로그아웃 (테스트용)
+        TestGoogleSignOut();
+
+        // UI 초기화
         setContentView(R.layout.a_start);
         bg = findViewById(R.id.bg);
         logoBox = findViewById(R.id.logoBox);
@@ -294,75 +324,51 @@ public class StartActivity extends BaseActivity {
         }
     }
 
+    /*
+     * 백엔드에 ID 토큰 전송
+     */
     private void sendTokenToBackend(String idToken) {
-        Log.d("GoogleLogin", "백엔드 전송 시작");
+        Log.d("GoogleLogin", "✅ 백엔드에 구글 로그인 프로세스 시작");
 
-        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-
-        OkHttpClient client = new OkHttpClient.Builder()
-                .addInterceptor(interceptor)
-                .build();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://13.124.105.243/")  // 꼭 슬래시 포함
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
+        // 1. Retrofit 싱글톤 인스턴스 가져오기
+        Retrofit retrofit = AppRetrofitClient.getInstance(this);
         AuthApi api = retrofit.create(AuthApi.class);
 
+        // 2. 요청 바디 생성
         TokenRequest body = new TokenRequest(idToken);
         Log.d("GoogleLogin", "요청 바디: " + new Gson().toJson(body));
 
+        // 3. 서버에 요청 보내기 (비동기)
         Call<ResponseBody> call = api.verifyGoogleToken(body);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 googleLogin.setEnabled(true);
                 Log.d("GoogleLogin", "Retrofit 응답 수신됨");
-                //Log.d("GoogleLogin", "HTTP 코드: " + response.code());
 
                 if (response.isSuccessful()) {
                     try {
                         String responseBody = response.body() != null ? response.body().string() : "";
-                        Log.e("GoogleLogin", "서버 응답 본문: " + responseBody); // 👈 추가
+                        Log.e("GoogleLogin", "서버 응답 본문: " + responseBody);
 
                         JSONObject json = new JSONObject(responseBody);
-
-                        boolean hasNickname = json.optBoolean("hasNickname", false);
-                        boolean loginSuccess = json.optBoolean("loginSuccess", true);
                         String accessToken = json.optString("accessToken", "");
                         String refreshToken = json.optString("refreshToken", "");
-                        String token = json.optString("token", ""); // 혹시 서버가 이렇게 보낼 수도 있음
 
-                        // 토큰 저장
-                        if (!accessToken.isEmpty() || !token.isEmpty()) {
+                        // ✅ 토큰 저장
+                        if (!accessToken.isEmpty()) {
                             getSharedPreferences("Auth", MODE_PRIVATE)
                                     .edit()
-                                    .putString("accessToken", !accessToken.isEmpty() ? accessToken : token)
+                                    .putString("accessToken", accessToken)
                                     .putString("refreshToken", refreshToken)
                                     .apply();
 
-                            Log.d("GoogleLogin", "토큰 저장 완료: " + (!accessToken.isEmpty() ? accessToken : token));
+                            Log.d("GoogleLogin", "토큰 저장 완료: " + accessToken);
                         }
 
-                        if (!hasNickname) {
-                            isSignUp = false;
-                            isLogin = false;
-                            showSignUpDialog();
-                            return;
-                        }
+                        // ✅ 로그인 성공 후 → 가입 여부 확인 추가
+                        checkUserExists();  // ★ 추가된 부분 ★
 
-                        if (hasNickname && loginSuccess) {
-                            isSignUp = true;
-                            isLogin = true;
-                            loginSuccess();
-                        } else if (hasNickname) {
-                            isSignUp = true;
-                            isLogin = false;
-                            loginFail();
-                        }
                     } catch (Exception e) {
                         Log.e("GoogleLogin", "JSON 파싱 실패", e);
                     }
@@ -383,6 +389,47 @@ public class StartActivity extends BaseActivity {
                 googleLogin.setEnabled(true);
                 Log.e("GoogleLogin", "Retrofit 통신 실패", t);
                 loginFail();
+            }
+        });
+    }
+
+    // ✅ [새로 추가된 메서드]
+    private void checkUserExists() {
+        Log.d("UserCheck", "✅ 가입된 회원 여부 확인 시작");
+
+        Retrofit retrofit = AppRetrofitClient.getInstance(this);
+        com.example.filter.apis.service.UserApi userApi = retrofit.create(com.example.filter.apis.service.UserApi.class);
+
+        Call<ResponseBody> call = userApi.checkUserExists();
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    try {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        JSONObject json = new JSONObject(responseBody);
+                        boolean exists = json.optBoolean("exists", false);
+
+                        if (exists) {
+                            Log.d("UserCheck", "✔️ 기존 회원 → MainActivity 이동");
+                            loginSuccess();
+                        } else {
+                            Log.d("UserCheck", "🆕 신규 회원 → SignUpActivity 이동");
+                            Intent intent = new Intent(StartActivity.this, SignUpActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                    } catch (Exception e) {
+                        Log.e("UserCheck", "JSON 파싱 실패", e);
+                    }
+                } else {
+                    Log.e("UserCheck", "회원 여부 확인 실패: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("UserCheck", "서버 연결 실패", t);
             }
         });
     }
