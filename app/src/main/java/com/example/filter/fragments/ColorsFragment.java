@@ -34,7 +34,7 @@ public class ColorsFragment extends Fragment {
     private LinearLayout nextBtn;
     private ConstraintLayout bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
-    private ImageButton undoSticker, redoSticker, originalSticker;
+    //private ImageButton undoSticker, redoSticker, originalSticker;
 
     @Nullable
     @Override
@@ -95,14 +95,14 @@ public class ColorsFragment extends Fragment {
         undoColor = requireActivity().findViewById(R.id.undoColor);
         redoColor = requireActivity().findViewById(R.id.redoColor);
         originalColor = requireActivity().findViewById(R.id.originalColor);
-        undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
         redoSticker = requireActivity().findViewById(R.id.redoSticker);
-        originalSticker = requireActivity().findViewById(R.id.originalSticker);
+        originalSticker = requireActivity().findViewById(R.id.originalSticker);*/
 
         bottomArea1.setVisibility(View.VISIBLE);
-        undoSticker.setVisibility(View.INVISIBLE);
+        /*undoSticker.setVisibility(View.INVISIBLE);
         redoSticker.setVisibility(View.INVISIBLE);
-        originalSticker.setVisibility(View.INVISIBLE);
+        originalSticker.setVisibility(View.INVISIBLE);*/
         undoColor.setEnabled(false);
         redoColor.setEnabled(false);
         undoColor.setVisibility(View.VISIBLE);
@@ -267,9 +267,9 @@ public class ColorsFragment extends Fragment {
         if (redoColor != null) redoColor.setVisibility(View.VISIBLE);
         if (originalColor != null) originalColor.setVisibility(View.VISIBLE);
 
-        if (undoSticker != null) undoSticker.setVisibility(View.INVISIBLE);
+        /*if (undoSticker != null) undoSticker.setVisibility(View.INVISIBLE);
         if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
-        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);
+        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);*/
 
         FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {

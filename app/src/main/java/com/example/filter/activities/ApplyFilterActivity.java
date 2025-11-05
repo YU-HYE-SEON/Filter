@@ -17,7 +17,9 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -31,9 +33,24 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
+import com.example.filter.fragments.StickersFragment;
+import com.example.filter.overlayviews.FaceBoxOverlayView;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApplyFilterActivity extends BaseActivity {
+    public interface FaceDetectionCallback {
+        void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
+    }
+    public static ApplyFilterActivity thisRef;
     private ImageButton backBtn;
     private FrameLayout photoContainer, brushOverlay, stickerOverlay;
     private View photoMask;
@@ -43,6 +60,7 @@ public class ApplyFilterActivity extends BaseActivity {
     private FGLRenderer renderer;
     private String brushPath, stickerPath;
     private FilterDtoCreateRequest.ColorAdjustments adj;
+    private ArrayList<FaceStickerData> faceStickers;
     private Bitmap finalBitmapWithStickers = null;
     private FrameLayout reviewPopOff;
     private View reviewPopOn, dimBackground;
@@ -52,10 +70,12 @@ public class ApplyFilterActivity extends BaseActivity {
     private ImageButton reviewBtn;
     private boolean isReviewPopVisible = false;
     private String filterId, imgUrl, title, nick;
+    public static FaceBoxOverlayView faceBox;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        thisRef = this;
         setContentView(R.layout.a_apply_photo);
         backBtn = findViewById(R.id.backBtn);
         photoContainer = findViewById(R.id.photoContainer);
@@ -126,6 +146,12 @@ public class ApplyFilterActivity extends BaseActivity {
                 if (bitmap != null) {
                     renderer.setBitmap(bitmap);
                     glSurfaceView.requestRender();
+
+                    faceBox = new FaceBoxOverlayView(this);
+                    photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                    detectFaces(bitmap, (faces, originalBitmap) -> {
+                        if (faces.isEmpty()) return;
+                    });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -141,6 +167,21 @@ public class ApplyFilterActivity extends BaseActivity {
         brushPath = getIntent().getStringExtra("brush_image_path");
         stickerPath = getIntent().getStringExtra("sticker_image_path");
 
+
+        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+
+        if (faceStickers != null && !faceStickers.isEmpty()) {
+            for (FaceStickerData d : faceStickers) {
+                Log.d("StickerFlow", String.format(
+                        "[ApplyFilterActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
+                        d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
+                ));
+            }
+        } else {
+            Log.d("StickerFlow", "[ApplyFilterActivity] faceStickers가 비어있음 혹은 null입니다.");
+        }
+
+
         if (adj != null) applyAdjustments(adj);
         if (brushPath != null) applyBrushStickerImage(brushOverlay, brushPath);
         if (stickerPath != null) applyBrushStickerImage(stickerOverlay, stickerPath);
@@ -149,6 +190,98 @@ public class ApplyFilterActivity extends BaseActivity {
             if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
+    }
+
+    public static void detectFaces(Bitmap bitmap, ApplyFilterActivity.FaceDetectionCallback callback) {
+        if (bitmap == null) {
+            if (callback != null) {
+                callback.onFacesDetected(new ArrayList<>(), null);
+            }
+            return;
+        }
+
+        InputImage image = InputImage.fromBitmap(bitmap, 0);
+
+        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .build();
+
+        FaceDetector detector = FaceDetection.getClient(options);
+
+        detector.process(image)
+                .addOnSuccessListener(faces -> {
+                    List<Rect> rects = new ArrayList<>();
+
+                    for (int i = 0; i < faces.size(); i++) {
+                        Face face = faces.get(i);
+                        rects.add(face.getBoundingBox());
+                        //Log.d("얼굴인식", "========================= photoPreview 속 Face [" + (i + 1) + "] =========================");
+                        //getFaceLandmarks(face);
+                        //getFaceContours(face);
+                    }
+
+                    if (faceBox != null) {
+                        if (!faces.isEmpty()) {
+                            faceBox.setVisibility(View.VISIBLE);
+                            faceBox.setFaceBoxes(rects, bitmap.getWidth(), bitmap.getHeight());
+                        } else {
+                            faceBox.clearBoxes();
+                            faceBox.setVisibility(View.GONE);
+                        }
+                    }
+
+                    ApplyFilterActivity activity = ApplyFilterActivity.thisRef;
+                    if (activity == null || activity.faceStickers == null || activity.faceStickers.isEmpty()) return;
+
+                    activity.runOnUiThread(() -> {
+                        for (Face face : faces) {
+                            Rect box = face.getBoundingBox();
+
+                            for (FaceStickerData d : activity.faceStickers) {
+                                Bitmap stickerBmp = d.stickerBitmap != null ?
+                                        d.stickerBitmap :
+                                        BitmapFactory.decodeFile(d.stickerPath);
+                                if (stickerBmp == null) continue;
+
+                                float absCenterX = box.centerX() + (d.relX * box.width() / 2f);
+                                float absCenterY = box.centerY() + (d.relY * box.height() / 2f);
+                                float absWidth   = d.relW * box.width();
+                                float absHeight  = d.relH * box.height();
+
+                                ImageView iv = new ImageView(activity);
+                                iv.setImageBitmap(stickerBmp);
+                                iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+                                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams((int) absWidth, (int) absHeight);
+                                lp.leftMargin = (int) (absCenterX - absWidth / 2f);
+                                lp.topMargin  = (int) (absCenterY - absHeight / 2f);
+                                iv.setLayoutParams(lp);
+                                iv.setRotation(d.stickerR);
+
+                                activity.stickerOverlay.addView(iv);
+                            }
+                        }
+                    });
+
+                    if (callback != null) {
+                        callback.onFacesDetected(faces, bitmap);
+                    }
+
+                    detector.close();
+                })
+                .addOnFailureListener(e -> {
+                    if (faceBox != null) {
+                        faceBox.clearBoxes();
+                        faceBox.setVisibility(View.GONE);
+                    }
+                    if (callback != null) {
+                        callback.onFacesDetected(new ArrayList<>(), bitmap);
+                    }
+                    detector.close();
+                });
     }
 
     private void setupReviewPop() {

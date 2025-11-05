@@ -10,6 +10,7 @@ import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -40,9 +41,11 @@ import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FilterDetailActivity extends BaseActivity {
@@ -62,6 +65,7 @@ public class FilterDetailActivity extends BaseActivity {
     private ImageButton galleryModeBtn, cameraModeBtn;
     private boolean isChooseUseModeVisible = false;
     private FilterDtoCreateRequest.ColorAdjustments adj;
+    private ArrayList<FaceStickerData> faceStickers;
     private String filterId, nick, originalPath, imgUrl, title, tagsStr, price, brushPath, stickerPath;
     private float cropN_l = -1f, cropN_t = -1f, cropN_r = -1f, cropN_b = -1f;
     private int accumRotationDeg = 0;
@@ -81,6 +85,30 @@ public class FilterDetailActivity extends BaseActivity {
                 intent.putExtra("filterImage", imgUrl);
                 intent.putExtra("filterTitle", title);
                 intent.putExtra("nickname", nick);
+
+
+                intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+
+                List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+                for (FaceStickerData d : faceStickers) {
+                    FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
+                    s.placementType = "face";
+                    s.x = d.relX;
+                    s.y = d.relY;
+                    s.scale = (d.relW + d.relH) / 2f;
+                    //s.relW = d.relW;
+                    //s.relH = d.relH;
+                    s.rotation = d.stickerR;
+                    s.stickerId = d.batchId.hashCode();
+                    stickers.add(s);
+
+                    Log.d("StickerFlow", String.format(
+                            "[FilterDetailActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
+                            d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
+                    ));
+                }
+
+
 
                 startActivity(intent);
             } else {
@@ -157,6 +185,22 @@ public class FilterDetailActivity extends BaseActivity {
         adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
         brushPath = getIntent().getStringExtra("brush_image_path");
         stickerPath = getIntent().getStringExtra("sticker_image_path");
+
+
+        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+
+        if (faceStickers != null && !faceStickers.isEmpty()) {
+            for (FaceStickerData d : faceStickers) {
+                Log.d("StickerFlow", String.format(
+                        "[FilterDetailActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
+                        d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
+                ));
+            }
+        } else {
+            Log.d("StickerFlow", "[FilterDetailActivity] faceStickers가 비어있음 혹은 null입니다.");
+        }
+
+
 
         if (imgUrl != null) {
             Glide.with(this)

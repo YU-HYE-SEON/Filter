@@ -42,7 +42,7 @@ public class EditMyStickerFragment extends Fragment {
     private final float ROT_MIN_RADIUS_DP = 24f;
     public static String sLastReturnOriginAction = null;
     private boolean[] prevEnabledSnapshot;
-    ImageButton undoSticker, redoSticker, originalSticker;
+    //ImageButton undoSticker, redoSticker, originalSticker;
     private Float prevElevation = null;
     private Float entryX = null, entryY = null, entryR = null;
     private Integer entryW = null, entryH = null;
@@ -72,13 +72,13 @@ public class EditMyStickerFragment extends Fragment {
         stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
         if (stickerOverlay == null) return;
 
-        undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
         redoSticker = requireActivity().findViewById(R.id.redoSticker);
         originalSticker = requireActivity().findViewById(R.id.originalSticker);
 
         if (undoSticker != null) undoSticker.setVisibility(View.INVISIBLE);
         if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
-        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);
+        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);*/
 
         stickerWrapper = stickerOverlay.findViewWithTag("editingSticker");
         if (stickerWrapper == null && stickerOverlay.getChildCount() > 0) {
@@ -257,10 +257,10 @@ public class EditMyStickerFragment extends Fragment {
             if ("stickers".equals(origin)) {
                 restoreElevationIfNeeded();
 
-                FilterActivity a = (FilterActivity) requireActivity();
+                /*FilterActivity a = (FilterActivity) requireActivity();
                 if (stickerWrapper != null) {
                     a.recordStickerDelete(stickerWrapper);
-                }
+                }*/
             }
 
             removeStickerWrapper();
@@ -315,21 +315,21 @@ public class EditMyStickerFragment extends Fragment {
                 if ("stickers".equals(origin)) {
                     FilterActivity a = (FilterActivity) requireActivity();
 
-                    int aw = stickerWrapper.getLayoutParams().width;
+                    /*int aw = stickerWrapper.getLayoutParams().width;
                     int ah = stickerWrapper.getLayoutParams().height;
                     float ax = stickerWrapper.getX();
                     float ay = stickerWrapper.getY();
-                    float ar = stickerWrapper.getRotation();
+                    float ar = stickerWrapper.getRotation();*/
 
-                    boolean samePos = (entryX != null && entryY != null)
+                    /*boolean samePos = (entryX != null && entryY != null)
                             && Math.abs(ax - entryX) < EPS_POS
                             && Math.abs(ay - entryY) < EPS_POS;
                     boolean sameRot = (entryR != null) && Math.abs(ar - entryR) < EPS_ROT;
                     boolean sameSize = (entryW != null && entryH != null)
                             && Math.abs(aw - entryW) <= EPS_SIZE
-                            && Math.abs(ah - entryH) <= EPS_SIZE;
+                            && Math.abs(ah - entryH) <= EPS_SIZE;*/
 
-                    if (!(samePos && sameRot && sameSize)) {
+                    /*if (!(samePos && sameRot && sameSize)) {
                         float bx = getArguments().getFloat("prevX", stickerWrapper.getX());
                         float by = getArguments().getFloat("prevY", stickerWrapper.getY());
                         int bw = getArguments().getInt("prevW", stickerWrapper.getLayoutParams().width);
@@ -337,7 +337,7 @@ public class EditMyStickerFragment extends Fragment {
                         float br = getArguments().getFloat("prevR", stickerWrapper.getRotation());
 
                         a.recordStickerEdit(stickerWrapper, bx, by, bw, bh, br, ax, ay, aw, ah, ar);
-                    }
+                    }*/
 
                     if (stickerOverlay != null) {
                         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
@@ -423,7 +423,10 @@ public class EditMyStickerFragment extends Fragment {
 
                 FaceFragment faceFragment = new FaceFragment();
                 Bundle args2 = new Bundle();
-                args2.putParcelable("stickerBitmap", bitmap);
+
+                viewModel.setTempBitmap(bitmap);
+                args2.putBoolean("useTempBitmap", true);
+
                 args2.putString("stickerId", stickerId);
                 args2.putString("returnOrigin", origin);
 

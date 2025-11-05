@@ -28,12 +28,16 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.FaceModeViewModel;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
+
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class FaceFragment extends Fragment {
     private FrameLayout faceContainer;
@@ -60,8 +64,11 @@ public class FaceFragment extends Fragment {
     private boolean isToastVisible = false;
     private long sessionId = -1L;
     private int entrySessionBaseline = 0;
+    //private final String currentFaceBatchId = "face_batch_" + System.currentTimeMillis();
     private final String currentFaceBatchId = "face_batch_" + System.currentTimeMillis();
     private String returnOrigin = "mystickers";
+    //private float bx, by, bw, bh, br;
+    //private float ax, ay, aw, ah, ar;
 
     @Nullable
     @Override
@@ -90,7 +97,15 @@ public class FaceFragment extends Fragment {
         entrySessionBaseline = args.getInt("sessionBaseline", 0);
         returnOrigin = args.getString("returnOrigin", "mystickers");
 
-        Bitmap bitmap = args.getParcelable("stickerBitmap");
+        Bitmap bitmap = null;
+        if (args.getBoolean("useTempBitmap", false)) {
+            viewModel = new ViewModelProvider(requireActivity()).get(FaceModeViewModel.class);
+            bitmap = viewModel.getTempBitmap();
+            viewModel.clearTempBitmap();
+        } else {
+            bitmap = args.getParcelable("stickerBitmap");
+        }
+
         if (bitmap == null) return;
 
         LayoutInflater inflater = LayoutInflater.from(requireContext());
@@ -208,7 +223,47 @@ public class FaceFragment extends Fragment {
                 float relH = meta.getFloat("relH");
                 float stickerR = meta.getFloat("stickerR");
 
-                Log.d("FaceFragment", String.format("마이스티커프래그먼트 사진 속 얼굴들 :: REL VALUES -> relX=%.3f, relY=%.3f, relW=%.3f, relH=%.3f", relX, relY, relW, relH));
+                //bx = relX;
+                //by = relY;
+                //bw = relW;
+                //bh = relH;
+                //br = stickerR;
+
+                //Log.d("StickerMeta", String.format("마이스티커프래그먼트 사진 속 얼굴들 :: X=%.3f, Y=%.3f, W=%.3f, H=%.3f, R=%.3f", relX, relY, relW, relH, stickerR));
+                //Log.d("StickerMeta", String.format("마이스티커프래그먼트 사진 속 얼굴들 :: bX=%.3f, bY=%.3f, bW=%.3f, bH=%.3f, bR=%.3f", bx, by, bw, bh, br));
+
+
+                ImageView stickerImageView = stickerWrapper.findViewById(R.id.stickerImage);
+                Bitmap stickerBitmap = null;
+                if (stickerImageView != null && stickerImageView.getDrawable() != null) {
+                    stickerImageView.setDrawingCacheEnabled(true);
+                    stickerBitmap = Bitmap.createBitmap(stickerImageView.getDrawingCache());
+                    stickerImageView.setDrawingCacheEnabled(false);
+                }
+
+                String stickerPath = null;
+                if (stickerBitmap != null) {
+                    try {
+                        File file = new File(requireContext().getCacheDir(),
+                                "face_sticker_" + System.currentTimeMillis() + ".png");
+                        FileOutputStream out = new FileOutputStream(file);
+                        stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        out.close();
+                        stickerPath = file.getAbsolutePath();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                FaceStickerData data = new FaceStickerData(relX, relY, relW, relH, stickerR, currentFaceBatchId, stickerBitmap,stickerPath);
+
+                Log.d("StickerFlow", String.format(
+                        "[FaceFragment] relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
+                        relX, relY, relW, relH, stickerR, currentFaceBatchId
+                ));
+
+                FaceModeViewModel vm = new ViewModelProvider(requireActivity()).get(FaceModeViewModel.class);
+                vm.setFaceStickerData(data);
 
                 View stickerToClone = stickerWrapper;
                 removeStickerWrapper();
@@ -470,7 +525,14 @@ public class FaceFragment extends Fragment {
         float relW = stickerW / (float) lastFaceBox.width();
         float relH = stickerH / (float) lastFaceBox.height();
 
-        Log.d("FaceFragment", String.format("페이스프래그먼트 faceModel :: REL VALUES -> relX=%.3f, relY=%.3f, relW=%.3f, relH=%.3f", relX, relY, relW, relH));
+        //ax = relX;
+        //ay = relY;
+        //aw = relW;
+        //ah = relH;
+        //ar = stickerR;
+
+        //Log.d("StickerMeta", String.format("페이스프래그먼트 faceModel :: X=%.3f, Y=%.3f, W=%.3f, H=%.3f, R=%.3f", relX, relY, relW, relH, stickerR));
+        //Log.d("StickerMeta", String.format("페이스프래그먼트 faceModel :: aX=%.3f, aY=%.3f, aW=%.3f, aH=%.3f, aR=%.3f", ax, ay, aw, ah, ar));
 
         meta = new Bundle();
         meta.putFloat("relX", relX);

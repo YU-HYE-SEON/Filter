@@ -54,7 +54,7 @@ public class StickersFragment extends Fragment {
     private ConstraintLayout filterActivity;
     private ConstraintLayout bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
-    private ImageButton undoSticker, redoSticker, originalSticker;
+    //private ImageButton undoSticker, redoSticker, originalSticker;
     private LinearLayout brushToSticker;
     private static final float EPS_Z = 0.5f;
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
@@ -90,12 +90,12 @@ public class StickersFragment extends Fragment {
         redoColor = requireActivity().findViewById(R.id.redoColor);
         originalColor = requireActivity().findViewById(R.id.originalColor);
 
-        undoSticker = requireActivity().findViewById(R.id.undoSticker);
-        redoSticker = requireActivity().findViewById(R.id.redoSticker);
-        originalSticker = requireActivity().findViewById(R.id.originalSticker);
+        //undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        //redoSticker = requireActivity().findViewById(R.id.redoSticker);
+        //originalSticker = requireActivity().findViewById(R.id.originalSticker);
         brushToSticker = requireActivity().findViewById(R.id.brushToSticker);
 
-        FilterActivity activity = (FilterActivity) getActivity();
+        /*FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {
             undoSticker.setOnClickListener(v -> {
                 activity.previewOriginalStickers(false);
@@ -110,15 +110,15 @@ public class StickersFragment extends Fragment {
             });
 
             activity.refreshStickerButtons();
-        }
+        }*/
 
         if (bottomArea1 != null) {
             undoColor.setVisibility(View.INVISIBLE);
             redoColor.setVisibility(View.INVISIBLE);
             originalColor.setVisibility(View.INVISIBLE);
-            undoSticker.setVisibility(View.VISIBLE);
+            /*undoSticker.setVisibility(View.VISIBLE);
             redoSticker.setVisibility(View.VISIBLE);
-            originalSticker.setVisibility(View.VISIBLE);
+            originalSticker.setVisibility(View.VISIBLE);*/
             bottomArea1.setVisibility(View.VISIBLE);
             brushToSticker.setVisibility(View.GONE);
         }
@@ -389,10 +389,10 @@ public class StickersFragment extends Fragment {
                 boolean indexChanged = (afterIndex != beforeIndex);
                 boolean zChanged = Math.abs(afterZ - beforeZ) > EPS_Z;
 
-                if (indexChanged || zChanged) {
+                /*if (indexChanged || zChanged) {
                     FilterActivity fa = (FilterActivity) act;
                     fa.recordStickerZOrderChange(stickerView, beforeIndex, beforeZ, afterIndex, afterZ);
-                }
+                }*/
             }
 
             stickerView.bringToFront();
@@ -454,7 +454,7 @@ public class StickersFragment extends Fragment {
         parent.invalidate();
     }
 
-    private void rewireOverlayClickListeners() {
+    /*private void rewireOverlayClickListeners() {
         FrameLayout overlay = requireActivity().findViewById(R.id.stickerOverlay);
         if (overlay == null) return;
 
@@ -479,7 +479,7 @@ public class StickersFragment extends Fragment {
         if (activity != null) {
             activity.refreshStickerButtons();
         }
-    }
+    }*/
 
     private void setControllersVisible(@NonNull View sticker, boolean visible) {
         View editFrame = sticker.findViewById(R.id.editFrame);

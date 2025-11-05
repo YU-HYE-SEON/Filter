@@ -119,7 +119,7 @@ public class BrushFragment extends Fragment {
     private LassoOverlayView lassoOverlay;
     private LinearLayout brushToSticker;
     private ConstraintLayout bottomArea1;
-    private ImageButton undoSticker, redoSticker, originalSticker;
+    //private ImageButton undoSticker, redoSticker, originalSticker;
     private CheckBox checkBox;
 
     /// 시스템 ///
@@ -249,9 +249,9 @@ public class BrushFragment extends Fragment {
         brushOverlay = requireActivity().findViewById(R.id.brushOverlay);
 
         bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
-        undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
         redoSticker = requireActivity().findViewById(R.id.redoSticker);
-        originalSticker = requireActivity().findViewById(R.id.originalSticker);
+        originalSticker = requireActivity().findViewById(R.id.originalSticker)*/;
         brushToSticker = requireActivity().findViewById(R.id.brushToSticker);
         lassoOverlay = requireActivity().findViewById(R.id.lassoOverlay);
         checkBox = requireActivity().findViewById(R.id.checkBox);
@@ -260,9 +260,9 @@ public class BrushFragment extends Fragment {
         stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
 
         if (bottomArea1 != null) {
-            undoSticker.setVisibility(View.INVISIBLE);
+            /*undoSticker.setVisibility(View.INVISIBLE);
             redoSticker.setVisibility(View.INVISIBLE);
-            originalSticker.setVisibility(View.INVISIBLE);
+            originalSticker.setVisibility(View.INVISIBLE);*/
             bottomArea1.setVisibility(View.VISIBLE);
             brushToSticker.setVisibility(View.VISIBLE);
         }
@@ -630,12 +630,12 @@ public class BrushFragment extends Fragment {
 
             FilterActivity a = (FilterActivity) requireActivity();
             if (!sessionEraseOps.isEmpty()) {
-                a.recordBrushErase(sessionEraseOps);
+                //a.recordBrushErase(sessionEraseOps);
                 sessionEraseOps.clear();
             }
 
             if (stickerOverlay != null) {
-                a.recordStickerPlacement(baselineChildCount);
+                //a.recordStickerPlacement(baselineChildCount);
                 baselineChildCount = stickerOverlay.getChildCount();
             }
 

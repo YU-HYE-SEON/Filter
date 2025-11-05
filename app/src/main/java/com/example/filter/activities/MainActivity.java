@@ -151,7 +151,7 @@ public class MainActivity extends BaseActivity {
         });*/
 
         filterAdapter.setOnItemClickListener((v, item, title, nickname) -> {
-            Intent intent = new Intent(MainActivity.this, FilterDetailActivity2.class);
+            Intent intent = new Intent(MainActivity.this, FilterDetailActivity.class);
             intent.putExtra("filterId", item.id);
             //intent.putExtra("nickname", item.nickname);
             intent.putExtra("nickname", nickname);

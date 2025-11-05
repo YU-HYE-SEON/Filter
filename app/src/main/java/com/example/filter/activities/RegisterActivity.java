@@ -36,11 +36,13 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.service.FilterApi;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.FaceStickerData;
 import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,6 +85,7 @@ public class RegisterActivity extends BaseActivity {
     private boolean forceScroll = false;
     private Bitmap finalBitmap;
     private FilterDtoCreateRequest.ColorAdjustments adj;
+    private ArrayList<FaceStickerData> faceStickers;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -257,6 +260,22 @@ public class RegisterActivity extends BaseActivity {
         adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
         brushImagePath = getIntent().getStringExtra("brush_image_path");
         stickerImagePath = getIntent().getStringExtra("sticker_image_path");
+
+
+
+        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+
+        if (faceStickers != null && !faceStickers.isEmpty()) {
+            for (FaceStickerData d : faceStickers) {
+                Log.d("StickerFlow", String.format(
+                        "[RegisterActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
+                        d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
+                ));
+            }
+        } else {
+            Log.d("StickerFlow", "[RegisterActivity] faceStickers가 비어있음 혹은 null입니다.");
+        }
+
 
         if (imagePath != null) {
             finalBitmap = BitmapFactory.decodeFile(imagePath);
@@ -506,6 +525,28 @@ public class RegisterActivity extends BaseActivity {
         intent.putExtra("color_adjustments", adj);
         intent.putExtra("brush_image_path", brushPath);
         intent.putExtra("sticker_image_path", stickerPath);
+
+
+        intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+
+        List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+        for (FaceStickerData d : faceStickers) {
+            FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
+            s.placementType = "face";
+            s.x = d.relX;
+            s.y = d.relY;
+            s.scale = (d.relW + d.relH) / 2f;
+            //s.relW = d.relW;
+            //s.relH = d.relH;
+            s.rotation = d.stickerR;
+            s.stickerId = d.batchId.hashCode();
+            stickers.add(s);
+
+            Log.d("StickerFlow", String.format(
+                    "[RegisterActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
+                    d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
+            ));
+        }
 
         startActivity(intent);
     }

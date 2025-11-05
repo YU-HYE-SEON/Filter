@@ -162,7 +162,7 @@
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <ImageButton
+            <!--<ImageButton
                 android:id="@+id/undoSticker"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
@@ -186,7 +186,7 @@
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/undoSticker"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" />-->
 
             <LinearLayout
                 android:id="@+id/brushToSticker"
@@ -195,8 +195,8 @@
                 android:orientation="horizontal"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/originalSticker"
-                app:layout_constraintStart_toEndOf="@+id/redoSticker"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
@@ -219,7 +219,7 @@
 
             </LinearLayout>
 
-            <ImageButton
+            <!--<ImageButton
                 android:id="@+id/originalSticker"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
@@ -230,7 +230,7 @@
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" />-->
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

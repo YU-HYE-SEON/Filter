@@ -44,7 +44,7 @@ public class MyStickersFragment extends Fragment {
     private int baselineChildCount = 0;
     private boolean skipDisableOnce = false;
     private static final int TAG_TEMP_PREVIEW = R.id.tag_prev_enabled;
-    private ImageButton undoSticker, redoSticker, originalSticker;
+    //private ImageButton undoSticker, redoSticker, originalSticker;
     private long sessionId = -1L;
 
     @Nullable
@@ -58,24 +58,25 @@ public class MyStickersFragment extends Fragment {
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
-        undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
         redoSticker = requireActivity().findViewById(R.id.redoSticker);
         originalSticker = requireActivity().findViewById(R.id.originalSticker);
 
         if (undoSticker != null) undoSticker.setVisibility(View.INVISIBLE);
         if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
-        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);
+        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);*/
 
         stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
 
-        getParentFragmentManager().setFragmentResultListener("stickerMeta", this, (key, meta) -> {
+        /*getParentFragmentManager().setFragmentResultListener("stickerMeta", this, (key, meta) -> {
             float relX = meta.getFloat("relX");
             float relY = meta.getFloat("relY");
             float relW = meta.getFloat("relW");
             float relH = meta.getFloat("relH");
             float rotation = meta.getFloat("rot");
-            Log.d("StickerMeta", "받은 값: relX=" + relX + ", relY=" + relY + ", relW=" + relW + ", relH=" + relH + ", rot=" + rotation);
-        });
+            Log.e("StickerMeta", String.format("마이스티커프래그먼트 :: X=%.3f, Y=%.3f, W=%.3f, H=%.3f, R=%.3f", relX, relY, relW, relH, rotation));
+            //Log.d("StickerMeta", String.format("페이스프래그먼트 faceModel :: X=%.3f, Y=%.3f, W=%.3f, H=%.3f, R=%.3f", relX, relY, relW, relH,stickerR));
+        });*/
 
         Bundle args = getArguments() != null ? getArguments() : new Bundle();
         baselineChildCount = args.getInt("sessionBaseline", (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0);
@@ -187,8 +188,8 @@ public class MyStickersFragment extends Fragment {
                 }
             }
 
-            FilterActivity a = (FilterActivity) requireActivity();
-            a.recordStickerPlacement(baselineChildCount);
+            //FilterActivity a = (FilterActivity) requireActivity();
+            //a.recordStickerPlacement(baselineChildCount);
 
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
@@ -424,11 +425,11 @@ public class MyStickersFragment extends Fragment {
             int afterIndex = overlay.indexOfChild(stickerView);
             float afterZ = ViewCompat.getZ(stickerView);
 
-            if (act instanceof FilterActivity) {
+            /*if (act instanceof FilterActivity) {
                 ((FilterActivity) act).recordStickerZOrderChange(
                         stickerView, beforeIndex, beforeZ, afterIndex, afterZ
                 );
-            }
+            }*/
 
             stickerView.bringToFront();
             overlay.requestLayout();
