@@ -10,7 +10,7 @@ import retrofit2.http.Query;
 public interface UserApi {
 
     @GET("/api/v1/users/exists")
-    Call<ResponseBody> checkUserExists(@Query("nickname") String nickname);
+    Call<ResponseBody> checkUserExists();
 
     @POST("/api/v1/users/nickname")
     Call<ResponseBody> setNickname(@Body NicknameRequest body);
