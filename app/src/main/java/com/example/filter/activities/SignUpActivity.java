@@ -6,17 +6,27 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.example.filter.R;
+import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.apis.service.UserApi;
 import com.example.filter.etc.ClickUtils;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class SignUpActivity extends BaseActivity {
     private EditText nickname;
@@ -31,8 +41,9 @@ public class SignUpActivity extends BaseActivity {
         setContentView(R.layout.a_nickname);
         nickname = findViewById(R.id.nickname);
         alertTxt = findViewById(R.id.alertTxt);
-        btn = findViewById(R.id.btn);
+        btn = findViewById(R.id.btn); // 다음 버튼
 
+        // 키보드 닫힘 감지
         View root = findViewById(android.R.id.content);
         root.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             Rect r = new Rect();
@@ -43,6 +54,7 @@ public class SignUpActivity extends BaseActivity {
             if (!keypadVisible) nickname.clearFocus();
         });
 
+        // 닉네임 입력 검증 
         nickname.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -95,12 +107,12 @@ public class SignUpActivity extends BaseActivity {
             }
         });
 
+        // ‼️ 닉네임 입력 후 다음 버튼 클릭
         btn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
-            //intent.putExtra("nickname", nickname.getText().toString());
-            startActivity(intent);
-            finish();
+            if (ClickUtils.isFastClick(v, 400)) return; // 더블 클릭 방지
+            String inputNickname = nickname.getText().toString().trim(); // 입력된 닉네임 가져오기
+            sendNicknameToServer(inputNickname); // 서버로 닉네임 전송
+
         });
     }
 
@@ -195,5 +207,42 @@ public class SignUpActivity extends BaseActivity {
             }
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    /**
+     * 닉네임을 Spring 서버에 전송하는 메서드
+     */
+    private void sendNicknameToServer(String nickname) {
+        // ① Retrofit 싱글톤 인스턴스 가져오기
+        Retrofit retrofit = AppRetrofitClient.getInstance(this);
+        UserApi api = retrofit.create(UserApi.class);
+
+        // ② 요청 바디 생성
+        UserApi.NicknameRequest body = new UserApi.NicknameRequest(nickname);
+
+        // ③ 비동기 요청 (enqueue: UI 스레드 블로킹 없음)
+        api.setNickname(body).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    // ✅ 성공 시
+                    Log.d("SignUp", "✅ 닉네임 설정 성공");
+
+                    // ④ 다음 화면으로 이동
+                    Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    // ❌ 서버 응답은 왔지만 실패 코드 (400, 409 등)
+                    Log.e("SignUp", "❌ 닉네임 설정 실패: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // ❌ 네트워크 자체 실패 (서버 다운, 연결 실패 등)
+                Log.e("SignUp", "❌ 서버 연결 오류", t);
+            }
+        });
     }
 }
