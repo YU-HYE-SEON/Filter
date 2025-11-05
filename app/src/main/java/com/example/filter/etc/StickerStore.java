@@ -3,14 +3,11 @@ package com.example.filter.etc;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
-
 import com.example.filter.apis.repositories.StickerUploader;
 import com.example.filter.items.StickerItem;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -27,7 +24,6 @@ public class StickerStore {
     private final List<StickerItem> all = new ArrayList<>();
     private final Deque<StickerItem> pending = new ArrayDeque<>();
 
-    // ✅ 서버 업로드를 위한 인터페이스
     private StickerUploader uploader;
 
     private StickerStore() {}
@@ -35,9 +31,7 @@ public class StickerStore {
     public static StickerStore get() { return INSTANCE; }
 
     public synchronized void init(Context context) {
-        if (appCtx == null) {
-            appCtx = context.getApplicationContext();
-        }
+        if (appCtx == null) appCtx = context.getApplicationContext();
         ensureLoaded();
     }
 
@@ -89,14 +83,13 @@ public class StickerStore {
 
     public synchronized void enqueuePending(StickerItem item) {
         pending.addLast(item);
-        Log.d(TAG, "✅ pollPending: " + item.getType());
+        Log.d(TAG, "✅ enqueuePending: " + item.getType());
     }
 
     public synchronized StickerItem pollPending() {
         return pending.pollFirst();
     }
 
-    // ✅ 핵심: 스티커 추가 시 업로드 + 저장 로그 개선
     public synchronized void addToAllFront(StickerItem item) {
         ensureLoaded();
         all.add(0, item);
@@ -123,4 +116,5 @@ public class StickerStore {
         }
         return false;
     }
+
 }

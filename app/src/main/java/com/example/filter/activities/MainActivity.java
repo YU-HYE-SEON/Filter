@@ -70,7 +70,8 @@ public class MainActivity extends BaseActivity {
         StickerStore store = StickerStore.get();
         store.init(getApplicationContext());
         store.setUploader(new StickerRepository(getApplicationContext()));
-        
+
+
         // UI 초기화
         setContentView(R.layout.a_main);
         mainActivity = findViewById(R.id.mainActivity);
