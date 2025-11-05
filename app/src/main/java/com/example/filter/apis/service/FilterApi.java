@@ -1,4 +1,6 @@
-package com.example.filter.apis;
+package com.example.filter.apis.service;
+
+import com.example.filter.apis.dto.FilterDtoCreateRequest;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;

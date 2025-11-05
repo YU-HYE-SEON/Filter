@@ -30,7 +30,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
-import com.example.filter.apis.FilterDtoCreateRequest;
+import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.ImageUtils;
 
 public class ApplyFilterActivity extends BaseActivity {
