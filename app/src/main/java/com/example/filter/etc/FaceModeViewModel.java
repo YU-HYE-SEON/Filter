@@ -13,6 +13,15 @@ public class FaceModeViewModel extends ViewModel {
     private final Map<String, MutableLiveData<Boolean>> stickerStates = new HashMap<>();
     private Bitmap tempBitmap;
     private final MutableLiveData<FaceStickerData> faceStickerLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> faceStickerDataToDelete = new MutableLiveData<>();
+
+    public LiveData<String> getFaceStickerDataToDelete() {
+        return faceStickerDataToDelete;
+    }
+
+    public void setFaceStickerDataToDelete(String batchId) {
+        faceStickerDataToDelete.setValue(batchId);
+    }
 
     public LiveData<Boolean> getStickerState(String stickerId) {
         if (!stickerStates.containsKey(stickerId)) {

@@ -206,6 +206,14 @@ public class FaceFragment extends Fragment {
             String batchId = getArguments().getString("batchId", null);
             boolean isBatchEdit = getArguments().getBoolean("isBatchEdit", false);
             if (checkBox.isChecked() && photoPreviewContainer != null) {
+                // ⭐ [추가된 부분 시작] 재수정일 경우, FilterActivity의 ViewModel에 이전 데이터 삭제 요청
+                if (isBatchEdit && batchId != null) {
+                    FaceModeViewModel vm = new ViewModelProvider(requireActivity()).get(FaceModeViewModel.class);
+                    // FilterActivity에서 해당 batchId를 가진 데이터를 삭제하도록 요청
+                    vm.setFaceStickerDataToDelete(batchId);
+                }
+                // ⭐ [추가된 부분 끝]
+
                 if (stickerOverlay != null) {
                     for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                         View child = stickerOverlay.getChildAt(i);
@@ -255,7 +263,8 @@ public class FaceFragment extends Fragment {
                     }
                 }
 
-                FaceStickerData data = new FaceStickerData(relX, relY, relW, relH, stickerR, currentFaceBatchId, stickerBitmap,stickerPath);
+                String finalBatchId = isBatchEdit && batchId != null ? batchId : currentFaceBatchId;
+                FaceStickerData data = new FaceStickerData(relX, relY, relW, relH, stickerR, finalBatchId, stickerBitmap, stickerPath);
 
                 Log.d("StickerFlow", String.format(
                         "[FaceFragment] relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",

@@ -71,6 +71,7 @@ public class ApplyFilterActivity extends BaseActivity {
     private boolean isReviewPopVisible = false;
     private String filterId, imgUrl, title, nick;
     public static FaceBoxOverlayView faceBox;
+    private Bitmap originalImageBitmap;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -144,12 +145,14 @@ public class ApplyFilterActivity extends BaseActivity {
             try {
                 Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
                 if (bitmap != null) {
+                    this.originalImageBitmap = bitmap;
+
                     renderer.setBitmap(bitmap);
                     glSurfaceView.requestRender();
 
                     faceBox = new FaceBoxOverlayView(this);
                     photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                    detectFaces(bitmap, (faces, originalBitmap) -> {
+                    detectFaces(this.originalImageBitmap, (faces, originalBitmap) -> {
                         if (faces.isEmpty()) return;
                     });
                 }
@@ -237,8 +240,37 @@ public class ApplyFilterActivity extends BaseActivity {
                     if (activity == null || activity.faceStickers == null || activity.faceStickers.isEmpty()) return;
 
                     activity.runOnUiThread(() -> {
+                        // Viewport 정보를 가져옴 (FaceFragment가 사용하는 FaceBox 좌표계와 다름)
+                        int vpX = activity.renderer.getViewportX();
+                        int vpY = activity.renderer.getViewportY();
+                        int vpW = activity.renderer.getViewportWidth();
+                        int vpH = activity.renderer.getViewportHeight();
+
+
+                        Bitmap original = activity.originalImageBitmap;
+                        if (original == null) return;
+
+                        // 원본 이미지 크기 (Bitmap)
+                        int bmpW = original.getWidth();
+                        int bmpH = original.getHeight();
+
+                        // 화면 Viewport와 원본 Bitmap 간의 스케일 및 오프셋 계산 (FaceFragment와 동일한 방식 사용)
+                        float scale = Math.min((float) vpW / bmpW, (float) vpH / bmpH);
+                        float offsetX = vpX + (vpW - bmpW * scale) / 2f;
+                        float offsetY = vpY + (vpH - bmpH * scale) / 2f;
+
+                        // 스티커 배치
                         for (Face face : faces) {
                             Rect box = face.getBoundingBox();
+
+                            // 1. 얼굴 바운딩 박스를 뷰 좌표계(View Coordinate)로 변환
+                            float faceL_view = (box.left * scale) + offsetX;
+                            float faceT_view = (box.top * scale) + offsetY;
+                            float faceW_view = box.width() * scale;
+                            float faceH_view = box.height() * scale;
+
+                            float faceCenterX_view = faceL_view + faceW_view / 2f;
+                            float faceCenterY_view = faceT_view + faceH_view / 2f;
 
                             for (FaceStickerData d : activity.faceStickers) {
                                 Bitmap stickerBmp = d.stickerBitmap != null ?
@@ -246,19 +278,48 @@ public class ApplyFilterActivity extends BaseActivity {
                                         BitmapFactory.decodeFile(d.stickerPath);
                                 if (stickerBmp == null) continue;
 
-                                float absCenterX = box.centerX() + (d.relX * box.width() / 2f);
-                                float absCenterY = box.centerY() + (d.relY * box.height() / 2f);
-                                float absWidth   = d.relW * box.width();
-                                float absHeight  = d.relH * box.height();
+                                // 2. 얼굴 중심으로부터 상대적 위치를 뷰 좌표계의 픽셀 단위로 변환
+                                // 스티커가 얼굴을 기준으로 얼마나 떨어져야 하는지 계산
+                                // d.relX * faceW_view/scale 은 (relX * faceW)로, 이는 픽셀 기준이 됨.
+                                // 뷰 좌표계에서의 상대적인 중심 이동량
+                                float relativeDx_view = d.relX * faceW_view;
+                                float relativeDy_view = d.relY * faceH_view;
+
+                                // 3. 스티커 중심 뷰 좌표 계산
+                                float stickerCenterX_view = faceCenterX_view + relativeDx_view;
+                                float stickerCenterY_view = faceCenterY_view + relativeDy_view;
+
+                                // 4. 스티커 크기를 뷰 좌표계의 픽셀 단위로 변환
+                                float stickerW_view   = d.relW * faceW_view;
+                                float stickerH_view  = d.relH * faceH_view;
+
+                                // 5. 뷰의 좌상단 위치 (마진) 계산
+                                int lpW = Math.round(stickerW_view);
+                                int lpH = Math.round(stickerH_view);
+
+                                int lpX = Math.round(stickerCenterX_view - lpW / 2f);
+                                int lpY = Math.round(stickerCenterY_view - lpH / 2f);
+
+                                // FaceFragment에서 사용하는 FACE_STICKER_SCALE_BOOST(1.3f)를 여기에 적용해야 하는지 확인
+                                // FaceFragment에서는 이 값(1.3f)을 얼굴 인식 스티커에만 적용하고 있습니다.
+                                // 하지만 ApplyFilterActivity는 순수하게 데이터(FaceStickerData)만 읽어서 배치하므로,
+                                // FaceFragment에서 스티커가 얼굴에 맞춰 배치될 때 이미 이 값(relW/relH)에
+                                // 포함되어 전달되었다고 가정합니다. 만약 포함되지 않았다면 아래 크기 계산 시 추가해야 합니다.
 
                                 ImageView iv = new ImageView(activity);
                                 iv.setImageBitmap(stickerBmp);
                                 iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
-                                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams((int) absWidth, (int) absHeight);
-                                lp.leftMargin = (int) (absCenterX - absWidth / 2f);
-                                lp.topMargin  = (int) (absCenterY - absHeight / 2f);
+                                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(lpW, lpH);
+                                lp.leftMargin = lpX;
+                                lp.topMargin  = lpY;
                                 iv.setLayoutParams(lp);
+
+                                // FaceFragment에서 사용한 회전각은 stickerR 입니다.
+                                // FaceFragment에서는 얼굴 회전각(eulerZ)을 빼서 최종 스티커 회전각을 계산하지만,
+                                // ApplyFilterActivity는 얼굴 회전을 추적할 수 없으므로, FaceFragment에서 계산된
+                                // 최종 회전각 (stickerR - eulerZ)이 FaceStickerData의 stickerR에 저장되어 있다고
+                                // **가정**하고 d.stickerR을 사용합니다.
                                 iv.setRotation(d.stickerR);
 
                                 activity.stickerOverlay.addView(iv);

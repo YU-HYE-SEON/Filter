@@ -352,6 +352,20 @@ public class FilterActivity extends BaseActivity {
             Log.d("FilterActivity", "FaceSticker received: " +
                     "relX=" + data.relX + ", relY=" + data.relY + ", relW=" + data.relW + ", relH=" + data.relH);
         });
+
+        vm.getFaceStickerDataToDelete().observe(this, batchId -> {
+            if (batchId == null) return;
+
+            if (faceStickerList != null) {
+                boolean removed = faceStickerList.removeIf(stickerData -> batchId.equals(stickerData.batchId));
+
+                if (removed) {
+                    Log.d("StickerFlow", String.format(
+                            "[FilterActivity] 이전 FaceStickerData 삭제 완료 (batchId=%s)", batchId
+                    ));
+                }
+            }
+        });
     }
 
     @Override
