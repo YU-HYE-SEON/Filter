@@ -27,7 +27,7 @@ public class StickerStore {
     private final List<StickerItem> all = new ArrayList<>();
     private final Deque<StickerItem> pending = new ArrayDeque<>();
 
-    // ✅ 업로드 담당 인터페이스
+    // ✅ 서버 업로드를 위한 인터페이스
     private StickerUploader uploader;
 
     private StickerStore() {}
@@ -96,14 +96,13 @@ public class StickerStore {
         return pending.pollFirst();
     }
 
-    // ✅ 핵심: Sticker 추가 시 업로더 콜백 실행
+    // ✅ 핵심: 스티커 추가 시 업로드 + 저장 로그 개선
     public synchronized void addToAllFront(StickerItem item) {
         ensureLoaded();
         all.add(0, item);
+        Log.d(TAG, "📦 로컬 스티커 추가: " + item.getImageUrl() + " (id=" + item.getId() + ")");
         saveAsync();
-        Log.d(TAG, "📦 로컬에 스티커 저장 완료: " + item.getImageUrl());
 
-        // 서버 업로드 요청 (있을 경우)
         if (uploader != null) {
             Log.d(TAG, "☁️ 서버 업로드 요청 시작: " + item.getType());
             uploader.uploadToServer(item);
@@ -118,6 +117,7 @@ public class StickerStore {
             if (key.equals(it.key())) {
                 all.remove(i);
                 saveAsync();
+                Log.d(TAG, "🗑️ 스티커 삭제됨: " + key);
                 return true;
             }
         }
