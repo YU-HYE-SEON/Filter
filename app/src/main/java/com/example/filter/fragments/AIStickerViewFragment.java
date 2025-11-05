@@ -20,6 +20,7 @@ import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.items.StickerItem;
 import com.example.filter.etc.StickerStore;
+import com.example.filter.items.StickerType;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -125,7 +126,8 @@ public class AIStickerViewFragment extends Fragment {
                         try (FileOutputStream fos = new FileOutputStream(out)) {
                             bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
                         }
-                        StickerItem item = StickerItem.fromFile(out.getAbsolutePath());
+                        StickerItem item = StickerItem.fromFile(out.getAbsolutePath(), StickerType.AI);
+
                         StickerStore.get().enqueuePending(item);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -133,7 +135,7 @@ public class AIStickerViewFragment extends Fragment {
                 } else {
                     String p = f.getCurrentImagePath();
                     if (p != null) {
-                        StickerItem item = StickerItem.fromFile(p);
+                        StickerItem item = StickerItem.fromFile(p, StickerType.AI);
                         StickerStore.get().enqueuePending(item);
                     }
                 }

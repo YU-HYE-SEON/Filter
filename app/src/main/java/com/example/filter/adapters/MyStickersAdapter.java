@@ -82,7 +82,7 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
         StickerItem item = items.get(position);
 
         if (item.isFile()) {
-            File f = new File(item.filePath);
+            File f = new File(item.getImageUrl());
             if (f.exists()) {
                 h.stickerImage.setImageURI(Uri.fromFile(f));
                 if (h.stickerImage.getDrawable() == null) {
@@ -94,9 +94,9 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
                 h.stickerImage.setImageDrawable(null);
             }
         } else {
-            if (item.resName != null) {
+            if (item.getResName() != null) {
                 int resId = h.itemView.getResources()
-                        .getIdentifier(item.resName, "drawable", h.itemView.getContext().getPackageName());
+                        .getIdentifier(item.getResName(), "drawable", h.itemView.getContext().getPackageName());
                 if (resId != 0) h.stickerImage.setImageResource(resId);
                 else if (fallback.length > 0)
                     h.stickerImage.setImageResource(fallback[Math.min(position, fallback.length - 1)]);
@@ -111,14 +111,14 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
             if (old != RecyclerView.NO_POSITION) notifyItemChanged(old);
             notifyItemChanged(selectedPos);
             if (clickListener != null) {
-                String key = item.isFile() ? item.filePath : item.resName;
+                String key = item.isFile() ? item.getImageUrl() : item.getResName();
                 clickListener.onStickerClick(position, key);
             }
         });
 
         h.itemView.setOnLongClickListener(v -> {
             if (deleteListener != null) {
-                String key = item.isFile() ? item.filePath : item.resName;
+                String key = item.isFile() ? item.getImageUrl() : item.getResName();
                 deleteListener.onDeleteRequested(position, key);
             }
             return true;

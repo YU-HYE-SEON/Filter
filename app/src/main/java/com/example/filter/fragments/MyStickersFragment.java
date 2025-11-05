@@ -520,7 +520,7 @@ public class MyStickersFragment extends Fragment {
             public void onDelete() {
                 if (currentSelectedPos != RecyclerView.NO_POSITION) {
                     StickerItem toRemove = adapter.getItem(currentSelectedPos);
-                    String key = toRemove.isFile() ? toRemove.filePath : toRemove.resName;
+                    String key = toRemove.isFile() ? toRemove.getImageUrl() : toRemove.getResName();
 
                     clearCurrentSticker();
                     StickerStore.get().removeByKey(key);
