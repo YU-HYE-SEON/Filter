@@ -1,4 +1,4 @@
-package com.example.filter.apis;
+package com.example.filter.apis.dto;
 
 public class PromptRequest {
     private String prompt;

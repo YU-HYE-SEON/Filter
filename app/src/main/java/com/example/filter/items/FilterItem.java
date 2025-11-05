@@ -1,8 +1,6 @@
 package com.example.filter.items;
 
-import com.example.filter.apis.FilterDtoCreateRequest;
-
-import java.util.List;
+import com.example.filter.apis.dto.FilterDtoCreateRequest;
 
 public class FilterItem {
     public final String id;

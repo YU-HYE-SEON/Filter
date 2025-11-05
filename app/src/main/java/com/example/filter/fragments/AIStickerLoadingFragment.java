@@ -21,10 +21,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
-import com.example.filter.apis.AIStickerApi;
-import com.example.filter.apis.AIStickerResponse;
-import com.example.filter.apis.PromptRequest;
-import com.example.filter.apis.AIStickreRetrofitClient;
+import com.example.filter.apis.service.AIStickerApi;
+import com.example.filter.apis.dto.AIStickerResponse;
+import com.example.filter.apis.dto.PromptRequest;
+import com.example.filter.apis.client.AIStickreRetrofitClient;
 
 import java.io.File;
 import java.util.ArrayList;

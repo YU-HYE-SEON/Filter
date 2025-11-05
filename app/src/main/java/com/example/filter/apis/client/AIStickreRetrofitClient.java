@@ -1,4 +1,4 @@
-package com.example.filter.apis;
+package com.example.filter.apis.client;
 
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;

@@ -39,7 +39,7 @@ import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.apis.FilterDtoCreateRequest;
+import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
 
