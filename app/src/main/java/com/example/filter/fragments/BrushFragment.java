@@ -54,6 +54,7 @@ import androidx.fragment.app.Fragment;
 import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
 import com.example.filter.dialogs.BrushToStickerDialog;
+import com.example.filter.items.StickerType;
 import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.BrushPrefs;
 import com.example.filter.etc.ClickUtils;
@@ -1924,7 +1925,7 @@ public class BrushFragment extends Fragment {
             }
 
             File f = savePngToStickers(cropped, requireContext());
-            StickerStore.get().enqueuePending(StickerItem.fromFile(f.getAbsolutePath()));
+            StickerStore.get().enqueuePending(StickerItem.fromFile(f.getAbsolutePath(), StickerType.BRUSH));
             showToast("내 스티커에 저장을 완료했습니다");
         } catch (Throwable t) {
             showToast("내 스티커에 저장을 실패했습니다");

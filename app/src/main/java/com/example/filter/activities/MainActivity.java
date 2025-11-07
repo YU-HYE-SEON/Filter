@@ -22,8 +22,10 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
 import com.example.filter.adapters.FilterAdapter;
+import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.StickerStore;
 import com.example.filter.items.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.fragments.SearchMainFragment;
@@ -63,6 +65,14 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ✅ ① StickerStore 초기화 및 서버 업로더 설정
+        StickerStore store = StickerStore.get();
+        store.init(getApplicationContext());
+        store.setUploader(new StickerRepository(getApplicationContext()));
+
+
+        // UI 초기화
         setContentView(R.layout.a_main);
         mainActivity = findViewById(R.id.mainActivity);
         logo = findViewById(R.id.logo);

@@ -32,6 +32,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.items.StickerType;
 import com.example.filter.overlayviews.LassoOverlayView;
 import com.example.filter.overlayviews.ShapeOverlayView;
 import com.example.filter.overlayviews.ShapeOverlayView.ShapeType;
@@ -327,7 +328,7 @@ public class LoadActivity extends BaseActivity {
                     }
                     if (!created.isEmpty()) {
                         for (File f : created) {
-                            StickerStore.get().enqueuePending(StickerItem.fromFile(f.getAbsolutePath()));
+                            StickerStore.get().enqueuePending(StickerItem.fromFile(f.getAbsolutePath(), StickerType.IMAGE)); // todo: image인지, brush인지ㅣ, 아니면 둘 다 여기서 처리하는지 모르겠음
                         }
                         msg = "내 스티커에 저장을 완료했습니다";
                     }
