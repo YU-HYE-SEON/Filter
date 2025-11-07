@@ -59,7 +59,7 @@
 
     <!-- 얼굴 인식 -->
     <FrameLayout
-        android:id="@+id/faceContainer"
+        android:id="@+id/faceOverlay"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipChildren="true"

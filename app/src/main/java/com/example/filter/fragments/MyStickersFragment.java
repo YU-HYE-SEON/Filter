@@ -1,11 +1,8 @@
 package com.example.filter.fragments;
 
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,10 +19,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
-import com.example.filter.activities.FilterActivity;
 import com.example.filter.adapters.MyStickersAdapter;
 import com.example.filter.dialogs.MyStickerDeleteDialog;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.Controller;
 import com.example.filter.items.StickerItem;
 import com.example.filter.etc.StickerStore;
 
@@ -39,7 +36,7 @@ public class MyStickersFragment extends Fragment {
     private View currentStickerView = null;
     private String currentStickerName = null;
     private int currentSelectedPos = RecyclerView.NO_POSITION;
-    private LayoutInflater cachedInflater;
+    private LayoutInflater inflater;
     private MyStickersAdapter adapter;
     private int baselineChildCount = 0;
     private boolean skipDisableOnce = false;
@@ -52,7 +49,7 @@ public class MyStickersFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_my_stickers, container, false);
 
-        cachedInflater = inflater;
+        this.inflater = inflater;
         myStickers = view.findViewById(R.id.myStickers);
         deleteStickerIcon = view.findViewById(R.id.deleteStickerIcon);
         cancelBtn = view.findViewById(R.id.cancelBtn);
@@ -110,7 +107,7 @@ public class MyStickersFragment extends Fragment {
         if (stickerOverlay != null) {
             for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                 View child = stickerOverlay.getChildAt(i);
-                hideControllers(child);
+                Controller.hideControllers(child);
 
                 if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
                     child.setOnClickListener(null);
@@ -123,16 +120,16 @@ public class MyStickersFragment extends Fragment {
                 boolean fromFaceFragment = args.getBoolean("fromFaceFragment", false);
 
                 if (restoreAllActive) {
-                    setStickerActive(child, true);
+                    Controller.setStickerActive(child, true);
                 } else if (fromFaceFragment) {
                     Object sid = child.getTag(R.id.tag_session_id);
                     if (sid instanceof Long && ((Long) sid) == sessionId) {
-                        setStickerActive(child, true);
+                        Controller.setStickerActive(child, true);
                     } else {
-                        setStickerActive(child, false);
+                        Controller.setStickerActive(child, false);
                     }
                 } else if (!skipDisableOnce) {
-                    setStickerActive(child, false);
+                    Controller.setStickerActive(child, false);
                 }
             }
         }
@@ -161,8 +158,9 @@ public class MyStickersFragment extends Fragment {
                     }
                 }
                 for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                    setStickerActive(stickerOverlay.getChildAt(i), true);
-                    hideControllers(stickerOverlay.getChildAt(i));
+                    View child = stickerOverlay.getChildAt(i);
+                    Controller.setStickerActive(child, true);
+                    Controller.hideControllers(stickerOverlay.getChildAt(i));
 
                     stickerOverlay.getChildAt(i).setTag(R.id.tag_prev_enabled, null);
                 }
@@ -183,8 +181,8 @@ public class MyStickersFragment extends Fragment {
             if (stickerOverlay != null) {
                 for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                     View child = stickerOverlay.getChildAt(i);
-                    hideControllers(child);
-                    setStickerActive(child, true);
+                    Controller.hideControllers(child);
+                    Controller.setStickerActive(child, true);
                 }
             }
 
@@ -204,7 +202,7 @@ public class MyStickersFragment extends Fragment {
     private void showStickerCentered(String key) {
         clearCurrentSticker();
 
-        View overlayViewLayout = cachedInflater.inflate(R.layout.v_sticker_edit, stickerOverlay, false);
+        View overlayViewLayout = inflater.inflate(R.layout.v_sticker_edit, stickerOverlay, false);
         ImageView stickerImage = overlayViewLayout.findViewById(R.id.stickerImage);
 
         File f = new File(key);
@@ -218,7 +216,7 @@ public class MyStickersFragment extends Fragment {
             if (resId != 0) stickerImage.setImageResource(resId);
         }
 
-        int sizePx = dpToPx(230);
+        int sizePx = Controller.dp(230, getResources());
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(sizePx, sizePx);
         overlayViewLayout.setLayoutParams(lp);
 
@@ -241,7 +239,7 @@ public class MyStickersFragment extends Fragment {
 
             overlayViewLayout.setTag(TAG_TEMP_PREVIEW, Boolean.TRUE);
 
-            setStickerActive(overlayViewLayout, true);
+            Controller.setStickerActive(overlayViewLayout, true);
 
             overlayViewLayout.setOnClickListener(v -> openEdit(key, overlayViewLayout));
         });
@@ -290,15 +288,15 @@ public class MyStickersFragment extends Fragment {
         }
         args.putBooleanArray("prevEnabled", prevEnabled);
 
-        hideControllersForAll(stickerOverlay);
+        hideControllersForAll();
 
         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
             View child = stickerOverlay.getChildAt(i);
             child.setTag(R.id.tag_prev_enabled, child.isEnabled());
-            MyStickersFragment.setStickerActive(child, child == stickerLayout);
+            Controller.setStickerActive(child, child == stickerLayout);
         }
 
-        setControllersVisible(stickerLayout, true);
+        Controller.setControllersVisible(stickerLayout, true);
         stickerLayout.setTag("editingSticker");
 
         stickerLayout.setOnClickListener(null);
@@ -313,11 +311,6 @@ public class MyStickersFragment extends Fragment {
                 .replace(R.id.bottomArea2, edit)
                 .addToBackStack("edit_from_stickers")
                 .commit();
-    }
-
-    private int dpToPx(int dp) {
-        float d = getResources().getDisplayMetrics().density;
-        return Math.round(dp * d);
     }
 
     /*public void consumePendingAndScrollToStart() {
@@ -338,53 +331,7 @@ public class MyStickersFragment extends Fragment {
         }
     }*/
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        StickerItem newly;
-        boolean inserted = false;
-        while ((newly = StickerStore.get().pollPending()) != null) {
-            adapter.insertAtFront(newly);
-            StickerStore.get().addToAllFront(newly);
-            inserted = true;
-        }
-        if (inserted) {
-            myStickers.scrollToPosition(0);
-            deleteStickerIcon.setEnabled(false);
-            deleteStickerIcon.setAlpha(0.4f);
-        }
-
-        if (stickerOverlay != null) {
-            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                View child = stickerOverlay.getChildAt(i);
-
-                hideControllers(child);
-
-                if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
-                    child.setOnClickListener(null);
-                    child.setClickable(false);
-                    child.setLongClickable(false);
-                    child.setEnabled(false);
-                    continue;
-                }
-
-                attachEditListenerForSticker(child, stickerOverlay);
-            }
-        }
-    }
-
-    private void raiseStickerToAbsoluteTop(@NonNull View sticker, @NonNull ViewGroup parent) {
-        float maxZ = 0f;
-        for (int i = 0; i < parent.getChildCount(); i++) {
-            maxZ = Math.max(maxZ, ViewCompat.getZ(parent.getChildAt(i)));
-        }
-        ViewCompat.setZ(sticker, maxZ + 1000f);
-        sticker.bringToFront();
-        parent.invalidate();
-    }
-
-    private void attachEditListenerForSticker(@NonNull View stickerView, @NonNull FrameLayout overlay) {
+    private void attachEditListenerForSticker(@NonNull View stickerView) {
         stickerView.setOnClickListener(null);
 
         if (Boolean.TRUE.equals(stickerView.getTag(R.id.tag_brush_layer))) {
@@ -410,9 +357,9 @@ public class MyStickersFragment extends Fragment {
                 return;
             }
 
-            int beforeIndex = overlay.indexOfChild(stickerView);
+            int beforeIndex = stickerOverlay.indexOfChild(stickerView);
             float beforeZ = ViewCompat.getZ(stickerView);
-            int n = overlay.getChildCount();
+            int n = stickerOverlay.getChildCount();
             boolean[] prevEnabled = new boolean[n];
 
             Bundle args = new Bundle();
@@ -420,9 +367,9 @@ public class MyStickersFragment extends Fragment {
             args.putBooleanArray("prevEnabled", prevEnabled);
             args.putFloat("prevElevation", beforeZ);
 
-            raiseStickerToAbsoluteTop(stickerView, overlay);
+            Controller.raiseStickerToAbsoluteTop(stickerView, stickerOverlay);
 
-            int afterIndex = overlay.indexOfChild(stickerView);
+            int afterIndex = stickerOverlay.indexOfChild(stickerView);
             float afterZ = ViewCompat.getZ(stickerView);
 
             /*if (act instanceof FilterActivity) {
@@ -432,20 +379,20 @@ public class MyStickersFragment extends Fragment {
             }*/
 
             stickerView.bringToFront();
-            overlay.requestLayout();
-            overlay.invalidate();
+            stickerOverlay.requestLayout();
+            stickerOverlay.invalidate();
 
-            for (int i = 0; i < n; i++) prevEnabled[i] = overlay.getChildAt(i).isEnabled();
+            for (int i = 0; i < n; i++) prevEnabled[i] = stickerOverlay.getChildAt(i).isEnabled();
 
-            hideControllersForAll(overlay);
+            hideControllersForAll();
 
-            for (int i = 0; i < overlay.getChildCount(); i++) {
-                View child = overlay.getChildAt(i);
+            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                View child = stickerOverlay.getChildAt(i);
                 child.setTag(R.id.tag_prev_enabled, child.isEnabled());
-                MyStickersFragment.setStickerActive(child, child == stickerView);
+                Controller.setStickerActive(child, child == stickerView);
             }
 
-            setControllersVisible(stickerView, true);
+            Controller.setControllersVisible(stickerView, true);
             stickerView.setTag("editingSticker");
 
             EditMyStickerFragment edit = new EditMyStickerFragment();
@@ -460,50 +407,14 @@ public class MyStickersFragment extends Fragment {
         });
     }
 
-    private void hideControllersForAll(@NonNull ViewGroup overlay) {
-        for (int i = 0; i < overlay.getChildCount(); i++) {
-            View child = overlay.getChildAt(i);
-            hideControllers(child);
+    private void hideControllersForAll() {
+        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+            View child = stickerOverlay.getChildAt(i);
+            Controller.hideControllers(child);
 
             Object t = child.getTag();
             if ("editingSticker".equals(t)) {
                 child.setTag(null);
-            }
-        }
-    }
-
-    public static void hideControllers(@NonNull View sticker) {
-        View ef = sticker.findViewById(R.id.editFrame);
-        View sc = sticker.findViewById(R.id.sizeController);
-        View rc = sticker.findViewById(R.id.rotateController);
-        if (ef != null) ef.setVisibility(View.INVISIBLE);
-        if (sc != null) sc.setVisibility(View.INVISIBLE);
-        if (rc != null) rc.setVisibility(View.INVISIBLE);
-    }
-
-    private void setControllersVisible(@NonNull View sticker, boolean visible) {
-        View editFrame = sticker.findViewById(R.id.editFrame);
-        View rotate = sticker.findViewById(R.id.rotateController);
-        View size = sticker.findViewById(R.id.sizeController);
-        int vis = visible ? View.VISIBLE : View.INVISIBLE;
-        if (editFrame != null) editFrame.setVisibility(vis);
-        if (rotate != null) rotate.setVisibility(vis);
-        if (size != null) size.setVisibility(vis);
-    }
-
-    public static void setStickerActive(@NonNull View stickerWrapper, boolean active) {
-        ImageView img = stickerWrapper.findViewById(R.id.stickerImage);
-
-        stickerWrapper.setEnabled(active);
-        stickerWrapper.setClickable(active);
-
-        if (img != null) {
-            if (active) {
-                img.setAlpha(1.0f);
-                img.clearColorFilter();
-            } else {
-                img.setAlpha(0.4f);
-                img.setColorFilter(Color.parseColor("#808080"), PorterDuff.Mode.SRC_ATOP);
             }
         }
     }
@@ -538,6 +449,42 @@ public class MyStickersFragment extends Fragment {
                 .withButton1Text("예")
                 .withButton2Text("아니오")
                 .show();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        StickerItem newly;
+        boolean inserted = false;
+        while ((newly = StickerStore.get().pollPending()) != null) {
+            adapter.insertAtFront(newly);
+            StickerStore.get().addToAllFront(newly);
+            inserted = true;
+        }
+        if (inserted) {
+            myStickers.scrollToPosition(0);
+            deleteStickerIcon.setEnabled(false);
+            deleteStickerIcon.setAlpha(0.4f);
+        }
+
+        if (stickerOverlay != null) {
+            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                View child = stickerOverlay.getChildAt(i);
+
+                Controller.hideControllers(child);
+
+                if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
+                    child.setOnClickListener(null);
+                    child.setClickable(false);
+                    child.setLongClickable(false);
+                    child.setEnabled(false);
+                    continue;
+                }
+
+                attachEditListenerForSticker(child);
+            }
+        }
     }
 
     @Override

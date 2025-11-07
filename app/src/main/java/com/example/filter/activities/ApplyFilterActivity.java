@@ -33,6 +33,7 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.FaceDetect;
 import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
 import com.example.filter.fragments.StickersFragment;
@@ -47,9 +48,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ApplyFilterActivity extends BaseActivity {
-    public interface FaceDetectionCallback {
-        void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
-    }
     public static ApplyFilterActivity thisRef;
     private ImageButton backBtn;
     private FrameLayout photoContainer, brushOverlay, stickerOverlay;
@@ -152,7 +150,7 @@ public class ApplyFilterActivity extends BaseActivity {
 
                     faceBox = new FaceBoxOverlayView(this);
                     photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                    detectFaces(this.originalImageBitmap, (faces, originalBitmap) -> {
+                    FaceDetect.detectFaces(this.originalImageBitmap, faceBox, (faces, originalBitmap) -> {
                         if (faces.isEmpty()) return;
                     });
                 }
@@ -195,7 +193,7 @@ public class ApplyFilterActivity extends BaseActivity {
         });
     }
 
-    public static void detectFaces(Bitmap bitmap, ApplyFilterActivity.FaceDetectionCallback callback) {
+    /*public static void detectFaces(Bitmap bitmap, ApplyFilterActivity.FaceDetectionCallback callback) {
         if (bitmap == null) {
             if (callback != null) {
                 callback.onFacesDetected(new ArrayList<>(), null);
@@ -343,7 +341,7 @@ public class ApplyFilterActivity extends BaseActivity {
                     }
                     detector.close();
                 });
-    }
+    }*/
 
     private void setupReviewPop() {
         FrameLayout rootView = findViewById(R.id.reviewPopOff);

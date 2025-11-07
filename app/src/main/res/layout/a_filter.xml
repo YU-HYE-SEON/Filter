@@ -262,7 +262,7 @@
 
     <!-- 얼굴 인식 오버레이 -->
     <FrameLayout
-        android:id="@+id/faceOverlay"
+        android:id="@+id/faceContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />

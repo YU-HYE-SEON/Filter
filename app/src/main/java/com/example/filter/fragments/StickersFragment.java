@@ -30,6 +30,8 @@ import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
 import com.example.filter.activities.LoadActivity;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.Controller;
+import com.example.filter.etc.FaceDetect;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
@@ -41,10 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StickersFragment extends Fragment {
-    public interface FaceDetectionCallback {
-        void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
-    }
-
     public static FaceBoxOverlayView faceBox;
     private ImageView myStickerIcon;
     private ImageView loadStickerIcon;
@@ -74,7 +72,7 @@ public class StickersFragment extends Fragment {
                 }
             });
 
-    @SuppressLint("ClickableViewAccessibility")
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -123,6 +121,18 @@ public class StickersFragment extends Fragment {
             brushToSticker.setVisibility(View.GONE);
         }
 
+        FilterActivity activity = (FilterActivity) requireActivity();
+        FrameLayout photoPreviewContainer = activity.findViewById(R.id.photoPreviewContainer);
+
+        faceBox = new FaceBoxOverlayView(requireContext());
+        photoPreviewContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        activity.getPhotoPreview().queueEvent(() -> {
+            Bitmap bmp = activity.getRenderer().getCurrentBitmap();
+            activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, originalBitmap) -> {
+                if (faces.isEmpty()) return;
+            }));
+        });
+
         myStickerIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -142,18 +152,6 @@ public class StickersFragment extends Fragment {
                 boolean skipDisableOnce = false;
                 args.putBoolean("skipDisableOnce", skipDisableOnce);
                 f.setArguments(args);
-
-                FilterActivity activity = (FilterActivity) requireActivity();
-                FrameLayout photoPreviewContainer = activity.findViewById(R.id.photoPreviewContainer);
-
-                faceBox = new FaceBoxOverlayView(requireContext());
-                photoPreviewContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                activity.getPhotoPreview().queueEvent(() -> {
-                    Bitmap bmp = activity.getRenderer().getCurrentBitmap();
-                    activity.runOnUiThread(() -> detectFaces(bmp, (faces, originalBitmap) -> {
-                        if (faces.isEmpty()) return;
-                    }));
-                });
 
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
@@ -224,127 +222,32 @@ public class StickersFragment extends Fragment {
         return view;
     }
 
-    public static void detectFaces(Bitmap bitmap, FaceDetectionCallback callback) {
-        if (bitmap == null) {
-            if (callback != null) {
-                callback.onFacesDetected(new ArrayList<>(), null);
-            }
-            return;
-        }
+    /*private void rewireOverlayClickListeners() {
+        FrameLayout overlay = requireActivity().findViewById(R.id.stickerOverlay);
+        if (overlay == null) return;
 
-        InputImage image = InputImage.fromBitmap(bitmap, 0);
-
-        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                .build();
-
-        FaceDetector detector = FaceDetection.getClient(options);
-
-        detector.process(image)
-                .addOnSuccessListener(faces -> {
-                    List<Rect> rects = new ArrayList<>();
-
-                    for (int i = 0; i < faces.size(); i++) {
-                        Face face = faces.get(i);
-                        rects.add(face.getBoundingBox());
-                        //Log.d("얼굴인식", "========================= photoPreview 속 Face [" + (i + 1) + "] =========================");
-                        //getFaceLandmarks(face);
-                        //getFaceContours(face);
-                    }
-
-                    if (faceBox != null) {
-                        if (!faces.isEmpty()) {
-                            faceBox.setVisibility(View.VISIBLE);
-                            faceBox.setFaceBoxes(rects, bitmap.getWidth(), bitmap.getHeight());
-                        } else {
-                            faceBox.clearBoxes();
-                            faceBox.setVisibility(View.GONE);
-                        }
-                    }
-
-                    if (callback != null) {
-                        callback.onFacesDetected(faces, bitmap);
-                    }
-
-                    detector.close();
-                })
-                .addOnFailureListener(e -> {
-                    if (faceBox != null) {
-                        faceBox.clearBoxes();
-                        faceBox.setVisibility(View.GONE);
-                    }
-                    if (callback != null) {
-                        callback.onFacesDetected(new ArrayList<>(), bitmap);
-                    }
-                    detector.close();
-                });
-    }
-
-    /*private static void logFaceLandmark(Face face, String label, int type) {
-        FaceLandmark lm = face.getLandmark(type);
-        if (lm == null) {
-            Log.d("얼굴인식", label + " : 인식 실패");
-            return;
-        }
-        PointF p = lm.getPosition();
-        Log.d("얼굴인식", label + " : (" + p.x + ", " + p.y + ")");
-    }
-
-    private static void getFaceLandmarks(Face face) {
-        logFaceLandmark(face, "LEFT_EYE : ", FaceLandmark.LEFT_EYE);
-        logFaceLandmark(face, "RIGHT_EYE : ", FaceLandmark.RIGHT_EYE);
-        logFaceLandmark(face, "NOSE_BASE : ", FaceLandmark.NOSE_BASE);
-        logFaceLandmark(face, "MOUTH_BOTTOM : ", FaceLandmark.MOUTH_BOTTOM);
-        logFaceLandmark(face, "LEFT_CHEEK : ", FaceLandmark.LEFT_CHEEK);
-        logFaceLandmark(face, "RIGHT_CHEEK : ", FaceLandmark.RIGHT_CHEEK);
-    }
-
-    private static void logFaceContour(Face face, String label, int type) {
-        FaceContour contour = face.getContour(type);
-        if (contour == null || contour.getPoints() == null || contour.getPoints().isEmpty()) {
-            Log.d("얼굴인식", label + " : 인식 실패");
-            return;
-        }
-        List<PointF> points = contour.getPoints();
-        StringBuilder sb = new StringBuilder();
-        sb.append(label).append("[");
-        for (int i = 0; i < points.size(); i++) {
-            PointF p = points.get(i);
-            sb.append(String.format("(%.1f, %.1f)", p.x, p.y));
-            if (i < points.size() - 1) sb.append(", ");
-        }
-        sb.append("]");
-        Log.d("얼굴인식", sb.toString());
-    }
-
-    private static void getFaceContours(Face face) {
-        logFaceContour(face, "FaceContour : ", FaceContour.FACE);
-    }*/
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
-        if (stickerOverlay == null) return;
-        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-            View child = stickerOverlay.getChildAt(i);
+        for (int i = 0; i < overlay.getChildCount(); i++) {
+            View child = overlay.getChildAt(i);
 
             if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
-                child.setOnClickListener(null);
-                child.setClickable(false);
-                child.setLongClickable(false);
-                child.setEnabled(false);
                 continue;
             }
 
+            child.setOnClickListener(null);
+            child.setTag(null);
+            child.setTag(R.id.tag_prev_enabled, null);
+
             MyStickersFragment.setStickerActive(child, true);
             MyStickersFragment.hideControllers(child);
-            attachEditListenerForSticker(child, stickerOverlay);
+
+            attachEditListenerForSticker(child, overlay);
         }
-    }
+
+        FilterActivity activity = (FilterActivity) getActivity();
+        if (activity != null) {
+            activity.refreshStickerButtons();
+        }
+    }*/
 
     private void attachEditListenerForSticker(@NonNull View stickerView, @NonNull FrameLayout overlay) {
         stickerView.setOnClickListener(null);
@@ -357,7 +260,7 @@ public class StickersFragment extends Fragment {
 
             Fragment cur = act.getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
             if (cur instanceof EditMyStickerFragment) return;
-            if (ClickUtils.isFastClick(v, 400)) return;
+            //if (ClickUtils.isFastClick(v, 400)) return;
 
             if (stickerView.findViewById(R.id.stickerImage) == null ||
                     stickerView.findViewById(R.id.editFrame) == null ||
@@ -367,7 +270,7 @@ public class StickersFragment extends Fragment {
             }
 
             int beforeIndex = overlay.indexOfChild(stickerView);
-            float beforeZ = androidx.core.view.ViewCompat.getZ(stickerView);
+            float beforeZ = ViewCompat.getZ(stickerView);
 
             int lastIndex = overlay.getChildCount() - 1;
             float maxZ = Float.NEGATIVE_INFINITY;
@@ -382,7 +285,7 @@ public class StickersFragment extends Fragment {
             float afterZ = beforeZ;
 
             if (!alreadyAbsoluteTop) {
-                raiseStickerToAbsoluteTop(stickerView, overlay);
+                Controller.raiseStickerToAbsoluteTop(stickerView, overlay);
                 afterIndex = overlay.indexOfChild(stickerView);
                 afterZ = ViewCompat.getZ(stickerView);
 
@@ -401,7 +304,7 @@ public class StickersFragment extends Fragment {
 
             for (int i = 0; i < overlay.getChildCount(); i++) {
                 View child = overlay.getChildAt(i);
-                MyStickersFragment.hideControllers(child);
+                Controller.hideControllers(child);
                 Object t = child.getTag();
                 if ("editingSticker".equals(t)) {
                     child.setTag(null);
@@ -411,10 +314,10 @@ public class StickersFragment extends Fragment {
             for (int i = 0; i < overlay.getChildCount(); i++) {
                 View child = overlay.getChildAt(i);
                 child.setTag(R.id.tag_prev_enabled, child.isEnabled());
-                MyStickersFragment.setStickerActive(child, child == stickerView);
+                Controller.setStickerActive(child, child == stickerView);
             }
 
-            setControllersVisible(stickerView, true);
+            Controller.setControllersVisible(stickerView, true);
             stickerView.setTag("editingSticker");
 
             Bundle args = new Bundle();
@@ -444,53 +347,26 @@ public class StickersFragment extends Fragment {
         });
     }
 
-    private void raiseStickerToAbsoluteTop(@NonNull View sticker, @NonNull ViewGroup parent) {
-        float maxZ = 0f;
-        for (int i = 0; i < parent.getChildCount(); i++) {
-            maxZ = Math.max(maxZ, ViewCompat.getZ(parent.getChildAt(i)));
-        }
-        ViewCompat.setZ(sticker, maxZ + 1000f);
-        sticker.bringToFront();
-        parent.invalidate();
-    }
-
-    /*private void rewireOverlayClickListeners() {
-        FrameLayout overlay = requireActivity().findViewById(R.id.stickerOverlay);
-        if (overlay == null) return;
-
-        for (int i = 0; i < overlay.getChildCount(); i++) {
-            View child = overlay.getChildAt(i);
+    @Override
+    public void onResume() {
+        super.onResume();
+        FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
+        if (stickerOverlay == null) return;
+        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+            View child = stickerOverlay.getChildAt(i);
 
             if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
+                child.setOnClickListener(null);
+                child.setClickable(false);
+                child.setLongClickable(false);
+                child.setEnabled(false);
                 continue;
             }
 
-            child.setOnClickListener(null);
-            child.setTag(null);
-            child.setTag(R.id.tag_prev_enabled, null);
-
-            MyStickersFragment.setStickerActive(child, true);
-            MyStickersFragment.hideControllers(child);
-
-            attachEditListenerForSticker(child, overlay);
+            Controller.setStickerActive(child, true);
+            Controller.hideControllers(child);
+            attachEditListenerForSticker(child, stickerOverlay);
         }
-
-        FilterActivity activity = (FilterActivity) getActivity();
-        if (activity != null) {
-            activity.refreshStickerButtons();
-        }
-    }*/
-
-    private void setControllersVisible(@NonNull View sticker, boolean visible) {
-        View editFrame = sticker.findViewById(R.id.editFrame);
-        View rotate = sticker.findViewById(R.id.rotateController);
-        View size = sticker.findViewById(R.id.sizeController);
-
-        int vis = visible ? View.VISIBLE : View.INVISIBLE;
-
-        if (editFrame != null) editFrame.setVisibility(vis);
-        if (rotate != null) rotate.setVisibility(vis);
-        if (size != null) size.setVisibility(vis);
     }
 
     @Override

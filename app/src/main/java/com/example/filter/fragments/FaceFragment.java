@@ -1,6 +1,5 @@
 package com.example.filter.fragments;
 
-import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -8,7 +7,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -27,33 +25,24 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
+import com.example.filter.etc.Controller;
+import com.example.filter.etc.FaceDetect;
 import com.example.filter.etc.FaceModeViewModel;
 import com.example.filter.etc.FaceStickerData;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
-import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
-import com.google.mlkit.vision.face.FaceDetection;
-import com.google.mlkit.vision.face.FaceDetector;
-import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
 public class FaceFragment extends Fragment {
-    private FrameLayout faceContainer;
+    private FrameLayout faceOverlay;
     private ImageView faceModel;
     private View stickerWrapper;
     private CheckBox checkBox;
     private ImageButton cancelBtn, checkBtn;
-    private ImageView editFrame, rotateController, sizeController;
-    private float downRawX, downRawY, startX, startY;
-    private float rotStartWrapperDeg, rotLastAngleDeg, rotAccumDeg;
-    private int startW, startH;
-    private static final int CTRL_BASE_DP = 30;
-    private static final int CTRL_MIN_DP = 22;
+    private ImageView stickerImage, editFrame, rotateController, sizeController;
     private static final int WRAPPER_MIN_DP = 100;
-    private final float ROT_MIN_RADIUS_DP = 24f;
-    //public static String sLastReturnOriginAction = null;
     private FaceModeViewModel viewModel;
     private FaceBoxOverlayView faceBox;
     private ConstraintLayout topArea;
@@ -67,14 +56,12 @@ public class FaceFragment extends Fragment {
     //private final String currentFaceBatchId = "face_batch_" + System.currentTimeMillis();
     private final String currentFaceBatchId = "face_batch_" + System.currentTimeMillis();
     private String returnOrigin = "mystickers";
-    //private float bx, by, bw, bh, br;
-    //private float ax, ay, aw, ah, ar;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_face, container, false);
-        faceContainer = view.findViewById(R.id.faceContainer);
+        faceOverlay = view.findViewById(R.id.faceOverlay);
         faceModel = view.findViewById(R.id.faceModel);
 
         return view;
@@ -108,31 +95,33 @@ public class FaceFragment extends Fragment {
 
         if (bitmap == null) return;
 
+        FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
         LayoutInflater inflater = LayoutInflater.from(requireContext());
-        stickerWrapper = inflater.inflate(R.layout.v_sticker_edit, faceContainer, false);
-
-        ImageView stickerImage = stickerWrapper.findViewById(R.id.stickerImage);
+        stickerWrapper = inflater.inflate(R.layout.v_sticker_edit, faceOverlay, false);
+        editFrame = stickerWrapper.findViewById(R.id.editFrame);
+        stickerImage = stickerWrapper.findViewById(R.id.stickerImage);
+        rotateController = stickerWrapper.findViewById(R.id.rotateController);
+        sizeController = stickerWrapper.findViewById(R.id.sizeController);
         stickerImage.setImageBitmap(bitmap);
 
-        faceContainer.post(() -> {
-            int sizePx = dpToPx(230);
+        faceOverlay.post(() -> {
+            int sizePx = Controller.dp(230, getResources());
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(sizePx, sizePx);
             stickerWrapper.setLayoutParams(lp);
-            float cx = (faceContainer.getWidth() - sizePx) / 2f;
-            float cy = (faceContainer.getHeight() - sizePx) / 2f;
+            float cx = (faceOverlay.getWidth() - sizePx) / 2f;
+            float cy = (faceOverlay.getHeight() - sizePx) / 2f;
             stickerWrapper.setX(cx);
             stickerWrapper.setY(cy);
 
             ViewParent parent = stickerWrapper.getParent();
             if (parent instanceof ViewGroup) ((ViewGroup) parent).removeView(stickerWrapper);
 
-            faceContainer.addView(stickerWrapper);
+            faceOverlay.addView(stickerWrapper);
         });
 
-        enableStickerControl(stickerWrapper);
+        Controller.enableStickerControl(stickerWrapper, editFrame, rotateController, sizeController, faceModel, getResources());
         String stickerId = args.getString("stickerId", "unknown");
 
-        FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
         if (stickerOverlay != null) {
             for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                 View child = stickerOverlay.getChildAt(i);
@@ -178,7 +167,6 @@ public class FaceFragment extends Fragment {
                 }
             }
 
-
             Fragment targetFragment;
             if ("stickers".equals(returnOrigin)) {
                 targetFragment = new StickersFragment();
@@ -199,7 +187,7 @@ public class FaceFragment extends Fragment {
                     .replace(R.id.bottomArea2, targetFragment)
                     .commit();
 
-            requireActivity().findViewById(R.id.faceOverlay).setVisibility(View.GONE);
+            requireActivity().findViewById(R.id.faceContainer).setVisibility(View.GONE);
         });
 
         checkBtn.setOnClickListener(v -> {
@@ -230,15 +218,6 @@ public class FaceFragment extends Fragment {
                 float relW = meta.getFloat("relW");
                 float relH = meta.getFloat("relH");
                 float stickerR = meta.getFloat("stickerR");
-
-                //bx = relX;
-                //by = relY;
-                //bw = relW;
-                //bh = relH;
-                //br = stickerR;
-
-                //Log.d("StickerMeta", String.format("마이스티커프래그먼트 사진 속 얼굴들 :: X=%.3f, Y=%.3f, W=%.3f, H=%.3f, R=%.3f", relX, relY, relW, relH, stickerR));
-                //Log.d("StickerMeta", String.format("마이스티커프래그먼트 사진 속 얼굴들 :: bX=%.3f, bY=%.3f, bW=%.3f, bH=%.3f, bR=%.3f", bx, by, bw, bh, br));
 
 
                 ImageView stickerImageView = stickerWrapper.findViewById(R.id.stickerImage);
@@ -275,7 +254,7 @@ public class FaceFragment extends Fragment {
                 vm.setFaceStickerData(data);
 
                 View stickerToClone = stickerWrapper;
-                removeStickerWrapper();
+                Controller.removeStickerWrapper(stickerWrapper);
 
                 FilterActivity activity = (FilterActivity) getActivity();
                 if (activity == null) return;
@@ -293,12 +272,12 @@ public class FaceFragment extends Fragment {
                                         .replace(R.id.bottomArea2, new MyStickersFragment())
                                         .commit();
 
-                                requireActivity().findViewById(R.id.faceOverlay).setVisibility(View.GONE);
+                                requireActivity().findViewById(R.id.faceContainer).setVisibility(View.GONE);
                             });
                         }
                         return;
                     }
-                    activity.runOnUiThread(() -> StickersFragment.detectFaces(bmp, (faces, originalBitmap) -> {
+                    activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, originalBitmap) -> {
                         if (!isAdded()) return;
 
                         if (faces.isEmpty()) {
@@ -357,7 +336,7 @@ public class FaceFragment extends Fragment {
                                     int stickerW_view = Math.round(stickerW * scale);
                                     int stickerH_view = Math.round(stickerH * scale);
 
-                                    int minStickerPx = dp(WRAPPER_MIN_DP);
+                                    int minStickerPx = Controller.dp(WRAPPER_MIN_DP, getResources());
                                     if (stickerW_view < minStickerPx || stickerH_view < minStickerPx) {
                                         float ratio = (float) stickerW_view / (float) stickerH_view;
                                         if (stickerW_view < stickerH_view) {
@@ -388,8 +367,8 @@ public class FaceFragment extends Fragment {
                                     newSticker.setTag(R.id.tag_face_generated, true);
                                     newSticker.setTag(R.id.tag_face_batch_id, currentFaceBatchId);
 
-                                    MyStickersFragment.hideControllers(newSticker);
-                                    MyStickersFragment.setStickerActive(newSticker, true);
+                                    Controller.hideControllers(newSticker);
+                                    Controller.setStickerActive(newSticker, true);
 
                                     if (isBatchEdit && batchId != null && stickerOverlay != null) {
                                         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
@@ -428,7 +407,7 @@ public class FaceFragment extends Fragment {
                                 .replace(R.id.bottomArea2, targetFragment)
                                 .commit();
 
-                        requireActivity().findViewById(R.id.faceOverlay).setVisibility(View.GONE);
+                        requireActivity().findViewById(R.id.faceContainer).setVisibility(View.GONE);
                     }));
                 });
             }
@@ -445,16 +424,12 @@ public class FaceFragment extends Fragment {
             viewModel.setStickerState(stickerId, isChecked);
             if (!isChecked) {
                 requireActivity().getSupportFragmentManager().popBackStack();
-                requireActivity().findViewById(R.id.faceOverlay).setVisibility(View.GONE);
+                requireActivity().findViewById(R.id.faceContainer).setVisibility(View.GONE);
             }
         });
 
-
-        //String batchId = args.getString("batchId", null);
-        //boolean isBatchEdit = args.getBoolean("isBatchEdit", false);
-
         faceBox = new FaceBoxOverlayView(requireContext());
-        faceContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        faceOverlay.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         faceModel.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -467,54 +442,14 @@ public class FaceFragment extends Fragment {
                 Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
                 Canvas c = new Canvas(bmp);
                 faceModel.draw(c);
-                detectFaces(bmp);
+                FaceDetect.detectFaces(bmp, faceBox, (faces, originalBitmap) -> {
+                    if (faces.isEmpty()) return;
+                });
             }
         });
-
-        /*if (isBatchEdit && batchId != null) {
-            loadExistingBatch(batchId);
-        }*/
     }
 
-    public void detectFaces(Bitmap bitmap) {
-        if (bitmap == null) return;
-
-        InputImage image = InputImage.fromBitmap(bitmap, 0);
-
-        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-                .build();
-
-        FaceDetector detector = FaceDetection.getClient(options);
-
-        detector.process(image)
-                .addOnSuccessListener(faces -> {
-                    if (!faces.isEmpty()) {
-                        Face face = faces.get(0);
-                        lastFaceBox = face.getBoundingBox();
-
-                        faceBox.setVisibility(View.VISIBLE);
-                        faceBox.setFaceBox(lastFaceBox, bitmap.getWidth(), bitmap.getHeight());
-
-                        updateMeta();
-
-                    } else {
-                        faceBox.clearBoxes();
-                        faceBox.setVisibility(View.GONE);
-                    }
-
-                    detector.close();
-                })
-                .addOnFailureListener(e -> {
-                    faceBox.clearBoxes();
-                    faceBox.setVisibility(View.GONE);
-                    detector.close();
-                });
-    }
-
-    private void updateMeta() {
+    /*private void updateMeta() {
         if (lastFaceBox == null || stickerWrapper == null) return;
 
         float stickerX = stickerWrapper.getX();
@@ -534,22 +469,13 @@ public class FaceFragment extends Fragment {
         float relW = stickerW / (float) lastFaceBox.width();
         float relH = stickerH / (float) lastFaceBox.height();
 
-        //ax = relX;
-        //ay = relY;
-        //aw = relW;
-        //ah = relH;
-        //ar = stickerR;
-
-        //Log.d("StickerMeta", String.format("페이스프래그먼트 faceModel :: X=%.3f, Y=%.3f, W=%.3f, H=%.3f, R=%.3f", relX, relY, relW, relH, stickerR));
-        //Log.d("StickerMeta", String.format("페이스프래그먼트 faceModel :: aX=%.3f, aY=%.3f, aW=%.3f, aH=%.3f, aR=%.3f", ax, ay, aw, ah, ar));
-
         meta = new Bundle();
         meta.putFloat("relX", relX);
         meta.putFloat("relY", relY);
         meta.putFloat("relW", relW);
         meta.putFloat("relH", relH);
         meta.putFloat("stickerR", stickerR);
-    }
+    }*/
 
     private View cloneSticker(View originalSticker) {
         if (originalSticker == null || getContext() == null) return null;
@@ -569,47 +495,6 @@ public class FaceFragment extends Fragment {
         return newSticker;
     }
 
-    /*private void loadExistingBatch(@NonNull String batchId) {
-        FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
-        if (stickerOverlay == null) return;
-
-        View firstSticker = null;
-        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-            //View child = stickerOverlay.getChildAt(i);
-            //Object bid = child.getTag(R.id.tag_face_batch_id);
-            //if (batchId.equals(bid)) {
-            //    firstSticker = child;
-            //    break;
-            //}
-        }
-        if (firstSticker == null) return;
-
-        LayoutInflater inflater = LayoutInflater.from(requireContext());
-        stickerWrapper = inflater.inflate(R.layout.v_sticker_edit, null, false);
-        ImageView stickerImage = stickerWrapper.findViewById(R.id.stickerImage);
-        ImageView oldImage = firstSticker.findViewById(R.id.stickerImage);
-        if (oldImage != null && oldImage.getDrawable() != null) {
-            stickerImage.setImageDrawable(oldImage.getDrawable().getConstantState().newDrawable());
-        }
-
-        faceContainer.post(() -> {
-            int sizePx = dpToPx(230);
-            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(sizePx, sizePx);
-            stickerWrapper.setLayoutParams(lp);
-            float cx = (faceContainer.getWidth() - sizePx) / 2f;
-            float cy = (faceContainer.getHeight() - sizePx) / 2f;
-            stickerWrapper.setX(cx);
-            stickerWrapper.setY(cy);
-
-            ViewParent parent = stickerWrapper.getParent();
-            if (parent instanceof ViewGroup) ((ViewGroup) parent).removeView(stickerWrapper);
-
-            faceContainer.addView(stickerWrapper);
-        });
-
-        enableStickerControl(stickerWrapper);
-    }*/
-
     private void showToast(String message) {
         isToastVisible = true;
 
@@ -622,12 +507,12 @@ public class FaceFragment extends Fragment {
         tv.setTextColor(0XFFFFFFFF);
         tv.setTextSize(16);
         tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        tv.setPadding(dp(14), dp(10), dp(14), dp(10));
-        tv.setElevation(dp(4));
+        tv.setPadding(Controller.dp(14, getResources()), Controller.dp(10, getResources()), Controller.dp(14, getResources()), Controller.dp(10, getResources()));
+        tv.setElevation(Controller.dp(4, getResources()));
 
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(0xCC222222);
-        bg.setCornerRadius(dp(16));
+        bg.setCornerRadius(Controller.dp(16, getResources()));
         tv.setBackground(bg);
 
         ConstraintLayout.LayoutParams lp =
@@ -651,221 +536,6 @@ public class FaceFragment extends Fragment {
                     isToastVisible = false;
                 })
                 .start(), 2000);
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private void enableStickerControl(View stickerWrapper) {
-        editFrame = stickerWrapper.findViewById(R.id.editFrame);
-        rotateController = stickerWrapper.findViewById(R.id.rotateController);
-        sizeController = stickerWrapper.findViewById(R.id.sizeController);
-
-        editFrame.setVisibility(View.VISIBLE);
-        rotateController.setVisibility(View.VISIBLE);
-        sizeController.setVisibility(View.VISIBLE);
-
-        View.OnTouchListener moveListener = (view, event) -> {
-            if (stickerWrapper == null) return false;
-
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    downRawX = event.getRawX();
-                    downRawY = event.getRawY();
-                    startX = stickerWrapper.getX();
-                    startY = stickerWrapper.getY();
-                    return true;
-                case MotionEvent.ACTION_MOVE:
-                    stickerWrapper.setX(startX + (event.getRawX() - downRawX));
-                    stickerWrapper.setY(startY + (event.getRawY() - downRawY));
-                    return true;
-                case MotionEvent.ACTION_UP:
-                    updateMeta();
-                    return true;
-            }
-            return false;
-        };
-        editFrame.setOnTouchListener(moveListener);
-
-        rotateController.setOnTouchListener((view1, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN: {
-                    ViewParent p = view1.getParent();
-                    if (p != null) p.requestDisallowInterceptTouchEvent(true);
-                    float[] c = getWrapperCenterInOverlay();
-                    float[] t = getTouchInOverlay(event);
-                    float r = dist(t[0], t[1], c[0], c[1]);
-                    if (r < dp((int) ROT_MIN_RADIUS_DP)) return false;
-                    rotStartWrapperDeg = stickerWrapper.getRotation();
-                    rotLastAngleDeg = angleDeg(c[0], c[1], t[0], t[1]);
-                    rotAccumDeg = 0f;
-                    view1.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
-                    return true;
-                }
-                case MotionEvent.ACTION_MOVE: {
-                    float[] c = getWrapperCenterInOverlay();
-                    float[] t = getTouchInOverlay(event);
-                    float r = dist(t[0], t[1], c[0], c[1]);
-                    if (r < dp((int) ROT_MIN_RADIUS_DP)) return true;
-                    float cur = angleDeg(c[0], c[1], t[0], t[1]);
-                    float step = shortestDeltaDeg(rotLastAngleDeg, cur);
-                    if (Math.abs(step) > 60f) {
-                        rotLastAngleDeg = cur;
-                        return true;
-                    }
-                    rotAccumDeg += step;
-                    rotLastAngleDeg = cur;
-                    float target = rotStartWrapperDeg + rotAccumDeg;
-                    stickerWrapper.setRotation(target);
-                    updateControllerAngles();
-                    return true;
-                }
-                case MotionEvent.ACTION_UP:
-                    updateMeta();
-                    return true;
-            }
-            return false;
-        });
-
-        sizeController.setOnTouchListener((view12, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN: {
-                    float[] c = getWrapperCenterInOverlay();
-                    float[] t = getTouchInOverlay(event);
-                    float vx = t[0] - c[0];
-                    float vy = t[1] - c[1];
-                    float startRadius = (float) Math.hypot(vx, vy);
-                    if (startRadius < 1f) return false;
-                    startW = Math.max(1, stickerWrapper.getLayoutParams().width);
-                    startH = Math.max(1, stickerWrapper.getLayoutParams().height);
-                    view12.setTag(new float[]{c[0], c[1], vx / startRadius, vy / startRadius, startRadius});
-                    return true;
-                }
-                case MotionEvent.ACTION_MOVE: {
-                    float[] tag = (float[]) view12.getTag();
-                    if (tag == null) return false;
-                    float cX = tag[0], cY = tag[1], dirX = tag[2], dirY = tag[3], startRadius = tag[4];
-                    float[] t = getTouchInOverlay(event);
-                    float cx = t[0] - cX, cy = t[1] - cY;
-                    float proj = cx * dirX + cy * dirY;
-                    float rawScale = proj / startRadius;
-
-                    int minSizePx = dp(WRAPPER_MIN_DP);
-                    float minScaleW = (float) minSizePx / (float) startW;
-                    float minScaleH = (float) minSizePx / (float) startH;
-                    float minScale = Math.max(minScaleW, minScaleH);
-                    if (rawScale < minScale) rawScale = minScale;
-
-                    int newW = Math.max(minSizePx, Math.round(startW * rawScale));
-                    int newH = Math.max(minSizePx, Math.round(startH * rawScale));
-
-                    float centerX = stickerWrapper.getX() + stickerWrapper.getWidth() / 2f;
-                    float centerY = stickerWrapper.getY() + stickerWrapper.getHeight() / 2f;
-
-                    stickerWrapper.getLayoutParams().width = newW;
-                    stickerWrapper.getLayoutParams().height = newH;
-                    stickerWrapper.requestLayout();
-                    stickerWrapper.setPivotX(newW / 2f);
-                    stickerWrapper.setPivotY(newH / 2f);
-                    stickerWrapper.setX(centerX - newW / 2f);
-                    stickerWrapper.setY(centerY - newH / 2f);
-
-                    updateControllersSizeAndAngle();
-                    return true;
-                }
-                case MotionEvent.ACTION_UP:
-                    updateMeta();
-                    return true;
-            }
-            return false;
-        });
-    }
-
-    private void updateControllerAngles() {
-        if (stickerWrapper == null) return;
-        float r = stickerWrapper.getRotation();
-        if (rotateController != null) rotateController.setRotation(-r);
-    }
-
-    private void updateControllersSizeAndAngle() {
-        if (stickerWrapper == null) return;
-        int ctrlPx = Math.max(dp(CTRL_MIN_DP), dp(CTRL_BASE_DP));
-        applySize(rotateController, ctrlPx, ctrlPx);
-        applySize(sizeController, ctrlPx, ctrlPx);
-        updateControllerAngles();
-        stickerWrapper.post(this::positionControllers);
-    }
-
-    private float[] getTouchInOverlay(MotionEvent e) {
-        int[] ov = new int[2];
-        faceModel.getLocationOnScreen(ov);
-        return new float[]{e.getRawX() - ov[0], e.getRawY() - ov[1]};
-    }
-
-    private float[] getWrapperCenterInOverlay() {
-        return new float[]{
-                stickerWrapper.getX() + stickerWrapper.getPivotX(),
-                stickerWrapper.getY() + stickerWrapper.getPivotY()
-        };
-    }
-
-    private void positionControllers() {
-        if (stickerWrapper == null || editFrame == null || rotateController == null || sizeController == null)
-            return;
-
-        float fx = editFrame.getX();
-        float fy = editFrame.getY();
-        float fw = editFrame.getWidth();
-        float fh = editFrame.getHeight();
-
-        int rcW = rotateController.getWidth(), rcH = rotateController.getHeight();
-        int scW = sizeController.getWidth(), scH = sizeController.getHeight();
-
-        rotateController.setX(fx - rcW / 2f);
-        rotateController.setY(fy - rcH / 2f);
-
-        sizeController.setX(fx + fw - scW / 2f);
-        sizeController.setY(fy + fh - scH / 2f);
-    }
-
-    private float angleDeg(float cx, float cy, float x, float y) {
-        return (float) Math.toDegrees(Math.atan2(y - cy, x - cx));
-    }
-
-    private float shortestDeltaDeg(float fromDeg, float toDeg) {
-        float d = toDeg - fromDeg;
-        while (d > 180f) d -= 360f;
-        while (d <= -180f) d += 360f;
-        return d;
-    }
-
-    private void applySize(View v, int w, int h) {
-        if (v == null) return;
-        ViewGroup.LayoutParams lp = v.getLayoutParams();
-        if (lp == null) return;
-        lp.width = w;
-        lp.height = h;
-        v.setLayoutParams(lp);
-    }
-
-    private void removeStickerWrapper() {
-        if (stickerWrapper == null) return;
-        ViewGroup parent = (ViewGroup) stickerWrapper.getParent();
-        if (parent != null) parent.removeView(stickerWrapper);
-        stickerWrapper = null;
-    }
-
-    private float dist(float x1, float y1, float x2, float y2) {
-        float dx = x1 - x2, dy = y1 - y2;
-        return (float) Math.hypot(dx, dy);
-    }
-
-    private int dp(int dp) {
-        float d = getResources().getDisplayMetrics().density;
-        return Math.round(dp * d);
-    }
-
-    private int dpToPx(int dp) {
-        float d = getResources().getDisplayMetrics().density;
-        return Math.round(dp * d);
     }
 
     @Override
