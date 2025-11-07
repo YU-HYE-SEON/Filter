@@ -64,7 +64,7 @@ public class SavePhotoActivity extends BaseActivity {
         String brushImagePath = getIntent().getStringExtra("brush_image_path");
         String stickerImagePath = getIntent().getStringExtra("sticker_image_path");
 
-            ArrayList<FaceStickerData> faceStickers =
+        /*ArrayList<FaceStickerData> faceStickers =
                 (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
 
         if (faceStickers != null && !faceStickers.isEmpty()) {
@@ -76,8 +76,7 @@ public class SavePhotoActivity extends BaseActivity {
             }
         } else {
             Log.d("StickerFlow", "[SavePhotoActivity] faceStickers가 비어있음 혹은 null입니다.");
-        }
-
+        }*/
 
 
         if (savedImagePath != null) {
@@ -129,7 +128,7 @@ public class SavePhotoActivity extends BaseActivity {
             intent.putExtra("sticker_image_path", stickerImagePath);
 
 
-            intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+            /*intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
 
             List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
             for (FaceStickerData d : faceStickers) {
@@ -148,7 +147,7 @@ public class SavePhotoActivity extends BaseActivity {
                         "[SavePhotoActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
                         d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
                 ));
-            }
+            }*/
 
 
             FilterDtoCreateRequest.ColorAdjustments adj =

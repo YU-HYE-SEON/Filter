@@ -87,7 +87,7 @@ public class FilterDetailActivity extends BaseActivity {
                 intent.putExtra("nickname", nick);
 
 
-                intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+                /*intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
 
                 List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
                 for (FaceStickerData d : faceStickers) {
@@ -106,7 +106,7 @@ public class FilterDetailActivity extends BaseActivity {
                             "[FilterDetailActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
                             d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
                     ));
-                }
+                }*/
 
 
 
@@ -187,7 +187,7 @@ public class FilterDetailActivity extends BaseActivity {
         stickerPath = getIntent().getStringExtra("sticker_image_path");
 
 
-        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+        /*faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
 
         if (faceStickers != null && !faceStickers.isEmpty()) {
             for (FaceStickerData d : faceStickers) {
@@ -198,7 +198,7 @@ public class FilterDetailActivity extends BaseActivity {
             }
         } else {
             Log.d("StickerFlow", "[FilterDetailActivity] faceStickers가 비어있음 혹은 null입니다.");
-        }
+        }*/
 
 
 

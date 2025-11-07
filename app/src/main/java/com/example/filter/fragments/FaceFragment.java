@@ -194,13 +194,11 @@ public class FaceFragment extends Fragment {
             String batchId = getArguments().getString("batchId", null);
             boolean isBatchEdit = getArguments().getBoolean("isBatchEdit", false);
             if (checkBox.isChecked() && photoPreviewContainer != null) {
-                // ⭐ [추가된 부분 시작] 재수정일 경우, FilterActivity의 ViewModel에 이전 데이터 삭제 요청
+
                 if (isBatchEdit && batchId != null) {
                     FaceModeViewModel vm = new ViewModelProvider(requireActivity()).get(FaceModeViewModel.class);
-                    // FilterActivity에서 해당 batchId를 가진 데이터를 삭제하도록 요청
                     vm.setFaceStickerDataToDelete(batchId);
                 }
-                // ⭐ [추가된 부분 끝]
 
                 if (stickerOverlay != null) {
                     for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
@@ -213,11 +211,11 @@ public class FaceFragment extends Fragment {
                     }
                 }
 
-                float relX = meta.getFloat("relX");
-                float relY = meta.getFloat("relY");
-                float relW = meta.getFloat("relW");
-                float relH = meta.getFloat("relH");
-                float stickerR = meta.getFloat("stickerR");
+                //float relX = meta.getFloat("relX");
+                //float relY = meta.getFloat("relY");
+                //float relW = meta.getFloat("relW");
+                //float relH = meta.getFloat("relH");
+                //float stickerR = meta.getFloat("stickerR");
 
 
                 ImageView stickerImageView = stickerWrapper.findViewById(R.id.stickerImage);
@@ -243,15 +241,15 @@ public class FaceFragment extends Fragment {
                 }
 
                 String finalBatchId = isBatchEdit && batchId != null ? batchId : currentFaceBatchId;
-                FaceStickerData data = new FaceStickerData(relX, relY, relW, relH, stickerR, finalBatchId, stickerBitmap, stickerPath);
+                //FaceStickerData data = new FaceStickerData(relX, relY, relW, relH, stickerR, finalBatchId, stickerBitmap, stickerPath);
 
-                Log.d("StickerFlow", String.format(
+                /*Log.d("StickerFlow", String.format(
                         "[FaceFragment] relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
                         relX, relY, relW, relH, stickerR, currentFaceBatchId
-                ));
+                ));*/
 
                 FaceModeViewModel vm = new ViewModelProvider(requireActivity()).get(FaceModeViewModel.class);
-                vm.setFaceStickerData(data);
+                //vm.setFaceStickerData(data);
 
                 View stickerToClone = stickerWrapper;
                 Controller.removeStickerWrapper(stickerWrapper);
@@ -298,7 +296,7 @@ public class FaceFragment extends Fragment {
                                 for (Face face : faces) {
                                     Rect box = face.getBoundingBox();
 
-                                    float eulerZ = face.getHeadEulerAngleZ();
+                                    /*float eulerZ = face.getHeadEulerAngleZ();
                                     float eulerY = face.getHeadEulerAngleY();
                                     float eulerX = face.getHeadEulerAngleX();
 
@@ -381,7 +379,7 @@ public class FaceFragment extends Fragment {
                                         }
                                     }
 
-                                    stickerOverlay.addView(newSticker);
+                                    stickerOverlay.addView(newSticker);*/
                                 }
                             }
                             showToast("얼굴 인식 성공");

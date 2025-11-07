@@ -330,7 +330,7 @@ public class FilterActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
 
-        FaceModeViewModel vm = new ViewModelProvider(this).get(FaceModeViewModel.class);
+        /*FaceModeViewModel vm = new ViewModelProvider(this).get(FaceModeViewModel.class);
         vm.getFaceStickerData().observe(this, data -> {
             if (data == null) return;
 
@@ -365,7 +365,7 @@ public class FilterActivity extends BaseActivity {
                     ));
                 }
             }
-        });
+        });*/
     }
 
     @Override
@@ -461,7 +461,7 @@ public class FilterActivity extends BaseActivity {
                     int vH = renderer.getViewportHeight();
 
                     try {
-                        List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+                        /*List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
                         for (FaceStickerData d : faceStickerList) {
                             FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
                             s.placementType = "face";
@@ -478,7 +478,7 @@ public class FilterActivity extends BaseActivity {
                                     "[FilterActivity:Save] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
                                     d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
                             ));
-                        }
+                        }*/
 
                         //조정값
                         FilterDtoCreateRequest.ColorAdjustments adj = new FilterDtoCreateRequest.ColorAdjustments();
@@ -568,7 +568,7 @@ public class FilterActivity extends BaseActivity {
                         intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath());
                         intent.putExtra("sticker_image_path", tempStickerFile.getAbsolutePath());
 
-                        intent.putExtra("face_stickers", new ArrayList<>(faceStickerList));
+                        //intent.putExtra("face_stickers", new ArrayList<>(faceStickerList));
 
                         startActivity(intent);
 

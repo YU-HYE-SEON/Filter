@@ -169,7 +169,7 @@ public class ApplyFilterActivity extends BaseActivity {
         stickerPath = getIntent().getStringExtra("sticker_image_path");
 
 
-        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+        /*faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
 
         if (faceStickers != null && !faceStickers.isEmpty()) {
             for (FaceStickerData d : faceStickers) {
@@ -180,7 +180,7 @@ public class ApplyFilterActivity extends BaseActivity {
             }
         } else {
             Log.d("StickerFlow", "[ApplyFilterActivity] faceStickers가 비어있음 혹은 null입니다.");
-        }
+        }*/
 
 
         if (adj != null) applyAdjustments(adj);
