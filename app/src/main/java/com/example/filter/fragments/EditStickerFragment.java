@@ -2,8 +2,9 @@ package com.example.filter.fragments;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.net.Uri;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,9 +27,10 @@ import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 
-import java.io.File;
-
 public class EditStickerFragment extends Fragment {
+    public static int sessionId = 0;
+    public static int stickerId = 0;
+    private int editingStickerId = -1;
     private View stickerFrame;
     private ImageView deleteController, faceModel;
     private CheckBox checkBox;
@@ -37,8 +39,10 @@ public class EditStickerFragment extends Fragment {
     //ImageButton undoSticker, redoSticker, originalSticker;
     private FaceBoxOverlayView faceBox;
     private final int WRAPPER_MIN_DP = 100;
-    private float x, y, r;
-    private int w, h;
+    private float pivotX, pivotY, tempPivotX, tempPivotY;
+    private float x, y, r, tempX, tempY, tempR;
+    private int w, h, tempW, tempH;
+    private Drawable stickerDrawable;
     private StickerMeta meta;
     public static boolean isFace = false;
 
@@ -70,75 +74,118 @@ public class EditStickerFragment extends Fragment {
         if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
         if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);*/
 
-        if (stickerFrame == null && stickerOverlay.getChildCount() > 0) {
+        Bundle args = getArguments();
+        Bundle args2 = new Bundle();
+
+        if (args != null && args.containsKey("selected_index")) {
+            int index = args.getInt("selected_index");
+            if (index >= 0 && index < stickerOverlay.getChildCount()) {
+                stickerFrame = stickerOverlay.getChildAt(index);
+            }
+        } else if (stickerOverlay.getChildCount() > 0) {
             stickerFrame = stickerOverlay.getChildAt(stickerOverlay.getChildCount() - 1);
         }
 
-        if (stickerFrame != null) {
-            //stickerImage = stickerFrame.findViewById(R.id.stickerImage);
-            deleteSticker();
-        }
+        //x = stickerFrame.getX();
+        //y = stickerFrame.getY();
+        //w = stickerFrame.getLayoutParams().width;
+        //h = stickerFrame.getLayoutParams().height;
+        //r = stickerFrame.getRotation();
 
-        Controller.enableStickerControl(null, null, stickerFrame, stickerOverlay, faceOverlay, getResources());
-        Controller.updateControllersSizeAndAngle(stickerFrame, getResources());
-
-        Bundle args = getArguments() != null ? getArguments() : new Bundle();
-        x = args.getFloat("x", stickerFrame.getX());
-        y = args.getFloat("y", stickerFrame.getY());
         w = args.getInt("w", stickerFrame.getLayoutParams().width);
         h = args.getInt("h", stickerFrame.getLayoutParams().height);
+        pivotX = args.getFloat("pivotX", stickerFrame.getPivotX());
+        pivotY = args.getFloat("pivotY", stickerFrame.getPivotY());
+        x = args.getFloat("x", stickerFrame.getX());
+        y = args.getFloat("y", stickerFrame.getY());
         r = args.getFloat("r", stickerFrame.getRotation());
 
-        int minPx = Controller.dp(WRAPPER_MIN_DP, getResources());
+        tempW = w;
+        tempH = h;
+        tempPivotX = pivotX;
+        tempPivotY = pivotY;
+        tempX = x;
+        tempY = y;
+        tempR = r;
+
+        //int minPx = Controller.dp(WRAPPER_MIN_DP, getResources());
+        int minPx = Controller.dp(230, getResources());
         int initW = Math.max(minPx, w);
         int initH = Math.max(minPx, h);
 
-        stickerFrame.setX(x);
-        stickerFrame.setY(y);
+        String prevFragment = args.getString("prev_frag");
+
         stickerFrame.getLayoutParams().width = initW;
         stickerFrame.getLayoutParams().height = initH;
+        if ("stickerF".equals(prevFragment)) {
+            stickerFrame.getLayoutParams().width = w;
+            stickerFrame.getLayoutParams().height = h;
+        }
         stickerFrame.requestLayout();
+        stickerFrame.setPivotX(stickerFrame.getWidth() / 2f);
+        stickerFrame.setPivotY(stickerFrame.getHeight() / 2f);
+        stickerFrame.setX(x);
+        stickerFrame.setY(y);
         stickerFrame.setRotation(r);
 
-        Bundle args4 = getArguments();
-        if (args4 != null && args4.getBoolean("IS_CLONED_STICKER", false)) {
-            checkBox.setChecked(true);
-            checkBox.setEnabled(false);
-            checkBox.setAlpha(0.4f);
-            faceOverlay.setVisibility(View.VISIBLE);
-            onFaceMode();
-            showStickerCentered();
+        //stickerFrame.post(() -> {
+        //    if ("myStickerF".equals(prevFragment))
+        //        Log.d("스티커", String.format("에딧 첫진입 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+        //                stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+        //    else
+        //        Log.d("스티커", String.format("에딧 재진입 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+        //                stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+        //});
+
+
+        if (stickerFrame != null) {
             Controller.enableStickerControl(null, null, stickerFrame, stickerOverlay, faceOverlay, getResources());
             Controller.updateControllersSizeAndAngle(stickerFrame, getResources());
             deleteSticker();
         }
 
-        cancelBtn.setOnClickListener(x -> {
-            if (ClickUtils.isFastClick(x, 400)) return;
+        if (stickerFrame != null) {
+            Object tag = stickerFrame.getTag(R.id.tag_sticker_id);
+            if (tag instanceof Integer) {
+                editingStickerId = (int) tag;
+                Log.d("스티커", "스티커 재편집 | ID = " + editingStickerId);
+            }
+        }
 
-            Bundle args3 = getArguments();
-            boolean isClone = args3.getBoolean("IS_CLONED_STICKER", false);
+        boolean isClone = args.getBoolean("IS_CLONED_STICKER", false);
+        if (isClone) {
+            checkBox.setChecked(true);
+            checkBox.setEnabled(false);
+            checkBox.setAlpha(0.4f);
+            faceOverlay.setVisibility(View.VISIBLE);
+        }
+
+
+        cancelBtn.setOnClickListener(view -> {
+            if (ClickUtils.isFastClick(view, 400)) return;
+
             if (checkBox.isChecked()) {
-                if (stickerFrame != null && stickerFrame.getParent() == faceOverlay) {
-                    faceOverlay.removeView(stickerFrame);
-                    stickerOverlay.addView(stickerFrame);
-                }
-                //Controller.enableStickerControl(null, null, stickerFrame, stickerOverlay, faceOverlay, getResources());
-                //Controller.updateControllersSizeAndAngle(stickerFrame, getResources());
-
                 offFaceMode();
-                showStickerCentered();
-                faceOverlay.removeAllViews();
-                faceOverlay.setVisibility(View.GONE);
+            }
 
-                if (!isClone) {
-                    checkBox.setChecked(false);
-                }
+            if (!checkBox.isChecked()) {
+                stickerFrame.getLayoutParams().width = tempW;
+                stickerFrame.getLayoutParams().height = tempH;
+                stickerFrame.requestLayout();
+                stickerFrame.setPivotX(tempPivotX);
+                stickerFrame.setPivotY(tempPivotY);
+                stickerFrame.setX(tempX);
+                stickerFrame.setY(tempY);
+                stickerFrame.setRotation(tempR);
+
+                //stickerFrame.post(() -> {
+                //    Log.d("스티커", String.format("에딧 캔슬 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+                //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+                //});
             }
 
             Controller.setControllersVisible(stickerFrame, false);
 
-            String prevFragment = args3.getString("prev_frag");
             if ("stickerF".equals(prevFragment)) {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
@@ -157,114 +204,82 @@ public class EditStickerFragment extends Fragment {
             }
         });
 
-        checkBtn.setOnClickListener(x -> {
-            if (ClickUtils.isFastClick(x, 400)) return;
-
-            StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-            viewModel.setTempView(stickerFrame);
+        checkBtn.setOnClickListener(view -> {
+            if (ClickUtils.isFastClick(view, 400)) return;
 
             Fragment stickerFragment = new StickersFragment();
-            Bundle args2 = new Bundle();
 
-            boolean isClone = getArguments().getBoolean("IS_CLONED_STICKER", false);
+            if (checkBox.isChecked()) {
+                StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
+                viewModel.setTempView(stickerFrame);
 
-            if (isClone) {
-                faceModel.post(() -> {
-                    Bitmap bmp = Bitmap.createBitmap(faceModel.getWidth(), faceModel.getHeight(), Bitmap.Config.ARGB_8888);
-                    Canvas c = new Canvas(bmp);
-                    faceModel.draw(c);
-                    FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
-                        if (faces.isEmpty()) return;
-                        meta = StickerMeta.calculate(faces.get(0), bitmap, stickerFrame, faceOverlay);
+                /*if (isClone) {
 
-                        if (isClone) {
+                } else {
 
-                        }
+                }*/
 
-                        faceOverlay.setVisibility(View.GONE);
+                args2.putBoolean("IS_FACE_MODE", true);
+                args2.putFloat("relX", meta.relX);
+                args2.putFloat("relY", meta.relY);
+                args2.putFloat("relW", meta.relW);
+                args2.putFloat("relH", meta.relH);
+                args2.putFloat("rot", meta.rot);
+                stickerFragment.setArguments(args2);
 
-
-                        args2.putBoolean("IS_FACE_MODE", true);
-                        args2.putFloat("relX", meta.relX);
-                        args2.putFloat("relY", meta.relY);
-                        args2.putFloat("relW", meta.relW);
-                        args2.putFloat("relH", meta.relH);
-                        args2.putFloat("rot", meta.rot);
-                        stickerFragment.setArguments(args2);
-                    });
-                });
+                Controller.removeStickerFrame(stickerFrame);
+                faceOverlay.setVisibility(View.GONE);
             }
 
-            Controller.removeStickerFrame(stickerFrame);
+            if (!checkBox.isChecked()) {
+                w = stickerFrame.getLayoutParams().width;
+                h = stickerFrame.getLayoutParams().height;
+                pivotX = stickerFrame.getPivotX();
+                pivotY = stickerFrame.getPivotY();
+                x = stickerFrame.getX();
+                y = stickerFrame.getY();
+                r = stickerFrame.getRotation();
 
-            stickerFragment.setArguments(args2);
+                //stickerFrame.post(() -> {
+                //    Log.d("스티커", String.format("에딧 체크 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+                //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+                //});
+            }
 
             Controller.setControllersVisible(stickerFrame, false);
 
-            requireActivity().runOnUiThread(() ->
-                    requireActivity().getSupportFragmentManager()
-                            .beginTransaction()
-                            .setCustomAnimations(R.anim.slide_up, 0)
-                            .replace(R.id.bottomArea2, stickerFragment)
-                            .commit()
-            );
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .setCustomAnimations(R.anim.slide_up, 0)
+                    .replace(R.id.bottomArea2, stickerFragment)
+                    .commit();
+
+            sessionId++;
+            //stickerId++;
+
+            //if (!checkBox.isChecked()) {
+            //    Log.d("스티커", String.format("최종 | [세션ID = %d] | [일반스티커ID = %d]", sessionId, stickerId));
+            //}
+
+            if (editingStickerId == -1) {
+                stickerId++;
+                stickerFrame.setTag(R.id.tag_sticker_id, stickerId);
+
+                if (!checkBox.isChecked()) {
+                    Log.d("스티커", String.format("스티커 생성 | [세션ID = %d] | [스티커ID = %d]", sessionId, stickerId));
+                }
+
+            } else {
+                if (!checkBox.isChecked()) {
+                    Log.d("스티커", String.format("스티커 수정 | [세션ID = %d] | [스티커ID = %d]", sessionId, editingStickerId));
+                }
+            }
         });
 
         checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             faceBox = new FaceBoxOverlayView(requireContext());
             if (isChecked) {
-                isFace = true;
-
-                if (stickerFrame != null && stickerFrame.getParent() == stickerOverlay) {
-                    stickerOverlay.removeView(stickerFrame);
-                }
-                faceOverlay.setVisibility(View.VISIBLE);
-
-                LayoutInflater inflater = LayoutInflater.from(requireContext());
-                View newSticker = inflater.inflate(R.layout.v_sticker_edit, faceOverlay, false);
-
-                String path = getArguments() != null ? getArguments().getString("sticker_path", null) : null;
-                ImageView newStickerImage = newSticker.findViewById(R.id.stickerImage);
-                if (path != null) {
-                    File f = new File(path);
-                    if (f.exists()) newStickerImage.setImageURI(Uri.fromFile(f));
-                    else {
-                        int resId = getResources().getIdentifier(path, "drawable", requireContext().getPackageName());
-                        if (resId != 0) newStickerImage.setImageResource(resId);
-                    }
-                } else {
-                    ImageView oldImage = stickerFrame.findViewById(R.id.stickerImage);
-                    newStickerImage.setImageDrawable(oldImage.getDrawable());
-                }
-
-                faceOverlay.addView(newSticker);
-                stickerFrame = newSticker;
-                deleteSticker();
-
-                faceOverlay.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                showStickerCentered();
-
-                faceModel.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        int w = faceModel.getWidth();
-                        int h = faceModel.getHeight();
-                        if (w <= 0 || h <= 0) return;
-
-                        faceModel.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-                        Canvas c = new Canvas(bmp);
-                        faceModel.draw(c);
-                        FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
-                            if (faces.isEmpty()) return;
-
-                            meta = StickerMeta.calculate(faces.get(0), bitmap, stickerFrame, faceOverlay);
-
-                            Controller.enableStickerControl(faces.get(0), bitmap, stickerFrame, stickerOverlay, faceOverlay, getResources());
-                        });
-                    }
-                });
+                onFaceMode();
             } else {
                 offFaceMode();
             }
@@ -279,8 +294,12 @@ public class EditStickerFragment extends Fragment {
         stickerFrame.setLayoutParams(lp);
 
         stickerOverlay.post(() -> {
+            stickerFrame.setPivotX(sizePx / 2f);
+            stickerFrame.setPivotY(sizePx / 2f);
+
             float cx = (stickerOverlay.getWidth() - sizePx) / 2f;
             float cy = (stickerOverlay.getHeight() - sizePx) / 2f;
+
             stickerFrame.setX(cx);
             stickerFrame.setY(cy);
             stickerFrame.setRotation(0f);
@@ -288,108 +307,97 @@ public class EditStickerFragment extends Fragment {
             stickerFrame.postDelayed(() -> {
                 stickerFrame.setVisibility(View.VISIBLE);
             }, 50);
+
+            //stickerFrame.post(() -> {
+            //    Log.d("스티커", String.format("에딧 페이스 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+            //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+            //});
         });
     }
 
     private void onFaceMode() {
-        if (checkBox.isChecked()) {
-            isFace = true;
+        isFace = true;
 
-            if (stickerFrame != null && stickerFrame.getParent() == stickerOverlay) {
-                stickerOverlay.removeView(stickerFrame);
-            }
-            faceOverlay.setVisibility(View.VISIBLE);
-
-            LayoutInflater inflater = LayoutInflater.from(requireContext());
-            View newSticker = inflater.inflate(R.layout.v_sticker_edit, faceOverlay, false);
-
-            String path = getArguments() != null ? getArguments().getString("sticker_path", null) : null;
-            ImageView newStickerImage = newSticker.findViewById(R.id.stickerImage);
-            if (path != null) {
-                File f = new File(path);
-                if (f.exists()) newStickerImage.setImageURI(Uri.fromFile(f));
-                else {
-                    int resId = getResources().getIdentifier(path, "drawable", requireContext().getPackageName());
-                    if (resId != 0) newStickerImage.setImageResource(resId);
-                }
-            } else {
-                ImageView oldImage = stickerFrame.findViewById(R.id.stickerImage);
-                newStickerImage.setImageDrawable(oldImage.getDrawable());
-            }
-
-            faceOverlay.addView(newSticker);
-            stickerFrame = newSticker;
-            deleteSticker();
-
-            faceOverlay.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            showStickerCentered();
-
-            faceModel.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    int w = faceModel.getWidth();
-                    int h = faceModel.getHeight();
-                    if (w <= 0 || h <= 0) return;
-
-                    faceModel.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                    Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-                    Canvas c = new Canvas(bmp);
-                    faceModel.draw(c);
-                    FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
-                        if (faces.isEmpty()) return;
-
-                        meta = StickerMeta.calculate(faces.get(0), bitmap, stickerFrame, faceOverlay);
-
-                        Controller.enableStickerControl(faces.get(0), bitmap, stickerFrame, stickerOverlay, faceOverlay, getResources());
-                    });
-                }
-            });
+        ImageView oldImage = stickerFrame.findViewById(R.id.stickerImage);
+        if (oldImage != null) {
+            stickerDrawable = oldImage.getDrawable();
         }
+
+        if (stickerFrame != null && stickerFrame.getParent() == stickerOverlay) {
+            stickerOverlay.removeView(stickerFrame);
+        }
+
+        faceOverlay.setVisibility(View.VISIBLE);
+
+        checkBox.setChecked(true);
+
+        faceModel.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int w = faceModel.getWidth();
+                int h = faceModel.getHeight();
+                if (w <= 0 || h <= 0) return;
+
+                faceModel.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+
+                LayoutInflater inflater = LayoutInflater.from(requireContext());
+                View newStickerFrame = inflater.inflate(R.layout.v_sticker_edit, faceOverlay, false);
+                ImageView stickerImage = newStickerFrame.findViewById(R.id.stickerImage);
+
+                if (stickerDrawable != null) {
+                    stickerImage.setImageDrawable(stickerDrawable);
+                }
+
+                faceOverlay.addView(newStickerFrame);
+                stickerFrame = newStickerFrame;
+                deleteSticker();
+
+                faceOverlay.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                showStickerCentered();
+
+                Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+                Canvas c = new Canvas(bmp);
+                faceModel.draw(c);
+                FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
+                    if (faces.isEmpty()) return;
+
+                    meta = StickerMeta.calculate(faces.get(0), bitmap, stickerFrame, faceOverlay);
+
+                    Controller.enableStickerControl(faces.get(0), bitmap, stickerFrame, stickerOverlay, faceOverlay, getResources());
+                });
+            }
+        });
     }
 
     private void offFaceMode() {
-        if (!checkBox.isChecked()) {
-            isFace = false;
-            if (faceBox != null && faceOverlay != null) {
-                if (stickerFrame != null && stickerFrame.getParent() == faceOverlay) {
-                    faceOverlay.removeView(stickerFrame);
-                }
-                faceBox.clearBoxes();
-                faceBox.setVisibility(View.GONE);
-                faceOverlay.setVisibility(View.GONE);
-
-                StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-                View originalSticker = viewModel.getTempView();
-
-                LayoutInflater inflater = LayoutInflater.from(requireContext());
-                View newSticker = inflater.inflate(R.layout.v_sticker_edit, stickerOverlay, false);
-                ImageView newStickerImage = newSticker.findViewById(R.id.stickerImage);
-
-                if (originalSticker != null) {
-                    ImageView oldImage = originalSticker.findViewById(R.id.stickerImage);
-                    newStickerImage.setImageDrawable(oldImage.getDrawable());
-                } else {
-                    String path = getArguments() != null ? getArguments().getString("sticker_path", null) : null;
-                    if (path != null) {
-                        File f = new File(path);
-                        if (f.exists()) newStickerImage.setImageURI(Uri.fromFile(f));
-                        else {
-                            int resId = getResources().getIdentifier(path, "drawable", requireContext().getPackageName());
-                            if (resId != 0) newStickerImage.setImageResource(resId);
-                        }
-                    }
-                }
-
-                stickerOverlay.addView(newSticker);
-                stickerFrame = newSticker;
-                deleteSticker();
+        isFace = false;
+        if (faceBox != null && faceOverlay != null) {
+            if (stickerFrame != null && stickerFrame.getParent() == faceOverlay) {
+                faceOverlay.removeView(stickerFrame);
             }
-            showStickerCentered();
+            faceBox.clearBoxes();
+            faceBox.setVisibility(View.GONE);
+            faceOverlay.setVisibility(View.GONE);
 
-            Controller.enableStickerControl(null, null, stickerFrame, stickerOverlay, faceOverlay, getResources());
-            Controller.updateControllersSizeAndAngle(stickerFrame, getResources());
+            checkBox.setChecked(false);
+
+            LayoutInflater inflater = LayoutInflater.from(requireContext());
+            View newStickerFrame = inflater.inflate(R.layout.v_sticker_edit, stickerOverlay, false);
+            ImageView stickerImage = newStickerFrame.findViewById(R.id.stickerImage);
+
+            if (stickerDrawable != null) {
+                stickerImage.setImageDrawable(stickerDrawable);
+            }
+
+            stickerOverlay.addView(newStickerFrame);
+            stickerFrame = newStickerFrame;
+            deleteSticker();
         }
+        showStickerCentered();
+
+        Controller.enableStickerControl(null, null, stickerFrame, stickerOverlay, faceOverlay, getResources());
+        Controller.updateControllersSizeAndAngle(stickerFrame, getResources());
     }
 
     private void deleteSticker() {
@@ -397,17 +405,11 @@ public class EditStickerFragment extends Fragment {
         deleteController = stickerFrame.findViewById(R.id.deleteController);
         if (deleteController == null) return;
 
-        deleteController.setOnClickListener(x -> {
-            StickerViewModel vm = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
+        deleteController.setOnClickListener(view -> {
+            StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
             Bundle args = getArguments();
             boolean isClone = args.getBoolean("IS_CLONED_STICKER", false);
-
             if (isClone) {
-                Object tagId = stickerFrame.getTag(R.id.tag_sticker_clone_id);
-                if (tagId instanceof Integer) {
-                    vm.removeGroup((Integer) tagId, stickerOverlay);
-                }
-
                 faceOverlay.setVisibility(View.GONE);
             }
 

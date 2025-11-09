@@ -3,6 +3,7 @@ package com.example.filter.fragments;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -77,6 +78,11 @@ public class MyStickersFragment extends Fragment {
             showStickerCentered(stickerKey);
         });
 
+        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+            View child = stickerOverlay.getChildAt(i);
+            Controller.setStickerActive(child, false);
+        }
+
         deleteStickerIcon.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             if (!deleteStickerIcon.isEnabled()) return;
@@ -140,12 +146,22 @@ public class MyStickersFragment extends Fragment {
         stickerFrame.setLayoutParams(lp);
 
         stickerOverlay.post(() -> {
+            stickerFrame.setPivotX(sizePx / 2f);
+            stickerFrame.setPivotY(sizePx / 2f);
+
             float cx = (stickerOverlay.getWidth() - sizePx) / 2f;
             float cy = (stickerOverlay.getHeight() - sizePx) / 2f;
+
             stickerFrame.setX(cx);
             stickerFrame.setY(cy);
 
             stickerOverlay.addView(stickerFrame);
+
+            //stickerFrame.post(() -> {
+            //    Log.d("스티커", String.format("마이 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+            //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+            //});
+
 
             this.selectSticker = stickerFrame;
 
@@ -243,5 +259,8 @@ public class MyStickersFragment extends Fragment {
                 child.setOnClickListener(null);
             }
         }
+        StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
+        viewModel.getTempView();
+        viewModel.setTempView(null);
     }
 }

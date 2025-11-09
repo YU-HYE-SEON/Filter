@@ -5,6 +5,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
@@ -49,7 +50,7 @@ public class Controller {
         if (selectSticker != null && selectSticker.getParent() == stickerOverlay) {
             //Object isTemp = selectSticker.getTag(TAG_TEMP_PREVIEW);
             //if (Boolean.TRUE.equals(isTemp)) {
-                stickerOverlay.removeView(selectSticker);
+            stickerOverlay.removeView(selectSticker);
             //}
         }
         selectSticker = null;
@@ -243,6 +244,11 @@ public class Controller {
                     if (EditStickerFragment.isFace && face != null && bitmap != null) {
                         StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
                     }
+
+                    //stickerFrame.post(() -> {
+                    //    Log.d("스티커", String.format("에딧 스티커 이동 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+                    //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+                    //});
                 }
             }
             return false;
@@ -271,7 +277,7 @@ public class Controller {
                     if (r < dp((int) ROT_MIN_RADIUS_DP, resources)) return true;
                     float cur = angleDeg(c[0], c[1], t[0], t[1]);
                     float step = shortestDeltaDeg(endDeg, cur);
-                    if (Math.abs(step) > 60f) {
+                    if (Math.abs(step) > 30f) {
                         endDeg = cur;
                         return true;
                     }
@@ -287,6 +293,11 @@ public class Controller {
                     if (EditStickerFragment.isFace && face != null && bitmap != null) {
                         StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
                     }
+
+                    //stickerFrame.post(() -> {
+                    //    Log.d("스티커", String.format("에딧 스티커 회전 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+                    //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+                    //});
                 }
             }
             return false;
@@ -342,6 +353,11 @@ public class Controller {
                     if (EditStickerFragment.isFace && face != null && bitmap != null) {
                         StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
                     }
+
+                    //stickerFrame.post(() -> {
+                    //    Log.d("스티커", String.format("에딧 스티커 크기 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
+                    //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
+                    //});
                 }
             }
             return false;

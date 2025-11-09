@@ -6,7 +6,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -231,55 +230,27 @@ public class StickerMeta {
         if (stickerFrame == null || context == null) return null;
 
         LayoutInflater inflater = LayoutInflater.from(context);
-        View newSticker = inflater.inflate(R.layout.v_sticker_edit, (ViewGroup) stickerOverlay, false);
+        View cloneSticker = inflater.inflate(R.layout.v_sticker_edit, (ViewGroup) stickerOverlay, false);
 
         ImageView oldImage = stickerFrame.findViewById(R.id.stickerImage);
-        ImageView newImage = newSticker.findViewById(R.id.stickerImage);
+        ImageView newImage = cloneSticker.findViewById(R.id.stickerImage);
 
         if (oldImage != null && oldImage.getDrawable() != null && newImage != null) {
             newImage.setImageDrawable(oldImage.getDrawable().getConstantState().newDrawable());
         }
 
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Math.round(placement[2]), Math.round(placement[3]));
-        newSticker.setLayoutParams(lp);
-        newSticker.setX(placement[0]);
-        newSticker.setY(placement[1]);
-        newSticker.setRotation(placement[4]);
+        cloneSticker.setLayoutParams(lp);
+        cloneSticker.setX(placement[0]);
+        cloneSticker.setY(placement[1]);
+        cloneSticker.setRotation(placement[4]);
 
         //Controller.removeStickerFrame(stickerFrame);
-        Controller.setControllersVisible(newSticker, false);
-        Controller.setStickerActive(newSticker, true);
+        Controller.setControllersVisible(cloneSticker, false);
+        Controller.setStickerActive(cloneSticker, true);
 
-        newSticker.setClickable(true);
-        newSticker.setFocusable(true);
-        newSticker.setFocusableInTouchMode(true);
+        stickerOverlay.addView(cloneSticker);
 
-        newSticker.setOnClickListener(v -> {
-            Controller.setControllersVisible(newSticker, true);
-
-            StickerViewModel viewModel = new ViewModelProvider((FragmentActivity) context).get(StickerViewModel.class);
-            viewModel.setTempView(newSticker);
-
-            EditStickerFragment editStickerFragment = new EditStickerFragment();
-            //int currentId = EditStickerFragment.stickerId;
-            //newSticker.setTag(R.id.tag_sticker_group_id, currentId);
-            //viewModel.addGroupSticker(currentId, newSticker);
-
-            Bundle args = new Bundle();
-            args.putString("prev_frag", "stickerF");
-            args.putBoolean("IS_FACE_MODE", true);
-            args.putBoolean("IS_CLONED_STICKER", true);
-            editStickerFragment.setArguments(args);
-
-            ((FragmentActivity) context).getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, editStickerFragment)
-                    .commit();
-        });
-
-        stickerOverlay.addView(newSticker);
-
-        return newSticker;
+        return cloneSticker;
     }
 }
