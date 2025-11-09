@@ -78,7 +78,6 @@ public class FaceDetect {
                 });
     }
 
-
     /*private static void logFaceLandmark(Face face, String label, int type) {
         FaceLandmark lm = face.getLandmark(type);
         if (lm == null) {

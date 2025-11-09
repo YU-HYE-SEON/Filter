@@ -1,5 +1,5 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/stickerWrapper"
+    android:id="@+id/stickerFrame"
     android:layout_width="180dp"
     android:layout_height="180dp"
     android:layout_gravity="center"
@@ -8,11 +8,11 @@
     android:padding="20dp">
 
     <ImageView
-        android:id="@+id/editFrame"
+        android:id="@+id/moveController"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/icon_sticker_edit_frame"
-        android:visibility="invisible" />
+        android:visibility="visible" />
 
     <ImageView
         android:id="@+id/stickerImage"
@@ -31,7 +31,7 @@
         android:src="@drawable/icon_rotation_controller"
         android:translationX="-15dp"
         android:translationY="-15dp"
-        android:visibility="invisible" />
+        android:visibility="visible" />
 
     <ImageView
         android:id="@+id/sizeController"
@@ -41,6 +41,16 @@
         android:src="@drawable/icon_size_controller"
         android:translationX="15dp"
         android:translationY="15dp"
-        android:visibility="invisible" />
+        android:visibility="visible" />
+
+    <ImageView
+        android:id="@+id/deleteController"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="top|end"
+        android:src="@drawable/icon_delete_controller"
+        android:translationX="15dp"
+        android:translationY="-15dp"
+        android:visibility="visible" />
 
 </FrameLayout>

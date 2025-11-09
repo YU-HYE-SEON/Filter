@@ -17,7 +17,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -34,18 +33,11 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.FaceDetect;
-import com.example.filter.etc.FaceStickerData;
+import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.ImageUtils;
-import com.example.filter.fragments.StickersFragment;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
-import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.face.Face;
-import com.google.mlkit.vision.face.FaceDetection;
-import com.google.mlkit.vision.face.FaceDetector;
-import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class ApplyFilterActivity extends BaseActivity {
     public static ApplyFilterActivity thisRef;
@@ -58,7 +50,7 @@ public class ApplyFilterActivity extends BaseActivity {
     private FGLRenderer renderer;
     private String brushPath, stickerPath;
     private FilterDtoCreateRequest.ColorAdjustments adj;
-    private ArrayList<FaceStickerData> faceStickers;
+    private ArrayList<StickerMeta> faceStickers;
     private Bitmap finalBitmapWithStickers = null;
     private FrameLayout reviewPopOff;
     private View reviewPopOn, dimBackground;
@@ -141,16 +133,16 @@ public class ApplyFilterActivity extends BaseActivity {
         Uri imageUri = getIntent().getData();
         if (imageUri != null) {
             try {
-                Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
-                if (bitmap != null) {
-                    this.originalImageBitmap = bitmap;
+                Bitmap bmp = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
+                if (bmp != null) {
+                    this.originalImageBitmap = bmp;
 
-                    renderer.setBitmap(bitmap);
+                    renderer.setBitmap(bmp);
                     glSurfaceView.requestRender();
 
                     faceBox = new FaceBoxOverlayView(this);
                     photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                    FaceDetect.detectFaces(this.originalImageBitmap, faceBox, (faces, originalBitmap) -> {
+                    FaceDetect.detectFaces(this.originalImageBitmap, faceBox, (faces, bitmap) -> {
                         if (faces.isEmpty()) return;
                     });
                 }
@@ -499,5 +491,9 @@ public class ApplyFilterActivity extends BaseActivity {
                 )
         );
         overlay.addView(imageView);
+    }
+
+    public FGLRenderer getRenderer() {
+        return renderer;
     }
 }

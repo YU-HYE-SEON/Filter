@@ -2,6 +2,7 @@ package com.example.filter.etc;
 
 import android.annotation.SuppressLint;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.view.HapticFeedbackConstants;
@@ -9,20 +10,50 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import androidx.core.view.ViewCompat;
 
 import com.example.filter.R;
+import com.example.filter.fragments.EditStickerFragment;
+import com.google.mlkit.vision.face.Face;
 
 public class Controller {
-    private static final int WRAPPER_MIN_DP = 100;
+    private static final int FRAME_MIN_DP = 100;
     private static final int CTRL_BASE_DP = 30;
     private static final int CTRL_MIN_DP = 22;
     private static final float ROT_MIN_RADIUS_DP = 24f;
     private static float downRawX, downRawY, startX, startY;
     private static int startW, startH;
-    private static float rotStartWrapperDeg, rotLastAngleDeg, rotAccumDeg;
+    private static float startDeg, endDeg, accumDeg;
+
+    public static void initPos(View stickerFrame, Float entryX, Float entryY, Float entryR, Integer entryW, Integer entryH) {
+        View moveController = stickerFrame.findViewById(R.id.moveController);
+        View rotateController = stickerFrame.findViewById(R.id.rotateController);
+        View sizeController = stickerFrame.findViewById(R.id.sizeController);
+        View deleteController = stickerFrame.findViewById(R.id.deleteController);
+
+        stickerFrame.setPivotX(stickerFrame.getWidth() / 2f);
+        stickerFrame.setPivotY(stickerFrame.getHeight() / 2f);
+        positionControllers(stickerFrame);
+
+        entryX = stickerFrame.getX();
+        entryY = stickerFrame.getY();
+        entryW = stickerFrame.getLayoutParams().width;
+        entryH = stickerFrame.getLayoutParams().height;
+        entryR = stickerFrame.getRotation();
+    }
+
+    public static void clearCurrentSticker(FrameLayout stickerOverlay, View selectSticker) {
+        if (selectSticker != null && selectSticker.getParent() == stickerOverlay) {
+            //Object isTemp = selectSticker.getTag(TAG_TEMP_PREVIEW);
+            //if (Boolean.TRUE.equals(isTemp)) {
+                stickerOverlay.removeView(selectSticker);
+            //}
+        }
+        selectSticker = null;
+    }
 
     public static void setStickerActive(View view, boolean active) {
         ImageView img = view.findViewById(R.id.stickerImage);
@@ -36,7 +67,7 @@ public class Controller {
                 img.clearColorFilter();
             } else {
                 img.setAlpha(0.4f);
-                img.setColorFilter(Color.parseColor("#808080"), PorterDuff.Mode.SRC_ATOP);
+                img.setColorFilter(Color.parseColor("#505050"), PorterDuff.Mode.SRC_ATOP);
             }
         }
     }
@@ -51,19 +82,27 @@ public class Controller {
         parent.invalidate();
     }
 
-    public static void updateControllerAngles(View stickerWrapper, View rotateController) {
-        if (stickerWrapper == null) return;
-        float r = stickerWrapper.getRotation();
-        if (rotateController != null) rotateController.setRotation(-r);
+    public static void updateControllerAngles(View stickerFrame, View controller) {
+        if (stickerFrame == null) return;
+        float r = stickerFrame.getRotation();
+        if (controller != null) controller.setRotation(-r);
     }
 
-    public static void updateControllersSizeAndAngle(View stickerWrapper, View editFrame, View rotateController, View sizeController, Resources resources) {
-        if (stickerWrapper == null) return;
+    public static void updateControllersSizeAndAngle(View stickerFrame, Resources resources) {
+        if (stickerFrame == null) return;
+
+        View moveController = stickerFrame.findViewById(R.id.moveController);
+        View rotateController = stickerFrame.findViewById(R.id.rotateController);
+        View sizeController = stickerFrame.findViewById(R.id.sizeController);
+        View deleteController = stickerFrame.findViewById(R.id.deleteController);
+
         int ctrlPx = Math.max(dp(CTRL_MIN_DP, resources), dp(CTRL_BASE_DP, resources));
         applySize(rotateController, ctrlPx, ctrlPx);
         applySize(sizeController, ctrlPx, ctrlPx);
-        updateControllerAngles(stickerWrapper, rotateController);
-        stickerWrapper.post(() -> positionControllers(stickerWrapper, editFrame, rotateController, sizeController));
+        applySize(deleteController, ctrlPx, ctrlPx);
+        updateControllerAngles(stickerFrame, rotateController);
+        updateControllerAngles(stickerFrame, deleteController);
+        stickerFrame.post(() -> positionControllers(stickerFrame));
     }
 
     public static float[] getTouchInOverlay(MotionEvent e, View view) {
@@ -72,30 +111,39 @@ public class Controller {
         return new float[]{e.getRawX() - ov[0], e.getRawY() - ov[1]};
     }
 
-    public static float[] getWrapperCenterInOverlay(View stickerWrapper) {
+    public static float[] getFrameCenterInOverlay(View stickerFrame) {
         return new float[]{
-                stickerWrapper.getX() + stickerWrapper.getPivotX(),
-                stickerWrapper.getY() + stickerWrapper.getPivotY()
+                stickerFrame.getX() + stickerFrame.getPivotX(),
+                stickerFrame.getY() + stickerFrame.getPivotY()
         };
     }
 
-    public static void positionControllers(View stickerWrapper, View editFrame, View rotateController, View sizeController) {
-        if (stickerWrapper == null || editFrame == null || rotateController == null || sizeController == null)
+    public static void positionControllers(View stickerFrame) {
+        View moveController = stickerFrame.findViewById(R.id.moveController);
+        View rotateController = stickerFrame.findViewById(R.id.rotateController);
+        View sizeController = stickerFrame.findViewById(R.id.sizeController);
+        View deleteController = stickerFrame.findViewById(R.id.deleteController);
+
+        if (stickerFrame == null || moveController == null || rotateController == null || sizeController == null)
             return;
 
-        float fx = editFrame.getX();
-        float fy = editFrame.getY();
-        float fw = editFrame.getWidth();
-        float fh = editFrame.getHeight();
+        float fx = moveController.getX();
+        float fy = moveController.getY();
+        float fw = moveController.getWidth();
+        float fh = moveController.getHeight();
 
         int rcW = rotateController.getWidth(), rcH = rotateController.getHeight();
         int scW = sizeController.getWidth(), scH = sizeController.getHeight();
+        int dcW = deleteController.getWidth(), dcH = deleteController.getHeight();
 
         rotateController.setX(fx - rcW / 2f);
         rotateController.setY(fy - rcH / 2f);
 
         sizeController.setX(fx + fw - scW / 2f);
         sizeController.setY(fy + fh - scH / 2f);
+
+        deleteController.setX(fx + fw - dcW / 2f);
+        deleteController.setY(fy - dcH / 2f);
     }
 
     public static float angleDeg(float cx, float cy, float x, float y) {
@@ -118,38 +166,40 @@ public class Controller {
         v.setLayoutParams(lp);
     }
 
-    public static void removeStickerWrapper(View stickerWrapper) {
-        if (stickerWrapper == null) return;
-        ViewGroup parent = (ViewGroup) stickerWrapper.getParent();
-        if (parent != null) parent.removeView(stickerWrapper);
-        //stickerWrapper = null;
+    public static void removeStickerFrame(View stickerFrame) {
+        if (stickerFrame == null) return;
+        ViewGroup parent = (ViewGroup) stickerFrame.getParent();
+        if (parent != null) parent.removeView(stickerFrame);
+        //stickerFrame = null;
     }
 
-    public static void setControllersVisible(View sticker, boolean visible) {
-        View editFrame = sticker.findViewById(R.id.editFrame);
-        View rotate = sticker.findViewById(R.id.rotateController);
-        View size = sticker.findViewById(R.id.sizeController);
+    public static void setControllersVisible(View stickerFrame, boolean visible) {
+        View moveController = stickerFrame.findViewById(R.id.moveController);
+        View rotateController = stickerFrame.findViewById(R.id.rotateController);
+        View sizeController = stickerFrame.findViewById(R.id.sizeController);
+        View deleteController = stickerFrame.findViewById(R.id.deleteController);
 
         int vis = visible ? View.VISIBLE : View.INVISIBLE;
 
-        if (editFrame != null) editFrame.setVisibility(vis);
-        if (rotate != null) rotate.setVisibility(vis);
-        if (size != null) size.setVisibility(vis);
+        if (moveController != null) moveController.setVisibility(vis);
+        if (rotateController != null) rotateController.setVisibility(vis);
+        if (sizeController != null) sizeController.setVisibility(vis);
+        if (deleteController != null) deleteController.setVisibility(vis);
     }
 
-    public static void hideControllers(View sticker) {
-        View editFrame = sticker.findViewById(R.id.editFrame);
+    /*public static void hideControllers(View sticker) {
+        View moveController = sticker.findViewById(R.id.moveController);
         View rotateController = sticker.findViewById(R.id.rotateController);
         View sizeController = sticker.findViewById(R.id.sizeController);
-        hideControllers(editFrame, rotateController, sizeController, null);
+        hideControllers(moveController, rotateController, sizeController, null);
     }
 
-    public static void hideControllers(View editFrame, View rotateController, View sizeController, View stickerWrapper) {
-        if (editFrame != null) editFrame.setVisibility(View.INVISIBLE);
+    public static void hideControllers(View moveController, View rotateController, View sizeController, View stickerFrame) {
+        if (moveController != null) moveController.setVisibility(View.INVISIBLE);
         if (rotateController != null) rotateController.setVisibility(View.INVISIBLE);
         if (sizeController != null) sizeController.setVisibility(View.INVISIBLE);
-        if (stickerWrapper != null) stickerWrapper.setTag(null);
-    }
+        if (stickerFrame != null) stickerFrame.setTag(null);
+    }*/
 
     public static float dist(float x1, float y1, float x2, float y2) {
         float dx = x1 - x2, dy = y1 - y2;
@@ -162,69 +212,82 @@ public class Controller {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    public static void enableStickerControl(View stickerWrapper, View editFrame, View rotateController, View sizeController, View view, Resources resources) {
-        editFrame.setVisibility(View.VISIBLE);
+    public static void enableStickerControl(Face face, Bitmap bitmap, View stickerFrame, FrameLayout stickerOverlay, FrameLayout faceOverlay, Resources resources) {
+        View moveController = stickerFrame.findViewById(R.id.moveController);
+        View rotateController = stickerFrame.findViewById(R.id.rotateController);
+        View sizeController = stickerFrame.findViewById(R.id.sizeController);
+        View deleteController = stickerFrame.findViewById(R.id.deleteController);
+
+        moveController.setVisibility(View.VISIBLE);
         rotateController.setVisibility(View.VISIBLE);
         sizeController.setVisibility(View.VISIBLE);
+        deleteController.setVisibility(View.VISIBLE);
 
-        View.OnTouchListener moveListener = (v, event) -> {
-            if (stickerWrapper == null) return false;
+        if (stickerFrame == null) return;
 
+        moveController.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
+                case MotionEvent.ACTION_DOWN: {
                     downRawX = event.getRawX();
                     downRawY = event.getRawY();
-                    startX = stickerWrapper.getX();
-                    startY = stickerWrapper.getY();
+                    startX = stickerFrame.getX();
+                    startY = stickerFrame.getY();
                     return true;
-                case MotionEvent.ACTION_MOVE:
-                    stickerWrapper.setX(startX + (event.getRawX() - downRawX));
-                    stickerWrapper.setY(startY + (event.getRawY() - downRawY));
+                }
+                case MotionEvent.ACTION_MOVE: {
+                    stickerFrame.setX(startX + (event.getRawX() - downRawX));
+                    stickerFrame.setY(startY + (event.getRawY() - downRawY));
                     return true;
-                /*case MotionEvent.ACTION_UP:
-                    updateMeta(lastFaceBox, stickerWrapper, meta);
-                    return true;*/
+                }
+                case MotionEvent.ACTION_UP: {
+                    if (EditStickerFragment.isFace && face != null && bitmap != null) {
+                        StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
+                    }
+                }
             }
             return false;
-        };
-        editFrame.setOnTouchListener(moveListener);
+        });
+
 
         rotateController.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN: {
                     ViewParent p = v.getParent();
                     if (p != null) p.requestDisallowInterceptTouchEvent(true);
-                    float[] c = getWrapperCenterInOverlay(stickerWrapper);
-                    float[] t = getTouchInOverlay(event, view);
+                    float[] c = getFrameCenterInOverlay(stickerFrame);
+                    float[] t = getTouchInOverlay(event, stickerOverlay);
                     float r = dist(t[0], t[1], c[0], c[1]);
                     if (r < dp((int) ROT_MIN_RADIUS_DP, resources)) return false;
-                    rotStartWrapperDeg = stickerWrapper.getRotation();
-                    rotLastAngleDeg = angleDeg(c[0], c[1], t[0], t[1]);
-                    rotAccumDeg = 0f;
+                    startDeg = stickerFrame.getRotation();
+                    endDeg = angleDeg(c[0], c[1], t[0], t[1]);
+                    accumDeg = 0f;
                     v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
                     return true;
                 }
                 case MotionEvent.ACTION_MOVE: {
-                    float[] c = getWrapperCenterInOverlay(stickerWrapper);
-                    float[] t = getTouchInOverlay(event, view);
+                    float[] c = getFrameCenterInOverlay(stickerFrame);
+                    float[] t = getTouchInOverlay(event, stickerOverlay);
                     float r = dist(t[0], t[1], c[0], c[1]);
                     if (r < dp((int) ROT_MIN_RADIUS_DP, resources)) return true;
                     float cur = angleDeg(c[0], c[1], t[0], t[1]);
-                    float step = shortestDeltaDeg(rotLastAngleDeg, cur);
+                    float step = shortestDeltaDeg(endDeg, cur);
                     if (Math.abs(step) > 60f) {
-                        rotLastAngleDeg = cur;
+                        endDeg = cur;
                         return true;
                     }
-                    rotAccumDeg += step;
-                    rotLastAngleDeg = cur;
-                    float target = rotStartWrapperDeg + rotAccumDeg;
-                    stickerWrapper.setRotation(target);
-                    updateControllerAngles(stickerWrapper, rotateController);
+                    accumDeg += step;
+                    endDeg = cur;
+                    float target = startDeg + accumDeg;
+                    stickerFrame.setRotation(target);
+                    updateControllerAngles(stickerFrame, rotateController);
+                    updateControllerAngles(stickerFrame, deleteController);
                     return true;
                 }
-                /*case MotionEvent.ACTION_UP:
-                    updateMeta(lastFaceBox, stickerWrapper, meta);
-                    return true;*/
+                case MotionEvent.ACTION_UP: {
+                    if (EditStickerFragment.isFace && face != null && bitmap != null) {
+                        StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
+                    }
+                }
             }
             return false;
         });
@@ -232,14 +295,14 @@ public class Controller {
         sizeController.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN: {
-                    float[] c = getWrapperCenterInOverlay(stickerWrapper);
-                    float[] t = getTouchInOverlay(event, view);
+                    float[] c = getFrameCenterInOverlay(stickerFrame);
+                    float[] t = getTouchInOverlay(event, stickerOverlay);
                     float vx = t[0] - c[0];
                     float vy = t[1] - c[1];
                     float startRadius = (float) Math.hypot(vx, vy);
                     if (startRadius < 1f) return false;
-                    startW = Math.max(1, stickerWrapper.getLayoutParams().width);
-                    startH = Math.max(1, stickerWrapper.getLayoutParams().height);
+                    startW = Math.max(1, stickerFrame.getLayoutParams().width);
+                    startH = Math.max(1, stickerFrame.getLayoutParams().height);
                     v.setTag(new float[]{c[0], c[1], vx / startRadius, vy / startRadius, startRadius});
                     return true;
                 }
@@ -247,12 +310,12 @@ public class Controller {
                     float[] tag = (float[]) v.getTag();
                     if (tag == null) return false;
                     float cX = tag[0], cY = tag[1], dirX = tag[2], dirY = tag[3], startRadius = tag[4];
-                    float[] t = getTouchInOverlay(event, view);
+                    float[] t = getTouchInOverlay(event, stickerOverlay);
                     float cx = t[0] - cX, cy = t[1] - cY;
                     float proj = cx * dirX + cy * dirY;
                     float rawScale = proj / startRadius;
 
-                    int minSizePx = dp(WRAPPER_MIN_DP, resources);
+                    int minSizePx = dp(FRAME_MIN_DP, resources);
                     float minScaleW = (float) minSizePx / (float) startW;
                     float minScaleH = (float) minSizePx / (float) startH;
                     float minScale = Math.max(minScaleW, minScaleH);
@@ -261,53 +324,27 @@ public class Controller {
                     int newW = Math.max(minSizePx, Math.round(startW * rawScale));
                     int newH = Math.max(minSizePx, Math.round(startH * rawScale));
 
-                    float centerX = stickerWrapper.getX() + stickerWrapper.getWidth() / 2f;
-                    float centerY = stickerWrapper.getY() + stickerWrapper.getHeight() / 2f;
+                    float centerX = stickerFrame.getX() + stickerFrame.getWidth() / 2f;
+                    float centerY = stickerFrame.getY() + stickerFrame.getHeight() / 2f;
 
-                    stickerWrapper.getLayoutParams().width = newW;
-                    stickerWrapper.getLayoutParams().height = newH;
-                    stickerWrapper.requestLayout();
-                    stickerWrapper.setPivotX(newW / 2f);
-                    stickerWrapper.setPivotY(newH / 2f);
-                    stickerWrapper.setX(centerX - newW / 2f);
-                    stickerWrapper.setY(centerY - newH / 2f);
+                    stickerFrame.getLayoutParams().width = newW;
+                    stickerFrame.getLayoutParams().height = newH;
+                    stickerFrame.requestLayout();
+                    stickerFrame.setPivotX(newW / 2f);
+                    stickerFrame.setPivotY(newH / 2f);
+                    stickerFrame.setX(centerX - newW / 2f);
+                    stickerFrame.setY(centerY - newH / 2f);
 
-                    updateControllersSizeAndAngle(stickerWrapper, editFrame, rotateController, sizeController, resources);
+                    updateControllersSizeAndAngle(stickerFrame, resources);
                     return true;
                 }
-                /*case MotionEvent.ACTION_UP:
-                    updateMeta(lastFaceBox, stickerWrapper, meta);
-                    return true;*/
+                case MotionEvent.ACTION_UP: {
+                    if (EditStickerFragment.isFace && face != null && bitmap != null) {
+                        StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
+                    }
+                }
             }
             return false;
         });
     }
-
-    /*public static void updateMeta(Rect lastFaceBox, View stickerWrapper, Bundle meta) {
-        if (lastFaceBox == null || stickerWrapper == null) return;
-
-        float stickerX = stickerWrapper.getX();
-        float stickerY = stickerWrapper.getY();
-        float stickerW = stickerWrapper.getWidth();
-        float stickerH = stickerWrapper.getHeight();
-        float stickerR = stickerWrapper.getRotation();
-
-        float stickerCenterX = stickerX + stickerW / 2f;
-        float stickerCenterY = stickerY + stickerH / 2f;
-
-        float faceCenterX = lastFaceBox.centerX();
-        float faceCenterY = lastFaceBox.centerY();
-
-        float relX = (stickerCenterX - faceCenterX) / lastFaceBox.width();
-        float relY = (stickerCenterY - faceCenterY) / lastFaceBox.height();
-        float relW = stickerW / (float) lastFaceBox.width();
-        float relH = stickerH / (float) lastFaceBox.height();
-
-        meta = new Bundle();
-        meta.putFloat("relX", relX);
-        meta.putFloat("relY", relY);
-        meta.putFloat("relW", relW);
-        meta.putFloat("relH", relH);
-        meta.putFloat("stickerR", stickerR);
-    }*/
 }

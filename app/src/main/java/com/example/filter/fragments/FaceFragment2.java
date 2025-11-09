@@ -1,3 +1,4 @@
+/*
 package com.example.filter.fragments;
 
 import android.graphics.Bitmap;
@@ -5,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,14 +28,13 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.Controller;
 import com.example.filter.etc.FaceDetect;
 import com.example.filter.etc.FaceModeViewModel;
-import com.example.filter.etc.FaceStickerData;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.mlkit.vision.face.Face;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class FaceFragment extends Fragment {
+public class FaceFragment2 extends Fragment {
     private FrameLayout faceOverlay;
     private ImageView faceModel;
     private View stickerWrapper;
@@ -169,9 +168,9 @@ public class FaceFragment extends Fragment {
 
             Fragment targetFragment;
             if ("stickers".equals(returnOrigin)) {
-                targetFragment = new StickersFragment();
+                targetFragment = new StickersFragment2();
             } else {
-                MyStickersFragment mystickers = new MyStickersFragment();
+                MyStickersFragment2 mystickers = new MyStickersFragment2();
                 Bundle args2 = new Bundle();
                 args2.putBoolean("restoreAllActive", false);
                 args2.putBoolean("fromFaceFragment", true);
@@ -243,16 +242,18 @@ public class FaceFragment extends Fragment {
                 String finalBatchId = isBatchEdit && batchId != null ? batchId : currentFaceBatchId;
                 //FaceStickerData data = new FaceStickerData(relX, relY, relW, relH, stickerR, finalBatchId, stickerBitmap, stickerPath);
 
-                /*Log.d("StickerFlow", String.format(
+                */
+/*Log.d("StickerFlow", String.format(
                         "[FaceFragment] relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
                         relX, relY, relW, relH, stickerR, currentFaceBatchId
-                ));*/
+                ));*//*
+
 
                 FaceModeViewModel vm = new ViewModelProvider(requireActivity()).get(FaceModeViewModel.class);
                 //vm.setFaceStickerData(data);
 
                 View stickerToClone = stickerWrapper;
-                Controller.removeStickerWrapper(stickerWrapper);
+                Controller.removeStickerFrame(stickerWrapper);
 
                 FilterActivity activity = (FilterActivity) getActivity();
                 if (activity == null) return;
@@ -267,7 +268,7 @@ public class FaceFragment extends Fragment {
                                 requireActivity().getSupportFragmentManager()
                                         .beginTransaction()
                                         .setCustomAnimations(R.anim.slide_up, 0)
-                                        .replace(R.id.bottomArea2, new MyStickersFragment())
+                                        .replace(R.id.bottomArea2, new MyStickersFragment2())
                                         .commit();
 
                                 requireActivity().findViewById(R.id.faceContainer).setVisibility(View.GONE);
@@ -296,7 +297,8 @@ public class FaceFragment extends Fragment {
                                 for (Face face : faces) {
                                     Rect box = face.getBoundingBox();
 
-                                    /*float eulerZ = face.getHeadEulerAngleZ();
+                                    */
+/*float eulerZ = face.getHeadEulerAngleZ();
                                     float eulerY = face.getHeadEulerAngleY();
                                     float eulerX = face.getHeadEulerAngleX();
 
@@ -379,7 +381,8 @@ public class FaceFragment extends Fragment {
                                         }
                                     }
 
-                                    stickerOverlay.addView(newSticker);*/
+                                    stickerOverlay.addView(newSticker);*//*
+
                                 }
                             }
                             showToast("얼굴 인식 성공");
@@ -387,9 +390,9 @@ public class FaceFragment extends Fragment {
 
                         Fragment targetFragment;
                         if ("stickers".equals(returnOrigin)) {
-                            targetFragment = new StickersFragment();
+                            targetFragment = new StickersFragment2();
                         } else {
-                            targetFragment = new MyStickersFragment();
+                            targetFragment = new MyStickersFragment2();
                             Bundle args2 = new Bundle();
                             args2.putBoolean("skipDisableOnce", true);
                             args2.putBoolean("restoreAllActive", false);
@@ -447,7 +450,8 @@ public class FaceFragment extends Fragment {
         });
     }
 
-    /*private void updateMeta() {
+    */
+/*private void updateMeta() {
         if (lastFaceBox == null || stickerWrapper == null) return;
 
         float stickerX = stickerWrapper.getX();
@@ -473,7 +477,8 @@ public class FaceFragment extends Fragment {
         meta.putFloat("relW", relW);
         meta.putFloat("relH", relH);
         meta.putFloat("stickerR", stickerR);
-    }*/
+    }*//*
+
 
     private View cloneSticker(View originalSticker) {
         if (originalSticker == null || getContext() == null) return null;
@@ -544,4 +549,4 @@ public class FaceFragment extends Fragment {
             this.faceBox.setVisibility(View.GONE);
         }
     }
-}
+}*/

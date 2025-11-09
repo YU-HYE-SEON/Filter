@@ -21,7 +21,7 @@
             android:layout_height="60dp"
             android:background="@android:color/transparent"
             android:visibility="visible"
-            app:layout_constraintBottom_toTopOf="@+id/photoPreviewContainer"
+            app:layout_constraintBottom_toTopOf="@+id/photoContainer"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -62,9 +62,9 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-        <!-- 사진 이미지 -->
+        <!-- 사진 영역 -->
         <FrameLayout
-            android:id="@+id/photoPreviewContainer"
+            android:id="@+id/photoContainer"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:clipChildren="true"
@@ -75,6 +75,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/topArea">
 
+            <!-- 사진 -->
             <android.opengl.GLSurfaceView
                 android:id="@+id/photoPreview"
                 android:layout_width="match_parent"
@@ -89,6 +90,7 @@
                 android:scaleType="fitCenter"
                 android:visibility="gone" />-->
 
+            <!-- 스티커 오버레이 -->
             <FrameLayout
                 android:id="@+id/stickerOverlay"
                 android:layout_width="match_parent"
@@ -96,6 +98,7 @@
                 android:clipChildren="false"
                 android:clipToPadding="false" />
 
+            <!-- 브러쉬 오버레이 -->
             <FrameLayout
                 android:id="@+id/brushOverlay"
                 android:layout_width="match_parent"
@@ -103,6 +106,7 @@
                 android:clipChildren="false"
                 android:clipToPadding="false" />
 
+            <!-- 올가미 오버레이 -->
             <com.example.filter.overlayviews.LassoOverlayView
                 android:id="@+id/lassoOverlay"
                 android:layout_width="match_parent"
@@ -110,6 +114,26 @@
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:visibility="gone" />
+
+            <!-- 얼굴 인식 오버레이 -->
+            <FrameLayout
+                android:id="@+id/faceOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#A1A1A1"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/faceModel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#A1A1A1"
+                    android:paddingTop="100dp"
+                    android:src="@drawable/face_model" />
+
+            </FrameLayout>
 
         </FrameLayout>
 
@@ -121,7 +145,7 @@
             app:layout_constraintBottom_toTopOf="@+id/bottomArea2"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/photoPreviewContainer">
+            app:layout_constraintTop_toBottomOf="@+id/photoContainer">
 
             <ImageButton
                 android:id="@+id/undoColor"
@@ -260,16 +284,16 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 얼굴 인식 오버레이 -->
+    <!--&lt;!&ndash; 얼굴 인식 오버레이 &ndash;&gt;
     <FrameLayout
         android:id="@+id/faceContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:visibility="gone" />-->
 
     <!-- AI 스티커 생성 뷰 -->
     <FrameLayout
-        android:id="@+id/fullScreenFragmentContainer"
+        android:id="@+id/fullScreenContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />

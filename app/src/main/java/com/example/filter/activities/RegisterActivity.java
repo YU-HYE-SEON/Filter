@@ -36,7 +36,7 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.service.FilterApi;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
-import com.example.filter.etc.FaceStickerData;
+import com.example.filter.etc.StickerMeta;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -85,7 +85,7 @@ public class RegisterActivity extends BaseActivity {
     private boolean forceScroll = false;
     private Bitmap finalBitmap;
     private FilterDtoCreateRequest.ColorAdjustments adj;
-    private ArrayList<FaceStickerData> faceStickers;
+    private ArrayList<StickerMeta> faceStickers;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override

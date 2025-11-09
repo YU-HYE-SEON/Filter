@@ -7,20 +7,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -34,18 +29,13 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
-import com.example.filter.etc.FaceModeViewModel;
-import com.example.filter.etc.FaceStickerData;
-import com.example.filter.fragments.FaceFragment;
+import com.example.filter.etc.StickerMeta;
 import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.overlayviews.CropBoxOverlayView;
@@ -55,7 +45,6 @@ import com.example.filter.etc.StickerStore;
 import com.example.filter.fragments.ColorsFragment;
 import com.example.filter.fragments.StickersFragment;
 import com.example.filter.fragments.ToolsFragment;
-import com.google.mlkit.vision.face.Face;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -205,7 +194,7 @@ public class FilterActivity extends BaseActivity {
     private int historyCursor = -1;
 
 
-    private List<FaceStickerData> faceStickerList = new ArrayList<>();
+    private List<StickerMeta> faceStickerList = new ArrayList<>();
 
     /// life cycle ///
     @SuppressLint("ClickableViewAccessibility")
@@ -312,11 +301,11 @@ public class FilterActivity extends BaseActivity {
         });
 
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
-            FrameLayout full = findViewById(R.id.fullScreenFragmentContainer);
+            FrameLayout full = findViewById(R.id.fullScreenContainer);
             ConstraintLayout filter = findViewById(R.id.filterActivity);
             ConstraintLayout main = findViewById(R.id.main);
 
-            Fragment f = getSupportFragmentManager().findFragmentById(R.id.fullScreenFragmentContainer);
+            Fragment f = getSupportFragmentManager().findFragmentById(R.id.fullScreenContainer);
             if (f == null) {
                 full.setVisibility(View.GONE);
                 filter.setVisibility(View.VISIBLE);
@@ -519,11 +508,11 @@ public class FilterActivity extends BaseActivity {
                         if (stickerOverlay != null) {
                             for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                                 View child = stickerOverlay.getChildAt(i);
-                                Object isFaceGenerated = child.getTag(R.id.tag_face_generated);
+                                //Object isFaceGenerated = child.getTag(R.id.tag_face_generated);
 
-                                if (!Boolean.TRUE.equals(isFaceGenerated)) {
+                                /*if (!Boolean.TRUE.equals(isFaceGenerated)) {
                                     child.draw(stickerCanvas);
-                                }
+                                }*/
                             }
                         }
                         stickerCanvas.restore();
@@ -809,8 +798,8 @@ public class FilterActivity extends BaseActivity {
                     .copy(renderer.getCurrentBitmap().getConfig(), true);
         }
 
-        FrameLayout container = findViewById(R.id.photoPreviewContainer);
-        if (cropOverlay != null) container.removeView(cropOverlay);
+        FrameLayout photoContainer = findViewById(R.id.photoContainer);
+        if (cropOverlay != null) photoContainer.removeView(cropOverlay);
 
         if (restorePrevRect && baseImageForCrop != null) {
             renderer.setBitmap(baseImageForCrop);
@@ -825,7 +814,7 @@ public class FilterActivity extends BaseActivity {
         }
 
         cropOverlay = new CropBoxOverlayView(this);
-        container.addView(cropOverlay, new FrameLayout.LayoutParams(
+        photoContainer.addView(cropOverlay, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -1786,7 +1775,7 @@ public class FilterActivity extends BaseActivity {
     private void handleBackNavChain() {
         FragmentManager fm = getSupportFragmentManager();
 
-        Fragment full = fm.findFragmentById(R.id.fullScreenFragmentContainer);
+        Fragment full = fm.findFragmentById(R.id.fullScreenContainer);
         if (full != null) {
             showExitConfirmDialog();
             return;

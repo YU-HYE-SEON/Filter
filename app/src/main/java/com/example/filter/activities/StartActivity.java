@@ -415,9 +415,10 @@ public class StartActivity extends BaseActivity {
                             loginSuccess();
                         } else {
                             Log.d("UserCheck", "🆕 신규 회원 → SignUpActivity 이동");
-                            Intent intent = new Intent(StartActivity.this, SignUpActivity.class);
-                            startActivity(intent);
-                            finish();
+                            showSignUpDialog();
+                            //Intent intent = new Intent(StartActivity.this, SignUpActivity.class);
+                            //startActivity(intent);
+                            //finish();
                         }
                     } catch (Exception e) {
                         Log.e("UserCheck", "JSON 파싱 실패", e);

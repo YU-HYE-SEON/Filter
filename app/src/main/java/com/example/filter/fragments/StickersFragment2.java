@@ -1,3 +1,4 @@
+/*
 package com.example.filter.fragments;
 
 import android.app.Activity;
@@ -20,8 +21,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.fragment.app.FragmentActivity;
 
 import com.example.filter.R;
 import com.example.filter.activities.FilterActivity;
@@ -29,21 +31,21 @@ import com.example.filter.activities.LoadActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
 import com.example.filter.etc.FaceDetect;
-import com.example.filter.etc.StickerMeta;
-import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 
-import java.util.List;
-
-public class StickersFragment extends Fragment {
-    private FaceBoxOverlayView faceBox;
-    private ImageView myStickerIcon, loadStickerIcon, brushIcon, AIStickerIcon;
-    private FrameLayout photoContainer, stickerOverlay, fullScreenContainer;
-    private ConstraintLayout filterActivity, bottomArea1;
+public class StickersFragment2 extends Fragment {
+    public static FaceBoxOverlayView faceBox;
+    private ImageView myStickerIcon;
+    private ImageView loadStickerIcon;
+    private ImageView brushIcon;
+    private ImageView AIStickerIcon;
+    private FrameLayout fullScreenFragmentContainer;
+    private ConstraintLayout filterActivity;
+    private ConstraintLayout bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
     //private ImageButton undoSticker, redoSticker, originalSticker;
     private LinearLayout brushToSticker;
-    //private static final float EPS_Z = 0.5f;
+    private static final float EPS_Z = 0.5f;
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -72,21 +74,17 @@ public class StickersFragment extends Fragment {
         brushIcon = view.findViewById(R.id.brushIcon);
         AIStickerIcon = view.findViewById(R.id.AIStickerIcon);
 
-        FilterActivity activity = (FilterActivity) requireActivity();
+        bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
+        undoColor = requireActivity().findViewById(R.id.undoColor);
+        redoColor = requireActivity().findViewById(R.id.redoColor);
+        originalColor = requireActivity().findViewById(R.id.originalColor);
 
-        photoContainer = activity.findViewById(R.id.photoContainer);
-        stickerOverlay = activity.findViewById(R.id.stickerOverlay);
-        bottomArea1 = activity.findViewById(R.id.bottomArea1);
-        undoColor = activity.findViewById(R.id.undoColor);
-        redoColor = activity.findViewById(R.id.redoColor);
-        originalColor = activity.findViewById(R.id.originalColor);
+        //undoSticker = requireActivity().findViewById(R.id.undoSticker);
+        //redoSticker = requireActivity().findViewById(R.id.redoSticker);
+        //originalSticker = requireActivity().findViewById(R.id.originalSticker);
+        brushToSticker = requireActivity().findViewById(R.id.brushToSticker);
 
-        //undoSticker = activity.findViewById(R.id.undoSticker);
-        //redoSticker = activity.findViewById(R.id.redoSticker);
-        //originalSticker = activity.findViewById(R.id.originalSticker);
-        brushToSticker = activity.findViewById(R.id.brushToSticker);
-
-        /*FilterActivity activity = (FilterActivity) getActivity();
+        FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {
             undoSticker.setOnClickListener(v -> {
                 activity.previewOriginalStickers(false);
@@ -101,48 +99,30 @@ public class StickersFragment extends Fragment {
             });
 
             activity.refreshStickerButtons();
-        }*/
+        }
+
 
         if (bottomArea1 != null) {
             undoColor.setVisibility(View.INVISIBLE);
             redoColor.setVisibility(View.INVISIBLE);
             originalColor.setVisibility(View.INVISIBLE);
-            /*undoSticker.setVisibility(View.VISIBLE);
+            undoSticker.setVisibility(View.VISIBLE);
             redoSticker.setVisibility(View.VISIBLE);
-            originalSticker.setVisibility(View.VISIBLE);*/
+            originalSticker.setVisibility(View.VISIBLE);
+
             bottomArea1.setVisibility(View.VISIBLE);
             brushToSticker.setVisibility(View.GONE);
         }
 
-        faceBox = new FaceBoxOverlayView(requireContext());
-        Bundle args = getArguments();
+        FilterActivity activity = (FilterActivity) requireActivity();
+        FrameLayout photoPreviewContainer = activity.findViewById(R.id.photoPreviewContainer);
 
-        photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        faceBox = new FaceBoxOverlayView(requireContext());
+        photoPreviewContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         activity.getPhotoPreview().queueEvent(() -> {
             Bitmap bmp = activity.getRenderer().getCurrentBitmap();
-            activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
+            activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, originalBitmap) -> {
                 if (faces.isEmpty()) return;
-
-                if (!faces.isEmpty() && args != null && args.getBoolean("IS_FACE_MODE")) {
-                    StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-                    View stickerFrame = viewModel.getTempView();
-                    StickerMeta meta = new StickerMeta(
-                            args.getFloat("relX"),
-                            args.getFloat("relY"),
-                            args.getFloat("relW"),
-                            args.getFloat("relH"),
-                            args.getFloat("rot")
-                    );
-                    List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, meta, requireContext());
-
-                    for (float[] p : placement) {
-                        View newSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame, requireContext(), p);
-                        if (newSticker != null) {
-                            viewModel.addSticker(newSticker);
-                        }
-                    }
-                    viewModel.setTempView(null);
-                }
             }));
         });
 
@@ -151,15 +131,25 @@ public class StickersFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(view, 400)) return;
 
-                MyStickersFragment myStickersFragment = new MyStickersFragment();
+                FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
+                int sessionBaseline = (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0;
+
+                long sessionId = System.currentTimeMillis();
+
+                MyStickersFragment2 f = new MyStickersFragment2();
                 Bundle args = new Bundle();
-                args.putString("prev_frag", "stickerF");
-                myStickersFragment.setArguments(args);
+                args.putInt("sessionBaseline", sessionBaseline);
+
+                args.putLong("sessionId", sessionId);
+
+                boolean skipDisableOnce = false;
+                args.putBoolean("skipDisableOnce", skipDisableOnce);
+                f.setArguments(args);
 
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea2, myStickersFragment)
+                        .replace(R.id.bottomArea2, f)
                         .commit();
             }
         });
@@ -180,10 +170,23 @@ public class StickersFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(view, 400)) return;
 
+                FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
+                int sessionBaseline = (stickerOverlay != null) ? stickerOverlay.getChildCount() : 0;
+
+                BrushFragment f = new BrushFragment();
+                Bundle args = new Bundle();
+                args.putInt("sessionBaseline", sessionBaseline);
+
+                args.putBoolean("insertAboveEditingSticker", true);
+
+                boolean skipDisableOnce = false;
+                args.putBoolean("skipDisableOnce", skipDisableOnce);
+                f.setArguments(args);
+
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea2, new BrushFragment())
+                        .replace(R.id.bottomArea2, f)
                         .commit();
             }
         });
@@ -193,17 +196,17 @@ public class StickersFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(view, 400)) return;
 
-                fullScreenContainer = requireActivity().findViewById(R.id.fullScreenContainer);
+                fullScreenFragmentContainer = requireActivity().findViewById(R.id.fullScreenFragmentContainer);
                 filterActivity = requireActivity().findViewById(R.id.filterActivity);
                 ConstraintLayout main = requireActivity().findViewById(R.id.main);
 
-                fullScreenContainer.setVisibility(View.VISIBLE);
+                fullScreenFragmentContainer.setVisibility(View.VISIBLE);
                 filterActivity.setVisibility(View.GONE);
                 main.setBackgroundColor(Color.parseColor("#007AFF"));
 
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
-                        .replace(R.id.fullScreenContainer, new AIStickerViewFragment())
+                        .replace(R.id.fullScreenFragmentContainer, new AIStickerViewFragment())
                         .addToBackStack("ai_sticker_view")
                         .commit();
             }
@@ -212,7 +215,7 @@ public class StickersFragment extends Fragment {
         return view;
     }
 
-    /*private void rewireOverlayClickListeners() {
+    private void rewireOverlayClickListeners() {
         FrameLayout overlay = requireActivity().findViewById(R.id.stickerOverlay);
         if (overlay == null) return;
 
@@ -230,28 +233,111 @@ public class StickersFragment extends Fragment {
             MyStickersFragment.setStickerActive(child, true);
             MyStickersFragment.hideControllers(child);
 
-            moveEditSticker(child, overlay);
+            attachEditListenerForSticker(child, overlay);
         }
 
         FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {
             activity.refreshStickerButtons();
         }
-    }*/
+    }
 
-    private void moveEditSticker(View stickerFrame) {
-        stickerFrame.setOnClickListener(v -> {
-            Controller.setControllersVisible(stickerFrame, true);
 
-            EditStickerFragment editStickerFragment = new EditStickerFragment();
+    private void attachEditListenerForSticker(@NonNull View stickerView, @NonNull FrameLayout overlay) {
+        stickerView.setOnClickListener(null);
+
+        stickerView.setOnClickListener(v -> {
+            if (!isAdded()) return;
+            FragmentActivity act = requireActivity();
+            if (act == null || act.isFinishing() || act.isDestroyed()) return;
+            if (!stickerView.isEnabled()) return;
+
+            Fragment cur = act.getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+            if (cur instanceof EditMyStickerFragment2) return;
+            //if (ClickUtils.isFastClick(v, 400)) return;
+
+            if (stickerView.findViewById(R.id.stickerImage) == null ||
+                    stickerView.findViewById(R.id.editFrame) == null ||
+                    stickerView.findViewById(R.id.rotateController) == null ||
+                    stickerView.findViewById(R.id.sizeController) == null) {
+                return;
+            }
+
+            int beforeIndex = overlay.indexOfChild(stickerView);
+            float beforeZ = ViewCompat.getZ(stickerView);
+
+            int lastIndex = overlay.getChildCount() - 1;
+            float maxZ = Float.NEGATIVE_INFINITY;
+            for (int i = 0; i < overlay.getChildCount(); i++) {
+                maxZ = Math.max(maxZ, ViewCompat.getZ(overlay.getChildAt(i)));
+            }
+            boolean alreadyTopIndex = (beforeIndex == lastIndex);
+            boolean alreadyTopZ = (beforeZ >= maxZ - EPS_Z);
+            boolean alreadyAbsoluteTop = alreadyTopIndex && alreadyTopZ;
+
+            int afterIndex = beforeIndex;
+            float afterZ = beforeZ;
+
+            if (!alreadyAbsoluteTop) {
+                Controller.raiseStickerToAbsoluteTop(stickerView, overlay);
+                afterIndex = overlay.indexOfChild(stickerView);
+                afterZ = ViewCompat.getZ(stickerView);
+
+                boolean indexChanged = (afterIndex != beforeIndex);
+                boolean zChanged = Math.abs(afterZ - beforeZ) > EPS_Z;
+
+                if (indexChanged || zChanged) {
+                    FilterActivity fa = (FilterActivity) act;
+                    fa.recordStickerZOrderChange(stickerView, beforeIndex, beforeZ, afterIndex, afterZ);
+                }
+
+            }
+
+            stickerView.bringToFront();
+            overlay.requestLayout();
+            overlay.invalidate();
+
+            for (int i = 0; i < overlay.getChildCount(); i++) {
+                View child = overlay.getChildAt(i);
+                Controller.hideControllers(child);
+                Object t = child.getTag();
+                if ("editingSticker".equals(t)) {
+                    child.setTag(null);
+                }
+            }
+
+            for (int i = 0; i < overlay.getChildCount(); i++) {
+                View child = overlay.getChildAt(i);
+                child.setTag(R.id.tag_prev_enabled, child.isEnabled());
+                Controller.setStickerActive(child, child == stickerView);
+            }
+
+            Controller.setControllersVisible(stickerView, true);
+            stickerView.setTag("editingSticker");
+
             Bundle args = new Bundle();
-            args.putString("prev_frag", "stickerF");
-            editStickerFragment.setArguments(args);
+            args.putString("origin", "stickers");
 
-            requireActivity().getSupportFragmentManager()
+            args.putFloat("prevElevation", beforeZ);
+            args.putFloat("prevX", stickerView.getX());
+            args.putFloat("prevY", stickerView.getY());
+
+            ViewGroup.LayoutParams lp = stickerView.getLayoutParams();
+            int pw = (lp != null ? lp.width : stickerView.getWidth());
+            int ph = (lp != null ? lp.height : stickerView.getHeight());
+
+            args.putInt("prevW", pw);
+            args.putInt("prevH", ph);
+            args.putFloat("prevR", stickerView.getRotation());
+
+            EditMyStickerFragment2 edit = new EditMyStickerFragment2();
+            edit.setArguments(args);
+
+            act.getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, editStickerFragment)
+                    .replace(R.id.bottomArea2, edit)
+                    .addToBackStack("edit_from_stickers")
                     .commit();
         });
     }
@@ -259,6 +345,7 @@ public class StickersFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        FrameLayout stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
         if (stickerOverlay == null) return;
         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
             View child = stickerOverlay.getChildAt(i);
@@ -272,8 +359,8 @@ public class StickersFragment extends Fragment {
             }
 
             Controller.setStickerActive(child, true);
-            Controller.setControllersVisible(child, false);
-            moveEditSticker(child);
+            Controller.hideControllers(child);
+            attachEditListenerForSticker(child, stickerOverlay);
         }
     }
 
@@ -287,10 +374,6 @@ public class StickersFragment extends Fragment {
                 child.setOnClickListener(null);
             }
         }
-
-        if (faceBox != null) {
-            faceBox.clearBoxes();
-            faceBox.setVisibility(View.GONE);
-        }
     }
 }
+*/

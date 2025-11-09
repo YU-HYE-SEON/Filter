@@ -14,34 +14,34 @@ import androidx.annotation.NonNull;
 
 import com.example.filter.R;
 
-public class MyStickerDeleteDialog extends Dialog {
-    public interface MyStickerDeleteDialogListener {
+public class StickerDeleteDialog extends Dialog {
+    public interface StickerDeleteDialogListener {
         void onKeep();
 
         void onDelete();
     }
 
-    private MyStickerDeleteDialogListener listener;
+    private StickerDeleteDialogListener listener;
     private CharSequence messageText = null;
     private CharSequence button1Text = null;
     private CharSequence button2Text = null;
 
-    public MyStickerDeleteDialog(@NonNull Context context, MyStickerDeleteDialogListener listener) {
+    public StickerDeleteDialog(@NonNull Context context, StickerDeleteDialogListener listener) {
         super(context);
         this.listener = listener;
     }
 
-    public MyStickerDeleteDialog withMessage(CharSequence text) {
+    public StickerDeleteDialog withMessage(CharSequence text) {
         this.messageText = text;
         return this;
     }
 
-    public MyStickerDeleteDialog withButton1Text(CharSequence text) {
+    public StickerDeleteDialog withButton1Text(CharSequence text) {
         this.button1Text = text;
         return this;
     }
 
-    public MyStickerDeleteDialog withButton2Text(CharSequence text) {
+    public StickerDeleteDialog withButton2Text(CharSequence text) {
         this.button2Text = text;
         return this;
     }

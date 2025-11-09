@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
@@ -17,12 +16,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
-import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SavePhotoActivity extends BaseActivity {
     private ImageButton backBtn;

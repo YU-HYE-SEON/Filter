@@ -10,7 +10,6 @@ import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -41,7 +40,7 @@ import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
-import com.example.filter.etc.FaceStickerData;
+import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
 
@@ -65,7 +64,7 @@ public class FilterDetailActivity extends BaseActivity {
     private ImageButton galleryModeBtn, cameraModeBtn;
     private boolean isChooseUseModeVisible = false;
     private FilterDtoCreateRequest.ColorAdjustments adj;
-    private ArrayList<FaceStickerData> faceStickers;
+    private ArrayList<StickerMeta> faceStickers;
     private String filterId, nick, originalPath, imgUrl, title, tagsStr, price, brushPath, stickerPath;
     private float cropN_l = -1f, cropN_t = -1f, cropN_r = -1f, cropN_b = -1f;
     private int accumRotationDeg = 0;

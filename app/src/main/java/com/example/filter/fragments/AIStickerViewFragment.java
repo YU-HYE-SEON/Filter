@@ -28,8 +28,6 @@ import java.io.FileOutputStream;
 public class AIStickerViewFragment extends Fragment {
     private FrameLayout aiStickerView;
     private ImageButton cancelBtn, checkBtn;
-    private FrameLayout fullScreenFragmentContainer;
-    private ConstraintLayout filterActivity;
 
     @Nullable
     @Override
@@ -163,7 +161,7 @@ public class AIStickerViewFragment extends Fragment {
     private void closeSelfSafely() {
         View root = getView();
         if (root != null) {
-            FrameLayout full = requireActivity().findViewById(R.id.fullScreenFragmentContainer);
+            FrameLayout full = requireActivity().findViewById(R.id.fullScreenContainer);
             ConstraintLayout filter = requireActivity().findViewById(R.id.filterActivity);
             ConstraintLayout main = requireActivity().findViewById(R.id.main);
 
