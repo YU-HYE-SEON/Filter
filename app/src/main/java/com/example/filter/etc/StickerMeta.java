@@ -5,20 +5,15 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModelProvider;
-
 import com.example.filter.R;
 import com.example.filter.activities.ApplyFilterActivity;
 import com.example.filter.activities.FilterActivity;
-import com.example.filter.fragments.EditStickerFragment;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceLandmark;
 
@@ -28,7 +23,6 @@ import java.util.List;
 public class StickerMeta {
     public static float relX, relY, relW, relH, rot;
     private static final int WRAPPER_MIN_DP = 100;
-    //private static final float FACE_STICKER_SCALE_BOOST = 1.3f;
 
     public StickerMeta(float relX, float relY, float relW, float relH, float rot) {
         this.relX = relX;
@@ -245,7 +239,6 @@ public class StickerMeta {
         cloneSticker.setY(placement[1]);
         cloneSticker.setRotation(placement[4]);
 
-        //Controller.removeStickerFrame(stickerFrame);
         Controller.setControllersVisible(cloneSticker, false);
         Controller.setStickerActive(cloneSticker, true);
 

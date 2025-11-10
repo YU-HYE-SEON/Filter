@@ -5,7 +5,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,10 +14,14 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import androidx.core.view.ViewCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
 import com.example.filter.fragments.EditStickerFragment;
 import com.google.mlkit.vision.face.Face;
+
+import java.util.List;
 
 public class Controller {
     private static final int FRAME_MIN_DP = 100;
@@ -28,23 +31,6 @@ public class Controller {
     private static float downRawX, downRawY, startX, startY;
     private static int startW, startH;
     private static float startDeg, endDeg, accumDeg;
-
-    public static void initPos(View stickerFrame, Float entryX, Float entryY, Float entryR, Integer entryW, Integer entryH) {
-        View moveController = stickerFrame.findViewById(R.id.moveController);
-        View rotateController = stickerFrame.findViewById(R.id.rotateController);
-        View sizeController = stickerFrame.findViewById(R.id.sizeController);
-        View deleteController = stickerFrame.findViewById(R.id.deleteController);
-
-        stickerFrame.setPivotX(stickerFrame.getWidth() / 2f);
-        stickerFrame.setPivotY(stickerFrame.getHeight() / 2f);
-        positionControllers(stickerFrame);
-
-        entryX = stickerFrame.getX();
-        entryY = stickerFrame.getY();
-        entryW = stickerFrame.getLayoutParams().width;
-        entryH = stickerFrame.getLayoutParams().height;
-        entryR = stickerFrame.getRotation();
-    }
 
     public static void clearCurrentSticker(FrameLayout stickerOverlay, View selectSticker) {
         if (selectSticker != null && selectSticker.getParent() == stickerOverlay) {
@@ -71,16 +57,6 @@ public class Controller {
                 img.setColorFilter(Color.parseColor("#505050"), PorterDuff.Mode.SRC_ATOP);
             }
         }
-    }
-
-    public static void raiseStickerToAbsoluteTop(View sticker, ViewGroup parent) {
-        float maxZ = 0f;
-        for (int i = 0; i < parent.getChildCount(); i++) {
-            maxZ = Math.max(maxZ, ViewCompat.getZ(parent.getChildAt(i)));
-        }
-        ViewCompat.setZ(sticker, maxZ + 1000f);
-        sticker.bringToFront();
-        parent.invalidate();
     }
 
     public static void updateControllerAngles(View stickerFrame, View controller) {

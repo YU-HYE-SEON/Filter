@@ -30,7 +30,7 @@ import com.example.filter.overlayviews.FaceBoxOverlayView;
 public class EditStickerFragment extends Fragment {
     public static int sessionId = 0;
     public static int stickerId = 0;
-    private int editingStickerId = -1;
+    private int editingStickerId = -1;  //-1이면 새로운 스티커 배치, -1 아니면 기존에 배치한 스티커 수정
     private View stickerFrame;
     private ImageView deleteController, faceModel;
     private CheckBox checkBox;
@@ -38,7 +38,6 @@ public class EditStickerFragment extends Fragment {
     private FrameLayout stickerOverlay, faceOverlay;
     //ImageButton undoSticker, redoSticker, originalSticker;
     private FaceBoxOverlayView faceBox;
-    private final int WRAPPER_MIN_DP = 100;
     private float pivotX, pivotY, tempPivotX, tempPivotY;
     private float x, y, r, tempX, tempY, tempR;
     private int w, h, tempW, tempH;
@@ -86,12 +85,6 @@ public class EditStickerFragment extends Fragment {
             stickerFrame = stickerOverlay.getChildAt(stickerOverlay.getChildCount() - 1);
         }
 
-        //x = stickerFrame.getX();
-        //y = stickerFrame.getY();
-        //w = stickerFrame.getLayoutParams().width;
-        //h = stickerFrame.getLayoutParams().height;
-        //r = stickerFrame.getRotation();
-
         w = args.getInt("w", stickerFrame.getLayoutParams().width);
         h = args.getInt("h", stickerFrame.getLayoutParams().height);
         pivotX = args.getFloat("pivotX", stickerFrame.getPivotX());
@@ -108,7 +101,6 @@ public class EditStickerFragment extends Fragment {
         tempY = y;
         tempR = r;
 
-        //int minPx = Controller.dp(WRAPPER_MIN_DP, getResources());
         int minPx = Controller.dp(230, getResources());
         int initW = Math.max(minPx, w);
         int initH = Math.max(minPx, h);
@@ -148,24 +140,36 @@ public class EditStickerFragment extends Fragment {
             Object tag = stickerFrame.getTag(R.id.tag_sticker_id);
             if (tag instanceof Integer) {
                 editingStickerId = (int) tag;
-                Log.d("스티커", "스티커 재편집 | ID = " + editingStickerId);
+                //Log.d("스티커", "스티커 재편집 | ID = " + editingStickerId);
             }
         }
 
         boolean isClone = args.getBoolean("IS_CLONED_STICKER", false);
+
         if (isClone) {
             checkBox.setChecked(true);
             checkBox.setEnabled(false);
             checkBox.setAlpha(0.4f);
-            faceOverlay.setVisibility(View.VISIBLE);
+            faceBox = new FaceBoxOverlayView(requireContext());
+            onFaceMode();
         }
-
 
         cancelBtn.setOnClickListener(view -> {
             if (ClickUtils.isFastClick(view, 400)) return;
 
-            if (checkBox.isChecked()) {
+            if (checkBox.isChecked() && !isClone) {
                 offFaceMode();
+            }
+
+            if (isClone && editingStickerId != -1) {
+                if (faceBox != null && faceOverlay != null) {
+                    if (stickerFrame != null && stickerFrame.getParent() == faceOverlay) {
+                        faceOverlay.removeView(stickerFrame);
+                    }
+                    faceBox.clearBoxes();
+                    faceBox.setVisibility(View.GONE);
+                    faceOverlay.setVisibility(View.GONE);
+                }
             }
 
             if (!checkBox.isChecked()) {
@@ -209,15 +213,10 @@ public class EditStickerFragment extends Fragment {
 
             Fragment stickerFragment = new StickersFragment();
 
+            /// (클론스티커) 새로 만드는 경우
             if (checkBox.isChecked()) {
                 StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-                viewModel.setTempView(stickerFrame);
-
-                /*if (isClone) {
-
-                } else {
-
-                }*/
+                viewModel.setTempView(editingStickerId != -1 ? editingStickerId : stickerId, stickerFrame);
 
                 args2.putBoolean("IS_FACE_MODE", true);
                 args2.putFloat("relX", meta.relX);
@@ -231,6 +230,34 @@ public class EditStickerFragment extends Fragment {
                 faceOverlay.setVisibility(View.GONE);
             }
 
+            /// (클론스티커) 수정하는 경우
+            if (isClone && editingStickerId != -1) {
+                StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
+                viewModel.setTempView(editingStickerId != -1 ? editingStickerId : stickerId, stickerFrame);
+
+                Bitmap bmp = Bitmap.createBitmap(faceModel.getWidth(), faceModel.getHeight(), Bitmap.Config.ARGB_8888);
+                Canvas c = new Canvas(bmp);
+                faceModel.draw(c);
+                FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
+                    if (!faces.isEmpty()) {
+                        meta = StickerMeta.calculate(faces.get(0), bitmap, stickerFrame, faceOverlay);
+                    }
+                });
+
+                args2.putInt("editingStickerId", editingStickerId);
+                args2.putBoolean("IS_FACE_MODE", true);
+                args2.putFloat("relX", meta.relX);
+                args2.putFloat("relY", meta.relY);
+                args2.putFloat("relW", meta.relW);
+                args2.putFloat("relH", meta.relH);
+                args2.putFloat("rot", meta.rot);
+                stickerFragment.setArguments(args2);
+
+                Controller.removeStickerFrame(stickerFrame);
+                faceOverlay.setVisibility(View.GONE);
+            }
+
+            /// (일반스티커) 새로 만들거나 수정하는 경우
             if (!checkBox.isChecked()) {
                 w = stickerFrame.getLayoutParams().width;
                 h = stickerFrame.getLayoutParams().height;
@@ -255,25 +282,21 @@ public class EditStickerFragment extends Fragment {
                     .commit();
 
             sessionId++;
-            //stickerId++;
 
-            //if (!checkBox.isChecked()) {
-            //    Log.d("스티커", String.format("최종 | [세션ID = %d] | [일반스티커ID = %d]", sessionId, stickerId));
-            //}
-
+            /// 스티커 새로 만들었을 때만 스티커아이디 증가
             if (editingStickerId == -1) {
                 stickerId++;
                 stickerFrame.setTag(R.id.tag_sticker_id, stickerId);
 
-                if (!checkBox.isChecked()) {
-                    Log.d("스티커", String.format("스티커 생성 | [세션ID = %d] | [스티커ID = %d]", sessionId, stickerId));
-                }
+                //if (!checkBox.isChecked()) {
+                //    Log.d("스티커", String.format("스티커 생성 | [세션ID = %d] | [스티커ID = %d]", sessionId, stickerId));
+                //}
 
-            } else {
+            } /*else {
                 if (!checkBox.isChecked()) {
                     Log.d("스티커", String.format("스티커 수정 | [세션ID = %d] | [스티커ID = %d]", sessionId, editingStickerId));
                 }
-            }
+            }*/
         });
 
         checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -323,7 +346,10 @@ public class EditStickerFragment extends Fragment {
             stickerDrawable = oldImage.getDrawable();
         }
 
-        if (stickerFrame != null && stickerFrame.getParent() == stickerOverlay) {
+        Bundle args = getArguments();
+        boolean isClone = args.getBoolean("IS_CLONED_STICKER", false);
+
+        if (stickerFrame != null && stickerFrame.getParent() == stickerOverlay && !isClone) {
             stickerOverlay.removeView(stickerFrame);
         }
 
@@ -339,7 +365,6 @@ public class EditStickerFragment extends Fragment {
                 if (w <= 0 || h <= 0) return;
 
                 faceModel.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
 
                 LayoutInflater inflater = LayoutInflater.from(requireContext());
                 View newStickerFrame = inflater.inflate(R.layout.v_sticker_edit, faceOverlay, false);
@@ -409,11 +434,21 @@ public class EditStickerFragment extends Fragment {
             StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
             Bundle args = getArguments();
             boolean isClone = args.getBoolean("IS_CLONED_STICKER", false);
+
             if (isClone) {
-                faceOverlay.setVisibility(View.GONE);
+                if (stickerFrame != null && stickerFrame.getParent() == faceOverlay) {
+                    faceOverlay.removeView(stickerFrame);
+                }
+                viewModel.removeCloneGroup(editingStickerId, stickerOverlay);
+            } else {
+                Controller.removeStickerFrame(stickerFrame);
             }
 
-            Controller.removeStickerFrame(stickerFrame);
+            if (faceBox != null && faceOverlay != null) {
+                faceBox.clearBoxes();
+                faceBox.setVisibility(View.GONE);
+                faceOverlay.setVisibility(View.GONE);
+            }
 
             String prevFragment = args.getString("prev_frag");
             if ("stickerF".equals(prevFragment)) {

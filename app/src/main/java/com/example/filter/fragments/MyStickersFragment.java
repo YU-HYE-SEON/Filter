@@ -3,7 +3,6 @@ package com.example.filter.fragments;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -189,7 +188,9 @@ public class MyStickersFragment extends Fragment {
 
         EditStickerFragment editStickerFragment = new EditStickerFragment();
         StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-        viewModel.setTempView(stickerFrame);
+        int currentId = EditStickerFragment.stickerId + 1;
+        viewModel.setTempView(currentId, stickerFrame);
+
         Bundle args = new Bundle();
         args.putString("prev_frag", "myStickerF");
         editStickerFragment.setArguments(args);
@@ -259,8 +260,5 @@ public class MyStickersFragment extends Fragment {
                 child.setOnClickListener(null);
             }
         }
-        StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-        viewModel.getTempView();
-        viewModel.setTempView(null);
     }
 }

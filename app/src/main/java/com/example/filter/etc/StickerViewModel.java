@@ -15,15 +15,15 @@ import java.util.Collections;
 import java.util.List;
 
 public class StickerViewModel extends ViewModel {
-    private View stickerFrame = null;
+    private final SparseArray<View> tempViews = new SparseArray<>();
     private final SparseArray<ArrayList<View>> cloneGroups = new SparseArray<>();
 
-    public void setTempView(View stickerFrame) {
-        this.stickerFrame = stickerFrame;
+    public void setTempView(int groupId, View stickerFrame) {
+        tempViews.put(groupId, stickerFrame);
     }
 
-    public View getTempView() {
-        return stickerFrame;
+    public View getTempView(int groupId) {
+        return tempViews.get(groupId);
     }
 
     public void addCloneGroup(int groupId, View cloneSticker) {
@@ -37,12 +37,12 @@ public class StickerViewModel extends ViewModel {
             list.add(cloneSticker);
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (View v : list) {
-            sb.append(v.hashCode()).append(" ");
-        }
-        int seesionId = EditStickerFragment.sessionId;
-        Log.d("스티커", String.format("[세션ID = %d] | [클론스티커ID = %d] | 개수 = %d, 구성 = %s", seesionId, groupId, list.size(), sb.toString()));
+        //StringBuilder sb = new StringBuilder();
+        //for (View v : list) {
+        //    sb.append(v.hashCode()).append(" ");
+        //}
+        //int seesionId = EditStickerFragment.sessionId;
+        //Log.d("스티커", String.format("[세션ID = %d] | [클론스티커ID = %d] | 개수 = %d, 구성 = %s", seesionId, groupId, list.size(), sb.toString()));
     }
 
     public List<View> getCloneGroup(int groupId) {

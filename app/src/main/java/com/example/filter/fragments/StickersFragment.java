@@ -44,7 +44,6 @@ public class StickersFragment extends Fragment {
     private ImageButton undoColor, redoColor, originalColor;
     //private ImageButton undoSticker, redoSticker, originalSticker;
     private LinearLayout brushToSticker;
-    //private static final float EPS_Z = 0.5f;
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -116,7 +115,6 @@ public class StickersFragment extends Fragment {
         }
 
         Bundle args = getArguments();
-        Bundle args2 = new Bundle();
 
         faceBox = new FaceBoxOverlayView(requireContext());
 
@@ -126,9 +124,10 @@ public class StickersFragment extends Fragment {
             activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
                 if (faces.isEmpty()) return;
 
-                if (!faces.isEmpty() && args != null && args.getBoolean("IS_FACE_MODE")) {
+                if (!faces.isEmpty() && args != null && (args.getBoolean("IS_FACE_MODE"))) {
                     StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-                    View stickerFrame = viewModel.getTempView();
+                    int groupId = args.getInt("editingStickerId", EditStickerFragment.stickerId);
+                    View stickerFrame = viewModel.getTempView(groupId);
                     StickerMeta meta = new StickerMeta(
                             args.getFloat("relX"),
                             args.getFloat("relY"),
@@ -136,28 +135,27 @@ public class StickersFragment extends Fragment {
                             args.getFloat("relH"),
                             args.getFloat("rot")
                     );
+
                     List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, meta, requireContext());
-
                     requireActivity().runOnUiThread(() -> {
-                        int groupId = EditStickerFragment.stickerId;
-                        int sessionId = EditStickerFragment.sessionId;
-
+                        viewModel.removeCloneGroup(groupId, stickerOverlay);
                         for (float[] p : placement) {
                             View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame, requireContext(), p);
                             if (cloneSticker != null) {
-                                cloneSticker.setTag(R.id.tag_sticker_id, EditStickerFragment.stickerId);
+                                cloneSticker.setTag(R.id.tag_sticker_id, groupId);
+                                cloneSticker.setTag(R.id.tag_sticker_clone, true);
                                 viewModel.addCloneGroup(groupId, cloneSticker);
+                                moveEditSticker(cloneSticker);
                             }
-                            moveEditSticker(cloneSticker);
                         }
 
-                        List<View> group = viewModel.getCloneGroup(groupId);
-                        StringBuilder sb = new StringBuilder();
-                        for (View v : group) {
-                            sb.append(v.hashCode()).append(" ");
-                        }
-                        Log.d("스티커", String.format("최종 | [세션ID = %d] | [클론스티커ID = %d] | 개수 = %d, 구성 = %s", sessionId, groupId, group.size(), sb.toString()));
-                        viewModel.setTempView(null);
+                        //List<View> group = viewModel.getCloneGroup(groupId);
+                        //StringBuilder sb = new StringBuilder();
+                        //for (View v : group) {
+                        //    sb.append(v.hashCode()).append(" ");
+                        //}
+                        //Log.d("스티커", String.format("최종 | [세션ID = %d] | [클론스티커ID = %d] | 개수 = %d, 구성 = %s", sessionId, groupId, group.size(), sb.toString()));
+                        //viewModel.setTempView(null);
                     });
                 }
             }));
@@ -168,14 +166,10 @@ public class StickersFragment extends Fragment {
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(view, 400)) return;
 
-                MyStickersFragment myStickersFragment = new MyStickersFragment();
-                //args2.putString("prev_frag", "stickerF");
-                //myStickersFragment.setArguments(args2);
-
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea2, myStickersFragment)
+                        .replace(R.id.bottomArea2, new MyStickersFragment())
                         .commit();
             }
         });
@@ -271,25 +265,25 @@ public class StickersFragment extends Fragment {
             //});
 
             EditStickerFragment editStickerFragment = new EditStickerFragment();
-            Bundle args2 = new Bundle();
+            Bundle args = new Bundle();
 
-            args2.putString("prev_frag", "stickerF");
-            args2.putInt("selected_index", ((ViewGroup) stickerFrame.getParent()).indexOfChild(stickerFrame));
+            args.putString("prev_frag", "stickerF");
+            args.putInt("selected_index", ((ViewGroup) stickerFrame.getParent()).indexOfChild(stickerFrame));
 
             Object tag = stickerFrame.getTag(R.id.tag_sticker_clone);
             if (tag != null) {
-                args2.putBoolean("IS_CLONED_STICKER", true);
+                args.putBoolean("IS_CLONED_STICKER", true);
             } else {
-                args2.putInt("w", stickerFrame.getLayoutParams().width);
-                args2.putInt("h", stickerFrame.getLayoutParams().height);
-                args2.putFloat("pivotX", stickerFrame.getPivotX());
-                args2.putFloat("pivotY", stickerFrame.getPivotY());
-                args2.putFloat("x", stickerFrame.getX());
-                args2.putFloat("y", stickerFrame.getY());
-                args2.putFloat("r", stickerFrame.getRotation());
+                args.putInt("w", stickerFrame.getLayoutParams().width);
+                args.putInt("h", stickerFrame.getLayoutParams().height);
+                args.putFloat("pivotX", stickerFrame.getPivotX());
+                args.putFloat("pivotY", stickerFrame.getPivotY());
+                args.putFloat("x", stickerFrame.getX());
+                args.putFloat("y", stickerFrame.getY());
+                args.putFloat("r", stickerFrame.getRotation());
             }
 
-            editStickerFragment.setArguments(args2);
+            editStickerFragment.setArguments(args);
 
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
