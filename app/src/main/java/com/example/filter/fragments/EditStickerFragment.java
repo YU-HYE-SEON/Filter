@@ -27,10 +27,14 @@ import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class EditStickerFragment extends Fragment {
     public static int sessionId = 0;
     public static int stickerId = 0;
     private int editingStickerId = -1;  //-1이면 새로운 스티커 배치, -1 아니면 기존에 배치한 스티커 수정
+    int originalIndex = -1;
     private View stickerFrame;
     private ImageView deleteController, faceModel;
     private CheckBox checkBox;
@@ -78,6 +82,8 @@ public class EditStickerFragment extends Fragment {
 
         if (args != null && args.containsKey("selected_index")) {
             int index = args.getInt("selected_index");
+            originalIndex = index;
+
             if (index >= 0 && index < stickerOverlay.getChildCount()) {
                 stickerFrame = stickerOverlay.getChildAt(index);
             }
@@ -146,6 +152,10 @@ public class EditStickerFragment extends Fragment {
 
         boolean isClone = args.getBoolean("IS_CLONED_STICKER", false);
 
+        if (stickerFrame != null && !isClone) {
+            stickerFrame.bringToFront();
+        }
+
         if (isClone) {
             checkBox.setChecked(true);
             checkBox.setEnabled(false);
@@ -186,6 +196,11 @@ public class EditStickerFragment extends Fragment {
                 //    Log.d("스티커", String.format("에딧 캔슬 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
                 //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
                 //});
+            }
+
+            if (stickerOverlay != null && stickerFrame != null && originalIndex >= 0 && !isClone) {
+                stickerOverlay.removeView(stickerFrame);
+                stickerOverlay.addView(stickerFrame, originalIndex);
             }
 
             Controller.setControllersVisible(stickerFrame, false);

@@ -162,7 +162,7 @@ public class StickerMeta {
                 }
 
                 float eulerZ = face.getHeadEulerAngleZ();
-                float eulerY = face.getHeadEulerAngleY();
+                //float eulerY = face.getHeadEulerAngleY();
                 float eulerX = face.getHeadEulerAngleX();
 
                 float stickerCenterX = faceCenterX + (metaData.relX * faceW);
@@ -174,20 +174,18 @@ public class StickerMeta {
                 float rotatedX = (float) (dx * Math.cos(radiansZ) - dy * Math.sin(radiansZ));
                 float rotatedY = (float) (dx * Math.sin(radiansZ) + dy * Math.cos(radiansZ));
 
-                float radiansY = (float) Math.toRadians(eulerY);
-                float depthShiftRatio = 0.35f;
-                float yawShiftX = (float) (Math.sin(radiansY) * faceW * depthShiftRatio);
-                float yawShiftY = (float) (Math.abs(Math.sin(radiansY)) * faceH * 0.1f);
+                //float radiansY = (float) Math.toRadians(eulerY);
+                //float depthShiftRatio = 0.35f;
+                //float yawShiftX = (float) (Math.sin(radiansY) * faceW * depthShiftRatio);
+                //float yawShiftY = (float) (Math.abs(Math.sin(radiansY)) * faceH * 0.1f);
 
                 float radiansX = (float) Math.toRadians(eulerX);
                 float pitchShiftRatio = 0.25f;
                 float pitchShiftY = (float) (Math.sin(radiansX) * faceH * pitchShiftRatio);
 
-                stickerCenterX = (faceCenterX + rotatedX) + yawShiftX;
-                stickerCenterY = (faceCenterY + rotatedY) - yawShiftY + pitchShiftY;
+                stickerCenterX = (faceCenterX + rotatedX) /*+ yawShiftX*/;
+                stickerCenterY = (faceCenterY + rotatedY) /*- yawShiftY*/ + pitchShiftY;
 
-                //float stickerW = metaData.relW * faceW * FACE_STICKER_SCALE_BOOST;
-                //float stickerH = metaData.relH * faceH * FACE_STICKER_SCALE_BOOST;
                 float stickerW = metaData.relW * faceW;
                 float stickerH = metaData.relH * faceH;
 

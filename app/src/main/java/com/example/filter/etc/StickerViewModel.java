@@ -17,6 +17,7 @@ import java.util.List;
 public class StickerViewModel extends ViewModel {
     private final SparseArray<View> tempViews = new SparseArray<>();
     private final SparseArray<ArrayList<View>> cloneGroups = new SparseArray<>();
+    private int selectedIndex = -1;
 
     public void setTempView(int groupId, View stickerFrame) {
         tempViews.put(groupId, stickerFrame);
@@ -64,5 +65,13 @@ public class StickerViewModel extends ViewModel {
         }
         list.clear();
         cloneGroups.remove(groupId);
+    }
+
+    public void setSelectedIndex(int index) {
+        this.selectedIndex = index;
+    }
+
+    public int getSelectedIndex() {
+        return selectedIndex;
     }
 }
