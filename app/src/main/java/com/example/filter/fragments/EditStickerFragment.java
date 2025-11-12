@@ -49,7 +49,7 @@ public class EditStickerFragment extends Fragment {
     private Drawable stickerDrawable;
     private StickerMeta meta;
     public static boolean isFace = false;
-    private int childCount = 0;
+    //private int childCount = 0;
     //private StickerMeta prevMeta, nextMeta;
 
     @Nullable
@@ -226,7 +226,7 @@ public class EditStickerFragment extends Fragment {
             }
         });
 
-        if (stickerOverlay != null) childCount = stickerOverlay.getChildCount();
+        //if (stickerOverlay != null) childCount = stickerOverlay.getChildCount();
 
         checkBtn.setOnClickListener(view -> {
             if (ClickUtils.isFastClick(view, 400)) return;
@@ -510,6 +510,7 @@ public class EditStickerFragment extends Fragment {
                     faceOverlay.removeView(stickerFrame);
                 }
                 viewModel.removeCloneGroup(editingStickerId, stickerOverlay);
+                viewModel.setFaceStickerDataToDelete(editingStickerId);
             } else {
                 Controller.removeStickerFrame(stickerFrame);
             }

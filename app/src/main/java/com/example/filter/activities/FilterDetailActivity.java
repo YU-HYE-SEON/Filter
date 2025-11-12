@@ -10,6 +10,7 @@ import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -40,6 +41,7 @@ import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
@@ -64,8 +66,8 @@ public class FilterDetailActivity extends BaseActivity {
     private ImageButton galleryModeBtn, cameraModeBtn;
     private boolean isChooseUseModeVisible = false;
     private FilterDtoCreateRequest.ColorAdjustments adj;
-    private ArrayList<StickerMeta> faceStickers;
-    private String filterId, nick, originalPath, imgUrl, title, tagsStr, price, brushPath, stickerPath;
+    private ArrayList<FaceStickerData> faceStickers;
+    private String filterId, nick, originalPath, imgUrl, title, tagsStr, price, brushPath, stickerImageNoFacePath;
     private float cropN_l = -1f, cropN_t = -1f, cropN_r = -1f, cropN_b = -1f;
     private int accumRotationDeg = 0;
     private boolean accumFlipH = false, accumFlipV = false;
@@ -78,15 +80,10 @@ public class FilterDetailActivity extends BaseActivity {
 
                 intent.putExtra("color_adjustments", adj);
                 intent.putExtra("brush_image_path", brushPath);
-                intent.putExtra("sticker_image_path", stickerPath);
 
-                intent.putExtra("filterId", filterId);
-                intent.putExtra("filterImage", imgUrl);
-                intent.putExtra("filterTitle", title);
-                intent.putExtra("nickname", nick);
-
-
-                /*intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+                /// 얼굴인식스티커 정보 전달 ///
+                intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
+                intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
 
                 List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
                 for (FaceStickerData d : faceStickers) {
@@ -97,17 +94,20 @@ public class FilterDetailActivity extends BaseActivity {
                     s.scale = (d.relW + d.relH) / 2f;
                     //s.relW = d.relW;
                     //s.relH = d.relH;
-                    s.rotation = d.stickerR;
-                    s.stickerId = d.batchId.hashCode();
+                    s.rotation = d.rot;
+                    s.stickerId = d.groupId;
                     stickers.add(s);
 
-                    Log.d("StickerFlow", String.format(
-                            "[FilterDetailActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
-                            d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
-                    ));
-                }*/
+                    /*Log.d("StickerFlow", String.format(
+                            "[FilterDetailActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+                            d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
+                    ));*/
+                }
 
-
+                intent.putExtra("filterId", filterId);
+                intent.putExtra("filterImage", imgUrl);
+                intent.putExtra("filterTitle", title);
+                intent.putExtra("nickname", nick);
 
                 startActivity(intent);
             } else {
@@ -183,23 +183,20 @@ public class FilterDetailActivity extends BaseActivity {
 
         adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
         brushPath = getIntent().getStringExtra("brush_image_path");
-        stickerPath = getIntent().getStringExtra("sticker_image_path");
 
-
-        /*faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
-
-        if (faceStickers != null && !faceStickers.isEmpty()) {
+        /// 얼굴인식스티커 정보 받기 ///
+        stickerImageNoFacePath = getIntent().getStringExtra("stickerImageNoFacePath");
+        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+        /*if (faceStickers != null && !faceStickers.isEmpty()) {
             for (FaceStickerData d : faceStickers) {
                 Log.d("StickerFlow", String.format(
-                        "[FilterDetailActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
-                        d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
+                        "[FilterDetailActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
                 ));
             }
         } else {
             Log.d("StickerFlow", "[FilterDetailActivity] faceStickers가 비어있음 혹은 null입니다.");
         }*/
-
-
 
         if (imgUrl != null) {
             Glide.with(this)
@@ -320,10 +317,20 @@ public class FilterDetailActivity extends BaseActivity {
             galleryLauncher.launch(intent);
         });
 
-            /*cameraModeBtn.setOnClickListener(v -> {
-                if (ClickUtils.isFastClick(v, 400)) return;
-                hideChooseUseMode();
-            });*/
+        cameraModeBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            Intent intent = new Intent();
+            intent.setClass(FilterDetailActivity.this, CameraActivity.class);
+
+            /// adj, brushPath, stickerImageNoFacePath, 얼굴인식스티커 정보 전달 ///
+            intent.putExtra("color_adjustments", adj);
+            intent.putExtra("brush_image_path", brushPath);
+            intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
+            intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+
+            startActivity(intent);
+            hideChooseUseMode();
+        });
     }
 
     private void showChooseUseMode() {

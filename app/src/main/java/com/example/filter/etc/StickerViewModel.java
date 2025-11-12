@@ -5,6 +5,8 @@ import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.filter.R;
@@ -17,6 +19,8 @@ import java.util.List;
 public class StickerViewModel extends ViewModel {
     private final SparseArray<View> tempViews = new SparseArray<>();
     private final SparseArray<ArrayList<View>> cloneGroups = new SparseArray<>();
+    private final MutableLiveData<FaceStickerData> faceStickerLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Integer> faceStickerDataToDelete = new MutableLiveData<>();
 
     public void setTempView(int groupId, View stickerFrame) {
         tempViews.put(groupId, stickerFrame);
@@ -64,5 +68,21 @@ public class StickerViewModel extends ViewModel {
         }
         list.clear();
         cloneGroups.remove(groupId);
+    }
+
+    public void setFaceStickerData(FaceStickerData data) {
+        faceStickerLiveData.postValue(data);
+    }
+
+    public LiveData<FaceStickerData> getFaceStickerData() {
+        return faceStickerLiveData;
+    }
+
+    public void setFaceStickerDataToDelete(int groupId) {
+        faceStickerDataToDelete.setValue(groupId);
+    }
+
+    public LiveData<Integer> getFaceStickerDataToDelete() {
+        return faceStickerDataToDelete;
     }
 }

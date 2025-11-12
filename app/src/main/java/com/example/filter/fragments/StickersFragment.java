@@ -30,10 +30,13 @@ import com.example.filter.activities.LoadActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
 import com.example.filter.etc.FaceDetect;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -138,6 +141,7 @@ public class StickersFragment extends Fragment {
                     List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, meta, requireContext());
                     requireActivity().runOnUiThread(() -> {
                         viewModel.removeCloneGroup(groupId, stickerOverlay);
+                        viewModel.setFaceStickerDataToDelete(groupId);
 
                         for (float[] p : placement) {
                             View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame, requireContext(), p);
@@ -148,6 +152,30 @@ public class StickersFragment extends Fragment {
                                 moveEditSticker(cloneSticker);
                             }
                         }
+
+                        ImageView stickerImage = stickerFrame.findViewById(R.id.stickerImage);
+                        Bitmap stickerBitmap = null;
+                        if (stickerImage != null && stickerImage.getDrawable() != null) {
+                            stickerImage.setDrawingCacheEnabled(true);
+                            stickerBitmap = Bitmap.createBitmap(stickerImage.getDrawingCache());
+                            stickerImage.setDrawingCacheEnabled(false);
+                        }
+                        String stickerPath = null;
+                        if (stickerBitmap != null) {
+                            try {
+                                File file = new File(requireContext().getCacheDir(),
+                                        "face_sticker_" + System.currentTimeMillis() + ".png");
+                                FileOutputStream out = new FileOutputStream(file);
+                                stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                                out.close();
+                                stickerPath = file.getAbsolutePath();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        FaceStickerData data = new FaceStickerData(meta.relX, meta.relY, meta.relW, meta.relH, meta.rot, groupId, stickerBitmap, stickerPath);
+                        viewModel.setFaceStickerData(data);
 
                         //List<View> group = viewModel.getCloneGroup(groupId);
                         //StringBuilder sb = new StringBuilder();

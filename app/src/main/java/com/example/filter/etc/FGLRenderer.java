@@ -2,6 +2,7 @@ package com.example.filter.etc;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
@@ -21,77 +22,41 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class FGLRenderer implements GLSurfaceView.Renderer {
-    private final Context context;  //리소스 접근 위해 사용
-    private GLSurfaceView glSurfaceView;    //화면에 그려지는 OpenGL의 뷰 (현재 불러온 사진 이미지 + 필터 적용)
-    private volatile Bitmap bitmap;  //렌더링할 이미지, openGL의 텍스쳐로 변환
-    private int viewportX, viewportY, viewportWidth, viewportHeight;    //화면에 실제로 보여지는 영역
-    private int textureId = 0;  //텍스쳐 객체 고유 ID 참조용, 0:생성한 텍스쳐 없음
-    private int program;    //쉐이더 프로그램 ID, 쉐이더 프로그램 = (버텍스 쉐이더(정점 위치 계산) + 프래그먼트 쉐이더(픽셀 색상 계산))
-    private int positionHandle, texCoordHandle; //버텍스 쉐이더의 변수들 ID 참조용 핸들
+    public interface OnBitmapCaptureListener {
+        void onBitmapCaptured(Bitmap bitmap);
+    }
+    private OnBitmapCaptureListener listener;
+    private boolean shouldCapture = false;
+    private final Context context;
+    private GLSurfaceView glSurfaceView;
+    private volatile Bitmap bitmap;
+    private int viewportX, viewportY, viewportWidth, viewportHeight;
+    private int textureId = 0;
+    private int program;
+    private int positionHandle, texCoordHandle;
+    private int textureHandle, brightnessHandle, exposureHandle, contrastHandle, highlightHandle, shadowHandle, temperatureHandle, hueHandle,
+            saturationHandle, sharpnessHandle, blurHandle, vignetteHandle, noiseHandle, resolutionHandle;
+    private final FloatBuffer vertexBuffer, texCoordBuffer;
+    private float imageAspectRatio;
+    private float updateBrightness = 0f, updateExposure = 0f, updateContrast = 0f, updateHighlight = 0f, updateShadow = 0f, updateTemperature = 0f,
+            updateHue = 0f, updateSaturation = 1.0f, updateSharpness = 0f, updateBlur = 0f, updateVignette = 0f, updateNoise = 0f;
+    private float tempBrightness = 0f, tempExposure = 0f, tempContrast = 0f, tempHighlight = 0f, tempShadow = 0f, tempTemperature = 0f,
+            tempHue = 0f, tempSaturation = 1.0f, tempSharpness = 0f, tempBlur = 0f, tempVignette = 0f, tempNoise = 0f;
+    private float translateX = 0f, translateY = 0f;
+    private float scaleFactor = 1.0f;
 
-    //프래그먼트 쉐이더의 변수들 ID 참조용 핸들
-    private int textureHandle, brightnessHandle, exposureHandle, contrastHandle,
-            highlightHandle, shadowHandle, temperatureHandle, hueHandle,
-            saturationHandle, sharpnessHandle, blurHandle,
-            vignetteHandle, noiseHandle, resolutionHandle;
-    private final FloatBuffer vertexBuffer, texCoordBuffer; //버텍스 위치/텍스쳐 좌표 데이터를 GPU에 전달할 때 사용하는 버퍼
-    private float imageAspectRatio; //사진 이미지 비율
-
-    //최종 적용 조절값
-    private float updateBrightness = 0f, updateExposure = 0f, updateContrast = 0f, updateHighlight = 0f,
-            updateShadow = 0f, updateTemperature = 0f, updateHue = 0f, updateSaturation = 1.0f,
-            updateSharpness = 0f, updateBlur = 0f, updateVignette = 0f, updateNoise = 0f;
-
-    //최종 적용 전 실시간 미리보기용 조절값 (onDrawFrame에서 사용)
-    private float tempBrightness = 0f, tempExposure = 0f, tempContrast = 0f, tempHighlight = 0f,
-            tempShadow = 0f, tempTemperature = 0f, tempHue = 0f, tempSaturation = 1.0f,
-            tempSharpness = 0f, tempBlur = 0f, tempVignette = 0f, tempNoise = 0f;
-
-    //화면(사각형)을 그릴 정점 좌표 (x,y)
-    //openGL의 정점 좌표는 가운데가 (0,0) / 왼쪽 아래가 (-1,-1) / 오른쪽 위가 (1,1)
     private final float[] vertices = {
             -1.0f, -1.0f,   //왼쪽 아래
             1.0f, -1.0f,    //오른쪽 아래
             -1.0f, 1.0f,    //왼쪽 위
             1.0f, 1.0f      //오른쪽 위
     };
-
-    //텍스쳐(이미지)의 어느 부분을 정점에 매핑할지에 대한 좌표 (s,t)
-    //openGL의 텍스쳐 좌표는 왼쪽 아래가 (0,0) / 오른쪽 위가 (1,1)
-    //안드로이드 비트맵 좌표는 왼쪽 위가 (0,0) / 오른쪽 아래가 (1,1)
-    //안드로이드 비트맵 좌표와 텍스쳐 좌표는 상하가 반대
-    //→ 텍스쳐 t값 반대로 생각해야 함
     private final float[] texCoords = {
             0.0f, 1.0f,     //왼쪽 위 → 왼쪽 아래
             1.0f, 1.0f,     //오른쪽 위 → 오른쪽 아래
             0.0f, 0.0f,     //왼쪽 아래 → 왼쪽 위
             1.0f, 0.0f      //오른쪽 아래 → 오른쪽 위
     };
-
-    private float translateX = 0f, translateY = 0f;  //사진 드래그 좌표
-
-    //사진 터치 드래그 좌표 계산
-    public void setTranslate(float x, float y) {
-        this.translateX = (x * 2f) / (float) viewportWidth;
-        this.translateY = (y * 2f) / (float) viewportHeight;
-    }
-
-    private float scaleFactor = 1.0f;   //사진 확대/축소 비율
-
-    //사진 확대/축소 비율 설정
-    public void setScaleFactor(float factor) {
-        this.scaleFactor = factor;
-    }
-
-    //사진 캡쳐를 위한 인터페이스
-    public interface OnBitmapCaptureListener {
-        void onBitmapCaptured(Bitmap bitmap);
-    }
-
-    //사진 캡쳐 리스너
-    private OnBitmapCaptureListener listener;
-    //사진 캡쳐 여부
-    private boolean shouldCapture = false;
 
     public FGLRenderer(Context context, GLSurfaceView glSurfaceView) {
         this.context = context;
@@ -108,47 +73,6 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         texCoordBuffer = cc.asFloatBuffer();
         texCoordBuffer.put(texCoords);
         texCoordBuffer.position(0);
-    }
-
-    private String loadShaderCodeFromRawResource(int resourceId) {
-        InputStream inputStream = context.getResources().openRawResource(resourceId);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder shaderCode = new StringBuilder();
-        String line;
-        try {
-            while ((line = reader.readLine()) != null) shaderCode.append(line).append("\n");
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return shaderCode.toString();
-    }
-
-    public void setBitmap(Bitmap bitmap) {
-        this.bitmap = bitmap;
-
-        if (textureId != 0) {
-            GLES20.glDeleteTextures(1, new int[]{textureId}, 0);
-            textureId = 0;
-        }
-
-        if (bitmap != null) {
-            imageAspectRatio = (float) bitmap.getWidth() / bitmap.getHeight();
-
-            if (glSurfaceView != null) {
-                glSurfaceView.queueEvent(() -> {
-                    int w = glSurfaceView.getWidth();
-                    int h = glSurfaceView.getHeight();
-                    onSurfaceChanged(null, w, h);
-                });
-
-                glSurfaceView.requestRender();
-            }
-        }
-    }
-
-    public Bitmap getCurrentBitmap() {
-        return this.bitmap;
     }
 
     @Override
@@ -347,8 +271,8 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                         for (int j = 0; j < rw; j++) {
                             int idx = i * rw + j;
                             int p = rgba[idx];
-                            int r = (p      ) & 0xff;
-                            int g = (p >>  8) & 0xff;
+                            int r = (p) & 0xff;
+                            int g = (p >> 8) & 0xff;
                             int b = (p >> 16) & 0xff;
                             int a = (p >> 24) & 0xff;
                             int flip = (rh - i - 1) * rw + j;
@@ -408,6 +332,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
+    /// 뷰포트 크기랑 좌표 ///
     public int getViewportX() {
         return viewportX;
     }
@@ -422,6 +347,90 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     public int getViewportHeight() {
         return viewportHeight;
+    }
+
+    /// 화면 조절 ///
+    public void setTranslate(float x, float y) {
+        this.translateX = (x * 2f) / (float) viewportWidth;
+        this.translateY = (y * 2f) / (float) viewportHeight;
+    }
+
+    public void setScaleFactor(float factor) {
+        this.scaleFactor = factor;
+    }
+
+    /// 비트맵, 캡쳐 관련 ///
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+
+        if (textureId != 0) {
+            GLES20.glDeleteTextures(1, new int[]{textureId}, 0);
+            textureId = 0;
+        }
+
+        if (bitmap != null) {
+            imageAspectRatio = (float) bitmap.getWidth() / bitmap.getHeight();
+
+            if (glSurfaceView != null) {
+                glSurfaceView.queueEvent(() -> {
+                    int w = glSurfaceView.getWidth();
+                    int h = glSurfaceView.getHeight();
+                    onSurfaceChanged(null, w, h);
+                });
+
+                glSurfaceView.requestRender();
+            }
+        }
+    }
+
+    public Bitmap getCurrentBitmap() {
+        return this.bitmap;
+    }
+
+    public void setOnBitmapCaptureListener(OnBitmapCaptureListener listener) {
+        this.listener = listener;
+    }
+
+    public void captureBitmap() {
+        shouldCapture = true;
+        if (glSurfaceView != null) glSurfaceView.requestRender();
+    }
+
+    private Bitmap createBitmapFromGLSurface(int x, int y, int width, int height) {
+        int rgbaBuffer[] = new int[width * height]; //openGL RGBA 픽셀 배열
+        int argbBuffer[] = new int[width * height]; //Bitmap ARGB 배열
+        IntBuffer ib = IntBuffer.wrap(rgbaBuffer);
+        ib.position(0);
+
+        GLES20.glReadPixels(x, y, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, ib);
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int index = i * width + j;
+                int pixel = rgbaBuffer[index];
+                int r = (pixel >> 0) & 0xff;
+                int g = (pixel >> 8) & 0xff;
+                int b = (pixel >> 16) & 0xff;
+                int a = (pixel >> 24) & 0xff;
+                int flippedIndex = (height - i - 1) * width + j;
+                argbBuffer[flippedIndex] = (a << 24) | (r << 16) | (g << 8) | b;
+            }
+        }
+        return Bitmap.createBitmap(argbBuffer, width, height, Bitmap.Config.ARGB_8888);
+    }
+
+    private String loadShaderCodeFromRawResource(int resourceId) {
+        InputStream inputStream = context.getResources().openRawResource(resourceId);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder shaderCode = new StringBuilder();
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) shaderCode.append(line).append("\n");
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return shaderCode.toString();
     }
 
     private int loadShader(int type, String shaderCode) {
@@ -439,6 +448,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         return shader;
     }
 
+    /// 필터 조정값 ///
     public int getCurrentValue(String filterType) {
         switch (filterType) {
             case "밝기":
@@ -654,58 +664,19 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
-    //비트맵 캡쳐 후 리스너에 등록
-    public void setOnBitmapCaptureListener(OnBitmapCaptureListener listener) {
-        this.listener = listener;
-    }
-
-    //비트맵 이미지 캡쳐 메서드, 캡쳐 여부 true로 -> onDraw에서 캡쳐되도록
-    public void captureBitmap() {
-        shouldCapture = true;
-        if (glSurfaceView != null) glSurfaceView.requestRender();
-    }
-
-    //openGL 픽셀 데이터를 Bitmap으로 변환하는 메서드
-    private Bitmap createBitmapFromGLSurface(int x, int y, int width, int height) {
-        int rgbaBuffer[] = new int[width * height]; //openGL RGBA 픽셀 배열
-        int argbBuffer[] = new int[width * height]; //Bitmap ARGB 배열
-        IntBuffer ib = IntBuffer.wrap(rgbaBuffer);
-        ib.position(0);
-
-        GLES20.glReadPixels(x, y, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, ib);
-
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                int index = i * width + j;
-                int pixel = rgbaBuffer[index];
-                int r = (pixel >> 0) & 0xff;
-                int g = (pixel >> 8) & 0xff;
-                int b = (pixel >> 16) & 0xff;
-                int a = (pixel >> 24) & 0xff;
-                int flippedIndex = (height - i - 1) * width + j;
-                argbBuffer[flippedIndex] = (a << 24) | (r << 16) | (g << 8) | b;
-            }
-        }
-        return Bitmap.createBitmap(argbBuffer, width, height, Bitmap.Config.ARGB_8888);
-    }
-
-    //오프스크린 렌더링 방식을 사용하기 위함 (사용자 눈에 직접 보이지 않게 처리)
-    //색감 보정 후 크롭 시 찰나에 원본 색감으로 깜빡이는 문제와
-    //색감 보정 후 크롭 시 색감 보정이 이중 적용되는 문제 해결을 위한 변수들
+    /// 오프스크린 ///
     private boolean captureUnfilteredNext = false;
     private int offFbo = 0;
     private int offTex = 0;
     private int offRbo = 0;
     private int offW = 0, offH = 0;
 
-    //색감 보정 후 사진 크롭 시 찰나에 원본 색감으로 깜빡이는 문제 해결을 위한 메서드, 크롭된 사진을 우회적으로 캡쳐함
     public void captureBitmapUnfiltered() {
         captureUnfilteredNext = true;
         shouldCapture = true;
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
-    //오프스크린 렌더링 준비
     private void ensureOffscreenTarget(int width, int height) {
         if (offFbo != 0 && width == offW && height == offH) return;
 
@@ -749,7 +720,6 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
         GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, 0);
     }
 
-    //메모리 차원에서 오프스크린 렌더링에 사용된 데이터들 삭제
     private void releaseOffscreenTarget() {
         int[] ids = new int[1];
         if (offTex != 0) {

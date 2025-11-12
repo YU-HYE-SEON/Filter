@@ -25,10 +25,14 @@ import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.StickerStore;
 import com.example.filter.items.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.fragments.SearchMainFragment;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends BaseActivity {
     private ConstraintLayout mainActivity;
@@ -60,6 +64,7 @@ public class MainActivity extends BaseActivity {
     /*private boolean isLoading = false;
     private int page = 0;
     private final int PAGE_SIZE = 10;*/
+    private ArrayList<FaceStickerData> faceStickers;
     private ActivityResultLauncher<Intent> detailActivityLauncher;
 
     @Override
@@ -175,7 +180,25 @@ public class MainActivity extends BaseActivity {
 
             intent.putExtra("color_adjustments", item.colorAdjustments);
             intent.putExtra("brush_image_path", item.brushPath);
-            intent.putExtra("sticker_image_path", item.stickerPath);
+            //intent.putExtra("sticker_image_path", item.stickerPath);
+
+            /// 얼굴인식스티커 정보 전달 ///
+            intent.putExtra("stickerImageNoFacePath", item.stickerImageNoFacePath);
+            intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+
+            List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+            for (FaceStickerData d : faceStickers) {
+                FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
+                s.placementType = "face";
+                s.x = d.relX;
+                s.y = d.relY;
+                s.scale = (d.relW + d.relH) / 2f;
+                //s.relW = d.relW;
+                //s.relH = d.relH;
+                s.rotation = d.rot;
+                s.stickerId = d.groupId;
+                stickers.add(s);
+            }
 
             detailActivityLauncher.launch(intent);
         });
@@ -234,7 +257,7 @@ public class MainActivity extends BaseActivity {
         String originalPath = intent.getStringExtra("original_image_path");
         String newImagePath = intent.getStringExtra("imgUrl");
         String brushPath = intent.getStringExtra("brush_image_path");
-        String stickerPath = intent.getStringExtra("sticker_image_path");
+        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
 
         if (newImagePath != null) {
             String nickname = intent.getStringExtra("nickname");
@@ -243,6 +266,9 @@ public class MainActivity extends BaseActivity {
             String price = intent.getStringExtra("price");
             FilterDtoCreateRequest.ColorAdjustments adj =
                     (FilterDtoCreateRequest.ColorAdjustments) intent.getSerializableExtra("color_adjustments");
+
+            /// 얼굴인식스티커 정보 받기 ///
+            String stickerImageNoFacePath = intent.getStringExtra("stickerImageNoFacePath");
 
             String newId = filterId;
             if (title == null) title = "New Filter";
@@ -261,7 +287,8 @@ public class MainActivity extends BaseActivity {
                     false,
                     adj,
                     brushPath,
-                    stickerPath
+                    stickerImageNoFacePath,
+                    faceStickers
             );
 
             if (filterAdapter != null) {

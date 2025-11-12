@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
@@ -16,9 +17,12 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SavePhotoActivity extends BaseActivity {
     private ImageButton backBtn;
@@ -58,16 +62,16 @@ public class SavePhotoActivity extends BaseActivity {
         boolean accumFlipV = getIntent().getBooleanExtra("accumFlipV", false);
 
         String brushImagePath = getIntent().getStringExtra("brush_image_path");
-        String stickerImagePath = getIntent().getStringExtra("sticker_image_path");
 
-        /*ArrayList<FaceStickerData> faceStickers =
+        /// 얼굴인식스티커 정보 받기 ///
+        String stickerImageNoFacePath = getIntent().getStringExtra("sticker_image_no_face_path");
+        ArrayList<FaceStickerData> faceStickers =
                 (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
-
-        if (faceStickers != null && !faceStickers.isEmpty()) {
+        /*if (faceStickers != null && !faceStickers.isEmpty()) {
             for (FaceStickerData d : faceStickers) {
                 Log.d("StickerFlow", String.format(
-                        "[SavePhotoActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
-                        d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
+                        "[SavePhotoActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
                 ));
             }
         } else {
@@ -121,10 +125,11 @@ public class SavePhotoActivity extends BaseActivity {
             intent.putExtra("accumFlipV", accumFlipV);
 
             intent.putExtra("brush_image_path", brushImagePath);
-            intent.putExtra("sticker_image_path", stickerImagePath);
+            //intent.putExtra("sticker_image_path", stickerImagePath);
 
-
-            /*intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+            /// 얼굴인식스티커 정보 전달 ///
+            intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
+            intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
 
             List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
             for (FaceStickerData d : faceStickers) {
@@ -135,16 +140,15 @@ public class SavePhotoActivity extends BaseActivity {
                 s.scale = (d.relW + d.relH) / 2f;
                 //s.relW = d.relW;
                 //s.relH = d.relH;
-                s.rotation = d.stickerR;
-                s.stickerId = d.batchId.hashCode();
+                s.rotation = d.rot;
+                s.stickerId = d.groupId;
                 stickers.add(s);
 
-                Log.d("StickerFlow", String.format(
-                        "[SavePhotoActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
-                        d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
-                ));
-            }*/
-
+                /*Log.d("StickerFlow", String.format(
+                        "[SavePhotoActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
+                ));*/
+            }
 
             FilterDtoCreateRequest.ColorAdjustments adj =
                     (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");

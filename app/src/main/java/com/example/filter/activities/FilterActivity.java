@@ -7,19 +7,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -40,9 +36,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
-import com.example.filter.etc.Controller;
-import com.example.filter.etc.FaceDetect;
-import com.example.filter.etc.StickerMeta;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
@@ -176,7 +170,7 @@ public class FilterActivity extends BaseActivity {
     private static class BrushOp {
         final ArrayList<View> views = new ArrayList<>();
         final ArrayList<Integer> positions = new ArrayList<>();
-    }*/
+    }
 
     public static class ErasePatch {
         public Rect rect;
@@ -191,17 +185,17 @@ public class FilterActivity extends BaseActivity {
     }
 
     private static class HistoryOp {
-        /*CloneGroupOp cloneGroup;
+        CloneGroupOp cloneGroup;
         List<View> cloneDelete;
         List<Integer> cloneDeletePos;
         StickerOp sticker;
         StickerEdit edit;
         View delete;
         int deletedPos = -1;
-        BrushOp brush;*/
+        BrushOp brush;
         ArrayList<EraseOp> erases;
 
-        /*boolean hasCloneGroup() {
+        boolean hasCloneGroup() {
             return cloneGroup != null;
         }
 
@@ -223,7 +217,7 @@ public class FilterActivity extends BaseActivity {
 
         boolean hasBrush() {
             return brush != null && !brush.views.isEmpty();
-        }*/
+        }
 
         boolean hasErase() {
             return erases != null && !erases.isEmpty();
@@ -231,7 +225,8 @@ public class FilterActivity extends BaseActivity {
     }
 
     private final ArrayList<HistoryOp> history = new ArrayList<>();
-    private int historyCursor = -1;
+    private int historyCursor = -1;*/
+    private List<FaceStickerData> faceStickerList = new ArrayList<>();
 
     /// life cycle ///
     @SuppressLint({"ClickableViewAccessibility", "WrongConstant"})
@@ -355,43 +350,27 @@ public class FilterActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
-        /*FaceModeViewModel vm = new ViewModelProvider(this).get(FaceModeViewModel.class);
-        vm.getFaceStickerData().observe(this, data -> {
+        StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
+        viewModel.getFaceStickerData().observe(this, data -> {
             if (data == null) return;
 
             if (faceStickerList == null) faceStickerList = new ArrayList<>();
             faceStickerList.add(data);
 
-            Log.d("StickerFlow", String.format(
-                    "[FilterActivity] 받은 FaceStickerData → nextRelX=%.4f, nextRelY=%.4f, nextRelW=%.4f, nextRelH=%.4f, nextRot=%.4f, batchId=%s",
-                    data.nextRelX, data.nextRelY, data.nextRelW, data.nextRelH, data.stickerR, data.batchId
-            ));
-
-
             if (data.stickerBitmap != null) {
                 ImageView iv = new ImageView(this);
                 iv.setImageBitmap(data.stickerBitmap);
-                iv.setRotation(data.stickerR);
+                iv.setRotation(data.rot);
             }
-
-            Log.d("FilterActivity", "FaceSticker received: " +
-                    "nextRelX=" + data.nextRelX + ", nextRelY=" + data.nextRelY + ", nextRelW=" + data.nextRelW + ", nextRelH=" + data.nextRelH);
         });
 
-        vm.getFaceStickerDataToDelete().observe(this, batchId -> {
-            if (batchId == null) return;
+        viewModel.getFaceStickerDataToDelete().observe(this, groupId -> {
+            if (groupId == null) return;
 
             if (faceStickerList != null) {
-                boolean removed = faceStickerList.removeIf(stickerData -> batchId.equals(stickerData.batchId));
-
-                if (removed) {
-                    Log.d("StickerFlow", String.format(
-                            "[FilterActivity] 이전 FaceStickerData 삭제 완료 (batchId=%s)", batchId
-                    ));
-                }
+                faceStickerList.removeIf(stickerData -> groupId.equals(stickerData.groupId));
             }
-        });*/
+        });
     }
 
     @Override
@@ -486,25 +465,35 @@ public class FilterActivity extends BaseActivity {
                     int vW = renderer.getViewportWidth();
                     int vH = renderer.getViewportHeight();
 
+                    List<View> clonesToHide = new ArrayList<>();
+                    for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                        View child = stickerOverlay.getChildAt(i);
+                        Object tag = child.getTag(R.id.tag_sticker_clone);
+                        if (tag != null) {
+                            clonesToHide.add(child);
+                        }
+                    }
+
                     try {
-                        /*List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+                        /// 얼굴인식스티커(클론스티커) 정보 입력 ///
+                        List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
                         for (FaceStickerData d : faceStickerList) {
                             FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
                             s.placementType = "face";
-                            s.x = d.nextRelX;
-                            s.y = d.nextRelY;
-                            s.scale = (d.nextRelW + d.nextRelH) / 2f;
-                            //s.nextRelW = d.nextRelW;
-                            //s.nextRelH = d.nextRelH;
-                            s.rotation = d.stickerR;
-                            s.stickerId = d.batchId.hashCode();
+                            s.x = d.relX;
+                            s.y = d.relY;
+                            s.scale = (d.relW + d.relH) / 2f;
+                            //s.relW = d.relW;
+                            //s.relH = d.relH;
+                            s.rotation = d.rot;
+                            s.stickerId = d.groupId;
                             stickers.add(s);
 
-                            Log.d("StickerFlow", String.format(
-                                    "[FilterActivity:Save] 전달 준비 → nextRelX=%.4f, nextRelY=%.4f, nextRelW=%.4f, nextRelH=%.4f, nextRot=%.4f, batchId=%s",
-                                    d.nextRelX, d.nextRelY, d.nextRelW, d.nextRelH, d.stickerR, d.batchId
-                            ));
-                        }*/
+                            /*Log.d("StickerFlow", String.format(
+                                    "[FilterActivity:Save] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+                                    d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
+                            ));*/
+                        }
 
                         //조정값
                         FilterDtoCreateRequest.ColorAdjustments adj = new FilterDtoCreateRequest.ColorAdjustments();
@@ -536,21 +525,14 @@ public class FilterActivity extends BaseActivity {
                             brushBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        //스티커 오버레이 굽기
+                        //스티커 오버레이 전체 굽기
                         Bitmap stickerBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas stickerCanvas = new Canvas(stickerBitmap);
                         stickerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
                         stickerCanvas.save();
                         stickerCanvas.translate(-vX, -vY);
                         if (stickerOverlay != null) {
-                            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                                View child = stickerOverlay.getChildAt(i);
-                                //Object isFaceGenerated = child.getTag(R.id.tag_face_generated);
-
-                                /*if (!Boolean.TRUE.equals(isFaceGenerated)) {
-                                    child.draw(stickerCanvas);
-                                }*/
-                            }
+                            stickerOverlay.draw(stickerCanvas);
                         }
                         stickerCanvas.restore();
 
@@ -575,6 +557,29 @@ public class FilterActivity extends BaseActivity {
                             finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
+                        //얼굴인식스티커 제외 버전으로 굽기
+                        Bitmap stickerBitmap_noFace = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
+                        Canvas stickerCanvas_noFace = new Canvas(stickerBitmap_noFace);
+                        stickerCanvas_noFace.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                        stickerCanvas_noFace.save();
+                        stickerCanvas_noFace.translate(-vX, -vY);
+
+                        if (stickerOverlay != null) {
+                            for (View child : clonesToHide) {
+                                child.setAlpha(0f);
+                            }
+                            stickerOverlay.draw(stickerCanvas_noFace);
+                            for (View child : clonesToHide) {
+                                child.setAlpha(1f);
+                            }
+                        }
+                        stickerCanvas_noFace.restore();
+
+                        File tempStickerFile_noFace = new File(getCacheDir(), "sticker_image_no_face.png");
+                        try (FileOutputStream out = new FileOutputStream(tempStickerFile_noFace)) {
+                            stickerBitmap_noFace.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        }
+
                         //데이터 전달
                         Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
                         intent.putExtra("saved_image", tempFile.getAbsolutePath());
@@ -594,7 +599,9 @@ public class FilterActivity extends BaseActivity {
                         intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath());
                         intent.putExtra("sticker_image_path", tempStickerFile.getAbsolutePath());
 
-                        //intent.putExtra("face_stickers", new ArrayList<>(faceStickerList));
+                        /// 얼굴인식스티커 정보 전달 ///
+                        intent.putExtra("sticker_image_no_face_path", tempStickerFile_noFace.getAbsolutePath());
+                        intent.putExtra("face_stickers", new ArrayList<>(faceStickerList));
 
                         startActivity(intent);
 
@@ -1397,7 +1404,7 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
-    private BrushOverlayView findBrushView() {
+    /*private BrushOverlayView findBrushView() {
         if (brushOverlay == null) return null;
         for (int i = 0; i < brushOverlay.getChildCount(); i++) {
             View v = brushOverlay.getChildAt(i);
@@ -1458,7 +1465,7 @@ public class FilterActivity extends BaseActivity {
         return false;
     }
 
-    /*public void recordBrushErase(List<EraseOp> ops) {
+    public void recordBrushErase(List<EraseOp> ops) {
         if (ops == null || ops.isEmpty()) {
             refreshStickerButtons();
             return;
@@ -1714,16 +1721,16 @@ public class FilterActivity extends BaseActivity {
 
         originalSticker.setEnabled(hasAnyPlacedStrict);
         originalSticker.setAlpha(hasAnyPlacedStrict ? 1f : 0.4f);
-    }*/
+    }
 
-    /*private void pushHistory(HistoryOp op) {
+    private void pushHistory(HistoryOp op) {
         while (history.size() > historyCursor + 1) history.remove(history.size() - 1);
         history.add(op);
         historyCursor = history.size() - 1;
         refreshStickerButtons();
-    }*/
+    }
 
-    /*public boolean canUndoSticker() {
+    public boolean canUndoSticker() {
         return historyCursor >= 0;
     }
 

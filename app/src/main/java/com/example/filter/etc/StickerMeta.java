@@ -210,7 +210,7 @@ public class StickerMeta {
                 float stickerY_view = stickerCenterY_view - stickerH_view / 2f;
                 float stickerR = metaData.rot - eulerZ;
 
-                //Log.d("얼굴스티커", String.format("[사진얼굴] 중심= %s, relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f", center, stickerX_view, stickerY_view, (float) stickerW_view, (float) stickerH_view, stickerR));
+                //Log.d("얼굴스티커", String.format("[사진얼굴] 중심= %s, relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f", center, stickerX_view, stickerY_view, (float) stickerW_view, (float) stickerH_view, rot));
 
                 resultList.add(new float[]{stickerX_view, stickerY_view, stickerW_view, stickerH_view, stickerR});
             }

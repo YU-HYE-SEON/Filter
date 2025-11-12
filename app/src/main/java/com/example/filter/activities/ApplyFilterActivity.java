@@ -17,6 +17,8 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -32,14 +34,24 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
-import com.example.filter.etc.FaceDetect;
-import com.example.filter.etc.StickerMeta;
+import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
+import com.example.filter.etc.StickerMeta;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ApplyFilterActivity extends BaseActivity {
+    public interface FaceDetectionCallback {
+        void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
+    }
+
     public static ApplyFilterActivity thisRef;
     private ImageButton backBtn;
     private FrameLayout photoContainer, brushOverlay, stickerOverlay;
@@ -48,9 +60,9 @@ public class ApplyFilterActivity extends BaseActivity {
     private ImageButton toArchiveBtn, toReviewBtn;
     private GLSurfaceView glSurfaceView;
     private FGLRenderer renderer;
-    private String brushPath, stickerPath;
+    private String brushPath, stickerImageNoFacePath;
     private FilterDtoCreateRequest.ColorAdjustments adj;
-    private ArrayList<StickerMeta> faceStickers;
+    private ArrayList<FaceStickerData> faceStickers;
     private Bitmap finalBitmapWithStickers = null;
     private FrameLayout reviewPopOff;
     private View reviewPopOn, dimBackground;
@@ -142,7 +154,7 @@ public class ApplyFilterActivity extends BaseActivity {
 
                     faceBox = new FaceBoxOverlayView(this);
                     photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                    FaceDetect.detectFaces(this.originalImageBitmap, faceBox, (faces, bitmap) -> {
+                    detectFaces(this.originalImageBitmap, (faces, originalBitmap) -> {
                         if (faces.isEmpty()) return;
                     });
                 }
@@ -158,182 +170,31 @@ public class ApplyFilterActivity extends BaseActivity {
 
         adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
         brushPath = getIntent().getStringExtra("brush_image_path");
-        stickerPath = getIntent().getStringExtra("sticker_image_path");
 
-
-        /*faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
-
-        if (faceStickers != null && !faceStickers.isEmpty()) {
+        /// 얼굴인식스티커 정보 받기 ///
+        stickerImageNoFacePath = getIntent().getStringExtra("stickerImageNoFacePath");
+        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+        /*if (faceStickers != null && !faceStickers.isEmpty()) {
             for (FaceStickerData d : faceStickers) {
                 Log.d("StickerFlow", String.format(
-                        "[ApplyFilterActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, batchId=%s",
-                        d.relX, d.relY, d.relW, d.relH, d.stickerR, d.batchId
+                        "[ApplyFilterActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
                 ));
             }
         } else {
             Log.d("StickerFlow", "[ApplyFilterActivity] faceStickers가 비어있음 혹은 null입니다.");
         }*/
 
-
         if (adj != null) applyAdjustments(adj);
         if (brushPath != null) applyBrushStickerImage(brushOverlay, brushPath);
-        if (stickerPath != null) applyBrushStickerImage(stickerOverlay, stickerPath);
+        if (stickerImageNoFacePath != null)
+            applyBrushStickerImage(stickerOverlay, stickerImageNoFacePath);
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
     }
-
-    /*public static void detectFaces(Bitmap bitmap, ApplyFilterActivity.FaceDetectionCallback callback) {
-        if (bitmap == null) {
-            if (callback != null) {
-                callback.onFacesDetected(new ArrayList<>(), null);
-            }
-            return;
-        }
-
-        InputImage image = InputImage.fromBitmap(bitmap, 0);
-
-        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                .build();
-
-        FaceDetector detector = FaceDetection.getClient(options);
-
-        detector.process(image)
-                .addOnSuccessListener(faces -> {
-                    List<Rect> rects = new ArrayList<>();
-
-                    for (int i = 0; i < faces.size(); i++) {
-                        Face face = faces.get(i);
-                        rects.add(face.getBoundingBox());
-                        //Log.d("얼굴인식", "========================= photoPreview 속 Face [" + (i + 1) + "] =========================");
-                        //getFaceLandmarks(face);
-                        //getFaceContours(face);
-                    }
-
-                    if (faceBox != null) {
-                        if (!faces.isEmpty()) {
-                            faceBox.setVisibility(View.VISIBLE);
-                            faceBox.setFaceBoxes(rects, bitmap.getWidth(), bitmap.getHeight());
-                        } else {
-                            faceBox.clearBoxes();
-                            faceBox.setVisibility(View.GONE);
-                        }
-                    }
-
-                    ApplyFilterActivity activity = ApplyFilterActivity.thisRef;
-                    if (activity == null || activity.faceStickers == null || activity.faceStickers.isEmpty()) return;
-
-                    activity.runOnUiThread(() -> {
-                        // Viewport 정보를 가져옴 (FaceFragment가 사용하는 FaceBox 좌표계와 다름)
-                        int vpX = activity.renderer.getViewportX();
-                        int vpY = activity.renderer.getViewportY();
-                        int vpW = activity.renderer.getViewportWidth();
-                        int vpH = activity.renderer.getViewportHeight();
-
-
-                        Bitmap original = activity.originalImageBitmap;
-                        if (original == null) return;
-
-                        // 원본 이미지 크기 (Bitmap)
-                        int bmpW = original.getWidth();
-                        int bmpH = original.getHeight();
-
-                        // 화면 Viewport와 원본 Bitmap 간의 스케일 및 오프셋 계산 (FaceFragment와 동일한 방식 사용)
-                        float scale = Math.min((float) vpW / bmpW, (float) vpH / bmpH);
-                        float offsetX = vpX + (vpW - bmpW * scale) / 2f;
-                        float offsetY = vpY + (vpH - bmpH * scale) / 2f;
-
-                        // 스티커 배치
-                        for (Face face : faces) {
-                            Rect box = face.getBoundingBox();
-
-                            // 1. 얼굴 바운딩 박스를 뷰 좌표계(View Coordinate)로 변환
-                            float faceL_view = (box.left * scale) + offsetX;
-                            float faceT_view = (box.top * scale) + offsetY;
-                            float faceW_view = box.width() * scale;
-                            float faceH_view = box.height() * scale;
-
-                            float faceCenterX_view = faceL_view + faceW_view / 2f;
-                            float faceCenterY_view = faceT_view + faceH_view / 2f;
-
-                            for (FaceStickerData d : activity.faceStickers) {
-                                Bitmap stickerBmp = d.stickerBitmap != null ?
-                                        d.stickerBitmap :
-                                        BitmapFactory.decodeFile(d.stickerPath);
-                                if (stickerBmp == null) continue;
-
-                                // 2. 얼굴 중심으로부터 상대적 위치를 뷰 좌표계의 픽셀 단위로 변환
-                                // 스티커가 얼굴을 기준으로 얼마나 떨어져야 하는지 계산
-                                // d.relX * faceW_view/scale 은 (relX * faceW)로, 이는 픽셀 기준이 됨.
-                                // 뷰 좌표계에서의 상대적인 중심 이동량
-                                float relativeDx_view = d.relX * faceW_view;
-                                float relativeDy_view = d.relY * faceH_view;
-
-                                // 3. 스티커 중심 뷰 좌표 계산
-                                float stickerCenterX_view = faceCenterX_view + relativeDx_view;
-                                float stickerCenterY_view = faceCenterY_view + relativeDy_view;
-
-                                // 4. 스티커 크기를 뷰 좌표계의 픽셀 단위로 변환
-                                float stickerW_view   = d.relW * faceW_view;
-                                float stickerH_view  = d.relH * faceH_view;
-
-                                // 5. 뷰의 좌상단 위치 (마진) 계산
-                                int lpW = Math.round(stickerW_view);
-                                int lpH = Math.round(stickerH_view);
-
-                                int lpX = Math.round(stickerCenterX_view - lpW / 2f);
-                                int lpY = Math.round(stickerCenterY_view - lpH / 2f);
-
-                                // FaceFragment에서 사용하는 FACE_STICKER_SCALE_BOOST(1.3f)를 여기에 적용해야 하는지 확인
-                                // FaceFragment에서는 이 값(1.3f)을 얼굴 인식 스티커에만 적용하고 있습니다.
-                                // 하지만 ApplyFilterActivity는 순수하게 데이터(FaceStickerData)만 읽어서 배치하므로,
-                                // FaceFragment에서 스티커가 얼굴에 맞춰 배치될 때 이미 이 값(relW/relH)에
-                                // 포함되어 전달되었다고 가정합니다. 만약 포함되지 않았다면 아래 크기 계산 시 추가해야 합니다.
-
-                                ImageView iv = new ImageView(activity);
-                                iv.setImageBitmap(stickerBmp);
-                                iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-
-                                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(lpW, lpH);
-                                lp.leftMargin = lpX;
-                                lp.topMargin  = lpY;
-                                iv.setLayoutParams(lp);
-
-                                // FaceFragment에서 사용한 회전각은 stickerR 입니다.
-                                // FaceFragment에서는 얼굴 회전각(eulerZ)을 빼서 최종 스티커 회전각을 계산하지만,
-                                // ApplyFilterActivity는 얼굴 회전을 추적할 수 없으므로, FaceFragment에서 계산된
-                                // 최종 회전각 (stickerR - eulerZ)이 FaceStickerData의 stickerR에 저장되어 있다고
-                                // **가정**하고 d.stickerR을 사용합니다.
-                                iv.setRotation(d.stickerR);
-
-                                activity.stickerOverlay.addView(iv);
-                            }
-                        }
-                    });
-
-                    if (callback != null) {
-                        callback.onFacesDetected(faces, bitmap);
-                    }
-
-                    detector.close();
-                })
-                .addOnFailureListener(e -> {
-                    if (faceBox != null) {
-                        faceBox.clearBoxes();
-                        faceBox.setVisibility(View.GONE);
-                    }
-                    if (callback != null) {
-                        callback.onFacesDetected(new ArrayList<>(), bitmap);
-                    }
-                    detector.close();
-                });
-    }*/
 
     private void setupReviewPop() {
         FrameLayout rootView = findViewById(R.id.reviewPopOff);
@@ -491,6 +352,93 @@ public class ApplyFilterActivity extends BaseActivity {
                 )
         );
         overlay.addView(imageView);
+    }
+
+    /// 얼굴인식스티커 적용하기 ///
+    private static void detectFaces(Bitmap bitmap, ApplyFilterActivity.FaceDetectionCallback callback) {
+        if (bitmap == null) {
+            if (callback != null) {
+                callback.onFacesDetected(new ArrayList<>(), null);
+            }
+            return;
+        }
+
+        InputImage image = InputImage.fromBitmap(bitmap, 0);
+
+        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .build();
+
+        FaceDetector detector = FaceDetection.getClient(options);
+
+        detector.process(image)
+                .addOnSuccessListener(faces -> {
+                    List<Rect> rects = new ArrayList<>();
+
+                    for (int i = 0; i < faces.size(); i++) {
+                        Face face = faces.get(i);
+                        rects.add(face.getBoundingBox());
+                        //Log.d("얼굴인식", "========================= photoPreview 속 Face [" + (i + 1) + "] =========================");
+                        //getFaceLandmarks(face);
+                        //getFaceContours(face);
+                    }
+
+                    if (faceBox != null) {
+                        if (!faces.isEmpty()) {
+                            faceBox.setVisibility(View.VISIBLE);
+                            faceBox.setFaceBoxes(rects, bitmap.getWidth(), bitmap.getHeight());
+                        } else {
+                            faceBox.clearBoxes();
+                            faceBox.setVisibility(View.GONE);
+                        }
+                    }
+
+                    ApplyFilterActivity activity = ApplyFilterActivity.thisRef;
+                    if (activity == null || activity.faceStickers == null || activity.faceStickers.isEmpty())
+                        return;
+
+                    activity.runOnUiThread(() -> {
+                        Bitmap original = activity.originalImageBitmap;
+                        if (original == null) return;
+
+                        for (Face face : faces) {
+                            for (FaceStickerData d : activity.faceStickers) {
+                                StickerMeta meta = new StickerMeta(d.relX, d.relY, d.relW, d.relH, d.rot);
+                                List<float[]> placements = StickerMeta.recalculate(faces, activity.originalImageBitmap, activity.stickerOverlay, meta, activity);
+                                for (float[] p : placements) {
+                                    View dummyFrame = LayoutInflater.from(activity).inflate(R.layout.v_sticker_edit, activity.stickerOverlay, false);
+                                    ImageView dummyImage = dummyFrame.findViewById(R.id.stickerImage);
+                                    if (d.stickerBitmap != null) {
+                                        dummyImage.setImageBitmap(d.stickerBitmap);
+                                    } else {
+                                        dummyImage.setImageBitmap(BitmapFactory.decodeFile(d.stickerPath));
+                                    }
+                                    StickerMeta.cloneSticker(activity.stickerOverlay, dummyFrame, activity, p);
+                                    activity.stickerOverlay.removeView(dummyFrame);
+                                }
+                            }
+                        }
+                    });
+
+                    if (callback != null) {
+                        callback.onFacesDetected(faces, bitmap);
+                    }
+
+                    detector.close();
+                })
+                .addOnFailureListener(e -> {
+                    if (faceBox != null) {
+                        faceBox.clearBoxes();
+                        faceBox.setVisibility(View.GONE);
+                    }
+                    if (callback != null) {
+                        callback.onFacesDetected(new ArrayList<>(), bitmap);
+                    }
+                    detector.close();
+                });
     }
 
     public FGLRenderer getRenderer() {

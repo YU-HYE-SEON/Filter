@@ -148,9 +148,21 @@ public class BrushFragment extends Fragment {
     private BitmapShader crayonPreviewShader;
 
     /// 지우개 ///
-    private final ArrayList<FilterActivity.EraseOp> sessionEraseOps = new ArrayList<>();
+    public static class ErasePatch {
+        public Rect rect;
+        public Bitmap before;
+    }
 
-    /// undoSticker, redoSticker, originalSticker 작업 ///
+    public static class EraseOp {
+        public ImageView view;
+        public ArrayList<ErasePatch> patches = new ArrayList<>();
+        public Path pathOnBitmap;
+        public float strokeWidthPx;
+    }
+
+    private final ArrayList<EraseOp> sessionEraseOps = new ArrayList<>();
+
+    /*/// undoSticker, redoSticker, originalSticker 작업 ///*/
     private final Map<ImageView, PendingErase> activeErases = new HashMap<>();
 
     /// 색상 코드 변수 ///
@@ -436,8 +448,8 @@ public class BrushFragment extends Fragment {
                                 return;
                             }
 
-                            FilterActivity act = (FilterActivity) requireActivity();
-                            ArrayList<FilterActivity.EraseOp> ops = new ArrayList<>();
+                            //FilterActivity act = (FilterActivity) requireActivity();
+                            ArrayList<EraseOp> ops = new ArrayList<>();
 
                             for (PendingErase pe : activeErases.values()) {
                                 if (!pe.hadEffect) {
@@ -448,13 +460,13 @@ public class BrushFragment extends Fragment {
                                     continue;
                                 }
 
-                                FilterActivity.EraseOp eo = new FilterActivity.EraseOp();
+                                EraseOp eo = new EraseOp();
                                 eo.view = pe.view;
                                 eo.pathOnBitmap = new Path(pe.path);
                                 eo.strokeWidthPx = pe.width;
 
                                 for (Patch pa : pe.patches) {
-                                    FilterActivity.ErasePatch ep = new FilterActivity.ErasePatch();
+                                    ErasePatch ep = new ErasePatch();
                                     ep.rect = new Rect(pa.rect);
                                     ep.before = pa.before;
                                     eo.patches.add(ep);
@@ -1339,13 +1351,13 @@ public class BrushFragment extends Fragment {
 
     private void rollbackSessionErases() {
         if (sessionEraseOps.isEmpty()) return;
-        for (FilterActivity.EraseOp eo : sessionEraseOps) {
+        for (EraseOp eo : sessionEraseOps) {
             if (!(eo.view.getDrawable() instanceof BitmapDrawable)) continue;
             Bitmap bmp = ((BitmapDrawable) eo.view.getDrawable()).getBitmap();
             if (bmp == null || bmp.isRecycled()) continue;
 
             Canvas c = new Canvas(bmp);
-            for (FilterActivity.ErasePatch ep : eo.patches) {
+            for (ErasePatch ep : eo.patches) {
                 if (ep.before == null || ep.before.isRecycled()) continue;
                 c.drawBitmap(ep.before, ep.rect.left, ep.rect.top, null);
 
