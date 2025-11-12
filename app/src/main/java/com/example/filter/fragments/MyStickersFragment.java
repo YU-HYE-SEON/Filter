@@ -59,6 +59,9 @@ public class MyStickersFragment extends Fragment {
         if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
         if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);*/
 
+        checkBtn.setEnabled(false);
+        checkBtn.setAlpha(0.4f);
+
         StickerStore.get().init(requireContext().getApplicationContext());
 
         deleteStickerIcon.setEnabled(false);
@@ -75,6 +78,8 @@ public class MyStickersFragment extends Fragment {
             deleteStickerIcon.setEnabled(true);
             deleteStickerIcon.setAlpha(1.0f);
             showStickerCentered(stickerKey);
+            checkBtn.setEnabled(true);
+            checkBtn.setAlpha(1.0f);
         });
 
         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
@@ -172,6 +177,8 @@ public class MyStickersFragment extends Fragment {
         deleteController.setOnClickListener(x -> {
             Controller.removeStickerFrame(stickerFrame);
             Controller.setControllersVisible(stickerFrame, false);
+            checkBtn.setEnabled(false);
+            checkBtn.setAlpha(0.4f);
         });
 
         stickerFrame.bringToFront();

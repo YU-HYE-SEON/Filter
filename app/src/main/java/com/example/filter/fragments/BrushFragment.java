@@ -184,10 +184,10 @@ public class BrushFragment extends Fragment {
     private BrushOverlayView brushDraw;
     private BrushOverlayView.BrushMode lastMode = BrushOverlayView.BrushMode.PEN;
     private View.OnLayoutChangeListener brushClipListener;
-    private int baselineStrokeCount = 0;
+    private int strokeCount = 0;
 
     /// 스티커 ///
-    private int baselineChildCount = 0;
+    private int childCount = 0;
 
     /// life cycle ///
     @Override
@@ -252,7 +252,7 @@ public class BrushFragment extends Fragment {
         bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
         /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
         redoSticker = requireActivity().findViewById(R.id.redoSticker);
-        originalSticker = requireActivity().findViewById(R.id.originalSticker)*/;
+        originalSticker = requireActivity().findViewById(R.id.originalSticker);*/
         brushToSticker = requireActivity().findViewById(R.id.brushToSticker);
         lassoOverlay = requireActivity().findViewById(R.id.lassoOverlay);
         checkBox = requireActivity().findViewById(R.id.checkBox);
@@ -328,8 +328,8 @@ public class BrushFragment extends Fragment {
                                 ViewGroup.LayoutParams.MATCH_PARENT,
                                 ViewGroup.LayoutParams.MATCH_PARENT));
             }
-            baselineStrokeCount = brushDraw.getVisibleStrokeCount();
-            if (stickerOverlay != null) baselineChildCount = stickerOverlay.getChildCount();
+            strokeCount = brushDraw.getVisibleStrokeCount();
+            if (stickerOverlay != null) childCount = stickerOverlay.getChildCount();
 
             if (brushDraw != null) {
                 brushDraw.setOnStrokeProgressListener(new BrushOverlayView.OnStrokeProgressListener() {
@@ -569,7 +569,7 @@ public class BrushFragment extends Fragment {
             rollbackSessionErases();
 
             if (brushDraw != null) {
-                brushDraw.trimToCount(baselineStrokeCount);
+                brushDraw.trimToCount(strokeCount);
                 brushDraw.setDrawingEnabled(false);
             }
             isPenPanelOpen = false;
@@ -592,7 +592,7 @@ public class BrushFragment extends Fragment {
             if (brushDraw != null) {
                 brushDraw.setDrawingEnabled(false);
 
-                int from = baselineStrokeCount;
+                int from = strokeCount;
                 int to = brushDraw.getVisibleStrokeCount();
                 Bitmap sessionBmp = brushDraw.renderStrokes(from, to);
                 if (sessionBmp != null) {
@@ -626,7 +626,7 @@ public class BrushFragment extends Fragment {
                     }
                 }
 
-                brushDraw.trimToCount(baselineStrokeCount);
+                brushDraw.trimToCount(strokeCount);
             }
 
             FilterActivity a = (FilterActivity) requireActivity();
@@ -636,8 +636,8 @@ public class BrushFragment extends Fragment {
             }
 
             if (stickerOverlay != null) {
-                //a.recordStickerPlacement(baselineChildCount);
-                baselineChildCount = stickerOverlay.getChildCount();
+                //a.recordBrush(childCount);
+                childCount = stickerOverlay.getChildCount();
             }
 
             isPenPanelOpen = false;

@@ -34,6 +34,7 @@ import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class StickersFragment extends Fragment {
@@ -81,26 +82,24 @@ public class StickersFragment extends Fragment {
         redoColor = activity.findViewById(R.id.redoColor);
         originalColor = activity.findViewById(R.id.originalColor);
 
-        //undoSticker = activity.findViewById(R.id.undoSticker);
-        //redoSticker = activity.findViewById(R.id.redoSticker);
-        //originalSticker = activity.findViewById(R.id.originalSticker);
+        /*undoSticker = activity.findViewById(R.id.undoSticker);
+        redoSticker = activity.findViewById(R.id.redoSticker);
+        originalSticker = activity.findViewById(R.id.originalSticker);*/
         brushToSticker = activity.findViewById(R.id.brushToSticker);
 
-        /*FilterActivity activity = (FilterActivity) getActivity();
-        if (activity != null) {
+       /* FilterActivity a = (FilterActivity) getActivity();
+        if (a != null) {
             undoSticker.setOnClickListener(v -> {
-                activity.previewOriginalStickers(false);
-                activity.undoSticker();
-                rewireOverlayClickListeners();
+                a.previewOriginalStickers(false);
+                a.undoSticker();
             });
 
             redoSticker.setOnClickListener(v -> {
-                activity.previewOriginalStickers(false);
-                activity.redoSticker();
-                rewireOverlayClickListeners();
+                a.previewOriginalStickers(false);
+                a.redoSticker();
             });
 
-            activity.refreshStickerButtons();
+            a.refreshStickerButtons();
         }*/
 
         if (bottomArea1 != null) {
@@ -139,6 +138,7 @@ public class StickersFragment extends Fragment {
                     List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, meta, requireContext());
                     requireActivity().runOnUiThread(() -> {
                         viewModel.removeCloneGroup(groupId, stickerOverlay);
+
                         for (float[] p : placement) {
                             View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame, requireContext(), p);
                             if (cloneSticker != null) {
@@ -157,6 +157,22 @@ public class StickersFragment extends Fragment {
                         //Log.d("스티커", String.format("최종 | [세션ID = %d] | [클론스티커ID = %d] | 개수 = %d, 구성 = %s", sessionId, groupId, group.size(), sb.toString()));
                         //viewModel.setTempView(null);
                     });
+
+                    /*StickerMeta prevMeta = new StickerMeta(
+                            args.getFloat("prev_relX"), args.getFloat("prev_relY"),
+                            args.getFloat("prev_relW"), args.getFloat("prev_relH"),
+                            args.getFloat("prev_rot")
+                    );
+
+                    StickerMeta nextMeta = new StickerMeta(
+                            args.getFloat("next_relX"), args.getFloat("next_relY"),
+                            args.getFloat("next_relW"), args.getFloat("next_relH"),
+                            args.getFloat("next_rot")
+                    );
+
+                    boolean isCloneModify = args.getBoolean("IS_CLONE_MODIFY", false);
+
+                    activity.recordCloneGroup(isCloneModify, groupId, stickerFrame, prevMeta, nextMeta);*/
                 }
             }));
         });
@@ -222,34 +238,14 @@ public class StickersFragment extends Fragment {
         return view;
     }
 
-    /*private void rewireOverlayClickListeners() {
-        FrameLayout overlay = requireActivity().findViewById(R.id.stickerOverlay);
-        if (overlay == null) return;
-
-        for (int i = 0; i < overlay.getChildCount(); i++) {
-            View child = overlay.getChildAt(i);
-
-            if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
-                continue;
-            }
-
-            child.setOnClickListener(null);
-            child.setTag(null);
-            child.setTag(R.id.tag_prev_enabled, null);
-
-            MyStickersFragment.setStickerActive(child, true);
-            MyStickersFragment.hideControllers(child);
-
-            moveEditSticker(child, overlay);
-        }
-
-        FilterActivity activity = (FilterActivity) getActivity();
-        if (activity != null) {
-            activity.refreshStickerButtons();
+    /*public void reapplyListenersToClones(List<View> clones) {
+        if (clones == null) return;
+        for (View clone : clones) {
+            moveEditSticker(clone);
         }
     }*/
 
-    private void moveEditSticker(View stickerFrame) {
+    public void moveEditSticker(View stickerFrame) {
         if (stickerFrame == null || stickerFrame.getParent() == null) return;
 
 

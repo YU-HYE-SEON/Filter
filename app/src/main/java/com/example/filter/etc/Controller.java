@@ -164,20 +164,6 @@ public class Controller {
         if (deleteController != null) deleteController.setVisibility(vis);
     }
 
-    /*public static void hideControllers(View sticker) {
-        View moveController = sticker.findViewById(R.id.moveController);
-        View rotateController = sticker.findViewById(R.id.rotateController);
-        View sizeController = sticker.findViewById(R.id.sizeController);
-        hideControllers(moveController, rotateController, sizeController, null);
-    }
-
-    public static void hideControllers(View moveController, View rotateController, View sizeController, View stickerFrame) {
-        if (moveController != null) moveController.setVisibility(View.INVISIBLE);
-        if (rotateController != null) rotateController.setVisibility(View.INVISIBLE);
-        if (sizeController != null) sizeController.setVisibility(View.INVISIBLE);
-        if (stickerFrame != null) stickerFrame.setTag(null);
-    }*/
-
     public static float dist(float x1, float y1, float x2, float y2) {
         float dx = x1 - x2, dy = y1 - y2;
         return (float) Math.hypot(dx, dy);

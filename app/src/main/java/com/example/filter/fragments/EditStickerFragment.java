@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
+import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
 import com.example.filter.etc.FaceDetect;
@@ -48,6 +49,8 @@ public class EditStickerFragment extends Fragment {
     private Drawable stickerDrawable;
     private StickerMeta meta;
     public static boolean isFace = false;
+    private int childCount = 0;
+    //private StickerMeta prevMeta, nextMeta;
 
     @Nullable
     @Override
@@ -223,10 +226,13 @@ public class EditStickerFragment extends Fragment {
             }
         });
 
+        if (stickerOverlay != null) childCount = stickerOverlay.getChildCount();
+
         checkBtn.setOnClickListener(view -> {
             if (ClickUtils.isFastClick(view, 400)) return;
 
             Fragment stickerFragment = new StickersFragment();
+            FilterActivity activity = (FilterActivity) requireActivity();
 
             /// (클론스티커) 새로 만드는 경우
             if (checkBox.isChecked()) {
@@ -243,12 +249,16 @@ public class EditStickerFragment extends Fragment {
 
                 Controller.removeStickerFrame(stickerFrame);
                 faceOverlay.setVisibility(View.GONE);
+
+                //prevMeta = meta;
             }
 
             /// (클론스티커) 수정하는 경우
             if (isClone && editingStickerId != -1) {
                 StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
                 viewModel.setTempView(editingStickerId != -1 ? editingStickerId : stickerId, stickerFrame);
+
+                //prevMeta = meta;
 
                 Bitmap bmp = Bitmap.createBitmap(faceModel.getWidth(), faceModel.getHeight(), Bitmap.Config.ARGB_8888);
                 Canvas c = new Canvas(bmp);
@@ -261,6 +271,7 @@ public class EditStickerFragment extends Fragment {
 
                 args2.putInt("editingStickerId", editingStickerId);
                 args2.putBoolean("IS_FACE_MODE", true);
+                args2.putBoolean("IS_CLONE_MODIFY", isClone);
                 args2.putFloat("relX", meta.relX);
                 args2.putFloat("relY", meta.relY);
                 args2.putFloat("relW", meta.relW);
@@ -270,7 +281,23 @@ public class EditStickerFragment extends Fragment {
 
                 Controller.removeStickerFrame(stickerFrame);
                 faceOverlay.setVisibility(View.GONE);
+
+                //nextMeta = meta;
             }
+
+
+            /*args2.putFloat("prev_relX", prevMeta.relX);
+            args2.putFloat("prev_relY", prevMeta.relY);
+            args2.putFloat("prev_relW", prevMeta.relW);
+            args2.putFloat("prev_relH", prevMeta.relH);
+            args2.putFloat("prev_rot", prevMeta.rot);
+
+            args2.putFloat("next_relX", nextMeta.relX);
+            args2.putFloat("next_relY", nextMeta.relY);
+            args2.putFloat("next_relW", nextMeta.relW);
+            args2.putFloat("next_relH", nextMeta.relH);
+            args2.putFloat("next_rot", nextMeta.rot);*/
+
 
             /// (일반스티커) 새로 만들거나 수정하는 경우
             if (!checkBox.isChecked()) {
@@ -286,6 +313,16 @@ public class EditStickerFragment extends Fragment {
                 //    Log.d("스티커", String.format("에딧 체크 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
                 //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
                 //});
+
+                /*if (stickerOverlay != null) {
+                    /// 일반스티커 생성 시 undo, redo 히스토리에 기록
+                    if (editingStickerId == -1) {
+                        int newStickerBaseline = Math.max(0, childCount - 1);
+                        activity.recordSticker(newStickerBaseline);
+                    } else {    /// 일반스티커 수정 시 undo, redo 히스토리에 기록
+                        activity.recordStickerEdit(stickerFrame, tempX, tempY, tempW, tempH, tempR, originalIndex, x, y, w, h, r, stickerOverlay.indexOfChild(stickerFrame));
+                    }
+                }*/
             }
 
             Controller.setControllersVisible(stickerFrame, false);
@@ -450,6 +487,24 @@ public class EditStickerFragment extends Fragment {
             Bundle args = getArguments();
             boolean isClone = args.getBoolean("IS_CLONED_STICKER", false);
 
+            String prevFragment = args.getString("prev_frag");
+
+            FilterActivity activity = (FilterActivity) requireActivity();
+
+            /// 일반스티커 삭제 undo, redo 히스토리에 기록
+            /*if ("stickerF".equals(prevFragment)) {
+                if (stickerFrame != null) {
+                    activity.recordStickerDelete(stickerFrame);
+                }
+
+                if (isClone && editingStickerId != -1) {
+                    List<View> deletedClones = viewModel.getCloneGroup(editingStickerId);
+                    if (deletedClones != null && !deletedClones.isEmpty()) {
+                        activity.recordCloneGroupDelete(editingStickerId, stickerFrame, deletedClones, meta);
+                    }
+                }
+            }*/
+
             if (isClone) {
                 if (stickerFrame != null && stickerFrame.getParent() == faceOverlay) {
                     faceOverlay.removeView(stickerFrame);
@@ -465,15 +520,15 @@ public class EditStickerFragment extends Fragment {
                 faceOverlay.setVisibility(View.GONE);
             }
 
-            String prevFragment = args.getString("prev_frag");
             if ("stickerF".equals(prevFragment)) {
-                requireActivity().getSupportFragmentManager()
+                activity.getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new StickersFragment())
                         .commit();
+
             } else if ("myStickerF".equals(prevFragment)) {
-                requireActivity().getSupportFragmentManager()
+                activity.getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new MyStickersFragment())
