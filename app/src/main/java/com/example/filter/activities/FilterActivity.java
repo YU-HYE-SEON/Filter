@@ -29,6 +29,7 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -59,10 +60,10 @@ public class FilterActivity extends BaseActivity {
     /// UI ///
     private FrameLayout stickerOverlay, brushOverlay;
     private GLSurfaceView photoPreview;
-    private ImageButton backBtn, saveBtn;
+    private ImageButton backBtn;
+    private AppCompatButton saveBtn;
     private ImageButton undoColor, redoColor, originalColor;
     //private ImageButton undoSticker, redoSticker, originalSticker;
-    private TextView saveTxt;
 
     /// renderer, photoImage ///
     private FGLRenderer renderer;
@@ -236,7 +237,6 @@ public class FilterActivity extends BaseActivity {
         setContentView(R.layout.a_filter);
         backBtn = findViewById(R.id.backBtn);
         saveBtn = findViewById(R.id.saveBtn);
-        saveTxt = findViewById(R.id.saveTxt);
         photoPreview = findViewById(R.id.photoPreview);
         stickerOverlay = findViewById(R.id.stickerOverlay);
         brushOverlay = findViewById(R.id.brushOverlay);
@@ -314,6 +314,8 @@ public class FilterActivity extends BaseActivity {
             }
         });
 
+        ClickUtils.clickDim(backBtn);
+        ClickUtils.clickDim(saveBtn);
         setupColorButtons();
         //setupStickerButtons();
         setupSaveButton();
@@ -1991,7 +1993,6 @@ public class FilterActivity extends BaseActivity {
             saveBtn.setEnabled(enabled);
             saveBtn.setClickable(enabled);
             saveBtn.setAlpha(enabled ? 1f : 0.3f);
-            saveTxt.setAlpha(enabled ? 1f : 0.3f);
         }
     }
 
@@ -2091,11 +2092,6 @@ public class FilterActivity extends BaseActivity {
                 .withButton1Text("예")
                 .withButton2Text("아니오")
                 .show();
-    }
-
-    private int dpToPx(int dp) {
-        float d = getResources().getDisplayMetrics().density;
-        return Math.round(dp * d);
     }
 
     /// getter ///

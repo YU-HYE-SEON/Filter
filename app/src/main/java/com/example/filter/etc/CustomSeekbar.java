@@ -22,9 +22,9 @@ public class CustomSeekbar extends View {
     private Paint progressPaint;    //움직인 만큼 채워질 색
     private Paint thumbPaint;   //조작 버튼
     private Paint progressText; //현재값 텍스트
-    private int textOffset = 80; //seekbar와 텍스트 사이 간격
-    private int thumbRadius = 25;   //버튼 반지름 → 크기
-    private int barStroke = 10; //seekbar 굵기
+    private int textOffset = dp(40); //seekbar와 텍스트 사이 간격
+    private int thumbRadius = dp(11);   //버튼 반지름 → 크기
+    private int barStroke = dp(3); //seekbar 굵기
     private static final int START_COLOR = Color.parseColor("#007BFF"); //파랑
     private static final int END_COLOR = Color.parseColor("#C2FA7A"); //초록
 
@@ -63,14 +63,14 @@ public class CustomSeekbar extends View {
         progressText = new Paint(Paint.ANTI_ALIAS_FLAG);
         progressText.setTypeface(ResourcesCompat.getFont(getContext(), R.font.roboto_bold));
         progressText.setColor(Color.parseColor("#6B6B6B"));
-        progressText.setTextSize(spToPx(18));
+        progressText.setTextSize(dp(18));
         progressText.setTextAlign(Paint.Align.CENTER);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        int centerY = getHeight() - 25;
+        int centerY = getHeight() - dp(60);
         int centerX = getWidth() / 2;
         float ratio = (float) (progress - min) / (max - min);
         ratio = Math.max(0f, Math.min(1f, ratio));
@@ -103,10 +103,10 @@ public class CustomSeekbar extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        float centerY = getHeight() - 25;
+        float centerY = getHeight() - dp(60);
         float touchX = event.getX();
         float touchY = event.getY();
-        float thumbTouchPadding = thumbRadius * 1.2f;
+        float thumbTouchPadding = thumbRadius * 3.5f;
         if (Math.abs(touchY - centerY) > thumbTouchPadding) return false;
 
         if (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -150,8 +150,7 @@ public class CustomSeekbar extends View {
         invalidate();
     }
 
-    private float spToPx(float sp) {
-        float scaledDensity = getResources().getDisplayMetrics().scaledDensity;
-        return sp * scaledDensity;
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 }

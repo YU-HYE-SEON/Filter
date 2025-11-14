@@ -43,7 +43,7 @@ public class OnBoardingActivity extends BaseActivity {
 
         adapter = new OnBoardingAdapter();
         recyclerView.setAdapter(adapter);
-        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
+        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(10), dp(10)));
 
         /*List<Integer> imageIds = new ArrayList<>();
         imageIds.add(R.drawable.);*/    // 이런 식으로 직접 추가
@@ -81,6 +81,7 @@ public class OnBoardingActivity extends BaseActivity {
             }
         });
 
+        ClickUtils.clickDim(nextBtn);
         nextBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             Intent intent = new Intent(OnBoardingActivity.this, MainActivity.class);

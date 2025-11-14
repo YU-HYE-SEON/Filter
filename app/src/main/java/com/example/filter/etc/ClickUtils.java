@@ -1,5 +1,8 @@
 package com.example.filter.etc;
 
+import android.annotation.SuppressLint;
+import android.graphics.PorterDuff;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.HashMap;
@@ -24,5 +27,21 @@ public class ClickUtils {
     public static void disableTemporarily(View v, long intervalMillis) {
         v.setEnabled(false);
         v.postDelayed(() -> v.setEnabled(true), intervalMillis);
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    public static void clickDim(View button) {
+        button.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.getBackground().setColorFilter(0x50000000, PorterDuff.Mode.SRC_ATOP);
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.getBackground().clearColorFilter();
+                    break;
+            }
+            return false;
+        });
     }
 }

@@ -2,36 +2,36 @@ package com.example.filter.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
+import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.TranslateAnimation;
-import android.widget.LinearLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.example.filter.R;
@@ -52,26 +52,23 @@ import com.google.gson.Gson;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
-import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class StartActivity extends BaseActivity {
     private GoogleSignInOptions gso;
     private GoogleSignInClient mGoogleSignInClient;
     private ActivityResultLauncher<Intent> signInLauncher;
     private ConstraintLayout bg;
-    private TextView txt, logo;
-    private LinearLayout logoBox, btn;
-    private AppCompatButton googleLogin, kakaoTalkLogin;
-    private boolean isLogin = false;
-    private boolean isSignUp = false;
+    private TextView txt;
+    private ImageView logo;
+    private ConstraintLayout btn;
+    private ImageButton googleLogin, kakaoTalkLogin;
 
     private void TestGoogleSignOut() {
         // ✅ [1] GoogleSignInOptions 초기화
@@ -108,7 +105,6 @@ public class StartActivity extends BaseActivity {
         // UI 초기화
         setContentView(R.layout.a_start);
         bg = findViewById(R.id.bg);
-        logoBox = findViewById(R.id.logoBox);
         txt = findViewById(R.id.txt);
         logo = findViewById(R.id.logo);
         btn = findViewById(R.id.btn);
@@ -152,104 +148,100 @@ public class StartActivity extends BaseActivity {
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
+
+        float moveUp = 114 * getResources().getDisplayMetrics().density;
+        long duration = 2500;
+
         new Handler().postDelayed(() -> {
             Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
-
-            final int[] start = new int[2];
-            logoBox.getLocationOnScreen(start);
-            final int startY = start[1];
 
             txt.setVisibility(View.VISIBLE);
             btn.setVisibility(View.VISIBLE);
             txt.startAnimation(fadeIn);
             btn.startAnimation(fadeIn);
 
-            final View root = findViewById(android.R.id.content);
-            root.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    root.getViewTreeObserver().removeOnPreDrawListener(this);
-                    int[] end = new int[2];
-                    logoBox.getLocationOnScreen(end);
-                    int endY = end[1];
-                    float dy = startY - endY;
+            ObjectAnimator logoAnimator = ObjectAnimator.ofFloat(logo, "translationY", -moveUp);
+            logoAnimator.setDuration(duration);
+            logoAnimator.setInterpolator(new DecelerateInterpolator(1.5f));
+            logoAnimator.start();
 
-                    TranslateAnimation moveUp = new TranslateAnimation(0f, 0f, dy, 0f);
-                    moveUp.setDuration(1000);
-                    moveUp.setInterpolator(new AccelerateDecelerateInterpolator());
-                    moveUp.setFillAfter(true);
+            ObjectAnimator txtAnimator = ObjectAnimator.ofFloat(txt, "translationY", -moveUp);
+            txtAnimator.setDuration(duration);
+            txtAnimator.setInterpolator(new DecelerateInterpolator(1.5f));
+            txtAnimator.start();
 
-                    bg.post(() -> {
-                        BgGradientDrawable bgDrawable = new BgGradientDrawable();
-                        bg.setBackground(bgDrawable);
-                        bgDrawable.setStretch(1.6f, 1.0f);
+            Drawable logoLime = ContextCompat.getDrawable(this, R.drawable.logo_lime);
+            Drawable logoWhite = ContextCompat.getDrawable(this, R.drawable.logo_white);
+            ClipDrawable clipDrawable = new ClipDrawable(logoWhite, android.view.Gravity.BOTTOM, ClipDrawable.VERTICAL);
+            Drawable[] layers = {logoLime, clipDrawable};
+            LayerDrawable layerDrawable = new LayerDrawable(layers);
+            logo.setImageDrawable(layerDrawable);
 
-                        //float cx = bg.getWidth() / 2f;
-                        //float r0 = 1f;
-                        //float r1 = bg.getWidth() * 2.5f;
-                        //bgDrawable.setStretch(bg.getWidth(), 1.0f);
+            ValueAnimator clipAnimator = ValueAnimator.ofInt(0, 10000);
+            clipAnimator.setDuration(duration);
+            clipAnimator.setInterpolator(new DecelerateInterpolator(1.5f));
+            clipAnimator.addUpdateListener(animation -> {
+                int level = (int) animation.getAnimatedValue();
+                clipDrawable.setLevel(level);
+            });
+            clipAnimator.start();
 
-                        ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
-                        anim.setDuration(1500);
-                        anim.setInterpolator(new AccelerateDecelerateInterpolator());
-                        anim.addUpdateListener(a -> {
-                            float t = (float) a.getAnimatedValue();
-                            float y = bg.getHeight() / 2f;
-                            float bgY = (y) + (-y * 1.7f) * t;
-                            //float bgY = (y) + (-y * 2.5f) * t;
-                            float radius = bg.getWidth() + bg.getWidth() * t;
-                            //float radius = r0 + (r1 - r0) * t;
-                            float glow = new DecelerateInterpolator(2f).getInterpolation(Math.min(1f, t * 1.6f));
+            BgGradientDrawable bgDrawable = new BgGradientDrawable();
+            bgDrawable.setStretch(1.6f, 1.0f);
+            bg.postDelayed(() -> bg.setBackground(bgDrawable), 80);
+            bg.post(() -> {
+                float startCX = bg.getWidth() / 2f;
+                float startCY = (bg.getHeight()) / 2f + logo.getHeight();
+                float finalRadius = bg.getHeight() * 0.5f;
+                float finalCenterY = -bg.getHeight() * 0.25f;
 
-                            bgDrawable.update(bg.getWidth() / 2f, bgY, radius, glow);
-                            //bgDrawable.update(cx, bgY, radius, glow);
-                        });
-                        anim.start();
-                    });
+                AtomicBoolean gradientStarted = new AtomicBoolean(false);
 
-                    logo.post(() -> {
-                        final int h = Math.max(1, logo.getHeight());
-                        final int brand = Color.parseColor("#C2FA7A");
-                        final ArgbEvaluator eval = new ArgbEvaluator();
+                ValueAnimator moveAnim = ValueAnimator.ofFloat(0f, 1f);
+                moveAnim.setDuration((int) (duration * 1.5f));
+                moveAnim.setInterpolator(new DecelerateInterpolator(1.0f));
+                moveAnim.addUpdateListener(a -> {
+                    float t = (float) a.getAnimatedValue();
+                    float currentY = startCY + (finalCenterY - startCY) * t;
+                    bgDrawable.update(startCX, currentY, bgDrawable.radius, bgDrawable.glow);
 
-                        ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
-                        anim.setDuration(1000);
-                        anim.setInterpolator(new AccelerateDecelerateInterpolator());
-                        anim.addUpdateListener(a -> {
-                            float t = (float) a.getAnimatedValue();
-                            float border = 1f - t;
-                            float feather = 0.08f + 0.12f * t;
-                            float p1 = Math.max(0f, border - feather);
-                            float p2 = border;
-                            float p3 = Math.min(1f, border + feather);
-                            int mid1 = (int) eval.evaluate(0.35f, brand, Color.WHITE);
-                            int mid2 = (int) eval.evaluate(0.85f, brand, Color.WHITE);
+                    if (t >= 0.9f && !gradientStarted.get()) {
+                        gradientStarted.set(true);
+                        Drawable finalGradient = ContextCompat.getDrawable(StartActivity.this, R.drawable.bg_gradient);
+                        Drawable current = bg.getBackground();
 
-                            Shader shader = new LinearGradient(
-                                    0, 0, 0, h,
-                                    new int[]{brand, brand, mid1, mid2, Color.WHITE},
-                                    new float[]{0f, p1, p2, p3, 1f},
-                                    Shader.TileMode.CLAMP
-                            );
-                            logo.getPaint().setShader(shader);
-                            logo.invalidate();
-                        });
-                        anim.addListener(new AnimatorListenerAdapter() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                logo.getPaint().setShader(null);
-                                logo.setTextColor(Color.WHITE);
-                            }
-                        });
+                        Drawable[] layers2 = {current, finalGradient};
+                        TransitionDrawable transition = new TransitionDrawable(layers2);
 
-                        anim.start();
-                    });
+                        bg.setBackground(transition);
+                        transition.startTransition(1200);
+                    }
+                });
 
-                    logoBox.clearAnimation();
-                    logoBox.startAnimation(moveUp);
+                ValueAnimator sizeAnim = ValueAnimator.ofFloat(0f, 1f);
+                sizeAnim.setDuration(duration);
+                sizeAnim.setInterpolator(new DecelerateInterpolator(2.0f));
+                sizeAnim.addUpdateListener(a -> {
+                    float t = (float) a.getAnimatedValue();
+                    float currentRadius = finalRadius * t;
+                    float glow = (float) a.getAnimatedValue();
+                    bgDrawable.update(startCX, bgDrawable.centerY, currentRadius, glow);
 
-                    return true;
-                }
+                    if (t >= 0.9f && !gradientStarted.get()) {
+                        gradientStarted.set(true);
+                        Drawable finalGradient = ContextCompat.getDrawable(StartActivity.this, R.drawable.bg_gradient);
+                        Drawable current = bg.getBackground();
+
+                        Drawable[] layers2 = {current, finalGradient};
+                        TransitionDrawable transition = new TransitionDrawable(layers2);
+
+                        bg.setBackground(transition);
+                        transition.startTransition(1200);
+                    }
+                });
+
+                moveAnim.start();
+                sizeAnim.start();
             });
         }, 1000);
 
@@ -258,25 +250,13 @@ public class StartActivity extends BaseActivity {
             ClickUtils.disableTemporarily(v, 800);
             googleLogin.setEnabled(false);
             signIn();
-
-            /*if (!isSignUp && !isLogin) {
-                showSignUpDialog();
-            } else if (!isLogin) {
-                loginFail();
-            } else if (isLogin) {
-                loginSuccess();
-            }*/
         });
 
         kakaoTalkLogin.setOnClickListener(v -> {
-            /*if (!isSignUp && !isLogin) {
-                showSignUpDialog();
-            } else if (!isLogin) {
-                loginFail();
-            } else if (isLogin) {
-                loginSuccess();
-            }*/
         });
+
+        ClickUtils.clickDim(googleLogin);
+        ClickUtils.clickDim(kakaoTalkLogin);
     }
 
     private void signIn() {
@@ -488,8 +468,14 @@ public class StartActivity extends BaseActivity {
     public class BgGradientDrawable extends Drawable {
         private final Paint basePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private int baseColor = Color.parseColor("#007AFF");
         private int accentColor = Color.parseColor("#C2FA7A");
+        private int middleColor1 = Color.parseColor("#B8F684");
+        private int middleColor2 = Color.parseColor("#AEF18D");
+        private int middleColor3 = Color.parseColor("#99E8A0");
+        private int middleColor4 = Color.parseColor("#84DFB3");
+        private int middleColor5 = Color.parseColor("#6FD6C6");
+        private int middleColor6 = Color.parseColor("#38A8E3");
+        private int baseColor = Color.parseColor("#007AFF");
         private float centerX, centerY, radius;
         private float glow = 0f;
         private float stretchX = 1f;
@@ -518,43 +504,18 @@ public class StartActivity extends BaseActivity {
         @Override
         public void draw(Canvas canvas) {
             canvas.drawRect(getBounds(), basePaint);
-
             int a = (int) (255 * glow);
             int accentWithA = Color.argb(a, Color.red(accentColor), Color.green(accentColor), Color.blue(accentColor));
-
-            /*float halfW = radius * stretchX;
-            float halfH = radius * stretchY;
-            float left = centerX - halfW;
-            float top = centerY - halfH;
-            float right = centerX + halfW;
-            float bottom = centerY + halfH;
-            float softness = 0.15f;
-
-            Shader fadeX = new LinearGradient(
-                    left, centerY, right, centerY,
-                    new int[]{Color.TRANSPARENT, accentWithA, accentWithA, Color.TRANSPARENT},
-                    new float[]{0f, 0.5f - softness, 0.5f + softness, 1f},
-                    Shader.TileMode.CLAMP
-            );
-
-            Shader fadeY = new LinearGradient(
-                    centerX, top, centerX, bottom,
-                    new int[]{Color.TRANSPARENT, accentWithA, accentWithA, Color.TRANSPARENT},
-                    new float[]{0f, 0.5f - softness, 0.5f + softness, 1f},
-                    Shader.TileMode.CLAMP
-            );
-
-            ComposeShader boxGlow = new ComposeShader(fadeX, fadeY, PorterDuff.Mode.MULTIPLY);
-            glowPaint.setShader(boxGlow);
-
-            canvas.drawRect(left, top, right, bottom, glowPaint);*/
-
-            Shader shader = new RadialGradient(
-                    centerX, centerY, radius,
-                    new int[]{accentWithA, Color.TRANSPARENT},
-                    new float[]{0f, 1f},
-                    Shader.TileMode.CLAMP
-            );
+            int middleWithA1 = Color.argb(a, Color.red(middleColor1), Color.green(middleColor1), Color.blue(middleColor1));
+            int middleWithA2 = Color.argb(a, Color.red(middleColor2), Color.green(middleColor2), Color.blue(middleColor2));
+            int middleWithA3 = Color.argb(a, Color.red(middleColor3), Color.green(middleColor3), Color.blue(middleColor3));
+            int middleWithA4 = Color.argb(a, Color.red(middleColor4), Color.green(middleColor4), Color.blue(middleColor4));
+            int middleWithA5 = Color.argb(a, Color.red(middleColor5), Color.green(middleColor5), Color.blue(middleColor5));
+            int middleWithA6 = Color.argb(a, Color.red(middleColor6), Color.green(middleColor6), Color.blue(middleColor6));
+            int baseWithA = Color.argb(a, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor));
+            int[] colors = {accentWithA, middleWithA1, middleWithA2, middleWithA3, middleWithA4, middleWithA5, middleWithA6, baseWithA};
+            float[] positions = {0.22f, 0.28f, 0.33f, 0.41f, 0.46f, 0.51f, 0.73f, 1f};
+            Shader shader = new RadialGradient(centerX, centerY, radius, colors, positions, Shader.TileMode.CLAMP);
             glowPaint.setShader(shader);
             canvas.save();
             canvas.scale(stretchX, stretchY, centerX, centerY);

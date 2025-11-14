@@ -9,10 +9,10 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.splashscreen.SplashScreen;
@@ -21,6 +21,8 @@ import com.example.filter.R;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.service.UserApi;
 import com.example.filter.etc.ClickUtils;
+
+import org.json.JSONObject;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -71,48 +73,41 @@ public class SignUpActivity extends BaseActivity {
                 String bad = findFirstForbiddenChar(input);
 
                 if (lengthByCodePoint > 10) {
-                    alertTxt.setTextColor(Color.RED);
+                    alertTxt.setTextColor(Color.parseColor("#FF5C8A"));
                     alertTxt.setText("10자 이내로 입력해주세요");
+                    setEditSizePos(320, 51, false);
                     nickname.setBackgroundResource(R.drawable.edit_nick_x);
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setVisibility(View.INVISIBLE);
                     btn.setEnabled(false);
-                } /*else if () {
-                    alertTxt.setTextColor(Color.RED);
-                    alertTxt.setText("이미 사용중인 닉네임입니다");
-                    alertTxt.setVisibility(View.VISIBLE);
-                    btn.setEnabled(false);
-                }*/ else if (bad != null) {
-                    alertTxt.setTextColor(Color.RED);
+                } else if (bad != null) {
+                    alertTxt.setTextColor(Color.parseColor("#FF5C8A"));
                     alertTxt.setText(bad + "은 사용할 수 없는 문자입니다");
+                    setEditSizePos(320, 51, false);
                     nickname.setBackgroundResource(R.drawable.edit_nick_x);
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setEnabled(false);
                     btn.setVisibility(View.INVISIBLE);
                 } else if (lengthByCodePoint == 0) {
-                    alertTxt.setTextColor(Color.RED);
+                    alertTxt.setTextColor(Color.parseColor("#FF5C8A"));
                     alertTxt.setText("닉네임을 입력해주세요");
+                    setEditSizePos(320, 51, false);
                     nickname.setBackgroundResource(R.drawable.edit_nick_x);
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setVisibility(View.INVISIBLE);
                     btn.setEnabled(false);
-                } else {
-                    alertTxt.setTextColor(Color.BLUE);
-                    alertTxt.setText("사용 가능한 닉네임입니다");
-                    nickname.setBackgroundResource(R.drawable.edit_nick_none);
-                    alertTxt.setVisibility(View.VISIBLE);
-                    btn.setVisibility(View.VISIBLE);
-                    btn.setEnabled(true);
+                } else {  //닉네임 중복 확인
+                    checkNicknameDuplicate(input);
                 }
             }
         });
 
+        ClickUtils.clickDim(btn);
         // ‼️ 닉네임 입력 후 다음 버튼 클릭
         btn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return; // 더블 클릭 방지
             String inputNickname = nickname.getText().toString().trim(); // 입력된 닉네임 가져오기
             sendNicknameToServer(inputNickname); // 서버로 닉네임 전송
-
         });
     }
 
@@ -244,5 +239,90 @@ public class SignUpActivity extends BaseActivity {
                 Log.e("SignUp", "❌ 서버 연결 오류", t);
             }
         });
+    }
+
+    /// 닉네임 중복 판단
+    private void checkNicknameDuplicate(String nicknameInput) {
+        Retrofit retrofit = AppRetrofitClient.getInstance(this);
+        UserApi userApi = retrofit.create(UserApi.class);
+
+        Call<ResponseBody> call = userApi.checkNicknameExists(nicknameInput);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    try {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        JSONObject json = new JSONObject(responseBody);
+                        boolean exists = json.optBoolean("exists", false);
+
+                        if (exists) {
+                            Log.d("닉네임중복", "닉네임 중복 o");
+
+                            alertTxt.setTextColor(Color.RED);
+                            alertTxt.setText("이미 사용중인 닉네임입니다");
+                            nickname.setBackgroundResource(R.drawable.edit_nick_x);
+                            alertTxt.setVisibility(View.VISIBLE);
+                            btn.setVisibility(View.INVISIBLE);
+                            btn.setEnabled(false);
+                        } else {
+                            Log.d("닉네임중복", "닉네임 중복 x");
+
+                            alertTxt.setTextColor(Color.BLUE);
+                            alertTxt.setText("사용 가능한 닉네임입니다");
+                            nickname.setBackgroundResource(R.drawable.edit_nick_o);
+                            alertTxt.setVisibility(View.VISIBLE);
+                            btn.setVisibility(View.VISIBLE);
+                            btn.setEnabled(true);
+                        }
+                    } catch (Exception e) {
+                        Log.e("닉네임중복", "JSON 파싱 실패", e);
+                    }
+                } else {
+                    Log.e("닉네임중복", "닉네임 중복 확인 실패 : " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("닉네임중복", "닉네임 중복 확인 실패", t);
+            }
+        });
+
+
+        ///  임시로 중복 확인 안 하고 넘기기
+        /// 추후 삭제 필요
+        alertTxt.setTextColor(Color.BLUE);
+        alertTxt.setText("사용 가능한 닉네임입니다");
+        setEditSizePos(344, 75, true);
+        nickname.setBackgroundResource(R.drawable.edit_nick_o);
+        alertTxt.setVisibility(View.VISIBLE);
+        btn.setVisibility(View.VISIBLE);
+        btn.setEnabled(true);
+    }
+
+    private int dp(int v) {
+        return Math.round(getResources().getDisplayMetrics().density * v);
+    }
+
+    private void setEditSizePos(int w, int h, boolean isNew) {
+        nickname.getLayoutParams().width = dp(w);
+        nickname.getLayoutParams().height = dp(h);
+        nickname.requestLayout();
+
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) nickname.getLayoutParams();
+        ViewGroup.MarginLayoutParams lp2 = (ViewGroup.MarginLayoutParams) alertTxt.getLayoutParams();
+
+        if (isNew) {
+            nickname.setPadding(dp(37), 0, dp(37), 0);
+            lp.topMargin = dp(210);
+            lp2.topMargin = dp(-2);
+        } else {
+            nickname.setPadding(dp(25), 0, dp(25), 0);
+            lp.topMargin = dp(222);
+            lp2.topMargin = dp(10);
+        }
+        nickname.setLayoutParams(lp);
+        alertTxt.setLayoutParams(lp2);
     }
 }

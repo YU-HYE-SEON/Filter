@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatButton;
 
 import com.example.filter.R;
+import com.example.filter.etc.ClickUtils;
 
 public class SignUpDialog extends Dialog {
     public interface SignUpDialogListener {
@@ -56,6 +57,9 @@ public class SignUpDialog extends Dialog {
         AppCompatButton signUpBtn = findViewById(R.id.signUpBtn);
         TextView txt2 = findViewById(R.id.txt2);
         TextView txt4 = findViewById(R.id.txt4);
+
+        ClickUtils.clickDim(closeBtn);
+        ClickUtils.clickDim(signUpBtn);
 
         closeBtn.setOnClickListener(v -> {
             dismiss();

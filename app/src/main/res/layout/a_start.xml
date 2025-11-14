@@ -6,81 +6,114 @@
     android:layout_height="match_parent"
     android:background="#007AFF">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/txt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:layout_marginBottom="10dp"
+        android:fontFamily="@font/gmarket_sans_ttf_medium"
+        android:text="필터 제작 거래 플랫폼"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/logo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="277dp"
+        android:layout_height="57dp"
+        android:src="@drawable/logo_lime"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
-            android:id="@+id/logoBox"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="50dp"
+        android:layout_marginBottom="80dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageButton
+            android:id="@+id/googleLogin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="120dp"
-            android:paddingBottom="120dp">
+            android:background="@drawable/btn_login"
+            app:layout_constraintBottom_toTopOf="@+id/kakaoTalkLogin"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/txt"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:letterSpacing="0.1"
-                android:text="필터 하나로 시작하는 나만의 비즈니스"
-                android:textColor="@color/white"
-                android:textSize="17sp"
-                android:visibility="invisible" />
+        <ImageButton
+            android:id="@+id/googleIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="30dp"
+            android:background="@drawable/icon_google"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="@+id/googleLogin"
+            app:layout_constraintStart_toStartOf="@+id/googleLogin"
+            app:layout_constraintTop_toTopOf="@+id/googleLogin" />
 
-            <TextView
-                android:id="@+id/logo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:letterSpacing="0.1"
-                android:text="Feel'em"
-                android:textColor="#C2FA7A"
-                android:textSize="80sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/btn"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="150dp"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:fontFamily="@font/pretendard_regular"
+            android:gravity="center"
+            android:text="구글로 시작하기"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/googleLogin"
+            app:layout_constraintEnd_toEndOf="@+id/googleLogin"
+            app:layout_constraintStart_toStartOf="@+id/googleLogin"
+            app:layout_constraintTop_toTopOf="@+id/googleLogin" />
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/googleLogin"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:background="@drawable/border_login_btn"
-                android:gravity="center"
-                android:text="구글로 시작하기"
-                android:textAlignment="center"
-                android:textColor="@color/black"
-                android:textSize="18sp" />
+        <ImageButton
+            android:id="@+id/kakaoTalkLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/btn_login"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/googleLogin" />
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/kakaoTalkLogin"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginTop="30dp"
-                android:background="@drawable/border_login_btn"
-                android:gravity="center"
-                android:text="카카오톡으로 시작하기"
-                android:textAlignment="center"
-                android:textColor="@color/black"
-                android:textSize="18sp" />
+        <ImageButton
+            android:id="@+id/kakaoTalkIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="30dp"
+            android:background="@drawable/icon_kakaotalk"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="@+id/kakaoTalkLogin"
+            app:layout_constraintStart_toStartOf="@+id/kakaoTalkLogin"
+            app:layout_constraintTop_toTopOf="@+id/kakaoTalkLogin" />
 
-        </LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_regular"
+            android:gravity="center"
+            android:text="카카오톡으로 시작하기"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/kakaoTalkLogin"
+            app:layout_constraintEnd_toEndOf="@+id/kakaoTalkLogin"
+            app:layout_constraintStart_toStartOf="@+id/kakaoTalkLogin"
+            app:layout_constraintTop_toTopOf="@+id/kakaoTalkLogin" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

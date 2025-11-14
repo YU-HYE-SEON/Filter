@@ -30,4 +30,9 @@ public interface UserApi {
             this.nickname = nickname;
         }
     }
+
+
+    /// 닉네임 중복 판단 필요
+    @GET("/api/v1/users/nickname/exists")
+    Call<ResponseBody> checkNicknameExists(@Query("nickname") String nickname);
 }

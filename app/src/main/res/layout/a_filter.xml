@@ -37,27 +37,21 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <ImageButton
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/saveBtn"
-                android:layout_width="55dp"
-                android:layout_height="55dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/saveTxt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:fontFamily="@font/roboto_medium"
+                android:gravity="center"
+                android:padding="16dp"
                 android:text="저장"
                 android:textAlignment="center"
                 android:textColor="@color/white"
-                android:textSize="18sp"
-                app:layout_constraintBottom_toBottomOf="@+id/saveBtn"
-                app:layout_constraintEnd_toEndOf="@+id/saveBtn"
-                app:layout_constraintStart_toStartOf="@+id/saveBtn"
-                app:layout_constraintTop_toTopOf="@+id/saveBtn" />
+                android:textSize="15sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -82,13 +76,6 @@
                 android:layout_height="match_parent"
                 android:background="@android:color/transparent"
                 android:scaleType="fitCenter" />
-
-            <!--<ImageView
-                android:id="@+id/photoPreviewImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitCenter"
-                android:visibility="gone" />-->
 
             <!-- 스티커 오버레이 -->
             <FrameLayout

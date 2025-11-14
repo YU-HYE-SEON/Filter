@@ -5,7 +5,7 @@
     android:id="@+id/rootView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:alpha="0"
+    android:alpha="10"
     android:background="@color/white"
     android:fitsSystemWindows="true">
 
@@ -41,7 +41,6 @@
                 android:id="@+id/a"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/txt1">
@@ -58,18 +57,11 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="25dp"
-                    android:src="@drawable/dialog_sticker_highlight"
-                    app:layout_constraintBottom_toBottomOf="@+id/txt3"
-                    app:layout_constraintEnd_toEndOf="@+id/txt3"
-                    app:layout_constraintStart_toStartOf="@+id/txt3" />
-
                 <TextView
                     android:id="@+id/txt3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:elevation="4dp"
                     android:fontFamily="@font/pretendard_bold"
                     android:text="취향"
                     android:textAlignment="center"
@@ -77,6 +69,16 @@
                     android:textSize="24sp"
                     app:layout_constraintStart_toEndOf="@+id/txt2"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:src="@drawable/img_style_highlight"
+                    android:translationY="5.5dp"
+                    app:layout_constraintBottom_toBottomOf="@+id/txt3"
+                    app:layout_constraintEnd_toEndOf="@+id/txt3"
+                    app:layout_constraintStart_toStartOf="@+id/txt3"
+                    app:layout_constraintTop_toTopOf="@+id/txt3" />
 
                 <TextView
                     android:id="@+id/txt4"
@@ -131,20 +133,18 @@
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/nextBtn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
+        android:layout_width="320dp"
+        android:layout_height="52dp"
         android:layout_marginBottom="10dp"
         android:background="@drawable/btn_next_onboarding"
+        android:fontFamily="@font/pretendard_semibold"
         android:text="Feel'em 시작하기"
         android:textAllCaps="false"
         android:textColor="@color/white"
-        android:textSize="16dp"
+        android:textSize="18dp"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
