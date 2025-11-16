@@ -20,10 +20,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -37,7 +37,6 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.service.FilterApi;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.FaceStickerData;
-import com.example.filter.etc.StickerMeta;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -65,12 +64,13 @@ public class RegisterActivity extends BaseActivity {
     private View topArea, photoView, contentContainer;
     private ImageView photo;
     private NestedScrollView scrollView;
+    private LinearLayout priceBox;
     private EditText titleEditText, tagEditText, priceEditText;
     private TextView alertTxt1, alertTxt2, alertTxt3, tagTxt, saleTxt;
-    private RadioGroup saleRadioGroup;
-    private RadioButton freeRadio, paidRadio;
-    private ImageButton registerBtn, backBtn;
+    private ImageButton free, pay, backBtn;
+    private AppCompatButton registerBtn;
     private boolean isFree = true;
+    private boolean isSelectPrice = false;
     private boolean isPriceFirstEdited = false;
 
     private enum Anchor {NONE, TAG_TXT, SALE_TXT, REGISTER_BTN}
@@ -104,14 +104,14 @@ public class RegisterActivity extends BaseActivity {
         titleEditText = findViewById(R.id.titleEditText);
         tagEditText = findViewById(R.id.tagEditText);
         priceEditText = findViewById(R.id.priceEditText);
+        priceBox = findViewById(R.id.priceBox);
         alertTxt1 = findViewById(R.id.alertTxt1);
         alertTxt2 = findViewById(R.id.alertTxt2);
         alertTxt3 = findViewById(R.id.alertTxt3);
         tagTxt = findViewById(R.id.tagTxt);
         saleTxt = findViewById(R.id.saleTxt);
-        saleRadioGroup = findViewById(R.id.saleRadioGroup);
-        freeRadio = findViewById(R.id.freeRadio);
-        paidRadio = findViewById(R.id.paidRadio);
+        free = findViewById(R.id.free);
+        pay = findViewById(R.id.pay);
         registerBtn = findViewById(R.id.registerBtn);
         backBtn = findViewById(R.id.backBtn);
 
@@ -283,9 +283,20 @@ public class RegisterActivity extends BaseActivity {
             }
         }
 
-        titleEditText.setOnClickListener(v -> focusWithAnchor(titleEditText, Anchor.TAG_TXT, false));
+        titleEditText.setOnClickListener(v -> {
+            focusWithAnchor(titleEditText, Anchor.TAG_TXT, false);
+            setEdit(true, titleEditText);
+        });
         titleEditText.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) focusWithAnchor(titleEditText, Anchor.TAG_TXT, false);
+            setEdit(hasFocus, titleEditText);
+            if (hasFocus) {
+                validateTitle();
+                focusWithAnchor(titleEditText, Anchor.TAG_TXT, false);
+            }
+        });
+        titleEditText.setOnEditorActionListener((v, actionId, event) -> {
+            hideKeyboardAndClearFocus();
+            return true;
         });
         titleEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -298,21 +309,33 @@ public class RegisterActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (s.length() > 15) {
-                    alertTxt1.setText("작성 가능한 이름은 최대 15자 입니다.");
-                    alertTxt1.setVisibility(View.VISIBLE);
-                } else {
-                    alertTxt1.setVisibility(View.INVISIBLE);
-                }
+                validateTitle();
+                setEdit(true, titleEditText);
+                setRegisterBtn();
             }
         });
 
-        tagEditText.setOnClickListener(v -> focusWithAnchor(tagEditText, Anchor.SALE_TXT, false));
-        tagEditText.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) focusWithAnchor(tagEditText, Anchor.SALE_TXT, false);
+        tagEditText.setOnClickListener(v -> {
+            focusWithAnchor(tagEditText, Anchor.SALE_TXT, false);
+            setEdit(true, tagEditText);
         });
-        tagEditText.setFilters(new InputFilter[]{singleSpaceFilter});
+        tagEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            setEdit(hasFocus, tagEditText);
+            if (hasFocus) focusWithAnchor(tagEditText, Anchor.SALE_TXT, false);
+
+            if (!hasFocus) {
+                applyFinalHashTagFix();
+            }
+        });
+        tagEditText.setFilters(new InputFilter[]{singleSpaceFilter, tagCharFilter});
+        tagEditText.setOnEditorActionListener((v, actionId, event) -> {
+            applyFinalHashTagFix();
+            hideKeyboardAndClearFocus();
+            return false;
+        });
         tagEditText.addTextChangedListener(new TextWatcher() {
+            private boolean self = false;
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -323,49 +346,89 @@ public class RegisterActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
+                if (self) return;
+
+                String text = s.toString();
+                if (text.endsWith(" ") && text.length() > 1) {
+                    String full = text.trim();
+                    int lastSpace = full.lastIndexOf(' ');
+                    String lastTag = (lastSpace == -1) ? full : full.substring(lastSpace + 1);
+                    if (!lastTag.startsWith("#")) {
+                        String newTag = "#" + lastTag;
+                        String prefix = (lastSpace == -1) ? "" : full.substring(0, lastSpace + 1);
+                        String result = prefix + newTag + " ";
+                        self = true;
+                        tagEditText.setText(result);
+                        tagEditText.setSelection(result.length());
+                        self = false;
+                    }
+                }
+
                 String str = s.toString().trim();
                 String[] tags = str.isEmpty() ? new String[]{} : str.split(" ");
+
                 if (tags.length > 5) {
-                    alertTxt2.setVisibility(View.VISIBLE);
+                    alertTxt2.setText("태그는 최대 5개까지 입력가능합니다.\n\n");
+                    alertTxt2.setTextColor(Color.parseColor("#FF5C8A"));
                 } else {
-                    alertTxt2.setVisibility(View.INVISIBLE);
+                    alertTxt2.setText("태그는 띄어쓰기로 구분해 주세요.\n각 10자 이하로 5개까지 가능하며,\n한글, 영문, 숫자, 밑줄(_)만 입력 가능해요.");
+                    alertTxt2.setTextColor(Color.parseColor("#8090989F"));
                 }
+
+                if (tagEditText.hasFocus()) {
+                    setEdit(true, tagEditText);
+                }
+                setRegisterBtn();
             }
         });
 
-        saleRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+        free.setOnClickListener(v -> {
+            isSelectPrice = true;
+
+            free.setBackgroundResource(R.drawable.btn_free_yes);
+            pay.setBackgroundResource(R.drawable.btn_pay_no);
+
             hideKeyboardAndClearFocus();
 
-            if (checkedId == R.id.freeRadio) {
-                isFree = true;
-                priceEditText.setText("0");
-                priceEditText.setTextColor(Color.parseColor("#888888"));
-                priceEditText.setEnabled(false);
-                alertTxt3.setText("무료 필터의 경우 가격을 측정할 수 없습니다.");
-                alertTxt3.setVisibility(View.VISIBLE);
-            } else if (checkedId == R.id.paidRadio) {
-                isFree = false;
-                isPriceFirstEdited = false;
-                priceEditText.setTextColor(Color.BLACK);
-                priceEditText.setEnabled(true);
-                priceEditText.setText("0");
-                priceEditText.setSelection(priceEditText.getText().length());
-            }
-        });
+            isFree = true;
+            priceEditText.setText("0");
+            priceEditText.setTextColor(Color.parseColor("#8090989F"));
+            priceEditText.setEnabled(false);
+            alertTxt3.setText("무료 필터의 경우 가격을 측정할 수 없습니다.");
+            alertTxt3.setTextColor(Color.parseColor("#FF5C8A"));
+            alertTxt3.setVisibility(View.VISIBLE);
 
+            setPriceEdit(false);
+            setRegisterBtn();
+        });
+        pay.setOnClickListener(v -> {
+            isSelectPrice = true;
+
+            pay.setBackgroundResource(R.drawable.btn_pay_yes);
+            free.setBackgroundResource(R.drawable.btn_free_no);
+
+            isFree = false;
+            isPriceFirstEdited = false;
+            priceEditText.setTextColor(Color.BLACK);
+            priceEditText.setEnabled(true);
+            priceEditText.setText("0");
+            priceEditText.setSelection(priceEditText.getText().length());
+
+            setPriceEdit(true);
+            setRegisterBtn();
+        });
         priceEditText.setOnClickListener(v -> {
-            if (!priceEditText.isEnabled()) {
-                paidRadio.setChecked(true);
-            }
             focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, false);
         });
         priceEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            setPriceEdit(hasFocus);
             if (hasFocus) {
-                if (!priceEditText.isEnabled()) {
-                    paidRadio.setChecked(true);
-                }
                 focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, false);
             }
+        });
+        priceEditText.setOnEditorActionListener((v, actionId, event) -> {
+            hideKeyboardAndClearFocus();
+            return true;
         });
         priceEditText.addTextChangedListener(new TextWatcher() {
             private boolean selfChange = false;
@@ -384,7 +447,7 @@ public class RegisterActivity extends BaseActivity {
 
                 String t = s.toString();
 
-                if (paidRadio.isChecked() && t.length() > 1 && t.startsWith("0")) {
+                if (!isFree && t.length() > 1 && t.startsWith("0")) {
                     String newText = t.replaceFirst("^0+(?=\\d)", "");
                     if (newText.isEmpty()) newText = "0";
                     selfChange = true;
@@ -398,18 +461,24 @@ public class RegisterActivity extends BaseActivity {
                 try {
                     int price = Integer.parseInt(t);
                     if (price < 10 || price > 300 || price % 10 != 0) {
+                        alertTxt3.setTextColor(Color.parseColor("#FF5C8A"));
                         alertTxt3.setText("판매 불가한 가격입니다.");
                         alertTxt3.setVisibility(View.VISIBLE);
                     } else {
                         alertTxt3.setVisibility(View.INVISIBLE);
                     }
                 } catch (NumberFormatException e) {
+                    alertTxt3.setTextColor(Color.parseColor("#FF5C8A"));
                     alertTxt3.setText("판매 불가한 가격입니다.");
                     alertTxt3.setVisibility(View.VISIBLE);
                 }
+
+                setPriceEdit(true);
+                setRegisterBtn();
             }
         });
 
+        ClickUtils.clickDim(registerBtn);
         /// 중첩 클릭되면 안 됨 ///
         registerBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
@@ -417,16 +486,21 @@ public class RegisterActivity extends BaseActivity {
 
             title = titleEditText.getText().toString().trim();
             tagStr = tagEditText.getText().toString().trim();
+            tagStr = tagStr.replace("#", "");
             String[] tags = tagStr.isEmpty() ? new String[]{} : tagStr.split("\\s+");
             priceStr = priceEditText.getText().toString().trim();
 
             if (title.isEmpty() || title.length() > 15) {
-                alertTxt1.setText(title.isEmpty() ? "필터 이름을 입력해주세요." : "작성 가능한 이름은 최대 15자 입니다.");
-                alertTxt1.setVisibility(View.VISIBLE);
                 focusWithAnchor(titleEditText, Anchor.TAG_TXT, true);
                 return;
             } else if (tags.length > 5) {
                 focusWithAnchor(tagEditText, Anchor.SALE_TXT, true);
+                return;
+            } else if (!isSelectPrice) {
+                alertTxt3.setText("가격을 선택해주세요.");
+                alertTxt3.setTextColor(Color.parseColor("#FF5C8A"));
+                alertTxt3.setVisibility(View.VISIBLE);
+                anchor(priceEditText, Anchor.REGISTER_BTN, true);
                 return;
             } else if (!isFree) {
                 try {
@@ -579,6 +653,52 @@ public class RegisterActivity extends BaseActivity {
         return out.equals(in) ? null : out;
     };
 
+    private final InputFilter tagCharFilter = (source, start, end, dest, dstart, dend) -> {
+        String input = source.subSequence(start, end).toString();
+
+        if (input.equals("#")) {
+            return "";
+        }
+
+        String filtered = input.replaceAll("[^\\u1100-\\u11FF\\u3131-\\u318F\\uAC00-\\uD7A3a-zA-Z0-9_ #]", "");
+
+        if (!input.equals(filtered)) {
+            return filtered;
+        }
+
+        return null;
+    };
+
+    private void applyFinalHashTagFix() {
+        Editable s = tagEditText.getText();
+        if (s == null) return;
+
+        String text = s.toString().trim();
+        if (text.isEmpty()) return;
+
+        int lastSpace = text.lastIndexOf(' ');
+        String lastTag = (lastSpace == -1) ? text : text.substring(lastSpace + 1);
+
+        if (lastTag.startsWith("#")) return;
+
+        String newTag = "#" + lastTag;
+        String prefix = (lastSpace == -1) ? "" : text.substring(0, lastSpace + 1);
+        String result = prefix + newTag;
+
+        tagEditText.setText(result);
+        tagEditText.setSelection(result.length());
+    }
+
+    private void anchor(EditText editText, Anchor anchor, boolean forceScroll) {
+        if (editText == null) return;
+        showKeyboard(editText);
+        pendingAnchor = anchor;
+        this.forceScroll = forceScroll;
+
+        if (keyboardVisible) {
+            new Handler().postDelayed(this::alignToPendingAnchor, 16);
+        }
+    }
 
     private void focusWithAnchor(EditText editText, Anchor anchor, boolean forceScroll) {
         if (editText == null) return;
@@ -716,6 +836,123 @@ public class RegisterActivity extends BaseActivity {
 
     private int dp(int value) {
         return (int) (getResources().getDisplayMetrics().density * value);
+    }
+
+    private void validateTitle() {
+        String t = titleEditText.getText().toString().trim();
+
+        if (t.isEmpty()) {
+            alertTxt1.setText("필터 이름을 입력해주세요.");
+            alertTxt1.setTextColor(Color.parseColor("#FF5C8A"));
+            alertTxt1.setVisibility(View.VISIBLE);
+        } else if (t.length() > 15) {
+            alertTxt1.setText("작성 가능한 이름은 최대 15자 입니다.");
+            alertTxt1.setTextColor(Color.parseColor("#FF5C8A"));
+            alertTxt1.setVisibility(View.VISIBLE);
+        } else {
+            alertTxt1.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private void setEdit(boolean hasFocus, EditText et) {
+
+        String text = et.getText().toString().trim();
+
+        boolean valid;
+        if (et == titleEditText) {
+            valid = !text.isEmpty() && text.length() <= 15;
+
+        } else if (et == tagEditText) {
+            String[] tags = text.isEmpty() ? new String[]{} : text.split(" ");
+            valid = tags.length <= 5;
+
+        } else {
+            valid = true;
+        }
+
+        if (hasFocus) {
+            if (valid) {
+                et.setBackgroundResource(R.drawable.border_edit_focus);
+            } else {
+                et.setBackgroundResource(R.drawable.border_edit_alert);
+            }
+        } else {
+            if (valid) {
+                et.setBackgroundResource(R.drawable.border_edit);
+            } else {
+                et.setBackgroundResource(R.drawable.border_edit_alert);
+            }
+        }
+    }
+
+    private void setPriceEdit(boolean hasFocus) {
+
+        if (isFree) {
+            priceBox.setBackgroundResource(R.drawable.border_price);
+            return;
+        }
+
+        String t = priceEditText.getText().toString().trim();
+
+        boolean valid = false;
+        try {
+            int price = Integer.parseInt(t);
+            valid = (price >= 10 && price <= 300 && price % 10 == 0);
+        } catch (Exception e) {
+            valid = false;
+        }
+
+        if (hasFocus) {
+            if (valid) {
+                priceBox.setBackgroundResource(R.drawable.border_price_focus);
+            } else {
+                priceBox.setBackgroundResource(R.drawable.border_price_alert);
+            }
+        } else {
+            if (valid) {
+                priceBox.setBackgroundResource(R.drawable.border_price);
+            } else {
+                priceBox.setBackgroundResource(R.drawable.border_price_alert);
+            }
+        }
+    }
+
+    private boolean isTitleValid() {
+        String t = titleEditText.getText().toString().trim();
+        return !t.isEmpty() && t.length() <= 15;
+    }
+
+    private boolean isTagValid() {
+        String str = tagEditText.getText().toString().trim();
+        if (str.isEmpty()) return true;
+        String[] tags = str.split(" ");
+        return tags.length <= 5;
+    }
+
+    private boolean isPriceValid() {
+        if (!isSelectPrice) return false;
+        if (isFree) return true;
+
+        try {
+            int price = Integer.parseInt(priceEditText.getText().toString().trim());
+            return price >= 10 && price <= 300 && price % 10 == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void setRegisterBtn() {
+        boolean titleValid = isTitleValid();
+        boolean tagValid = isTagValid();
+        boolean priceValid = isPriceValid();
+
+        if (titleValid && tagValid && priceValid) {
+            registerBtn.setBackgroundResource(R.drawable.btn_register_yes);
+            registerBtn.setTextColor(Color.WHITE);
+        } else {
+            registerBtn.setBackgroundResource(R.drawable.btn_register_no);
+            registerBtn.setTextColor(Color.parseColor("#90989F"));
+        }
     }
 
     private void sendFilterToServer(String idToken, String title, String tags, String price, File imageFile, FilterDtoCreateRequest request) {

@@ -232,6 +232,9 @@ public class FilterActivity extends BaseActivity {
     private int historyCursor = -1;*/
     private List<FaceStickerData> faceStickerList = new ArrayList<>();
 
+    /// 필터 등록 제한 ///
+    private boolean allowRegister = false;
+
     /// life cycle ///
     @SuppressLint({"ClickableViewAccessibility", "WrongConstant"})
     @Override
@@ -585,6 +588,8 @@ public class FilterActivity extends BaseActivity {
 
                         //데이터 전달
                         Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
+                        intent.putExtra("allowRegister", allowRegister);
+
                         intent.putExtra("saved_image", tempFile.getAbsolutePath());
                         intent.putExtra("original_image_path", getIntent().getData().toString());
 
@@ -2020,6 +2025,7 @@ public class FilterActivity extends BaseActivity {
             }
         }
 
+        allowRegister = (colorAdjusted || hasDrawable);
         boolean isEdited = geometryEdited || colorAdjusted || hasDrawable;
 
         saveBtn.setEnabled(isEdited);

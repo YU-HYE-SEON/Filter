@@ -3,6 +3,8 @@ package com.example.filter.activities;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -49,6 +51,15 @@ public class SavePhotoActivity extends BaseActivity {
             return insets;
         });
 
+        boolean allow = getIntent().getBooleanExtra("allowRegister", true);
+        if (!allow) {
+            toRegisterBtn.setEnabled(false);
+            //toRegisterBtn.setAlpha(0.4f);
+            toRegisterBtn.getBackground().setColorFilter(Color.parseColor("#759749"), PorterDuff.Mode.SRC_ATOP);
+            toRegisterBtn.setTextColor(Color.parseColor("#00499A"));
+            toRegisterBtn.setClickable(false);
+        }
+
         String originalPath = getIntent().getStringExtra("original_image_path");
         String savedImagePath = getIntent().getStringExtra("saved_image");
 
@@ -86,7 +97,7 @@ public class SavePhotoActivity extends BaseActivity {
                 if (bitmap != null) {
                     photo.setImageBitmap(bitmap);
                     //사진 저장 메서드 호출
-                    ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, bitmap);
+                    //ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, bitmap);
                 }
             }
         }
