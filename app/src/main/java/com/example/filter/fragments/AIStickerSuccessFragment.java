@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.filter.R;
+import com.example.filter.etc.ClickUtils;
 
 import java.io.File;
 
@@ -80,6 +81,7 @@ public class AIStickerSuccessFragment extends Fragment {
             }
         }
 
+        ClickUtils.clickDim(retryBtn);
         retryBtn.setOnClickListener(v -> {
             if (!isAdded()) return;
             getParentFragmentManager().beginTransaction()
@@ -88,8 +90,6 @@ public class AIStickerSuccessFragment extends Fragment {
                             AIStickerLoadingFragment.newInstance(baseUrl, prompt))
                     .commit();
         });
-
-        setupRetryButtonPressEffect();
 
         return view;
     }
@@ -106,22 +106,5 @@ public class AIStickerSuccessFragment extends Fragment {
 
     public @Nullable String getCurrentImagePath() {
         return imagePath;
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private void setupRetryButtonPressEffect() {
-        retryBtn.setOnTouchListener((v, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    retryTxt.setTextColor(Color.WHITE);
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    retryTxt.setTextColor(retryTextColorDefault);
-                    break;
-            }
-
-            return false;
-        });
     }
 }

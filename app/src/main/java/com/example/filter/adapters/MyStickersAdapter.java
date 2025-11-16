@@ -60,6 +60,14 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
         }
     }
 
+    public void clearSelection() {
+        int old = selectedPos;
+        selectedPos = RecyclerView.NO_POSITION;
+        if (old != RecyclerView.NO_POSITION) {
+            notifyItemChanged(old);
+        }
+    }
+
     public int getSelectedPos() {
         return selectedPos;
     }
@@ -105,6 +113,12 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
             }
         }
 
+        if (position == selectedPos) {
+            h.box.setBackgroundResource(R.drawable.bg_sticker_choose_yes);
+        } else {
+            h.box.setBackgroundResource(R.drawable.bg_sticker_choose_no);
+        }
+
         h.stickerImage.setOnClickListener(v -> {
             int old = selectedPos;
             selectedPos = position;
@@ -131,10 +145,11 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView stickerImage;
+        ImageView box, stickerImage;
 
         public ViewHolder(View itemView) {
             super(itemView);
+            box = itemView.findViewById(R.id.box);
             stickerImage = itemView.findViewById(R.id.stickerImage);
         }
     }

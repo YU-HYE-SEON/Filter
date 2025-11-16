@@ -10,6 +10,8 @@ import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
@@ -39,6 +41,7 @@ import com.example.filter.R;
 import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.StickerViewModel;
+import com.example.filter.fragments.BrushFragment;
 import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.overlayviews.CropBoxOverlayView;
@@ -314,8 +317,6 @@ public class FilterActivity extends BaseActivity {
             }
         });
 
-        ClickUtils.clickDim(backBtn);
-        ClickUtils.clickDim(saveBtn);
         setupColorButtons();
         //setupStickerButtons();
         setupSaveButton();
@@ -606,7 +607,7 @@ public class FilterActivity extends BaseActivity {
                         intent.putExtra("face_stickers", new ArrayList<>(faceStickerList));
 
                         startActivity(intent);
-
+                        finish();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1053,7 +1054,6 @@ public class FilterActivity extends BaseActivity {
         this.rotationEdited = edited;
     }
 
-
     public int getAccumRotationDeg() {
         return accumRotationDeg;
     }
@@ -1273,7 +1273,6 @@ public class FilterActivity extends BaseActivity {
         this.colorEdited = edited;
         refreshOriginalColorButton();
     }
-
 
     public int getCurrentValue(String filterType) {
         if (renderer != null && filterType != null) {
@@ -1975,6 +1974,58 @@ public class FilterActivity extends BaseActivity {
     }
 
     /// UI, 시스템 ///
+    public void updateSaveButtonState() {
+        if (stickerOverlay == null || saveBtn == null) return;
+
+        boolean geometryEdited = isRotationEdited() || isCropEdited();
+        boolean colorAdjusted = getCurrentValue("밝기") != 0 ||
+                getCurrentValue("노출") != 0 ||
+                getCurrentValue("대비") != 0 ||
+                getCurrentValue("하이라이트") != 0 ||
+                getCurrentValue("그림자") != 0 ||
+                getCurrentValue("온도") != 0 ||
+                getCurrentValue("색조") != 0 ||
+                getCurrentValue("채도") != 0 ||
+                getCurrentValue("선명하게") != 0 ||
+                getCurrentValue("흐리게") != 0 ||
+                getCurrentValue("비네트") != 0 ||
+                getCurrentValue("노이즈") != 0;
+        boolean hasDrawable = false;
+
+        int count = stickerOverlay.getChildCount();
+        for (int i = 0; i < count; i++) {
+            View child = stickerOverlay.getChildAt(i);
+            Boolean isBrush = (Boolean) child.getTag(R.id.tag_brush_layer);
+
+            if (!Boolean.TRUE.equals(isBrush)) {
+                hasDrawable = true;
+                break;
+            }
+
+            if (Boolean.TRUE.equals(isBrush)) {
+                if (child instanceof ImageView) {
+                    ImageView imageView = (ImageView) child;
+                    Drawable drawable = imageView.getDrawable();
+
+                    if (drawable instanceof BitmapDrawable) {
+                        Bitmap bmp = ((BitmapDrawable) drawable).getBitmap();
+                        if (bmp != null && !bmp.isRecycled()) {
+                            if (BrushFragment.hasAnyVisiblePixel(bmp)) {
+                                hasDrawable = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        boolean isEdited = geometryEdited || colorAdjusted || hasDrawable;
+
+        saveBtn.setEnabled(isEdited);
+        saveBtn.setAlpha(isEdited ? 1f : 0.4f);
+    }
+
     private boolean isBackEnabledFor(Fragment f) {
         return (f instanceof ToolsFragment)
                 || (f instanceof ColorsFragment)
@@ -1989,11 +2040,11 @@ public class FilterActivity extends BaseActivity {
             backBtn.setAlpha(enabled ? 1f : 0.3f);
         }
 
-        if (saveBtn != null) {
+        /*if (saveBtn != null) {
             saveBtn.setEnabled(enabled);
             saveBtn.setClickable(enabled);
             saveBtn.setAlpha(enabled ? 1f : 0.3f);
-        }
+        }*/
     }
 
     public void requestUpdateBackGate() {

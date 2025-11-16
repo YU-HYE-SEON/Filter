@@ -61,9 +61,9 @@
 
         <ImageButton
             android:id="@+id/retryBtn"
-            android:layout_width="120dp"
-            android:layout_height="30dp"
-            android:background="@drawable/btn_ai_bg"
+            android:layout_width="200dp"
+            android:layout_height="65dp"
+            android:background="@drawable/btn_retry_ai_sticker"
             android:clickable="true"
             android:focusable="true"
             app:layout_constraintBottom_toBottomOf="parent"

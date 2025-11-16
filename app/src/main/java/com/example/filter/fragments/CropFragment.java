@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
@@ -23,6 +24,7 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.overlayviews.CropBoxOverlayView;
 
 public class CropFragment extends Fragment {
+    private AppCompatButton saveBtn;
     private LinearLayout freeCropBtn, OTORatioBtn, TTFRatioBtn, NTSRatioBtn;
     private ImageView freeCropIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
     private TextView freeCropTxt, OTOTxt, TTFTxt, NTSTxt;
@@ -54,12 +56,16 @@ public class CropFragment extends Fragment {
 
         FilterActivity activity = (FilterActivity) requireActivity();
 
+        checkBtn.setEnabled(false);
+        checkBtn.setAlpha(0.4f);
+
         freeCropBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 activity.setCurrentCropMode(FilterActivity.CropMode.FREE);
                 updateIconUI(FilterActivity.CropMode.FREE);
                 activity.showCropOverlay(true, false, 0, 0, false);
+                updateCheckButtonState(activity);
             }
         });
 
@@ -69,6 +75,7 @@ public class CropFragment extends Fragment {
                 activity.setCurrentCropMode(FilterActivity.CropMode.OTO);
                 updateIconUI(FilterActivity.CropMode.OTO);
                 activity.showCropOverlay(true, true, 1, 1, false);
+                updateCheckButtonState(activity);
             }
         });
 
@@ -78,6 +85,7 @@ public class CropFragment extends Fragment {
                 activity.setCurrentCropMode(FilterActivity.CropMode.TTF);
                 updateIconUI(FilterActivity.CropMode.TTF);
                 activity.showCropOverlay(true, true, 3, 4, false);
+                updateCheckButtonState(activity);
             }
         });
 
@@ -87,6 +95,7 @@ public class CropFragment extends Fragment {
                 activity.setCurrentCropMode(FilterActivity.CropMode.NTS);
                 updateIconUI(FilterActivity.CropMode.NTS);
                 activity.showCropOverlay(true, true, 9, 16, false);
+                updateCheckButtonState(activity);
             }
         });
 
@@ -226,6 +235,16 @@ public class CropFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        saveBtn = requireActivity().findViewById(R.id.saveBtn);
+        if (saveBtn != null) {
+            saveBtn.setEnabled(false);
+            saveBtn.setAlpha(0.4f);
+        }
+    }
+
     private void restoreLastSelection(FilterActivity activity) {
         FilterActivity.CropMode mode = activity.getLastCropMode();
         if (mode == FilterActivity.CropMode.NONE) return;
@@ -247,6 +266,8 @@ public class CropFragment extends Fragment {
                 activity.showCropOverlay(true, true, 9, 16, true);
                 break;
         }
+
+        updateCheckButtonState(activity);
     }
 
     private void updateIconUI(FilterActivity.CropMode mode) {
@@ -282,5 +303,24 @@ public class CropFragment extends Fragment {
 
     private boolean nearly(int a, int b, int tolPx) {
         return Math.abs(a - b) <= tolPx;
+    }
+
+    private void updateCheckButtonState(FilterActivity activity) {
+        if (checkBtn == null) return;
+
+        CropBoxOverlayView overlay = activity.getCropOverlay();
+        boolean hasValidCropRect = false;
+
+        if (overlay != null) {
+            Rect cropRect = overlay.getCropRect();
+            if (cropRect != null && cropRect.width() > 0 && cropRect.height() > 0) {
+                hasValidCropRect = true;
+            }
+        }
+
+        boolean enabled = hasValidCropRect;
+
+        checkBtn.setEnabled(enabled);
+        checkBtn.setAlpha(enabled ? 1f : 0.4f);
     }
 }

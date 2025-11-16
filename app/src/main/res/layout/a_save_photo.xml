@@ -18,11 +18,11 @@
             android:id="@+id/saveSuccessTxt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_semibold"
             android:text="저장 완료!"
             android:textAlignment="center"
-            android:fontFamily="@font/pretendard_semibold"
-            android:textSize="18sp"
             android:textColor="#007AFF"
+            android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -30,11 +30,10 @@
 
         <ImageButton
             android:id="@+id/backBtn"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:scaleType="centerCrop"
-            android:padding="18dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="16dp"
             android:src="@drawable/btn_back_black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -61,26 +60,38 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <ImageView
-            android:id="@+id/backToHomeBtn"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/toArchiveBtn"
             android:layout_width="180dp"
             android:layout_height="60dp"
-            android:src="@drawable/btn_back_home"
             android:layout_marginStart="10dp"
+            android:background="@drawable/btn_to_archive"
+            android:fontFamily="@font/pretendard_semibold"
+            android:gravity="center"
+            android:text="아카이브로"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/registerBtn"
+            app:layout_constraintEnd_toStartOf="@+id/toRegisterBtn"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/registerBtn"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/toRegisterBtn"
             android:layout_width="180dp"
             android:layout_height="60dp"
             android:layout_marginEnd="10dp"
-            android:src="@drawable/btn_register"
+            android:background="@drawable/btn_to_register"
+            android:fontFamily="@font/pretendard_semibold"
+            android:gravity="center"
+            android:text="내 필터 등록"
+            android:textAlignment="center"
+            android:textColor="#007AFF"
+            android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/backToHomeBtn"
+            app:layout_constraintStart_toEndOf="@+id/toArchiveBtn"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

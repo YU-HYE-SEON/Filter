@@ -4,11 +4,11 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -28,7 +28,7 @@ public class SavePhotoActivity extends BaseActivity {
     private ImageButton backBtn;
     private ImageView photo;
     private ConstraintLayout bottomArea;
-    private ImageView backToHomeBtn, registerBtn;
+    private AppCompatButton toArchiveBtn, toRegisterBtn;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -37,8 +37,8 @@ public class SavePhotoActivity extends BaseActivity {
         backBtn = findViewById(R.id.backBtn);
         photo = findViewById(R.id.photo);
         bottomArea = findViewById(R.id.bottomArea);
-        backToHomeBtn = findViewById(R.id.backToHomeBtn);
-        registerBtn = findViewById(R.id.registerBtn);
+        toArchiveBtn = findViewById(R.id.toArchiveBtn);
+        toRegisterBtn = findViewById(R.id.toRegisterBtn);
 
         ViewCompat.setOnApplyWindowInsetsListener(bottomArea, (v, insets) -> {
             Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
@@ -93,21 +93,20 @@ public class SavePhotoActivity extends BaseActivity {
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            finish();
-        });
-
-        backToHomeBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-
             Intent intent = new Intent(SavePhotoActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
-
             finish();
         });
 
+        ClickUtils.clickDim(toArchiveBtn);
+        toArchiveBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            finish();
+        });
+
+        ClickUtils.clickDim(toRegisterBtn);
         /// 중첩 클릭되면 안 됨 ///
-        registerBtn.setOnClickListener(v -> {
+        toRegisterBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             ClickUtils.disableTemporarily(v, 800);
 

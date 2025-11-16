@@ -149,7 +149,7 @@
                         android:paddingBottom="10dp"
                         android:text="태그1"
                         android:textAlignment="textStart"
-                        android:textColor="#007AFF"
+                        android:textColor="@drawable/keyword_text_color"
                         android:textSize="12sp"
                         android:visibility="visible" />
 
@@ -167,7 +167,7 @@
                         android:paddingBottom="10dp"
                         android:text="태그2"
                         android:textAlignment="textStart"
-                        android:textColor="#007AFF"
+                        android:textColor="@drawable/keyword_text_color"
                         android:textSize="12sp"
                         android:visibility="visible" />
 
@@ -185,7 +185,7 @@
                         android:paddingBottom="10dp"
                         android:text="태그3"
                         android:textAlignment="textStart"
-                        android:textColor="#007AFF"
+                        android:textColor="@drawable/keyword_text_color"
                         android:textSize="12sp"
                         android:visibility="visible" />
 
@@ -203,7 +203,7 @@
                         android:paddingBottom="10dp"
                         android:text="태그4"
                         android:textAlignment="textStart"
-                        android:textColor="#007AFF"
+                        android:textColor="@drawable/keyword_text_color"
                         android:textSize="12sp"
                         android:visibility="visible" />
 
@@ -221,7 +221,7 @@
                         android:paddingBottom="10dp"
                         android:text="태그5"
                         android:textAlignment="textStart"
-                        android:textColor="#007AFF"
+                        android:textColor="@drawable/keyword_text_color"
                         android:textSize="12sp"
                         android:visibility="visible" />
 

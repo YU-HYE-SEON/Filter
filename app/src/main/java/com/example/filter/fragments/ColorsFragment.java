@@ -118,6 +118,7 @@ public class ColorsFragment extends Fragment {
             if (activity != null) {
                 activity.previewOriginalColors(false);
                 activity.undoColor();
+                activity.updateSaveButtonState();
             }
             refreshColorButtons();
         });
@@ -126,6 +127,7 @@ public class ColorsFragment extends Fragment {
             if (activity != null) {
                 activity.previewOriginalColors(false);
                 activity.redoColor();
+                activity.updateSaveButtonState();
             }
             refreshColorButtons();
         });
@@ -275,6 +277,7 @@ public class ColorsFragment extends Fragment {
         if (activity != null) {
             activity.refreshOriginalColorButton();
             activity.requestUpdateBackGate();
+            activity.updateSaveButtonState();
         }
     }
 
@@ -282,11 +285,12 @@ public class ColorsFragment extends Fragment {
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
         if (!hidden) {
-            FilterActivity act = (FilterActivity) getActivity();
-            if (act != null) {
-                act.requestUpdateBackGate();
+            FilterActivity activity = (FilterActivity) getActivity();
+            if (activity != null) {
+                activity.requestUpdateBackGate();
                 refreshColorButtons();
                 updateColorIcons();
+                activity.updateSaveButtonState();
             }
         }
     }

@@ -18,7 +18,7 @@ import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 
 public class AIStickerFailFragment extends Fragment {
-    ImageButton retryBtn;
+    private ImageButton retryBtn;
     private TextView retryTxt;
     private int retryTextColorDefault;
 
@@ -32,6 +32,7 @@ public class AIStickerFailFragment extends Fragment {
 
         retryTextColorDefault = retryTxt.getCurrentTextColor();
 
+        ClickUtils.clickDim(retryBtn);
         retryBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
 
@@ -42,25 +43,6 @@ public class AIStickerFailFragment extends Fragment {
                     .commit();
         });
 
-        setupRetryButtonPressEffect();
-
         return view;
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private void setupRetryButtonPressEffect() {
-        retryBtn.setOnTouchListener((v, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    retryTxt.setTextColor(Color.WHITE);
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    retryTxt.setTextColor(retryTextColorDefault);
-                    break;
-            }
-
-            return false;
-        });
     }
 }

@@ -4,9 +4,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,12 +16,14 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -37,12 +41,15 @@ import com.example.filter.overlayviews.FaceBoxOverlayView;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 public class StickersFragment extends Fragment {
+    private ConstraintLayout topArea;
+    private boolean isToastVisible = false;
     private FaceBoxOverlayView faceBox;
-    private ImageView myStickerIcon, loadStickerIcon, brushIcon, AIStickerIcon;
+    private LinearLayout myStickerBtn, loadStickerBtn, brushBtn, AIStickerBtn;
+    private ImageView myStickerIcon, brushIcon;
+    private TextView myStickerTxt, brushTxt;
     private FrameLayout photoContainer, stickerOverlay, fullScreenContainer;
     private ConstraintLayout filterActivity, bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
@@ -71,13 +78,21 @@ public class StickersFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_stickers, container, false);
 
+        myStickerBtn = view.findViewById(R.id.myStickerBtn);
         myStickerIcon = view.findViewById(R.id.myStickerIcon);
-        loadStickerIcon = view.findViewById(R.id.loadStickerIcon);
+        myStickerTxt = view.findViewById(R.id.myStickerTxt);
+
+        loadStickerBtn = view.findViewById(R.id.loadStickerBtn);
+
+        brushBtn = view.findViewById(R.id.brushBtn);
         brushIcon = view.findViewById(R.id.brushIcon);
-        AIStickerIcon = view.findViewById(R.id.AIStickerIcon);
+        brushTxt = view.findViewById(R.id.brushTxt);
+
+        AIStickerBtn = view.findViewById(R.id.AIStickerBtn);
 
         FilterActivity activity = (FilterActivity) requireActivity();
 
+        topArea = activity.findViewById(R.id.topArea);
         photoContainer = activity.findViewById(R.id.photoContainer);
         stickerOverlay = activity.findViewById(R.id.stickerOverlay);
         bottomArea1 = activity.findViewById(R.id.bottomArea1);
@@ -117,14 +132,19 @@ public class StickersFragment extends Fragment {
         }
 
         Bundle args = getArguments();
-
+        boolean fromCheck = args != null && args.getBoolean("TRIGGERED_BY_CHECK", false);
         faceBox = new FaceBoxOverlayView(requireContext());
 
         photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         activity.getPhotoPreview().queueEvent(() -> {
             Bitmap bmp = activity.getRenderer().getCurrentBitmap();
             activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
-                if (faces.isEmpty()) return;
+                if (faces.isEmpty()) {
+                    if (fromCheck) {
+                        showToast("얼굴을 감지하지 못했습니다");
+                    }
+                    return;
+                }
 
                 if (!faces.isEmpty() && args != null && (args.getBoolean("IS_FACE_MODE"))) {
                     StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
@@ -148,10 +168,15 @@ public class StickersFragment extends Fragment {
                             if (cloneSticker != null) {
                                 cloneSticker.setTag(R.id.tag_sticker_id, groupId);
                                 cloneSticker.setTag(R.id.tag_sticker_clone, true);
+                                cloneSticker.setTag(R.id.tag_brush_layer, false);
                                 viewModel.addCloneGroup(groupId, cloneSticker);
                                 moveEditSticker(cloneSticker);
+                                ((FilterActivity) getActivity()).updateSaveButtonState();
                             }
                         }
+
+                        setIcon();
+                        showToast("얼굴 인식 성공");
 
                         ImageView stickerImage = stickerFrame.findViewById(R.id.stickerImage);
                         Bitmap stickerBitmap = null;
@@ -205,7 +230,7 @@ public class StickersFragment extends Fragment {
             }));
         });
 
-        myStickerIcon.setOnClickListener(new View.OnClickListener() {
+        myStickerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(view, 400)) return;
@@ -218,7 +243,7 @@ public class StickersFragment extends Fragment {
             }
         });
 
-        loadStickerIcon.setOnClickListener(new View.OnClickListener() {
+        loadStickerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(view, 400)) return;
@@ -229,7 +254,7 @@ public class StickersFragment extends Fragment {
             }
         });
 
-        brushIcon.setOnClickListener(new View.OnClickListener() {
+        brushBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(view, 400)) return;
@@ -242,7 +267,7 @@ public class StickersFragment extends Fragment {
             }
         });
 
-        AIStickerIcon.setOnClickListener(new View.OnClickListener() {
+        AIStickerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (ClickUtils.isFastClick(view, 400)) return;
@@ -317,10 +342,85 @@ public class StickersFragment extends Fragment {
         });
     }
 
+    private void setIcon() {
+        int count = stickerOverlay.getChildCount();
+
+        for (int i = 0; i < count; i++) {
+            View child = stickerOverlay.getChildAt(i);
+            Boolean isBrush = (Boolean) child.getTag(R.id.tag_brush_layer);
+
+            if (!Boolean.TRUE.equals(isBrush)) {
+                myStickerIcon.setImageResource(R.drawable.icon_mysticker_yes);
+                myStickerTxt.setTextColor(Color.parseColor("#C2FA7A"));
+            }
+
+            if (Boolean.TRUE.equals(isBrush)) {
+                if (child instanceof ImageView) {
+                    ImageView imageView = (ImageView) child;
+                    Drawable drawable = imageView.getDrawable();
+
+                    if (drawable instanceof BitmapDrawable) {
+                        Bitmap bmp = ((BitmapDrawable) drawable).getBitmap();
+                        if (bmp != null && !bmp.isRecycled()) {
+                            if (BrushFragment.hasAnyVisiblePixel(bmp)) {
+                                brushIcon.setImageResource(R.drawable.icon_brush_yes);
+                                brushTxt.setTextColor(Color.parseColor("#C2FA7A"));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void showToast(String message) {
+        isToastVisible = true;
+
+        View old = topArea.findViewWithTag("inline_banner");
+        if (old != null) topArea.removeView(old);
+
+        TextView tv = new TextView(requireContext());
+        tv.setTag("inline_banner");
+        tv.setText(message);
+        tv.setTextColor(0XFFFFFFFF);
+        tv.setTextSize(16);
+        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        tv.setPadding(Controller.dp(14, getResources()), Controller.dp(10, getResources()), Controller.dp(14, getResources()), Controller.dp(10, getResources()));
+        tv.setElevation(Controller.dp(4, getResources()));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xCC222222);
+        bg.setCornerRadius(Controller.dp(16, getResources()));
+        tv.setBackground(bg);
+
+        ConstraintLayout.LayoutParams lp =
+                new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                        ConstraintLayout.LayoutParams.WRAP_CONTENT);
+        lp.startToStart = topArea.getId();
+        lp.endToEnd = topArea.getId();
+        lp.topToTop = topArea.getId();
+        lp.bottomToBottom = topArea.getId();
+        tv.setLayoutParams(lp);
+
+        tv.setAlpha(0f);
+        topArea.addView(tv);
+        tv.animate().alpha(1f).setDuration(150).start();
+
+        tv.postDelayed(() -> tv.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction(() -> {
+                    if (tv.getParent() == topArea) topArea.removeView(tv);
+                    isToastVisible = false;
+                })
+                .start(), 2000);
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         if (stickerOverlay == null) return;
+
         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
             View child = stickerOverlay.getChildAt(i);
 
@@ -341,6 +441,9 @@ public class StickersFragment extends Fragment {
             Controller.setControllersVisible(child, false);
             moveEditSticker(child);
         }
+
+        setIcon();
+        ((FilterActivity) getActivity()).updateSaveButtonState();
     }
 
     @Override

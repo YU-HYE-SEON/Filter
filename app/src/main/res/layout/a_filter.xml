@@ -39,7 +39,7 @@
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/saveBtn"
-                android:layout_width="wrap_content"
+                android:layout_width="60dp"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:fontFamily="@font/roboto_medium"
@@ -203,6 +203,7 @@
                 android:id="@+id/brushToSticker"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:orientation="horizontal"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -217,16 +218,23 @@
                     android:text="스티커로 만들 영역 선택하기"
                     android:textAlignment="center"
                     android:textColor="@color/white"
-                    android:textSize="18sp" />
+                    android:textSize="16sp" />
 
-                <CheckBox
-                    android:id="@+id/checkBox"
+                <FrameLayout
                     android:layout_width="30dp"
                     android:layout_height="30dp"
-                    android:layout_marginLeft="5dp"
-                    android:background="@drawable/checkbox_states"
-                    android:button="@null"
-                    android:checked="false" />
+                    android:layout_marginLeft="5dp">
+
+                    <CheckBox
+                        android:id="@+id/checkBox"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:layout_marginTop="3dp"
+                        android:background="@drawable/checkbox_states"
+                        android:button="@null"
+                        android:checked="false" />
+
+                </FrameLayout>
 
             </LinearLayout>
 

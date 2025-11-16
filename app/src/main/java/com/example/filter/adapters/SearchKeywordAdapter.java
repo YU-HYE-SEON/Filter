@@ -1,6 +1,9 @@
 package com.example.filter.adapters;
 
+import android.annotation.SuppressLint;
+import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -16,7 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SearchKeywordAdapter extends RecyclerView.Adapter<SearchKeywordAdapter.SKVH> {
-    private final List<String> items = new ArrayList<>();
+    public interface OnKeywordClickListener {
+        void onClick(String keyword);
+    }
+
+    private OnKeywordClickListener listener;
+
+    private List<String> items = new ArrayList<>();
 
     public void addItem(String keyword) {
         int existingPosition = -1;
@@ -53,6 +62,14 @@ public class SearchKeywordAdapter extends RecyclerView.Adapter<SearchKeywordAdap
         }
     }
 
+    public void setOnKeywordClickListener(OnKeywordClickListener l) {
+        this.listener = l;
+    }
+
+    public SearchKeywordAdapter(List<String> savedList) {
+        this.items = savedList;
+    }
+
     @NonNull
     @Override
     public SKVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -64,6 +81,10 @@ public class SearchKeywordAdapter extends RecyclerView.Adapter<SearchKeywordAdap
     public void onBindViewHolder(@NonNull SKVH holder, int position) {
         String keyword = items.get(position);
         holder.keywordTxt.setText(keyword);
+
+        holder.searchHistory.setOnClickListener(v -> {
+            if (listener != null) listener.onClick(keyword);
+        });
 
         holder.deleteHistory.setOnClickListener(v -> {
             int currentPosition = holder.getAdapterPosition();

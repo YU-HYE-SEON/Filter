@@ -24,11 +24,11 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:id="@+id/img"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_marginBottom="20dp"
-                android:src="@drawable/icon_robot"
+                android:id="@+id/symbol"
+                android:layout_width="170dp"
+                android:layout_height="170dp"
+                android:layout_marginLeft="15dp"
+                android:src="@drawable/logo_symbol"
                 android:visibility="visible" />
 
             <TextView
@@ -66,7 +66,6 @@
                 android:background="@drawable/border_dialog"
                 android:fontFamily="@font/roboto_medium"
                 android:gravity="top|start"
-                android:textAlignment="textStart"
                 android:includeFontPadding="false"
                 android:inputType="textMultiLine"
                 android:maxLines="18"
@@ -77,6 +76,7 @@
                 android:paddingRight="14dp"
                 android:paddingBottom="18dp"
                 android:scrollbars="vertical"
+                android:textAlignment="textStart"
                 android:textColor="@color/black"
                 android:textSize="20sp" />
 
@@ -90,8 +90,8 @@
                 <ImageButton
                     android:id="@+id/createBtn"
                     android:layout_width="match_parent"
-                    android:layout_height="55dp"
-                    android:background="@drawable/btn_ai_bg"
+                    android:layout_height="72dp"
+                    android:background="@drawable/btn_create_ai_sticker_no"
                     android:clickable="true"
                     android:focusable="true"
                     android:visibility="invisible"
@@ -104,10 +104,12 @@
                     android:id="@+id/createTxt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/pretendard_semibold"
+                    android:fontFamily="@font/pretendard_bold"
+                    android:gravity="center"
                     android:text="제작하기"
-                    android:textColor="#007BFF"
-                    android:textSize="20sp"
+                    android:textAlignment="center"
+                    android:textColor="#80007AFF"
+                    android:textSize="18sp"
                     android:visibility="invisible"
                     app:layout_constraintBottom_toBottomOf="@+id/createBtn"
                     app:layout_constraintEnd_toEndOf="@+id/createBtn"

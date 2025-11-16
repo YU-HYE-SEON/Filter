@@ -25,8 +25,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
@@ -35,8 +33,7 @@ import com.example.filter.etc.ClickUtils;
 public class AIStickerCreateFragment extends Fragment {
     private ConstraintLayout aiStickerCreate;
     private LinearLayout contentBox;
-    private ImageView img;
-    private TextView txt;
+    private ImageView symbol;
     private TextView warningTxt;
     private EditText editText;
     private ImageButton createBtn;
@@ -45,7 +42,6 @@ public class AIStickerCreateFragment extends Fragment {
     private int animDuration = 500;
     private boolean isUp = false;
     private boolean imeVisible = false;
-    private int createTextColorDefault;
     private float baseTY = 0f;
     private boolean baseReady = false;
     private float upTY = Float.NaN;
@@ -59,8 +55,7 @@ public class AIStickerCreateFragment extends Fragment {
         View view = inflater.inflate(R.layout.f_aisticker_create, container, false);
         aiStickerCreate = view.findViewById(R.id.aiStickerCreate);
         contentBox = view.findViewById(R.id.contentBox);
-        img = view.findViewById(R.id.img);
-        txt = view.findViewById(R.id.txt);
+        symbol = view.findViewById(R.id.symbol);
         warningTxt = view.findViewById(R.id.warningTxt);
         editText = view.findViewById(R.id.editText);
         createBtn = view.findViewById(R.id.createBtn);
@@ -70,21 +65,17 @@ public class AIStickerCreateFragment extends Fragment {
         imeVisible = false;
         baseReady = false;
 
-        createTextColorDefault = createTxt.getCurrentTextColor();
-
-        createBtn.setAlpha(0f);
-        createTxt.setAlpha(0f);
         createBtn.setVisibility(View.INVISIBLE);
         createTxt.setVisibility(View.INVISIBLE);
         warningTxt.setVisibility(View.INVISIBLE);
 
+        ClickUtils.clickDim(createBtn);
         createBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
 
             String prompt = editText.getText() != null ? editText.getText().toString().trim() : "";
             if (prompt.isEmpty()) return;
 
-            //서버 재테스트할 때마다 변경해야 됨
             String baseUrl = "http://13.124.105.243/";
 
             getParentFragmentManager()
@@ -96,7 +87,6 @@ public class AIStickerCreateFragment extends Fragment {
 
         setupKeyboardVisibilityListener(view);
         setupEditTextBehavior();
-        setupCreateButtonPressEffect();
 
         updateControlsByText(editText.getText() == null ? "" : editText.getText().toString());
 
@@ -195,23 +185,6 @@ public class AIStickerCreateFragment extends Fragment {
                 | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private void setupCreateButtonPressEffect() {
-        createBtn.setOnTouchListener((v, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    createTxt.setTextColor(Color.WHITE);
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    createTxt.setTextColor(createTextColorDefault);
-                    break;
-            }
-
-            return false;
-        });
-    }
-
     private void updateControlsByText(String text) {
         boolean overLimit = isOverLimit(text);
         boolean empty = text.trim().isEmpty();
@@ -221,11 +194,13 @@ public class AIStickerCreateFragment extends Fragment {
         boolean enableCreate = !empty && !overLimit;
         createBtn.setEnabled(enableCreate);
         createTxt.setEnabled(enableCreate);
-        float targetAlpha = enableCreate ? 1.0f : 0.4f;
 
-        if (createBtn.getVisibility() == View.VISIBLE) {
-            createBtn.setAlpha(targetAlpha);
-            createTxt.setAlpha(targetAlpha);
+        if (enableCreate) {
+            createBtn.setBackgroundResource(R.drawable.btn_create_ai_sticker_yes);
+            createTxt.setTextColor(Color.parseColor("#007AFF"));
+        } else {
+            createBtn.setBackgroundResource(R.drawable.btn_create_ai_sticker_no);
+            createTxt.setTextColor(Color.parseColor("#80007AFF"));
         }
     }
 
@@ -253,21 +228,27 @@ public class AIStickerCreateFragment extends Fragment {
 
         AccelerateDecelerateInterpolator interp = new AccelerateDecelerateInterpolator();
 
-        img.animate().alpha(0f).setDuration(animDuration).setInterpolator(interp).start();
+        symbol.animate().alpha(0f).setDuration(animDuration).setInterpolator(interp).start();
 
         if (createBtn.getVisibility() != View.VISIBLE) {
             createBtn.setVisibility(View.VISIBLE);
             createTxt.setVisibility(View.VISIBLE);
+            createBtn.setAlpha(0f);
+            createTxt.setAlpha(0f);
         }
+
+        createBtn.animate().alpha(1f).setDuration(animDuration).setInterpolator(interp).start();
+        createTxt.animate().alpha(1f).setDuration(animDuration).setInterpolator(interp).start();
 
         String cur = editText.getText() == null ? "" : editText.getText().toString();
 
-        float targetAlpha = (!isOverLimit(cur) && !cur.trim().isEmpty()) ? 1f : 0.4f;
-
-        createBtn.setAlpha(0f);
-        createTxt.setAlpha(0f);
-        createBtn.animate().alpha(targetAlpha).setDuration(animDuration).setInterpolator(interp).start();
-        createTxt.animate().alpha(targetAlpha).setDuration(animDuration).setInterpolator(interp).start();
+        if (!isOverLimit(cur) && !cur.trim().isEmpty()) {
+            createBtn.setBackgroundResource(R.drawable.btn_create_ai_sticker_yes);
+            createTxt.setTextColor(Color.parseColor("#007AFF"));
+        } else {
+            createBtn.setBackgroundResource(R.drawable.btn_create_ai_sticker_no);
+            createTxt.setTextColor(Color.parseColor("#80007AFF"));
+        }
 
         if (!upTYReady) {
             upTY = baseTY - dpToPx(upView);
@@ -287,12 +268,11 @@ public class AIStickerCreateFragment extends Fragment {
 
         AccelerateDecelerateInterpolator interp = new AccelerateDecelerateInterpolator();
 
-        img.animate().alpha(1f).setDuration(animDuration).setInterpolator(interp).start();
+        symbol.animate().alpha(1f).setDuration(animDuration).setInterpolator(interp).start();
 
         createBtn.animate().alpha(0f).setDuration(animDuration).setInterpolator(interp)
                 .withEndAction(() -> {
                     createBtn.setVisibility(View.INVISIBLE);
-                    createTxt.setTextColor(createTextColorDefault);
                 })
                 .start();
         createTxt.animate().alpha(0f).setDuration(animDuration).setInterpolator(interp)
@@ -332,7 +312,7 @@ public class AIStickerCreateFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (contentBox != null) contentBox.animate().cancel();
-        if (img != null) img.animate().cancel();
+        if (symbol != null) symbol.animate().cancel();
         if (createBtn != null) createBtn.animate().cancel();
     }
 

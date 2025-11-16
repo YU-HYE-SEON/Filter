@@ -117,7 +117,7 @@
                             android:background="@android:color/transparent"
                             android:padding="5dp"
                             android:scaleType="fitCenter"
-                            android:src="@drawable/icon_pen_no" />
+                            android:src="@drawable/icon_crayon_no" />
 
                         <TextView
                             android:id="@+id/crayonTxt"

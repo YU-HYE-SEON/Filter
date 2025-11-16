@@ -2,6 +2,7 @@ package com.example.filter.fragments;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -26,6 +27,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
+import com.example.filter.activities.MainActivity;
 import com.example.filter.adapters.SearchKeywordAdapter;
 
 public class SearchMainFragment extends Fragment {
@@ -38,6 +40,7 @@ public class SearchMainFragment extends Fragment {
     private TextView keyword1, keyword2, keyword3, keyword4, keyword5, keyword6, keyword7, keyword8, keyword9, keyword10;
     private FrameLayout searchFrame;
     private boolean maybeTap = false;
+    private boolean lastKeypadVisible = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -68,7 +71,12 @@ public class SearchMainFragment extends Fragment {
             int screenHeight = root.getRootView().getHeight();
             int keypadHeight = screenHeight - r.bottom;
             boolean keypadVisible = keypadHeight > screenHeight * 0.15;
-            if (!keypadVisible) searchTxt.clearFocus();
+            if (lastKeypadVisible && !keypadVisible) {
+                if (searchTxt.hasFocus()) {
+                    searchTxt.clearFocus();
+                }
+            }
+            lastKeypadVisible = keypadVisible;
         });
 
         return view;
@@ -81,7 +89,8 @@ public class SearchMainFragment extends Fragment {
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
-        adapter = new SearchKeywordAdapter();
+        MainActivity activity = (MainActivity) requireActivity();
+        adapter = new SearchKeywordAdapter(activity.searchHistory);
         recyclerView.setAdapter(adapter);
 
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
@@ -102,8 +111,6 @@ public class SearchMainFragment extends Fragment {
             }
         });
 
-        searchBtn.setOnClickListener(v -> handleSearch());
-
         searchTxt.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
@@ -113,19 +120,41 @@ public class SearchMainFragment extends Fragment {
             return false;
         });
 
+        searchTxt.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                setSearchButton();
+            } else {
+                resetSearchButton();
+            }
+        });
+
         allDelete.setOnClickListener(v -> {
             if (adapter != null) {
                 adapter.clearAll();
             }
         });
 
+        adapter.setOnKeywordClickListener(keyword -> {
+            adapter.addItem(keyword);
+            MainActivity act = (MainActivity) requireActivity();
+            act.searchHistory.remove(keyword);
+            act.searchHistory.add(0, keyword);
+            act.saveSearchHistory();
+            searchTxt.setText(keyword);
+            searchTxt.setSelection(keyword.length());
+            navigateToSearch(keyword);
+        });
+
         View.OnClickListener keywordClickListener = v -> {
             TextView clickedTextView = (TextView) v;
             String keyword = clickedTextView.getText().toString();
 
-            if (keyword != null && !keyword.isEmpty() && adapter != null) {
+            if (keyword != null && !keyword.isEmpty()) {
                 adapter.addItem(keyword);
-                recyclerView.scrollToPosition(0);
+                MainActivity act = (MainActivity) requireActivity();
+                act.searchHistory.remove(keyword);
+                act.searchHistory.add(0, keyword);
+                act.saveSearchHistory();
             }
 
             navigateToSearch(keyword);
@@ -146,12 +175,29 @@ public class SearchMainFragment extends Fragment {
     private void handleSearch() {
         String keyword = searchTxt.getText().toString();
 
-        if (keyword != null && !keyword.isEmpty() && adapter != null) {
+        if (keyword != null && !keyword.isEmpty()) {
             adapter.addItem(keyword);
-            recyclerView.scrollToPosition(0);
+            MainActivity act = (MainActivity) requireActivity();
+            act.searchHistory.remove(keyword);
+            act.searchHistory.add(0, keyword);
+            act.saveSearchHistory();
         }
 
         navigateToSearch(keyword);
+    }
+
+    public void setSearchButton() {
+        searchBtn.setImageResource(R.drawable.btn_now_keyword_delete);
+        searchBtn.setOnClickListener(v -> {
+            searchTxt.setText("");
+            searchTxt.requestFocus();
+            showKeyboard(searchTxt);
+        });
+    }
+
+    public void resetSearchButton() {
+        searchBtn.setImageResource(R.drawable.icon_search_blue);
+        searchBtn.setOnClickListener(v -> handleSearch());
     }
 
     private void navigateToSearch(String keyword) {
@@ -198,6 +244,16 @@ public class SearchMainFragment extends Fragment {
         final int x = (int) ev.getRawX();
         final int y = (int) ev.getRawY();
         return r.contains(x, y);
+    }
+
+    private void showKeyboard(View view) {
+        view.post(() -> {
+            InputMethodManager imm = (InputMethodManager)
+                    requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
     }
 
     private void hideKeypadAndClearFocus() {

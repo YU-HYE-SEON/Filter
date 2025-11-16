@@ -12,6 +12,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -29,6 +30,7 @@ import com.example.filter.items.StickerItem;
 import java.io.File;
 
 public class MyStickersFragment extends Fragment {
+    private AppCompatButton saveBtn;
     private ImageButton cancelBtn, checkBtn, deleteStickerIcon;
     private MyStickersAdapter adapter;
     private RecyclerView myStickers;
@@ -78,8 +80,6 @@ public class MyStickersFragment extends Fragment {
             deleteStickerIcon.setEnabled(true);
             deleteStickerIcon.setAlpha(1.0f);
             showStickerCentered(stickerKey);
-            checkBtn.setEnabled(true);
-            checkBtn.setAlpha(1.0f);
         });
 
         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
@@ -177,8 +177,14 @@ public class MyStickersFragment extends Fragment {
         deleteController.setOnClickListener(x -> {
             Controller.removeStickerFrame(stickerFrame);
             Controller.setControllersVisible(stickerFrame, false);
-            checkBtn.setEnabled(false);
-            checkBtn.setAlpha(0.4f);
+
+            int old = adapter.getSelectedPos();
+            if (old != RecyclerView.NO_POSITION) {
+                adapter.clearSelection();
+            }
+
+            deleteStickerIcon.setEnabled(false);
+            deleteStickerIcon.setAlpha(0.4f);
         });
 
         stickerFrame.bringToFront();
@@ -255,6 +261,12 @@ public class MyStickersFragment extends Fragment {
             myStickers.scrollToPosition(0);
             deleteStickerIcon.setEnabled(false);
             deleteStickerIcon.setAlpha(0.4f);
+        }
+
+        saveBtn = requireActivity().findViewById(R.id.saveBtn);
+        if (saveBtn != null) {
+            saveBtn.setEnabled(false);
+            saveBtn.setAlpha(0.4f);
         }
     }
 

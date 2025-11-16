@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +15,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -28,10 +28,8 @@ import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class EditStickerFragment extends Fragment {
+    private AppCompatButton saveBtn;
     public static int sessionId = 0;
     public static int stickerId = 0;
     private int editingStickerId = -1;  //-1이면 새로운 스티커 배치, -1 아니면 기존에 배치한 스티커 수정
@@ -92,6 +90,15 @@ public class EditStickerFragment extends Fragment {
             }
         } else if (stickerOverlay.getChildCount() > 0) {
             stickerFrame = stickerOverlay.getChildAt(stickerOverlay.getChildCount() - 1);
+        }
+
+        if (stickerOverlay != null && stickerFrame != null) {
+            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                View child = stickerOverlay.getChildAt(i);
+                if (child != stickerFrame && !Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
+                    Controller.setStickerActive(child, false);
+                }
+            }
         }
 
         w = args.getInt("w", stickerFrame.getLayoutParams().width);
@@ -285,6 +292,7 @@ public class EditStickerFragment extends Fragment {
                 //nextMeta = meta;
             }
 
+            args2.putBoolean("TRIGGERED_BY_CHECK", true);
 
             /*args2.putFloat("prev_relX", prevMeta.relX);
             args2.putFloat("prev_relY", prevMeta.relY);
@@ -393,6 +401,8 @@ public class EditStickerFragment extends Fragment {
     private void onFaceMode() {
         isFace = true;
 
+        setCheckboxSize(28.5f, 1f);
+
         ImageView oldImage = stickerFrame.findViewById(R.id.stickerImage);
         if (oldImage != null) {
             stickerDrawable = oldImage.getDrawable();
@@ -449,6 +459,9 @@ public class EditStickerFragment extends Fragment {
 
     private void offFaceMode() {
         isFace = false;
+
+        setCheckboxSize(25f, 3f);
+
         if (faceBox != null && faceOverlay != null) {
             if (stickerFrame != null && stickerFrame.getParent() == faceOverlay) {
                 faceOverlay.removeView(stickerFrame);
@@ -536,6 +549,35 @@ public class EditStickerFragment extends Fragment {
                         .commit();
             }
         });
+    }
+
+    private void setCheckboxSize(float dp1, float dp2) {
+        int px = (int) dp(dp1);
+
+        ViewGroup.LayoutParams lp = checkBox.getLayoutParams();
+        lp.width = px;
+        lp.height = px;
+        checkBox.setLayoutParams(lp);
+
+        checkBox.requestLayout();
+
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) checkBox.getLayoutParams();
+        params.topMargin = (int) dp(dp2);
+        checkBox.setLayoutParams(params);
+    }
+
+    private float dp(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        saveBtn = requireActivity().findViewById(R.id.saveBtn);
+        if (saveBtn != null) {
+            saveBtn.setEnabled(false);
+            saveBtn.setAlpha(0.4f);
+        }
     }
 
     @Override

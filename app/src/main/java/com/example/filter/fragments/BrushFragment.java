@@ -47,6 +47,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
@@ -111,6 +112,7 @@ public class BrushFragment extends Fragment {
 
     /// UI ///
     private ConstraintLayout topArea;
+    private AppCompatButton saveBtn;
     private LinearLayout penBtn, glowBtn, crayonBtn, eraserBtn;
     private ImageView pen, glow, crayon, eraser;
     private TextView penTxt, glowTxt, crayonTxt, eraserTxt;
@@ -283,6 +285,8 @@ public class BrushFragment extends Fragment {
         if (checkBox != null) {
             checkBox.setOnCheckedChangeListener((btn, isChecked) -> {
                 if (isChecked) {
+                    setCheckboxSize(28.5f, 1f);
+
                     pen.setEnabled(false);
                     glow.setEnabled(false);
                     crayon.setEnabled(false);
@@ -316,6 +320,8 @@ public class BrushFragment extends Fragment {
                         showBrushToStickerDialog();
                     });
                 } else {
+                    setCheckboxSize(25f, 3f);
+
                     lassoOverlay.setLassoListener(null);
                     lassoOverlay.setDrawingEnabled(false);
                     lassoOverlay.setLassoVisible(false);
@@ -325,7 +331,17 @@ public class BrushFragment extends Fragment {
                     crayon.setEnabled(true);
                     eraser.setEnabled(true);
 
-                    setModeAlpha(lastMode);
+                    pen.setAlpha(1f);
+                    glow.setAlpha(1f);
+                    crayon.setAlpha(1f);
+                    eraser.setAlpha(1f);
+
+                    penTxt.setAlpha(1f);
+                    glowTxt.setAlpha(1f);
+                    crayonTxt.setAlpha(1f);
+                    eraserTxt.setAlpha(1f);
+
+                    setIcon(lastMode);
                 }
             });
         }
@@ -448,7 +464,6 @@ public class BrushFragment extends Fragment {
                                 return;
                             }
 
-                            //FilterActivity act = (FilterActivity) requireActivity();
                             ArrayList<EraseOp> ops = new ArrayList<>();
 
                             for (PendingErase pe : activeErases.values()) {
@@ -508,7 +523,6 @@ public class BrushFragment extends Fragment {
             brushDraw.setBrush(color, sizePx, startMode);
             brushDraw.setDrawingEnabled(!isPenPanelOpen);
 
-            setModeAlpha(startMode);
             setIcon(startMode);
             lastMode = startMode;
 
@@ -529,7 +543,7 @@ public class BrushFragment extends Fragment {
                 brushDraw.setDrawingEnabled(true);
             }
             lastMode = BrushOverlayView.BrushMode.PEN;
-            setModeAlpha(lastMode);
+            setIcon(lastMode);
             BrushPrefs.saveLastMode(requireContext(), lastMode);
             showPanel(lastMode);
         });
@@ -541,7 +555,7 @@ public class BrushFragment extends Fragment {
                 brushDraw.setDrawingEnabled(true);
             }
             lastMode = BrushOverlayView.BrushMode.GLOW;
-            setModeAlpha(lastMode);
+            setIcon(lastMode);
             BrushPrefs.saveLastMode(requireContext(), lastMode);
             showPanel(lastMode);
         });
@@ -553,7 +567,7 @@ public class BrushFragment extends Fragment {
                 brushDraw.setDrawingEnabled(true);
             }
             lastMode = BrushOverlayView.BrushMode.CRAYON;
-            setModeAlpha(lastMode);
+            setIcon(lastMode);
             BrushPrefs.saveLastMode(requireContext(), lastMode);
             showPanel(lastMode);
         });
@@ -566,7 +580,7 @@ public class BrushFragment extends Fragment {
                 brushDraw.setDrawingEnabled(true);
             }
             lastMode = BrushOverlayView.BrushMode.ERASER;
-            setModeAlpha(lastMode);
+            setIcon(lastMode);
             BrushPrefs.saveLastMode(requireContext(), lastMode);
             showEraserPanel();
         });
@@ -588,6 +602,7 @@ public class BrushFragment extends Fragment {
 
             if (checkBox != null && checkBox.isChecked()) {
                 checkBox.setChecked(false);
+                setCheckboxSize(25f, 3f);
             }
 
             requireActivity().getSupportFragmentManager()
@@ -656,6 +671,7 @@ public class BrushFragment extends Fragment {
 
             if (checkBox != null && checkBox.isChecked()) {
                 checkBox.setChecked(false);
+                setCheckboxSize(25f, 3f);
             }
 
             requireActivity().getSupportFragmentManager()
@@ -680,6 +696,16 @@ public class BrushFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        saveBtn = requireActivity().findViewById(R.id.saveBtn);
+        if (saveBtn != null) {
+            saveBtn.setEnabled(false);
+            saveBtn.setAlpha(0.4f);
+        }
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         if (brushOverlay != null && brushClipListener != null) {
@@ -691,6 +717,7 @@ public class BrushFragment extends Fragment {
         if (checkBox != null) {
             checkBox.setOnCheckedChangeListener(null);
             checkBox.setChecked(false);
+            setCheckboxSize(25f, 3f);
         }
         if (lassoOverlay != null) {
             lassoOverlay.setLassoListener(null);
@@ -2006,7 +2033,7 @@ public class BrushFragment extends Fragment {
         return f;
     }
 
-    private boolean hasAnyVisiblePixel(@NonNull Bitmap bmp) {
+    public static boolean hasAnyVisiblePixel(@NonNull Bitmap bmp) {
         int w = bmp.getWidth(), h = bmp.getHeight();
         int[] row = new int[w];
         for (int y = 0; y < h; y++) {
@@ -2115,10 +2142,10 @@ public class BrushFragment extends Fragment {
         }
         if (crayon != null) {
             if (mode == BrushOverlayView.BrushMode.CRAYON) {
-                crayon.setImageResource(R.drawable.icon_pen_yes);
+                crayon.setImageResource(R.drawable.icon_crayon_yes);
                 crayonTxt.setTextColor(Color.parseColor("#C2FA7A"));
             } else {
-                crayon.setImageResource(R.drawable.icon_pen_no);
+                crayon.setImageResource(R.drawable.icon_crayon_no);
                 crayonTxt.setTextColor(Color.parseColor("#90989F"));
             }
         }
@@ -2133,29 +2160,28 @@ public class BrushFragment extends Fragment {
         }
     }
 
-    private void setModeAlpha(BrushOverlayView.BrushMode mode) {
-        float on = 1f, off = 0.2f;
-        if (pen != null) {
-            pen.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
-            penTxt.setAlpha(mode == BrushOverlayView.BrushMode.PEN ? on : off);
-        }
-        if (glow != null) {
-            glow.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
-            glowTxt.setAlpha(mode == BrushOverlayView.BrushMode.GLOW ? on : off);
-        }
-        if (crayon != null) {
-            crayon.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);
-            crayonTxt.setAlpha(mode == BrushOverlayView.BrushMode.CRAYON ? on : off);
-        }
-        if (eraser != null) {
-            eraser.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
-            eraserTxt.setAlpha(mode == BrushOverlayView.BrushMode.ERASER ? on : off);
-        }
-        setIcon(mode);
-    }
-
     /// 단위 변환 ///
     private int dp(int v) {
         return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+
+    private float dp(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    /// 체크박스 크기 변환 ///
+    private void setCheckboxSize(float dp1, float dp2) {
+        int px = (int) dp(dp1);
+
+        ViewGroup.LayoutParams lp = checkBox.getLayoutParams();
+        lp.width = px;
+        lp.height = px;
+        checkBox.setLayoutParams(lp);
+
+        checkBox.requestLayout();
+
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) checkBox.getLayoutParams();
+        params.topMargin = (int) dp(dp2);
+        checkBox.setLayoutParams(params);
     }
 }

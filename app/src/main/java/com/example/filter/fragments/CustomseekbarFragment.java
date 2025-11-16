@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.etc.ClickUtils;
@@ -18,6 +19,7 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.R;
 
 public class CustomseekbarFragment extends Fragment {
+    private AppCompatButton saveBtn;
     private TextView filterText;
     private ImageButton cancelBtn, checkBtn;
     private CustomSeekbar customSeekbar;
@@ -52,6 +54,12 @@ public class CustomseekbarFragment extends Fragment {
         FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {
             activity.refreshOriginalColorButton();
+        }
+
+        saveBtn = requireActivity().findViewById(R.id.saveBtn);
+        if (saveBtn != null) {
+            saveBtn.setEnabled(false);
+            saveBtn.setAlpha(0.4f);
         }
 
         Bundle bundle = getArguments();
@@ -152,6 +160,7 @@ public class CustomseekbarFragment extends Fragment {
         requireActivity().getSupportFragmentManager().executePendingTransactions();
         if (getActivity() instanceof FilterActivity) {
             ((FilterActivity) getActivity()).requestUpdateBackGate();
+            ((FilterActivity) getActivity()).updateSaveButtonState();
         }
     }
 }

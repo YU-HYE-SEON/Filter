@@ -54,7 +54,7 @@ public class Controller {
                 img.clearColorFilter();
             } else {
                 img.setAlpha(0.4f);
-                img.setColorFilter(Color.parseColor("#505050"), PorterDuff.Mode.SRC_ATOP);
+                img.setColorFilter(Color.parseColor("#141414"), PorterDuff.Mode.SRC_ATOP);
             }
         }
     }

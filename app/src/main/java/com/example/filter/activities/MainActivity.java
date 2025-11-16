@@ -1,11 +1,11 @@
 package com.example.filter.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -32,14 +32,16 @@ import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.fragments.SearchMainFragment;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends BaseActivity {
     private ConstraintLayout mainActivity;
     private ImageView logo;
-    private EditText searchTxt;
+    private ImageButton searchBtn, random, hot, newest;
+    //private EditText searchTxt;
     //private boolean maybeTap = false;
-    private ImageButton filter;
+    private ImageButton home, filter;
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -66,6 +68,7 @@ public class MainActivity extends BaseActivity {
     private final int PAGE_SIZE = 10;*/
     private ArrayList<FaceStickerData> faceStickers;
     private ActivityResultLauncher<Intent> detailActivityLauncher;
+    public ArrayList<String> searchHistory = new ArrayList<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -81,9 +84,13 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.a_main);
         mainActivity = findViewById(R.id.mainActivity);
         logo = findViewById(R.id.logo);
-        searchTxt = findViewById(R.id.searchTxt);
+        searchBtn = findViewById(R.id.searchBtn);
+        random = findViewById(R.id.random);
+        hot = findViewById(R.id.hot);
+        newest = findViewById(R.id.newest);
         textView = findViewById(R.id.textView);
         recyclerView = findViewById(R.id.recyclerView);
+        home = findViewById(R.id.home);
         filter = findViewById(R.id.filter);
 
         detailActivityLauncher = registerForActivityResult(
@@ -107,7 +114,8 @@ public class MainActivity extends BaseActivity {
             if (!keypadVisible) searchTxt.clearFocus();
         });*/
 
-        searchTxt.setOnClickListener(v -> {
+        loadSearchHistory();
+        searchBtn.setOnClickListener(v -> {
             FrameLayout frameLayout = findViewById(R.id.frameLayout);
 
             frameLayout.setVisibility(View.VISIBLE);
@@ -211,6 +219,45 @@ public class MainActivity extends BaseActivity {
             });
         });
 
+        View.OnClickListener listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int id = view.getId();
+                switch (id) {
+                    case R.id.random:
+                        random.setBackgroundResource(R.drawable.btn_random_contents_yes);
+                        hot.setBackgroundResource(R.drawable.btn_hot_contents_no);
+                        newest.setBackgroundResource(R.drawable.btn_newest_contents_no);
+                        break;
+                    case R.id.hot:
+                        hot.setBackgroundResource(R.drawable.btn_hot_contents_yes);
+                        random.setBackgroundResource(R.drawable.btn_random_contents_no);
+                        newest.setBackgroundResource(R.drawable.btn_newest_contents_no);
+                        break;
+                    case R.id.newest:
+                        newest.setBackgroundResource(R.drawable.btn_newest_contents_yes);
+                        random.setBackgroundResource(R.drawable.btn_random_contents_no);
+                        hot.setBackgroundResource(R.drawable.btn_hot_contents_no);
+                        break;
+                    default:
+                        random.setBackgroundResource(R.drawable.btn_random_contents_no);
+                        hot.setBackgroundResource(R.drawable.btn_hot_contents_no);
+                        newest.setBackgroundResource(R.drawable.btn_newest_contents_no);
+                }
+            }
+        };
+
+        random.setOnClickListener(listener);
+        hot.setOnClickListener(listener);
+        newest.setOnClickListener(listener);
+
+        home.setOnClickListener(v -> {
+            FrameLayout frameLayout = findViewById(R.id.frameLayout);
+            frameLayout.setVisibility(View.GONE);
+            mainActivity.setVisibility(View.VISIBLE);
+            getSupportFragmentManager().popBackStack(null, getSupportFragmentManager().POP_BACK_STACK_INCLUSIVE);
+        });
+
         filter.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             filter.setEnabled(false);
@@ -238,6 +285,37 @@ public class MainActivity extends BaseActivity {
             ((SearchMainFragment) fragment).onParentTouchEvent(ev);
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveSearchHistory();
+    }
+
+    private void loadSearchHistory() {
+        SharedPreferences sp = getSharedPreferences("search_pref", MODE_PRIVATE);
+        String saved = sp.getString("search_history", "");
+
+        searchHistory.clear();
+        if (!saved.isEmpty()) {
+            String[] arr = saved.split(",");
+            searchHistory.addAll(Arrays.asList(arr));
+        }
+    }
+
+    public void saveSearchHistory() {
+        SharedPreferences sp = getSharedPreferences("search_pref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < searchHistory.size(); i++) {
+            sb.append(searchHistory.get(i));
+            if (i < searchHistory.size() - 1) sb.append(",");
+        }
+
+        editor.putString("search_history", sb.toString());
+        editor.apply();
     }
 
     private void handleIntent(Intent intent) {

@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
@@ -39,10 +40,12 @@ public class ToolsFragment extends Fragment {
         rotationTxt = view.findViewById(R.id.rotationTxt);
         cropTxt = view.findViewById(R.id.cropTxt);
 
-        bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
+        FilterActivity activity = (FilterActivity) requireActivity();
+
+        bottomArea1 = activity.findViewById(R.id.bottomArea1);
         bottomArea1.setVisibility(View.INVISIBLE);
 
-        FilterActivity activity = (FilterActivity) requireActivity();
+        activity.updateSaveButtonState();
 
         if (activity.isRotationEdited()) {
             rotationIcon.setImageResource(R.drawable.icon_rotation_yes);

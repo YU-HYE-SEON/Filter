@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
@@ -19,6 +20,7 @@ import com.example.filter.activities.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class RotationFragment extends Fragment {
+    private AppCompatButton saveBtn;
     private LinearLayout leftRotationBtn, rightRotationBtn, horizontalFlipBtn, verticalFlipBtn;
     private ImageView leftRotationIcon, rightRotationIcon, horizontalFlip, verticalFlip;
     private TextView leftRotationTxt, rightRotationTxt, horizontalFlipTxt, verticalFlipTxt;
@@ -126,6 +128,16 @@ public class RotationFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        saveBtn = requireActivity().findViewById(R.id.saveBtn);
+        if (saveBtn != null) {
+            saveBtn.setEnabled(false);
+            saveBtn.setAlpha(0.4f);
+        }
     }
 
     private void updateIcon(FilterActivity activity) {
