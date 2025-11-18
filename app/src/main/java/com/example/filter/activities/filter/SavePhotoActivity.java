@@ -143,23 +143,23 @@ public class SavePhotoActivity extends BaseActivity {
             intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
 
             List<FilterDtoCreateRequest.FaceSticker> stickers = new ArrayList<>();
-            for (FaceStickerData d : faceStickers) {
-                FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
-                s.placementType = "face";
-                s.x = d.relX;
-                s.y = d.relY;
-                s.scale = (d.relW + d.relH) / 2f;
-                //s.relW = d.relW;
-                //s.relH = d.relH;
-                s.rotation = d.rot;
-                s.stickerId = d.groupId;
-                stickers.add(s);
-
-                /*Log.d("StickerFlow", String.format(
-                        "[SavePhotoActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
-                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-                ));*/
-            }
+//            for (FaceStickerData d : faceStickers) {
+//                FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
+//                s.placementType = "face";
+//                s.x = d.relX;
+//                s.y = d.relY;
+//                s.scale = (d.relW + d.relH) / 2f;
+//                //s.relW = d.relW;
+//                //s.relH = d.relH;
+//                s.rotation = d.rot;
+//                s.stickerId = d.groupId;
+//                stickers.add(s);
+//
+//                /*Log.d("StickerFlow", String.format(
+//                        "[SavePhotoActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+//                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
+//                ));*/
+//            }
 
             FilterDtoCreateRequest.ColorAdjustments adj =
                     (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");

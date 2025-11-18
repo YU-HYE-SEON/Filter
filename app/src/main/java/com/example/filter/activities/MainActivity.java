@@ -81,7 +81,7 @@ public class MainActivity extends BaseActivity {
         // ✅ ① StickerStore 초기화 및 서버 업로더 설정
         StickerStore store = StickerStore.get();
         store.init(getApplicationContext());
-        store.setUploader(new StickerRepository(getApplicationContext()));
+        store.setUploader(new StickerRepository(getApplicationContext(), null));
 
 
         // UI 초기화

@@ -89,23 +89,23 @@ public class FilterInfoActivity extends BaseActivity {
                 intent.putExtra("face_stickers", new ArrayList<>(this.faceStickers));
 
                 List<FilterDtoCreateRequest.FaceSticker> faceStickers = new ArrayList<>();
-                for (FaceStickerData d : this.faceStickers) {
-                    FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
-                    s.placementType = "face";
-                    s.x = d.relX;
-                    s.y = d.relY;
-                    s.scale = (d.relW + d.relH) / 2f;
-                    //s.relW = d.relW;
-                    //s.relH = d.relH;
-                    s.rotation = d.rot;
-                    s.stickerId = d.groupId;
-                    faceStickers.add(s);
-
-                    /*Log.d("StickerFlow", String.format(
-                            "[FilterDetailActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
-                            d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-                    ));*/
-                }
+//                for (FaceStickerData d : this.faceStickers) {
+//                    FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
+//                    s.placementType = "face";
+//                    s.x = d.relX;
+//                    s.y = d.relY;
+//                    s.scale = (d.relW + d.relH) / 2f;
+//                    //s.relW = d.relW;
+//                    //s.relH = d.relH;
+//                    s.rotation = d.rot;
+//                    s.stickerId = d.groupId;
+//                    faceStickers.add(s);
+//
+//                    /*Log.d("StickerFlow", String.format(
+//                            "[FilterDetailActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+//                            d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
+//                    ));*/
+//                }
 
                 intent.putExtra("filterId", filterId);
                 intent.putExtra("filterImage", imgUrl);

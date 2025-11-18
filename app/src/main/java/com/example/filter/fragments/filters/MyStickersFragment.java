@@ -1,5 +1,7 @@
 package com.example.filter.fragments.filters;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,8 +22,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.adapters.MyStickersAdapter;
-import com.example.filter.apis.client.AppRetrofitClient; // ✅ 내 클라이언트 Import
+import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.dto.StickerResponseDto;
+import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.apis.service.StickerApi;
 import com.example.filter.dialogs.StickerDeleteDialog;
 import com.example.filter.etc.ClickUtils;
@@ -50,6 +53,27 @@ public class MyStickersFragment extends Fragment {
     private View stickerFrame;
     private ImageView stickerImage, moveController, rotateController, sizeController, deleteController;
 
+    private int pendingUploadCount = 0;
+
+    // ✅ 업로드 완료 리스너 정의 (콜백 구현체)
+    public interface StickerUploadListener {
+        void onUploadFinished();
+    }
+
+    // 업로드 완료 시 호출될 리스너 구현
+    private final StickerUploadListener uploadListener = () -> {
+        synchronized (this) {
+            pendingUploadCount--;
+            Log.d("StickerUpload", "업로드 완료 카운트: " + pendingUploadCount);
+
+            // 모든 업로드가 완료되면 목록 조회 시작
+            if (pendingUploadCount <= 0) {
+                Log.d("StickerUpload", "✅ 모든 업로드 완료. 서버 목록 조회 시작.");
+                requireActivity().runOnUiThread(this::loadStickersFromServer);
+            }
+        }
+    };
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -64,11 +88,12 @@ public class MyStickersFragment extends Fragment {
 
         checkBtn.setEnabled(false);
         checkBtn.setAlpha(0.4f);
-
         deleteStickerIcon.setEnabled(false);
         deleteStickerIcon.setAlpha(0.4f);
 
+        // 1. 로컬 스토어 초기화 및 업로더 연결 (리스너 주입)
         StickerStore.get().init(requireContext().getApplicationContext());
+        StickerStore.get().setUploader(new StickerRepository(requireContext(), uploadListener));
 
         LinearLayoutManager lm = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
         myStickers.setLayoutManager(lm);
@@ -83,27 +108,67 @@ public class MyStickersFragment extends Fragment {
             showStickerCentered(item.getImageUrl(), item.getId());
         });
 
-        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-            View child = stickerOverlay.getChildAt(i);
-            Controller.setStickerActive(child, false);
-        }
-
+        setupOverlayControllers();
         setupBottomButtons();
 
-        // 서버에서 로드
-        loadStickersFromServer();
+        // 2. 임시 스티커 업로드 시작 (조회는 콜백에서 호출됨)
+        uploadPendingStickers();
 
         return view;
     }
 
+    @Override
+    public void onResume() {
+        // 🛑 [수정] SuperNotCalledException 방지
+        super.onResume();
+
+        saveBtn = requireActivity().findViewById(R.id.saveBtn);
+        if (saveBtn != null) {
+            saveBtn.setEnabled(false);
+            saveBtn.setAlpha(0.4f);
+        }
+    }
+
     // ---------------------------------------------------------------
-    // ✅ [수정됨] AppRetrofitClient를 사용하여 서버 호출
+    // ✅ Pending Sticker 업로드 (순서 보장 로직)
+    // ---------------------------------------------------------------
+    private void uploadPendingStickers() {
+        List<StickerItem> itemsToUpload = new ArrayList<>();
+        StickerItem pendingItem;
+
+        // 1. 업로드할 항목들을 큐에서 꺼내 카운트 설정
+        while ((pendingItem = StickerStore.get().pollPending()) != null) {
+            itemsToUpload.add(pendingItem);
+        }
+
+        pendingUploadCount = itemsToUpload.size();
+        Log.d("StickerUpload", "업로드할 스티커 개수: " + pendingUploadCount);
+
+        if (pendingUploadCount == 0) {
+            // 업로드할 스티커가 없으면 바로 목록 조회
+            loadStickersFromServer();
+            return;
+        }
+
+        // 2. 각 항목을 로컬 스토어에 추가하고 (이 과정에서 uploader.uploadToServer가 호출됨)
+        //    UI에 즉시 반영
+        for (StickerItem item : itemsToUpload) {
+            StickerStore.get().addToAllFront(item);
+            adapter.insertAtFront(item);
+        }
+
+        if (adapter.getItemCount() > 0) {
+            myStickers.scrollToPosition(0);
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // ✅ 서버 API 호출: 내 스티커 목록 가져오기 (콜백 완료 후 실행)
     // ---------------------------------------------------------------
     private void loadStickersFromServer() {
-        // 1. 내가 만든 클라이언트로 API 생성 (토큰 처리는 내부에서 자동 해결)
         StickerApi api = AppRetrofitClient.getInstance(requireContext()).create(StickerApi.class);
 
-        // 2. 호출 (파라미터 없이 호출 가능!)
+        // ★ 토큰을 가져와 API 호출에 사용해야 합니다. (이 부분은 AppRetrofitClient가 처리하므로, 여기서는 호출만 합니다.)
         api.getMyStickers().enqueue(new Callback<List<StickerResponseDto>>() {
             @Override
             public void onResponse(Call<List<StickerResponseDto>> call, Response<List<StickerResponseDto>> response) {
@@ -113,7 +178,6 @@ public class MyStickersFragment extends Fragment {
 
                     for (StickerResponseDto dto : dtos) {
                         if (dto.getImageUrl() != null) {
-                            // DTO -> StickerItem 변환
                             items.add(StickerItem.fromServer(
                                     dto.getId(),
                                     dto.getImageUrl(),
@@ -134,6 +198,9 @@ public class MyStickersFragment extends Fragment {
         });
     }
 
+    // ---------------------------------------------------------------
+    // ✅ 스티커 화면 배치 (Glide + ID 태그 저장)
+    // ---------------------------------------------------------------
     private void showStickerCentered(String stickerUrl, long stickerId) {
         Controller.clearCurrentSticker(stickerOverlay, selectSticker);
 
@@ -147,7 +214,7 @@ public class MyStickersFragment extends Fragment {
         rotateController.setVisibility(View.INVISIBLE);
         sizeController.setVisibility(View.INVISIBLE);
 
-        // Glide 로드 (로딩/에러 이미지 제거하여 깔끔하게)
+        // Glide로 이미지 로드 (URL 처리)
         Glide.with(this)
                 .load(stickerUrl)
                 .into(stickerImage);
@@ -185,6 +252,13 @@ public class MyStickersFragment extends Fragment {
         });
 
         stickerFrame.bringToFront();
+    }
+
+    private void setupOverlayControllers() {
+        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+            View child = stickerOverlay.getChildAt(i);
+            Controller.setStickerActive(child, false);
+        }
     }
 
     private void setupBottomButtons() {
@@ -264,16 +338,6 @@ public class MyStickersFragment extends Fragment {
                 .withButton1Text("예")
                 .withButton2Text("아니오")
                 .show();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        saveBtn = requireActivity().findViewById(R.id.saveBtn);
-        if (saveBtn != null) {
-            saveBtn.setEnabled(false);
-            saveBtn.setAlpha(0.4f);
-        }
     }
 
     @Override
