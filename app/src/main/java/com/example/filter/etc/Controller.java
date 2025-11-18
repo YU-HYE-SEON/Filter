@@ -13,15 +13,9 @@ import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-import androidx.core.view.ViewCompat;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-
 import com.example.filter.R;
-import com.example.filter.fragments.EditStickerFragment;
+import com.example.filter.fragments.filters.EditStickerFragment;
 import com.google.mlkit.vision.face.Face;
-
-import java.util.List;
 
 public class Controller {
     private static final int FRAME_MIN_DP = 100;

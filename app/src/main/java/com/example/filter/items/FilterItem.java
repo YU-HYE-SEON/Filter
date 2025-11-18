@@ -3,9 +3,10 @@ package com.example.filter.items;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.FaceStickerData;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class FilterItem {
+public class FilterItem implements Serializable {
     public final String id;
     public final String nickname, originalPath, filterImageUrl, filterTitle, tags, price;
     public final String brushPath, stickerImageNoFacePath;

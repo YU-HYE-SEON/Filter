@@ -138,10 +138,11 @@
 
         <ImageButton
             android:id="@+id/home"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginStart="50dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="37dp"
             android:background="@android:color/transparent"
+            android:padding="15dp"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_home_yes"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -150,9 +151,10 @@
 
         <ImageButton
             android:id="@+id/filter"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:background="@android:color/transparent"
+            android:padding="15dp"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_create_no"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -162,9 +164,10 @@
 
         <ImageButton
             android:id="@+id/archive"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:background="@android:color/transparent"
+            android:padding="15dp"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_archive_no"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -174,10 +177,11 @@
 
         <ImageButton
             android:id="@+id/myPage"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginEnd="50dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginEnd="37dp"
             android:background="@android:color/transparent"
+            android:padding="15dp"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_mypage_no"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -187,7 +191,13 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <FrameLayout
-        android:id="@+id/frameLayout"
+        android:id="@+id/searchFrame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/mypageFrame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />

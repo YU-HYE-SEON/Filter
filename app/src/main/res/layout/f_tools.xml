@@ -136,7 +136,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="10dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/btn_next" />
+                    android:src="@drawable/btn_next_white" />
 
             </LinearLayout>
 

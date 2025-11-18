@@ -121,6 +121,7 @@
                     android:id="@+id/price2"
                     android:layout_width="100dp"
                     android:layout_height="50dp"
+                    android:background="@android:color/transparent"
                     android:fontFamily="@font/roboto_medium"
                     android:text="000"
                     android:textAlignment="center"
@@ -145,69 +146,19 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/txt2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:fontFamily="@font/roboto_medium"
+                android:text="가격을 0% 낮췄습니다."
+                android:textAlignment="center"
+                android:textColor="#73B6FD"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="@+id/changePrice"
                 app:layout_constraintStart_toStartOf="@+id/changePrice"
-                app:layout_constraintTop_toBottomOf="@+id/changePrice">
-
-                <TextView
-                    android:id="@+id/txt2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:fontFamily="@font/roboto_medium"
-                    android:text="가격을 "
-                    android:textAlignment="center"
-                    android:textColor="#73B6FD"
-                    android:textSize="14sp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/changePrice" />
-
-                <TextView
-                    android:id="@+id/percent"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:fontFamily="@font/roboto_medium"
-                    android:text="00"
-                    android:textAlignment="center"
-                    android:textColor="#73B6FD"
-                    android:textSize="14sp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/changePrice" />
-
-                <TextView
-                    android:id="@+id/txt3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:fontFamily="@font/roboto_medium"
-                    android:text="% "
-                    android:textAlignment="center"
-                    android:textColor="#73B6FD"
-                    android:textSize="14sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/changePrice" />
-
-                <TextView
-                    android:id="@+id/txt4"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:fontFamily="@font/roboto_medium"
-                    android:text="낮췄습니다."
-                    android:textAlignment="center"
-                    android:textColor="#73B6FD"
-                    android:textSize="14sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/changePrice" />
-
-            </LinearLayout>
+                app:layout_constraintTop_toBottomOf="@+id/changePrice" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

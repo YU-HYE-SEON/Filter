@@ -37,7 +37,17 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
     public FilterAdapter() {
     }
 
-    public void prepend(FilterItem item) {
+    public boolean containsId(String id) {
+        if (id == null) return false;
+        for (FilterItem item : items) {
+            if (item != null && id.equals(item.id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void addItem(FilterItem item) {
         items.add(0, item);
         if (items.size() > maxItems) {
             notifyDataSetChanged();
@@ -46,7 +56,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         }
     }
 
-    public void removeItemById(String id) {
+    public void removeItem(String id) {
         if (id == null) return;
 
         int targetIndex = -1;

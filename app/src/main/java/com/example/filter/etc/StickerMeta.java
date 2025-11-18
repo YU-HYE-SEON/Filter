@@ -12,8 +12,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.example.filter.R;
-import com.example.filter.activities.ApplyFilterActivity;
-import com.example.filter.activities.FilterActivity;
+import com.example.filter.activities.apply.ApplyFilterActivity;
+import com.example.filter.activities.filter.FilterActivity;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceLandmark;
 

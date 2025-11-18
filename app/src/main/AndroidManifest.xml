@@ -64,15 +64,15 @@
         </activity>
 
         <activity
-            android:name=".activities.SignUpActivity"
+            android:name=".activities.start.SignUpActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.OnBoardingActivity"
+            android:name=".activities.start.OnBoardingActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.LoginFailActivity"
+            android:name=".activities.start.LoginFailActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
 
@@ -83,47 +83,51 @@
             android:theme="@style/Base.Theme.Filter" />-->
 
         <activity
-            android:name=".activities.FilterDetailActivity"
+            android:name=".activities.filterinfo.FilterDetailActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.FilterDetailActivity2"
+            android:name=".activities.review.ReviewActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.ReviewActivity"
+            android:name=".activities.review.ReviewDetailActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.ReviewDetailActivity"
+            android:name=".activities.apply.ApplyFilterActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.ApplyFilterActivity"
+            android:name=".activities.apply.CameraActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.CameraActivity"
-            android:exported="false"
-            android:theme="@style/Base.Theme.Filter" />
-        <activity
-            android:name=".activities.FilterActivity"
+            android:name=".activities.filter.FilterActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter"
             android:windowSoftInputMode="adjustPan" />
         <activity
-            android:name=".activities.LoadActivity"
+            android:name=".activities.filter.LoadActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.SavePhotoActivity"
+            android:name=".activities.filter.SavePhotoActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.RegisterActivity"
+            android:name=".activities.filter.RegisterActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter"
             android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity
+            android:name=".activities.mypage.PointHistoryActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.Filter" />
+        <activity
+            android:name=".activities.mypage.PointChargeActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.Filter" />
     </application>
 
 </manifest>

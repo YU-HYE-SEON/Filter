@@ -5,11 +5,9 @@
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
     </style>
 
-    <style name="Theme.Filter" parent="Base.Theme.Filter" />
-
     <style name="Theme.Filter.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#007AFF</item>
-        <item name="postSplashScreenTheme">@style/Theme.Filter</item>
+        <item name="postSplashScreenTheme">@style/Base.Theme.Filter</item>
     </style>
 
 </resources>

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -21,15 +22,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
+import com.example.filter.activities.filter.FilterActivity;
+import com.example.filter.activities.filterinfo.FilterDetailActivity;
 import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.StickerStore;
+import com.example.filter.fragments.mypages.MyPageFragment;
 import com.example.filter.items.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
-import com.example.filter.fragments.SearchMainFragment;
+import com.example.filter.fragments.mains.SearchMainFragment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +45,8 @@ public class MainActivity extends BaseActivity {
     private ImageButton searchBtn, random, hot, newest;
     //private EditText searchTxt;
     //private boolean maybeTap = false;
-    private ImageButton home, filter;
+    private ImageButton home, filter, myPage;
+    private FrameLayout searchFrame, mypageFrame;
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -66,7 +71,7 @@ public class MainActivity extends BaseActivity {
     /*private boolean isLoading = false;
     private int page = 0;
     private final int PAGE_SIZE = 10;*/
-    private ArrayList<FaceStickerData> faceStickers;
+    //private ArrayList<FaceStickerData> faceStickers;
     private ActivityResultLauncher<Intent> detailActivityLauncher;
     public ArrayList<String> searchHistory = new ArrayList<>();
 
@@ -92,6 +97,10 @@ public class MainActivity extends BaseActivity {
         recyclerView = findViewById(R.id.recyclerView);
         home = findViewById(R.id.home);
         filter = findViewById(R.id.filter);
+        myPage = findViewById(R.id.myPage);
+
+        searchFrame = findViewById(R.id.searchFrame);
+        mypageFrame = findViewById(R.id.mypageFrame);
 
         detailActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -99,7 +108,7 @@ public class MainActivity extends BaseActivity {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         String deletedId = result.getData().getStringExtra("deleted_filter_id");
                         if (deletedId != null && filterAdapter != null) {
-                            filterAdapter.removeItemById(deletedId);
+                            filterAdapter.removeItem(deletedId);
                         }
                     }
                 });
@@ -116,13 +125,10 @@ public class MainActivity extends BaseActivity {
 
         loadSearchHistory();
         searchBtn.setOnClickListener(v -> {
-            FrameLayout frameLayout = findViewById(R.id.frameLayout);
-
-            frameLayout.setVisibility(View.VISIBLE);
+            searchFrame.setVisibility(View.VISIBLE);
             mainActivity.setVisibility(View.GONE);
-
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.frameLayout, new SearchMainFragment())
+                    .replace(R.id.searchFrame, new SearchMainFragment())
                     .addToBackStack(null)
                     .commit();
         });
@@ -192,20 +198,26 @@ public class MainActivity extends BaseActivity {
 
             /// 얼굴인식스티커 정보 전달 ///
             intent.putExtra("stickerImageNoFacePath", item.stickerImageNoFacePath);
-            intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+            //intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+            if (item.faceStickers != null) {
+                intent.putExtra("face_stickers", new ArrayList<>(item.faceStickers));
+            }
 
             List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
-            for (FaceStickerData d : faceStickers) {
-                FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-                s.placementType = "face";
-                s.x = d.relX;
-                s.y = d.relY;
-                s.scale = (d.relW + d.relH) / 2f;
-                //s.relW = d.relW;
-                //s.relH = d.relH;
-                s.rotation = d.rot;
-                s.stickerId = d.groupId;
-                stickers.add(s);
+            if (item.faceStickers != null) {
+                for (FaceStickerData d : item.faceStickers) {
+
+                    FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
+                    s.placementType = "face";
+                    s.x = d.relX;
+                    s.y = d.relY;
+                    s.scale = (d.relW + d.relH) / 2f;
+                    //s.relW = d.relW;
+                    //s.relH = d.relH;
+                    s.rotation = d.rot;
+                    s.stickerId = d.groupId;
+                    stickers.add(s);
+                }
             }
 
             detailActivityLauncher.launch(intent);
@@ -252,10 +264,13 @@ public class MainActivity extends BaseActivity {
         newest.setOnClickListener(listener);
 
         home.setOnClickListener(v -> {
-            FrameLayout frameLayout = findViewById(R.id.frameLayout);
-            frameLayout.setVisibility(View.GONE);
+            searchFrame.setVisibility(View.GONE);
+            mypageFrame.setVisibility(View.GONE);
             mainActivity.setVisibility(View.VISIBLE);
             getSupportFragmentManager().popBackStack(null, getSupportFragmentManager().POP_BACK_STACK_INCLUSIVE);
+
+            home.setImageResource(R.drawable.icon_home_yes);
+            myPage.setImageResource(R.drawable.icon_mypage_no);
         });
 
         filter.setOnClickListener(v -> {
@@ -269,6 +284,19 @@ public class MainActivity extends BaseActivity {
             filter.postDelayed(() -> filter.setEnabled(true), 500);
         });
 
+        myPage.setOnClickListener(v -> {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.mypageFrame, new MyPageFragment())
+                    .commitNow();
+
+            mypageFrame.setVisibility(View.VISIBLE);
+            searchFrame.setVisibility(View.GONE);
+            mainActivity.setVisibility(View.GONE);
+
+            myPage.setImageResource(R.drawable.icon_mypage_yes);
+            home.setImageResource(R.drawable.icon_home_no);
+        });
+
         handleIntent(getIntent());
     }
 
@@ -280,7 +308,7 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frameLayout);
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.searchFrame);
         if (fragment instanceof SearchMainFragment) {
             ((SearchMainFragment) fragment).onParentTouchEvent(ev);
         }
@@ -321,21 +349,12 @@ public class MainActivity extends BaseActivity {
     private void handleIntent(Intent intent) {
         if (intent == null) return;
 
-        String deletedId = intent.getStringExtra("DELETED_ID_FROM_DETAIL");
-        if (deletedId != null) {
-            if (filterAdapter != null) {
-                filterAdapter.removeItemById(deletedId);
-            }
-            intent.removeExtra("DELETED_ID_FROM_DETAIL");
-            setIntent(new Intent());
-            return;
-        }
-
         String filterId = intent.getStringExtra("filterId");
         String originalPath = intent.getStringExtra("original_image_path");
         String newImagePath = intent.getStringExtra("imgUrl");
         String brushPath = intent.getStringExtra("brush_image_path");
-        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+        //faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+         ArrayList<FaceStickerData> faceStickers = (ArrayList<FaceStickerData>) intent.getSerializableExtra("face_stickers");
 
         if (newImagePath != null) {
             String nickname = intent.getStringExtra("nickname");
@@ -369,15 +388,14 @@ public class MainActivity extends BaseActivity {
                     faceStickers
             );
 
-            if (filterAdapter != null) {
-                filterAdapter.prepend(newItem);
+            if (filterAdapter != null && !filterAdapter.containsId(newId)) {
+                filterAdapter.addItem(newItem);
+                recyclerView.smoothScrollToPosition(0);
             }
 
             if (recyclerView != null) {
                 recyclerView.smoothScrollToPosition(0);
             }
-
-            setIntent(new Intent());
         }
     }
 
@@ -447,5 +465,19 @@ public class MainActivity extends BaseActivity {
 
     private int dp(int v) {
         return Math.round(getResources().getDisplayMetrics().density * v);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mypageFrame.getVisibility() == View.VISIBLE) {
+            getSupportFragmentManager().popBackStack(null, getSupportFragmentManager().POP_BACK_STACK_INCLUSIVE);
+            mypageFrame.setVisibility(View.GONE);
+            searchFrame.setVisibility(View.GONE);
+            mainActivity.setVisibility(View.VISIBLE);
+            home.setImageResource(R.drawable.icon_home_yes);
+            myPage.setImageResource(R.drawable.icon_mypage_no);
+            return;
+        }
+        super.onBackPressed();
     }
 }

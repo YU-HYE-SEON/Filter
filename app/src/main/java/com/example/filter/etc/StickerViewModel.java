@@ -1,6 +1,5 @@
 package com.example.filter.etc;
 
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.filter.R;
-import com.example.filter.fragments.EditStickerFragment;
 
 import java.util.ArrayList;
 import java.util.Collections;
