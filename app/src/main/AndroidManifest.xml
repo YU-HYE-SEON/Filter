@@ -83,7 +83,7 @@
             android:theme="@style/Base.Theme.Filter" />-->
 
         <activity
-            android:name=".activities.filterinfo.FilterDetailActivity"
+            android:name=".activities.filterinfo.FilterInfoActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
@@ -91,7 +91,7 @@
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity
-            android:name=".activities.review.ReviewDetailActivity"
+            android:name=".activities.review.ReviewInfoActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.Filter" />
         <activity

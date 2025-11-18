@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -23,7 +22,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
 import com.example.filter.activities.filter.FilterActivity;
-import com.example.filter.activities.filterinfo.FilterDetailActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.etc.ClickUtils;
@@ -102,6 +101,8 @@ public class MainActivity extends BaseActivity {
         searchFrame = findViewById(R.id.searchFrame);
         mypageFrame = findViewById(R.id.mypageFrame);
 
+
+        /// 필터상세화면에서 필터 삭제 지시받는 곳 ///
         detailActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -179,8 +180,10 @@ public class MainActivity extends BaseActivity {
             }
         });*/
 
+        /// 홈화면에서 필터 아이템 눌렀을 때 상세화면으로 이동하는 부분 ///
+        /// 홈에서 필터상세 갈 때도 정보값 유지시켜야 해서 해당 필터아이템의 정보값들을 전달 ///
         filterAdapter.setOnItemClickListener((v, item, title, nickname) -> {
-            Intent intent = new Intent(MainActivity.this, FilterDetailActivity.class);
+            Intent intent = new Intent(MainActivity.this, FilterInfoActivity.class);
             intent.putExtra("filterId", item.id);
             //intent.putExtra("nickname", item.nickname);
             intent.putExtra("nickname", nickname);
@@ -346,6 +349,8 @@ public class MainActivity extends BaseActivity {
         editor.apply();
     }
 
+
+    /// 여기가 새롭게 등록할 필터의 정보를 설정하고 어댑터에 등록시키는 부분 ///
     private void handleIntent(Intent intent) {
         if (intent == null) return;
 
@@ -354,7 +359,7 @@ public class MainActivity extends BaseActivity {
         String newImagePath = intent.getStringExtra("imgUrl");
         String brushPath = intent.getStringExtra("brush_image_path");
         //faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
-         ArrayList<FaceStickerData> faceStickers = (ArrayList<FaceStickerData>) intent.getSerializableExtra("face_stickers");
+        ArrayList<FaceStickerData> faceStickers = (ArrayList<FaceStickerData>) intent.getSerializableExtra("face_stickers");
 
         if (newImagePath != null) {
             String nickname = intent.getStringExtra("nickname");
@@ -372,6 +377,8 @@ public class MainActivity extends BaseActivity {
             if (price == null) price = "0";
             if (nickname == null) nickname = "@" + "닉네임";
 
+
+            /// 새롭게 등록될 필터의 정보들을 넣어주는 부분 ///
             FilterItem newItem = new FilterItem(
                     newId,
                     nickname,
@@ -388,13 +395,10 @@ public class MainActivity extends BaseActivity {
                     faceStickers
             );
 
+            /// 여기가 실질적으로 필터를 등록할지 말지를 결정 ///
+            /// 이미 어댑터에 존재하는 필터라면 새로 등록하지 않음. 존재하지 않는 필터라면 등록 ///
             if (filterAdapter != null && !filterAdapter.containsId(newId)) {
                 filterAdapter.addItem(newItem);
-                recyclerView.smoothScrollToPosition(0);
-            }
-
-            if (recyclerView != null) {
-                recyclerView.smoothScrollToPosition(0);
             }
         }
     }

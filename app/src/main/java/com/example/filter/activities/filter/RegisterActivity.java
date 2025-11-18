@@ -35,7 +35,7 @@ import androidx.annotation.Nullable;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
-import com.example.filter.activities.filterinfo.FilterDetailActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.service.FilterApi;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
@@ -563,11 +563,15 @@ public class RegisterActivity extends BaseActivity {
                 Log.e("스티커테스트", "idToken이 없습니다. 로그인 필요");
             }
 
-            //Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
-            //putFilterInfo(mainIntent);
-            //startActivity(mainIntent);
+            /// 홈화면에도 필터 정보 전달 ///
+            Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
+            /// FLAG_ACTIVITY_CLEAR_TOP과 FLAG_ACTIVITY_SINGLE_TOP을 사용하여 MainActivity가 onNewIntent를 받도록 합니다. ///
+            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            putFilterInfo(mainIntent);
+            startActivity(mainIntent);
 
-            Intent detailIntent = new Intent(RegisterActivity.this, FilterDetailActivity.class);
+            /// 필터상세화면에도 필터 정보 전달 ///
+            Intent detailIntent = new Intent(RegisterActivity.this, FilterInfoActivity.class);
             putFilterInfo(detailIntent);
             startActivity(detailIntent);
             finish();

@@ -10,7 +10,6 @@ import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -50,11 +49,10 @@ import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FilterDetailActivity extends BaseActivity {
+public class FilterInfoActivity extends BaseActivity {
     private ImageButton backBtn, originalBtn;
     private ImageView shareBtn;
     private TextView nickname, deleteORreportBtn, filterTitle, moreBtn, noReviewTxt;
@@ -80,7 +78,7 @@ public class FilterDetailActivity extends BaseActivity {
         if (result.getResultCode() == RESULT_OK && result.getData() != null) {
             Uri photoUri = result.getData().getData();
             if (photoUri != null) {
-                Intent intent = new Intent(FilterDetailActivity.this, ApplyFilterActivity.class);
+                Intent intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
                 intent.setData(photoUri);
 
                 intent.putExtra("color_adjustments", adj);
@@ -125,7 +123,7 @@ public class FilterDetailActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.a_filter_detail);
+        setContentView(R.layout.a_filter_info);
         backBtn = findViewById(R.id.backBtn);
         shareBtn = findViewById(R.id.shareBtn);
         originalBtn = findViewById(R.id.originalBtn);
@@ -256,23 +254,18 @@ public class FilterDetailActivity extends BaseActivity {
 
         setupOriginalButton();
 
+        /// 일단 여기가 필터 삭제 버튼 눌렀을 때, 해당 필터를 삭제하라고 전달하는 부분 ///
+        /// 이제 닉네임이나 로그인 정보를 가지고 나인지 타인인지 구분해서 삭제버튼할지 신고버튼할지 추가할 것 ///
         deleteORreportBtn.setOnClickListener(v -> {
-            //Intent resultIntent = new Intent();
-            //resultIntent.putExtra("deleted_filter_id", filterId);
-            //setResult(RESULT_OK, resultIntent);
-
-            Intent mainIntent = new Intent(FilterDetailActivity.this, MainActivity.class);
-            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            mainIntent.putExtra("DELETED_ID_FROM_DETAIL", filterId);
-
-            startActivity(mainIntent);
-
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("deleted_filter_id", filterId);
+            setResult(RESULT_OK, resultIntent);
             finish();
         });
 
         moreBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            Intent intent2 = new Intent(FilterDetailActivity.this, ReviewActivity.class);
+            Intent intent2 = new Intent(FilterInfoActivity.this, ReviewActivity.class);
             intent2.putExtra("filterId", filterId);
             intent2.putExtra("filterImage", imgUrl);
             intent2.putExtra("filterTitle", title);
@@ -284,17 +277,15 @@ public class FilterDetailActivity extends BaseActivity {
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
 
-            Intent mainIntent = new Intent(FilterDetailActivity.this, MainActivity.class);
+            Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
             mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-            putFilterInfo(mainIntent);
-
+            //putFilterInfo(mainIntent);
             startActivity(mainIntent);
             finish();
         });
     }
 
-    private void putFilterInfo(Intent intent) {
+    /*private void putFilterInfo(Intent intent) {
         intent.putExtra("filterId", filterId);
         //intent.putExtra("nickname", "@" + "닉네임");
         intent.putExtra("original_image_path", originalPath);
@@ -333,12 +324,12 @@ public class FilterDetailActivity extends BaseActivity {
             s.stickerId = d.groupId;
             stickers.add(s);
 
-            /*Log.d("StickerFlow", String.format(
+            *//*Log.d("StickerFlow", String.format(
                     "[RegisterActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
                     d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-            ));*/
+            ));*//*
         }
-    }
+    }*/
 
     private void setupChooseUseMode() {
         FrameLayout rootView = findViewById(R.id.chooseUseModeOff);
@@ -379,7 +370,7 @@ public class FilterDetailActivity extends BaseActivity {
         cameraModeBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             Intent intent = new Intent();
-            intent.setClass(FilterDetailActivity.this, CameraActivity.class);
+            intent.setClass(FilterInfoActivity.this, CameraActivity.class);
 
             /// adj, brushPath, stickerImageNoFacePath, 얼굴인식스티커 정보 전달 ///
             intent.putExtra("color_adjustments", adj);
@@ -485,7 +476,7 @@ public class FilterDetailActivity extends BaseActivity {
             String reviewNick = data.getStringExtra("reviewNick");
             String reviewSnsId = data.getStringExtra("reviewSnsId");
 
-            Intent intent = new Intent(FilterDetailActivity.this, ReviewActivity.class);
+            Intent intent = new Intent(FilterInfoActivity.this, ReviewActivity.class);
             intent.putExtra("filterId", filterId);
             intent.putExtra("filterImage", imgUrl);
             intent.putExtra("filterTitle", title);
@@ -515,7 +506,7 @@ public class FilterDetailActivity extends BaseActivity {
                     if (imgUrl != null) {
                         v.setPressed(false);
                         originalBtn.setAlpha(1f);
-                        Glide.with(FilterDetailActivity.this)
+                        Glide.with(FilterInfoActivity.this)
                                 .load(imgUrl)
                                 .dontAnimate()
                                 .placeholder(img.getDrawable())
@@ -609,9 +600,10 @@ public class FilterDetailActivity extends BaseActivity {
     public void onBackPressed() {
         super.onBackPressed();
 
-        Intent mainIntent = new Intent(FilterDetailActivity.this, MainActivity.class);
+        Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
         mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        putFilterInfo(mainIntent);
+
+        //putFilterInfo(mainIntent);
 
         startActivity(mainIntent);
         finish();

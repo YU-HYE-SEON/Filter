@@ -108,7 +108,7 @@ public class ReviewActivity extends BaseActivity {
         adapter.setOnItemClickListener((v, item) -> {
             if (ClickUtils.isFastClick(v, 400)) return;
 
-            Intent i = new Intent(ReviewActivity.this, ReviewDetailActivity.class);
+            Intent i = new Intent(ReviewActivity.this, ReviewInfoActivity.class);
             i.putExtra("reviewImg", item.imageUrl);
             i.putExtra("reviewNick", item.nickname);
             i.putExtra("reviewSnsId", item.snsId);

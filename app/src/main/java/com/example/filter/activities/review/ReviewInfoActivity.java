@@ -15,7 +15,7 @@ import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.etc.ClickUtils;
 
-public class ReviewDetailActivity extends BaseActivity {
+public class ReviewInfoActivity extends BaseActivity {
     private ImageButton backBtn;
     private ImageView img;
     private TextView nickname, snsId, deleteBtn;
@@ -26,7 +26,7 @@ public class ReviewDetailActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.a_review_detail);
+        setContentView(R.layout.a_review_info);
         backBtn = findViewById(R.id.backBtn);
         deleteBtn = findViewById(R.id.deleteBtn);
         img = findViewById(R.id.img);
