@@ -41,6 +41,7 @@ import com.example.filter.dialogs.SignUpDialog;
 import com.example.filter.apis.service.AuthApi;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.TokenRequest;
+import com.example.filter.etc.UserManager;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -392,6 +393,13 @@ public class StartActivity extends BaseActivity {
 
                         if (exists) {
                             Log.d("UserCheck", "✔️ 기존 회원 → MainActivity 이동");
+
+
+                            /// 닉네임 저장 임시 테스트
+                            String nickname = UserManager.get(StartActivity.this).getNickname();
+                            UserManager.get(StartActivity.this).setNickname(nickname);
+
+
                             loginSuccess();
                         } else {
                             Log.d("UserCheck", "🆕 신규 회원 → SignUpActivity 이동");

@@ -31,9 +31,17 @@ public class PointHistoryAdapter extends RecyclerView.Adapter<PointHistoryAdapte
     @Override
     public void onBindViewHolder(@NonNull VH holder, @SuppressLint("RecyclerView") int position) {
         PointHistoryItem item = items.get(position);
-        holder.point.setText(item.point + "P 충전");
-        holder.currentPoint.setText(String.format("%,dP", item.currentPoint));
-        holder.txt.setText(item.price + " · Google 인앱결제");
+
+        if (!item.isBuyHistory) {
+            holder.point1.setText(String.format("%,dP 충전", item.point1));
+            holder.point2.setText(String.format("%,dP", item.point2));
+            holder.txt.setText(item.price + " · Google 인앱결제");
+        } else {
+            holder.point1.setText(String.format("%,dP 사용", item.point1));
+            holder.point2.setText(String.format("%,dP", item.point2));
+            holder.txt.setText(item.filterTitle);
+        }
+
         holder.date.setText(item.date);
     }
 
@@ -43,11 +51,12 @@ public class PointHistoryAdapter extends RecyclerView.Adapter<PointHistoryAdapte
     }
 
     public static class VH extends RecyclerView.ViewHolder {
-        TextView point, currentPoint, txt, date;
+        TextView point1, point2, txt, date;
+
         public VH(View itemView) {
             super(itemView);
-            point = itemView.findViewById(R.id.point);
-            currentPoint = itemView.findViewById(R.id.currentPoint);
+            point1 = itemView.findViewById(R.id.point1);
+            point2 = itemView.findViewById(R.id.point2);
             txt = itemView.findViewById(R.id.txt);
             date = itemView.findViewById(R.id.date);
         }

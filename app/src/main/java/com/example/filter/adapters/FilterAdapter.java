@@ -21,7 +21,7 @@ import java.util.List;
 
 public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
     public interface OnItemClickListener {
-        void onClick(View v, FilterItem item, String displayedTitle, String displayedNickname);
+        void onClick(View v, FilterItem item);
     }
 
     private OnItemClickListener listener;
@@ -178,10 +178,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
                 int pos = getAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION && listener != null) {
                     if (pos >= 0 && pos < items.size()) {
-                        String title = filterTitle.getText().toString();
-                        String nick = nickname.getText().toString();
-
-                        listener.onClick(v, items.get(pos), title, nick);
+                        listener.onClick(v, items.get(pos));
                     }
                 }
             });

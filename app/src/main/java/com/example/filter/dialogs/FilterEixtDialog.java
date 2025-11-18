@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.example.filter.R;
+import com.example.filter.etc.ClickUtils;
 
 public class FilterEixtDialog extends Dialog {
     public interface FilterEixtDialogListener {
@@ -22,34 +23,16 @@ public class FilterEixtDialog extends Dialog {
     }
 
     private FilterEixtDialogListener listener;
-    private CharSequence messageText = null;
-    private CharSequence button1Text = null;
-    private CharSequence button2Text = null;
 
     public FilterEixtDialog(@NonNull Context context, FilterEixtDialogListener listener) {
         super(context);
         this.listener = listener;
     }
 
-    public FilterEixtDialog withMessage(CharSequence text) {
-        this.messageText = text;
-        return this;
-    }
-
-    public FilterEixtDialog withButton1Text(CharSequence text) {
-        this.button1Text = text;
-        return this;
-    }
-
-    public FilterEixtDialog withButton2Text(CharSequence text) {
-        this.button2Text = text;
-        return this;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dialog);
+        setContentView(R.layout.dialog_exit_filter);
 
         setCancelable(false);
         setCanceledOnTouchOutside(false);
@@ -66,13 +49,11 @@ public class FilterEixtDialog extends Dialog {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().setAttributes(lp);
 
-        TextView textView = findViewById(R.id.message);
-        Button exitBtn = findViewById(R.id.button1);
-        Button keepBtn = findViewById(R.id.button2);
+        Button keepBtn = findViewById(R.id.keepBtn);
+        Button exitBtn = findViewById(R.id.exitBtn);
 
-        if (textView != null && messageText != null) textView.setText(messageText);
-        if (exitBtn != null && button1Text != null) exitBtn.setText(button1Text);
-        if (keepBtn != null && button2Text != null) keepBtn.setText(button2Text);
+        ClickUtils.clickDim(keepBtn);
+        ClickUtils.clickDim(exitBtn);
 
         keepBtn.setOnClickListener(v -> {
             dismiss();

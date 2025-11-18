@@ -40,6 +40,7 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.service.FilterApi;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.FaceStickerData;
+import com.example.filter.etc.UserManager;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -582,7 +583,13 @@ public class RegisterActivity extends BaseActivity {
 
     private void putFilterInfo(Intent intent) {
         intent.putExtra("filterId", filterId);
-        //intent.putExtra("nickname", "@" + "닉네임");
+
+
+        /// 닉네임 저장 임시용
+        String nickname = UserManager.get(RegisterActivity.this).getNickname();
+        intent.putExtra("nickname", nickname);
+
+
         intent.putExtra("original_image_path", originalPath);
         intent.putExtra("imgUrl", newImagePath);
         intent.putExtra("filterTitle", title);

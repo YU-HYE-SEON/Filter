@@ -16,34 +16,36 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingVertical="24dp"
         android:paddingHorizontal="16dp"
+        android:paddingVertical="24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/borderLine">
 
         <TextView
-            android:id="@+id/point"
+            android:id="@+id/point1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_semibold"
             android:text="000P 충전"
+            android:textAlignment="textStart"
             android:textColor="@color/black"
             android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/currentPoint"
+            android:id="@+id/point2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:fontFamily="@font/pretendard_medium"
-            android:text="00,000P"
+            android:text="000P"
+            android:textAlignment="textStart"
             android:textColor="#90989F"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/point" />
+            app:layout_constraintTop_toBottomOf="@+id/point1" />
 
         <TextView
             android:id="@+id/txt"
@@ -51,9 +53,10 @@
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_medium"
             android:text="00,000 · Google 인앱결제"
+            android:textAlignment="textEnd"
             android:textColor="#90989F"
             android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="@+id/point"
+            app:layout_constraintBottom_toBottomOf="@+id/point1"
             app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
@@ -62,9 +65,10 @@
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_medium"
             android:text="0000.00.00 00:00"
+            android:textAlignment="textEnd"
             android:textColor="#90989F"
             android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="@+id/currentPoint"
+            app:layout_constraintBottom_toBottomOf="@+id/point2"
             app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -16,13 +16,13 @@
             android:id="@+id/backBtn"
             android:layout_width="55dp"
             android:layout_height="55dp"
+            android:layout_marginBottom="10dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="18dp"
+            android:padding="20dp"
             android:scaleType="centerCrop"
             android:src="@drawable/btn_back_black"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -33,10 +33,10 @@
             android:textColor="@color/black"
             android:textSize="22sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/backBtn"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@id/backBtn" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -49,32 +49,48 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/topArea">
 
-        <ImageView
-            android:id="@+id/filterImage"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/a"
             android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:layout_margin="18dp"
-            android:background="#E3E3E3"
-            android:scaleType="fitCenter"
+            android:layout_height="150dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="10dp"
+            android:background="@android:color/transparent"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="0dp"
+            app:cardUseCompatPadding="false"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/filterImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#E3E3E3"
+                android:scaleType="centerCrop"
+                app:layout_constraintDimensionRatio="1:1" />
+
+        </androidx.cardview.widget.CardView>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            android:paddingStart="16dp"
-            app:layout_constraintBottom_toBottomOf="@+id/filterImage"
+            android:paddingStart="10dp"
+            app:layout_constraintBottom_toBottomOf="@+id/a"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/filterImage"
-            app:layout_constraintTop_toTopOf="@id/filterImage">
+            app:layout_constraintStart_toEndOf="@+id/a"
+            app:layout_constraintTop_toTopOf="@id/a">
 
             <TextView
                 android:id="@+id/filterTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
                 android:fontFamily="@font/pretendard_bold"
                 android:text="필터이름"
                 android:textAlignment="textStart"
@@ -88,6 +104,7 @@
                 android:id="@+id/nickname"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/pretendard_medium"
                 android:text=" @닉네임"
                 android:textAlignment="textStart"
@@ -106,8 +123,8 @@
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingStart="18dp"
-        android:paddingEnd="18dp"
+        android:paddingHorizontal="18dp"
+        android:paddingBottom="60dp"
         android:scrollbars="none"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -121,8 +138,7 @@
         android:layout_height="0dp"
         android:fontFamily="@font/pretendard_semibold"
         android:gravity="center"
-        android:paddingStart="18dp"
-        android:paddingEnd="18dp"
+        android:paddingHorizontal="20dp"
         android:text="등록된 리뷰가 없습니다."
         android:textSize="18sp"
         android:visibility="invisible"

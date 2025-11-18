@@ -85,7 +85,7 @@ public class MyPageFragment extends Fragment {
 
         SharedPreferences sp2 = requireContext().getSharedPreferences("points", 0);
         int current = sp2.getInt("current_point", 0);
-        currentPoint.setText(current + "P");
+        currentPoint.setText(String.format("%,dP", current));
 
         pushToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
             requireContext()
@@ -102,6 +102,6 @@ public class MyPageFragment extends Fragment {
 
         SharedPreferences sp = requireContext().getSharedPreferences("points", 0);
         int current = sp.getInt("current_point", 0);
-        currentPoint.setText(current + "P");
+        currentPoint.setText(String.format("%,dP", current));
     }
 }

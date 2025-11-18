@@ -22,6 +22,7 @@ import com.example.filter.activities.BaseActivity;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.service.UserApi;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.UserManager;
 
 import org.json.JSONObject;
 
@@ -224,6 +225,12 @@ public class SignUpActivity extends BaseActivity {
                     // ✅ 성공 시
                     Log.d("SignUp", "✅ 닉네임 설정 성공");
 
+
+                    /// 닉네임 저장 임시 테스트
+                    UserManager.get(SignUpActivity.this).setNickname(nickname);
+                    Log.d("닉네임 테스트", "닉네임 : " + nickname);
+
+
                     // ④ 다음 화면으로 이동
                     Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
                     startActivity(intent);
@@ -231,6 +238,16 @@ public class SignUpActivity extends BaseActivity {
                 } else {
                     // ❌ 서버 응답은 왔지만 실패 코드 (400, 409 등)
                     Log.e("SignUp", "❌ 닉네임 설정 실패: " + response.code());
+
+
+                    /// 임시용 나중에 삭제
+                    /// 닉네임 저장 임시 테스트
+                    UserManager.get(SignUpActivity.this).setNickname(nickname);
+                    Log.d("닉네임 테스트", "닉네임 : " + nickname);
+                    // ④ 다음 화면으로 이동
+                    Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
+                    startActivity(intent);
+                    finish();
                 }
             }
 

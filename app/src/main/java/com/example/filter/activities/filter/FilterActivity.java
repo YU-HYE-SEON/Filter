@@ -607,8 +607,8 @@ public class FilterActivity extends BaseActivity {
                         intent.putExtra("accumFlipV", accumFlipV);
 
                         intent.putExtra("color_adjustments", adj);
-                        intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath());
-                        intent.putExtra("sticker_image_path", tempStickerFile.getAbsolutePath());
+                        //intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath());
+                        //intent.putE`xtra("sticker_image_path", tempStickerFile.getAbsolutePath());
 
                         /// 얼굴인식스티커 정보 전달 ///
                         intent.putExtra("sticker_image_no_face_path", tempStickerFile_noFace.getAbsolutePath());
@@ -2148,10 +2148,7 @@ public class FilterActivity extends BaseActivity {
                 finish();
             }
         }
-        ).withMessage("편집한 내용을 저장하지 않고\n종료하시겠습니까?")
-                .withButton1Text("예")
-                .withButton2Text("아니오")
-                .show();
+        ).show();
     }
 
     /// getter ///

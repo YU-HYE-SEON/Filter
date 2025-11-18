@@ -22,6 +22,7 @@ import com.example.filter.activities.MainActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.FaceStickerData;
+import com.example.filter.etc.ImageUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class SavePhotoActivity extends BaseActivity {
         boolean accumFlipH = getIntent().getBooleanExtra("accumFlipH", false);
         boolean accumFlipV = getIntent().getBooleanExtra("accumFlipV", false);
 
-        String brushImagePath = getIntent().getStringExtra("brush_image_path");
+        //String brushImagePath = getIntent().getStringExtra("brush_image_path");
 
         /// 얼굴인식스티커 정보 받기 ///
         String stickerImageNoFacePath = getIntent().getStringExtra("sticker_image_no_face_path");
@@ -135,7 +136,7 @@ public class SavePhotoActivity extends BaseActivity {
             intent.putExtra("accumFlipH", accumFlipH);
             intent.putExtra("accumFlipV", accumFlipV);
 
-            intent.putExtra("brush_image_path", brushImagePath);
+            //intent.putExtra("brush_image_path", brushImagePath);
             //intent.putExtra("sticker_image_path", stickerImagePath);
 
             /// 얼굴인식스티커 정보 전달 ///

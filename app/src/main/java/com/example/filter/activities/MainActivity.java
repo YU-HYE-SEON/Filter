@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -23,12 +24,14 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.example.filter.R;
 import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
+import com.example.filter.activities.start.SignUpActivity;
 import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
 import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.StickerStore;
+import com.example.filter.etc.UserManager;
 import com.example.filter.fragments.mypages.MyPageFragment;
 import com.example.filter.items.FilterItem;
 import com.example.filter.etc.GridSpaceItemDecoration;
@@ -182,15 +185,16 @@ public class MainActivity extends BaseActivity {
 
         /// 홈화면에서 필터 아이템 눌렀을 때 상세화면으로 이동하는 부분 ///
         /// 홈에서 필터상세 갈 때도 정보값 유지시켜야 해서 해당 필터아이템의 정보값들을 전달 ///
-        filterAdapter.setOnItemClickListener((v, item, title, nickname) -> {
+        filterAdapter.setOnItemClickListener((v, item) -> {
             Intent intent = new Intent(MainActivity.this, FilterInfoActivity.class);
             intent.putExtra("filterId", item.id);
-            //intent.putExtra("nickname", item.nickname);
-            intent.putExtra("nickname", nickname);
+
+            intent.putExtra("nickname", item.nickname);
+            Log.d("닉네임 테스트", "메인 → 필터상세 | 닉네임 : " + item.nickname);
+
             intent.putExtra("original_image_path", item.originalPath);
             intent.putExtra("imgUrl", item.filterImageUrl);
-            //intent.putExtra("filterTitle", item.filterTitle);
-            intent.putExtra("filterTitle", title);
+            intent.putExtra("filterTitle", item.filterTitle);
             intent.putExtra("tags", item.tags);
             intent.putExtra("price", item.price);
             intent.putExtra("count", item.count);

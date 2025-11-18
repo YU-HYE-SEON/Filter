@@ -33,17 +33,17 @@
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="face" />
 
-        <!-- <activity
-             android:name=".activities.SignUpActivity"
-             android:exported="true"
-             android:theme="@style/Theme.Filter.Splash">
-             <intent-filter>
-                 <action android:name="android.intent.action.MAIN" />
-                 <category android:name="android.intent.category.LAUNCHER" />
-             </intent-filter>
-         </activity>-->
         <!--<activity
-            android:name=".activities.StartActivity"
+            android:name=".activities.start.SignUpActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Filter.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>-->
+        <!--<activity
+            android:name=".activities.start.StartActivity"
             android:exported="true"
             android:theme="@style/Theme.Filter.Splash">
             <intent-filter>
@@ -63,10 +63,10 @@
             </intent-filter>
         </activity>
 
-        <activity
+        <!--<activity
             android:name=".activities.start.SignUpActivity"
             android:exported="false"
-            android:theme="@style/Base.Theme.Filter" />
+            android:theme="@style/Base.Theme.Filter" />-->
         <activity
             android:name=".activities.start.OnBoardingActivity"
             android:exported="false"
@@ -79,8 +79,8 @@
         <!--<activity
             android:name=".activities.MainActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustPan|stateHidden"
-            android:theme="@style/Base.Theme.Filter" />-->
+            android:theme="@style/Base.Theme.Filter"
+            android:windowSoftInputMode="adjustPan|stateHidden" />-->
 
         <activity
             android:name=".activities.filterinfo.FilterInfoActivity"

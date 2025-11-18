@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatButton;
 
 import com.example.filter.R;
+import com.example.filter.etc.ClickUtils;
 
 public class StickersDialog extends Dialog {
     public interface StickersDialogListener {
@@ -49,6 +50,9 @@ public class StickersDialog extends Dialog {
 
         AppCompatButton changeBtn = findViewById(R.id.changeBtn);
         AppCompatButton keepBtn = findViewById(R.id.keepBtn);
+
+        ClickUtils.clickDim(keepBtn);
+        ClickUtils.clickDim(changeBtn);
 
         keepBtn.setOnClickListener(v -> {
             dismiss();
