@@ -496,7 +496,7 @@ public class RegisterActivity extends BaseActivity {
                     FilterResponse filterResponse = response.body();
 
                     // 다음 화면으로 데이터 전달하며 이동
-                    moveToNextScreen(filterResponse);
+                    moveToFilterInfo(response.body());
 
                 } else {
                     try {
@@ -517,20 +517,20 @@ public class RegisterActivity extends BaseActivity {
         });
     }
 
-    // ✅ 다음 화면 이동 메서드
-    private void moveToNextScreen(FilterResponse filterResponse) {
-        // 메인 화면으로 이동한다고 가정 (필요시 FilterInfoActivity 등으로 변경)
-        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    // ✅ [추가] 필터 상세 화면으로 이동하는 메서드
+    private void moveToFilterInfo(FilterResponse response) {
+        Intent intent = new Intent(RegisterActivity.this, FilterInfoActivity.class);
+        // 뒤로가기 했을 때 다시 등록화면으로 오지 않게 플래그 설정 (선택사항)
+        // intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        // ★★★ 서버에서 받은 객체를 통째로 넘김 ★★★
-        intent.putExtra("filter_response", filterResponse);
+        // ★ 서버 응답 객체를 통째로 넘김
+        intent.putExtra("filter_response", response);
 
         startActivity(intent);
-        finish();
+        finish(); // 등록 화면 종료
     }
 
-    private void moveToMain() {
+    private void moveToMain() { ///  ??? 언제 main으로 가는거지
         Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
         mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(mainIntent);
