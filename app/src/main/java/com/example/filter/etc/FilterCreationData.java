@@ -22,18 +22,19 @@ public class FilterCreationData implements Parcelable {
     public List<String> tags;
 
     // --- 이미지 편집 정보 ---
-    public float cropL, cropT, cropR, cropB;
+    // 크롭 -> 오리지널 이미지로 업로드 -> 색감 조정, 스티커 작업 -> 최종 이미지 업로드
+    // 오리지널 이미지 : 크롭한 사진을 original image로 저장하면?
+    public float cropL, cropT, cropR, cropB; // 수정
     public int aspectX;
     public int aspectY;
 
     public int rotationDeg;
-    public boolean flipH, flipV;
+    public boolean flipH, flipV; // 필터 제작 화면에서만 필요
 
     // --- 스티커 이미지 경로 / 여러 개 지원 ---
-    public ArrayList<String> brushImagePaths;   // 여러 개 가능
     public ArrayList<String> freeStickerImagePaths;
 
-    public String stickerImageNoFacePath;
+    public  String stickerImageNoFacePath;
     public String stickerRawImagePath; // 얼굴 인식 전 원본 스티커
 
     // --- 실제 서버에 전달할 스티커 정보 ---

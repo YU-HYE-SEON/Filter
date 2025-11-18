@@ -589,12 +589,13 @@ public class FilterActivity extends BaseActivity {
                             stickerBitmap_noFace.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        //데이터 전달
+                        // 데이터 전달
+                        // 인탠트
                         Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
-                        intent.putExtra("allowRegister", allowRegister);
+                        intent.putExtra("allowRegister", allowRegister); // 크롭이랑 반전만 하면 등록 안됨
 
-                        intent.putExtra("saved_image", tempFile.getAbsolutePath());
-                        intent.putExtra("original_image_path", getIntent().getData().toString());
+                        intent.putExtra("saved_image", tempFile.getAbsolutePath()); // 최종 이미지
+                        intent.putExtra("original_image_path", getIntent().getData().toString()); // 원본 이미지
 
                         if (appliedCropRectN != null) {
                             intent.putExtra("cropRectN_l", appliedCropRectN.left);
@@ -602,16 +603,16 @@ public class FilterActivity extends BaseActivity {
                             intent.putExtra("cropRectN_r", appliedCropRectN.right);
                             intent.putExtra("cropRectN_b", appliedCropRectN.bottom);
                         }
-                        intent.putExtra("accumRotationDeg", accumRotationDeg);
-                        intent.putExtra("accumFlipH", accumFlipH);
+                        intent.putExtra("accumRotationDeg", accumRotationDeg); // 회전각도?
+                        intent.putExtra("accumFlipH", accumFlipH); 
                         intent.putExtra("accumFlipV", accumFlipV);
 
-                        intent.putExtra("color_adjustments", adj);
-                        intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath());
-                        intent.putExtra("sticker_image_path", tempStickerFile.getAbsolutePath());
+                        intent.putExtra("color_adjustments", adj); // 조정값
+                        intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath()); // 스티커가 아닌 브러쉬를 이미지로 구워서 저장한거
+                        intent.putExtra("sticker_image_path", tempStickerFile.getAbsolutePath()); // 얼굴 인식 포함 모든 스티커를 구운거 -> 용도?
 
                         /// 얼굴인식스티커 정보 전달 ///
-                        intent.putExtra("sticker_image_no_face_path", tempStickerFile_noFace.getAbsolutePath());
+                        intent.putExtra("sticker_image_no_face_path", tempStickerFile_noFace.getAbsolutePath()); // 얼굴 인식 스티커 제외 1장으로 만든거
                         intent.putExtra("face_stickers", new ArrayList<>(faceStickerList));
 
                         startActivity(intent);
