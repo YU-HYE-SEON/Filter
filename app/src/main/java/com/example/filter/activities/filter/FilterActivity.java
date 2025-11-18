@@ -69,6 +69,7 @@ import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -334,11 +335,11 @@ public class FilterActivity extends BaseActivity {
         });
     }
 
-    /// 저장 버튼 설정 (수정됨: S3 업로드 로직 추가) ///
+    /// 저장 버튼 설정 (수정됨: S3 업로드 후 이동) ///
     private void setupSaveButton() {
         saveBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            ClickUtils.disableTemporarily(v, 2000); // 업로드 시간 고려해 클릭 방지 시간 늘림
+            ClickUtils.disableTemporarily(v, 3000); // 업로드 시간 고려
 
             renderer.setOnBitmapCaptureListener(new FGLRenderer.OnBitmapCaptureListener() {
                 @Override
@@ -360,8 +361,7 @@ public class FilterActivity extends BaseActivity {
                     try {
                         String tempFilterId = UUID.randomUUID().toString();
 
-                        /// 1. 파일 저장 (업로드용)
-                        // 브러쉬 오버레이
+                        // 1. 브러쉬 오버레이 파일 저장
                         Bitmap brushBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas brushCanvas = new Canvas(brushBitmap);
                         brushCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -375,7 +375,7 @@ public class FilterActivity extends BaseActivity {
                             brushBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        // 최종 편집본 (Preview)
+                        // 2. 최종 편집본 (Preview) 파일 저장
                         Bitmap finalBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas finalCanvas = new Canvas(finalBitmap);
                         finalCanvas.drawBitmap(bitmap, 0, 0, null);
@@ -390,18 +390,24 @@ public class FilterActivity extends BaseActivity {
                             finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        // 원본 이미지 (Original)
+                        // ---------------------------------------------------------
+                        // ✅ 3. [수정됨] 원본 이미지 (Original) 파일 저장
+                        // (회전/크롭은 적용하되, 필터는 없는 깨끗한 이미지 생성)
+                        // ---------------------------------------------------------
                         File originalFile = new File(getCacheDir(), "original_" + tempFilterId + ".png");
                         try (FileOutputStream out = new FileOutputStream(originalFile)) {
-                            // 만약 원본 비트맵 변수가 있다면 사용, 없으면 현재 캡처본 사용
-                            if (originalBitmap != null) {
-                                originalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                            // ★ 헬퍼 메서드로 '지오메트리만 적용된' 비트맵 생성
+                            Bitmap geomBitmap = createGeometryOnlyBitmap();
+
+                            if (geomBitmap != null) {
+                                geomBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                             } else {
+                                // 만약 생성 실패시 fallback으로 현재 캡처본 사용
                                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                             }
                         }
 
-                        // 얼굴 인식 스티커 제외 이미지 (No Face Sticker)
+                        // 4. 얼굴 인식 스티커 제외 이미지 (No Face) 파일 저장
                         Bitmap stickerBitmap_noFace = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas stickerCanvas_noFace = new Canvas(stickerBitmap_noFace);
                         stickerCanvas_noFace.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -419,7 +425,7 @@ public class FilterActivity extends BaseActivity {
                             stickerBitmap_noFace.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        /// 2. 서버에 이미지 업로드 후 화면 이동
+                        // ✅ 2. 서버에 이미지 업로드 시작 -> 성공 시 다음 화면 이동
                         uploadImagesAndProceed(originalFile, previewFile, bitmap, tempStickerFile_noFace);
 
                     } catch (Exception e) {
@@ -475,43 +481,51 @@ public class FilterActivity extends BaseActivity {
     // ✅ [추가됨] 2단계: 스티커 이미지 업로드 후 화면 이동
     // ---------------------------------------------------------------
     private void uploadStickerImageAndMove(String s3OriginalUrl, String s3PreviewUrl, Bitmap bitmap, File stickerNoFaceFile) {
-        // 파일 존재 여부 확인 (스티커가 하나도 없어서 파일이 안 만들어졌을 수도 있음)
+        // 파일 존재 여부 확인
         if (stickerNoFaceFile == null || !stickerNoFaceFile.exists() || stickerNoFaceFile.length() == 0) {
-            // 스티커 파일이 없으면 URL을 null로 하고 바로 이동
             moveToNextActivity(s3OriginalUrl, s3PreviewUrl, null, bitmap);
             return;
         }
 
-        // 1. 스티커 이미지 Body 생성
+        // RequestBody 생성
         RequestBody reqSticker = RequestBody.create(MediaType.parse("image/png"), stickerNoFaceFile);
         MultipartBody.Part partSticker = MultipartBody.Part.createFormData("file", stickerNoFaceFile.getName(), reqSticker);
 
         UploadApi api = AppRetrofitClient.getInstance(this).create(UploadApi.class);
 
-        // 2. 스티커 이미지 업로드 요청
-        api.uploadStickerImage(partSticker).enqueue(new Callback<String>() {
+        // ⚠️ [수정] Call<String> -> Call<ResponseBody>
+        api.uploadStickerImage(partSticker).enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    String s3StickerUrl = response.body(); // 서버에서 받은 URL
-                    Log.d("FilterUpload", "스티커 이미지 업로드 완료: " + s3StickerUrl);
+                    try {
+                        // ✅ [핵심] 날것의 데이터를 문자열로 변환 (이게 S3 URL임)
+                        String s3StickerUrl = response.body().string();
 
-                    // ★ 최종 이동: 모든 URL을 다 가지고 이동
-                    moveToNextActivity(s3OriginalUrl, s3PreviewUrl, s3StickerUrl, bitmap);
+                        Log.d("FilterUpload", "스티커 이미지 업로드 완료: " + s3StickerUrl);
+
+                        // 화면 이동
+                        moveToNextActivity(s3OriginalUrl, s3PreviewUrl, s3StickerUrl, bitmap);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        moveToNextActivity(s3OriginalUrl, s3PreviewUrl, null, bitmap); // 실패 시 null 넘기고 진행
+                    }
                 } else {
                     Log.e("FilterUpload", "스티커 이미지 업로드 실패: " + response.code());
-                    // 실패해도 진행할지, 멈출지는 정책에 따라 결정 (여기서는 에러 토스트)
-                    Toast.makeText(FilterActivity.this, "스티커 업로드 실패", Toast.LENGTH_SHORT).show();
+                    // 실패해도 일단 다음 화면으로 넘어가게 처리 (선택 사항)
+                    moveToNextActivity(s3OriginalUrl, s3PreviewUrl, null, bitmap);
                 }
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e("FilterUpload", "스티커 통신 오류", t);
+                // 통신 오류 시에도 일단 진행 (선택 사항)
+                moveToNextActivity(s3OriginalUrl, s3PreviewUrl, null, bitmap);
             }
         });
     }
-
     // ---------------------------------------------------------------
     // ✅ [수정됨] 화면 이동 (URL들을 받아서 DTO에 담음)
     // ---------------------------------------------------------------
@@ -521,7 +535,7 @@ public class FilterActivity extends BaseActivity {
         // 1. 서버에서 받은 S3 URL들을 DTO에 주입
         data.originalImageUrl = s3OriginalUrl;
         data.editedImageUrl = s3PreviewUrl;
-        data.stickerImageNoFaceUrl = s3StickerUrl; // ★ 로컬 경로 대신 S3 URL 저장
+        data.stickerImageNoFaceUrl = s3StickerUrl;
 
         // 2. 나머지 데이터 설정 (기존 코드 유지)
         data.aspectX = bitmap.getWidth();
@@ -530,13 +544,24 @@ public class FilterActivity extends BaseActivity {
         data.colorAdjustments.brightness = renderer.getCurrentValue("밝기") / 100.0;
         data.colorAdjustments.exposure = renderer.getCurrentValue("노출") / 100.0;
         // ... (색상 값 매핑 생략 - 기존 유지) ...
+        data.colorAdjustments.contrast = renderer.getCurrentValue("대비") / 100.0;
+        data.colorAdjustments.highlight = renderer.getCurrentValue("하이라이트") / 100.0;
+        data.colorAdjustments.shadow = renderer.getCurrentValue("그림자") / 100.0;
+        data.colorAdjustments.temperature = renderer.getCurrentValue("온도") / 100.0;
+        data.colorAdjustments.hue = renderer.getCurrentValue("색조") / 100.0;
+        data.colorAdjustments.saturation = (renderer.getCurrentValue("채도") / 100.0) + 1.0;
+        data.colorAdjustments.sharpen = renderer.getCurrentValue("선명하게") / 100.0;
+        data.colorAdjustments.blur = renderer.getCurrentValue("흐리게") / 100.0;
+        data.colorAdjustments.vignette = renderer.getCurrentValue("비네트") / 100.0;
         data.colorAdjustments.noise = renderer.getCurrentValue("노이즈") / 100.0;
 
         // 스티커 정보 (DB ID 사용)
         if (faceStickerList != null) {
             for (FaceStickerData d : faceStickerList) {
                 FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
+                // ✅ FaceStickerData의 서버 ID 사용
                 s.stickerId = d.stickerDbId;
+
                 s.relX = d.relX;
                 s.relY = d.relY;
                 s.relW = d.relW;
@@ -574,8 +599,6 @@ public class FilterActivity extends BaseActivity {
                 Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
                 if (isBackEnabledFor(cur)) {
                     handleBackNavChain();
-                } else {
-
                 }
             }
         };
@@ -591,7 +614,6 @@ public class FilterActivity extends BaseActivity {
                     }
                 }, true
         );
-
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
@@ -617,6 +639,46 @@ public class FilterActivity extends BaseActivity {
                     }
                 }
         );
+    }
+
+    // ---------------------------------------------------------------
+    // ✅ [추가] 필터/스티커 없이 '회전/반전/크롭'만 적용된 원본 비트맵 생성
+    // ---------------------------------------------------------------
+    private Bitmap createGeometryOnlyBitmap() {
+        // 1. 회전/반전이 적용된 비트맵 사용 (transformedBitmap이 최신 회전 상태임)
+        Bitmap source = transformedBitmap != null ? transformedBitmap : originalBitmap;
+
+        if (source == null) return null;
+
+        // 2. 크롭 정보 가져오기 (적용된 크롭이 없으면 현재 크롭 모드의 영역 사용)
+        RectF cropRectN = appliedCropRectN;
+        if (cropRectN == null && lastCropRectN != null) {
+            cropRectN = lastCropRectN;
+        }
+
+        // 3. 크롭이 없으면 회전된 상태 그대로 반환
+        if (cropRectN == null) {
+            return source;
+        }
+
+        // 4. 정규화 좌표(0.0 ~ 1.0)를 픽셀 좌표로 변환하여 자르기
+        int width = source.getWidth();
+        int height = source.getHeight();
+
+        int left = (int) (cropRectN.left * width);
+        int top = (int) (cropRectN.top * height);
+        int right = (int) (cropRectN.right * width);
+        int bottom = (int) (cropRectN.bottom * height);
+
+        // 범위 안전 장치
+        left = Math.max(0, left);
+        top = Math.max(0, top);
+        int cropW = Math.min(right - left, width - left);
+        int cropH = Math.min(bottom - top, height - top);
+
+        if (cropW <= 0 || cropH <= 0) return source;
+
+        return Bitmap.createBitmap(source, left, top, cropW, cropH);
     }
 
     /// 사진 이미지 가져오기 ///
@@ -2012,4 +2074,5 @@ public class FilterActivity extends BaseActivity {
     public GLSurfaceView getPhotoPreview() {
         return photoPreview;
     }
+
 }

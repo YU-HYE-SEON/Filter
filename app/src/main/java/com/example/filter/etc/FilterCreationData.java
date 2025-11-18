@@ -41,23 +41,28 @@ public class FilterCreationData implements Parcelable {
     }
 
     // --- 서버 전송용 DTO 변환 헬퍼 메서드 ---
-    public FilterDtoCreateRequest toDto(String uploadedOriginalUrl, String uploadedEditedUrl, String uploadedNoFaceUrl) {
+    public FilterDtoCreateRequest toDto() {
         FilterDtoCreateRequest request = new FilterDtoCreateRequest();
+
         request.name = this.name;
         request.price = this.price;
         request.tags = this.tags;
 
-        // 업로드된 URL 매핑
-        request.originalImageUrl = uploadedOriginalUrl;
-        request.editedImageUrl = uploadedEditedUrl;
-        request.stickerImageNoFaceUrl = uploadedNoFaceUrl;
+        request.originalImageUrl = this.originalImageUrl;
+        request.editedImageUrl = this.editedImageUrl;
+        request.stickerImageNoFaceUrl = this.stickerImageNoFaceUrl;
 
         request.aspectX = this.aspectX;
         request.aspectY = this.aspectY;
+
         request.colorAdjustments = this.colorAdjustments;
 
-        // 이름이 같으므로 바로 대입 가능
-        request.faceStickers = this.stickers;
+        // ✅ [수정] stickers가 null이면 빈 리스트로 초기화하여 NullPointerException 방지
+        if (this.stickers != null) {
+            request.faceStickers = this.stickers;
+        } else {
+            request.faceStickers = new ArrayList<>(); // 빈 리스트 할당
+        }
 
         return request;
     }
