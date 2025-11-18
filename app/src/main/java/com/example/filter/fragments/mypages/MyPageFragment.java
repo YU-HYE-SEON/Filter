@@ -16,12 +16,16 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.activities.filter.RegisterActivity;
 import com.example.filter.activities.mypage.PointChargeActivity;
 import com.example.filter.activities.mypage.PointHistoryActivity;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.UserManager;
 
 public class MyPageFragment extends Fragment {
-    private TextView nickname, id, currentPoint;
+    private TextView nickname;
+    private TextView id;
+    private TextView currentPoint;
     private AppCompatButton nickEditBtn, logoutBtn, pointChargeBtn, salesManageBtn;
     private ConstraintLayout pointBox, ask, appInfo, withdraw, snsId;
     private SwitchCompat pushToggle;
@@ -59,6 +63,9 @@ public class MyPageFragment extends Fragment {
         ClickUtils.clickDim(appInfo);
         ClickUtils.clickDim(withdraw);
         ClickUtils.clickDim(snsId);
+
+        String n = UserManager.get(requireContext()).getNickname();
+        nickname.setText(n);
 
         pointBox.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), PointHistoryActivity.class);
