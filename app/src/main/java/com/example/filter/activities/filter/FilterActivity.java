@@ -40,6 +40,7 @@ import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
 import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.FaceStickerData;
+import com.example.filter.etc.FilterCreationData;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.fragments.filters.BrushFragment;
 import com.example.filter.overlayviews.BrushOverlayView;
@@ -482,43 +483,8 @@ public class FilterActivity extends BaseActivity {
                     }
 
                     try {
-                        /// 얼굴인식스티커(클론스티커) 정보 입력 ///
-                        List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
-                        for (FaceStickerData d : faceStickerList) {
-                            FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-                            s.placementType = "face";
-                            s.x = d.relX;
-                            s.y = d.relY;
-                            s.scale = (d.relW + d.relH) / 2f;
-                            //s.relW = d.relW;
-                            //s.relH = d.relH;
-                            s.rotation = d.rot;
-                            s.stickerId = d.groupId;
-                            stickers.add(s);
-
-                            /*Log.d("StickerFlow", String.format(
-                                    "[FilterActivity:Save] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
-                                    d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-                            ));*/
-                        }
-
-                        //조정값
-                        FilterDtoCreateRequest.ColorAdjustments adj = new FilterDtoCreateRequest.ColorAdjustments();
-                        adj.brightness = renderer.getCurrentValue("밝기") / 100f;
-                        adj.exposure = renderer.getCurrentValue("노출") / 100f;
-                        adj.contrast = renderer.getCurrentValue("대비") / 100f;
-                        adj.highlight = renderer.getCurrentValue("하이라이트") / 100f;
-                        adj.shadow = renderer.getCurrentValue("그림자") / 100f;
-                        adj.temperature = renderer.getCurrentValue("온도") / 100f;
-                        adj.hue = renderer.getCurrentValue("색조") / 100f;
-                        //adj.saturation = renderer.getCurrentValue("채도") / 100f;
-                        adj.saturation = (renderer.getCurrentValue("채도") / 100f) + 1.0f;
-                        adj.sharpen = renderer.getCurrentValue("선명하게") / 100f;
-                        adj.blur = renderer.getCurrentValue("흐리게") / 100f;
-                        adj.vignette = renderer.getCurrentValue("비네트") / 100f;
-                        adj.noise = renderer.getCurrentValue("노이즈") / 100f;
-
-                        //브러쉬 오버레이 굽기
+                        /// ----- 이미지 굽기 -----
+                        // 브러쉬 오버레이 굽기
                         Bitmap brushBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas brushCanvas = new Canvas(brushBitmap);
                         brushCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -534,7 +500,7 @@ public class FilterActivity extends BaseActivity {
                             brushBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        //스티커 오버레이 전체 굽기
+                        // 스티커 오버레이 전체 굽기
                         Bitmap stickerBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas stickerCanvas = new Canvas(stickerBitmap);
                         stickerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -550,7 +516,7 @@ public class FilterActivity extends BaseActivity {
                             stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        //브러쉬와 스티커 포함된 최종 편집된 이미지
+                        // 브러쉬와 스티커 포함된 최종 편집된 이미지
                         Bitmap finalBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas finalCanvas = new Canvas(finalBitmap);
 
@@ -566,7 +532,7 @@ public class FilterActivity extends BaseActivity {
                             finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        //얼굴인식스티커 제외 버전으로 굽기
+                        // 얼굴인식스티커 제외 버전으로 굽기
                         Bitmap stickerBitmap_noFace = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas stickerCanvas_noFace = new Canvas(stickerBitmap_noFace);
                         stickerCanvas_noFace.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -589,13 +555,52 @@ public class FilterActivity extends BaseActivity {
                             stickerBitmap_noFace.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        // 데이터 전달
-                        // 인탠트
+                        /// Acitivity 전환 데이터 전달용 객체
+                        FilterCreationData data = new FilterCreationData();
+
+                        /// ----- 조정값 -----
+                        data.colorAdjustments.brightness = renderer.getCurrentValue("밝기") / 100.0;
+                        data.colorAdjustments.exposure = renderer.getCurrentValue("노출") / 100.0;
+                        data.colorAdjustments.contrast = renderer.getCurrentValue("대비") / 100.0;
+                        data.colorAdjustments.highlight = renderer.getCurrentValue("하이라이트") / 100.0;
+                        data.colorAdjustments.shadow = renderer.getCurrentValue("그림자") / 100.0;
+                        data.colorAdjustments.temperature = renderer.getCurrentValue("온도") / 100.0;
+                        data.colorAdjustments.hue = renderer.getCurrentValue("색조") / 100.0;
+                        data.colorAdjustments.saturation = (renderer.getCurrentValue("채도") / 100.0) + 1.0; // 0.0 -> 1.0 기준
+                        data.colorAdjustments.sharpen = renderer.getCurrentValue("선명하게") / 100.0;
+                        data.colorAdjustments.blur = renderer.getCurrentValue("흐리게") / 100.0;
+                        data.colorAdjustments.vignette = renderer.getCurrentValue("비네트") / 100.0;
+                        data.colorAdjustments.noise = renderer.getCurrentValue("노이즈") / 100.0;
+
+                        /// ----- 이미지 path -----
+                        data.originalImageUrl = getIntent().getData().toString(); // 원본 이미지 local
+                        data.editedImageUrl = tempFile.getAbsolutePath(); // 최종 이미지 local
+                        data.stickerImageNoFaceUrl = tempStickerFile_noFace.getAbsolutePath(); // 얼굴인식스티커 제외 이미지 local
+
+                        /// ----- 필터 기본 비율 설정 -----
+                        data.aspectX = bitmap.getWidth();
+                        data.aspectY = bitmap.getHeight();
+
+                        /// ----- 얼굴인식스티커(클론스티커) 정보 ----- ///
+                        if (faceStickerList != null) {
+                            for (FaceStickerData d : faceStickerList) {
+                                FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
+                                /// todo
+                                //                                s.stickerId = d.groupId;
+                                s.relX = d.relX;
+                                s.relY = d.relY;
+                                s.relW = d.relW;
+                                s.relH = d.relH;
+                                s.rot = d.rot;
+
+                                data.stickers.add(s);
+                            }
+                        }
+
+                        /// ----- Save Photo Activity로 데이터 전달 -----
                         Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
                         intent.putExtra("allowRegister", allowRegister); // 크롭이랑 반전만 하면 등록 안됨
-
-                        intent.putExtra("saved_image", tempFile.getAbsolutePath()); // 최종 이미지
-                        intent.putExtra("original_image_path", getIntent().getData().toString()); // 원본 이미지
+                        intent.putExtra("filter_data", data); // ★ 객체 하나만 전달!
 
                         if (appliedCropRectN != null) {
                             intent.putExtra("cropRectN_l", appliedCropRectN.left);
@@ -603,17 +608,9 @@ public class FilterActivity extends BaseActivity {
                             intent.putExtra("cropRectN_r", appliedCropRectN.right);
                             intent.putExtra("cropRectN_b", appliedCropRectN.bottom);
                         }
-                        intent.putExtra("accumRotationDeg", accumRotationDeg); // 회전각도?
+                        intent.putExtra("accumRotationDeg", accumRotationDeg);
                         intent.putExtra("accumFlipH", accumFlipH); 
                         intent.putExtra("accumFlipV", accumFlipV);
-
-                        intent.putExtra("color_adjustments", adj); // 조정값
-                        intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath()); // 스티커가 아닌 브러쉬를 이미지로 구워서 저장한거
-                        intent.putExtra("sticker_image_path", tempStickerFile.getAbsolutePath()); // 얼굴 인식 포함 모든 스티커를 구운거 -> 용도?
-
-                        /// 얼굴인식스티커 정보 전달 ///
-                        intent.putExtra("sticker_image_no_face_path", tempStickerFile_noFace.getAbsolutePath()); // 얼굴 인식 스티커 제외 1장으로 만든거
-                        intent.putExtra("face_stickers", new ArrayList<>(faceStickerList));
 
                         startActivity(intent);
                         finish();

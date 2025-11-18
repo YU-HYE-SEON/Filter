@@ -206,20 +206,18 @@ public class MainActivity extends BaseActivity {
                 intent.putExtra("face_stickers", new ArrayList<>(item.faceStickers));
             }
 
-            List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+            List<FilterDtoCreateRequest.FaceSticker> faceStickers = new ArrayList<>();
             if (item.faceStickers != null) {
                 for (FaceStickerData d : item.faceStickers) {
 
-                    FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-                    s.placementType = "face";
-                    s.x = d.relX;
-                    s.y = d.relY;
-                    s.scale = (d.relW + d.relH) / 2f;
-                    //s.relW = d.relW;
-                    //s.relH = d.relH;
-                    s.rotation = d.rot;
-                    s.stickerId = d.groupId;
-                    stickers.add(s);
+                    FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
+                    // s.stickerId
+                    s.relX = d.relX;
+                    s.relY = d.relY;
+                    s.relW = d.relW;
+                    s.relH = d.relH;
+                    s.rot = Math.round(d.rot);
+                    faceStickers.add(s);
                 }
             }
 

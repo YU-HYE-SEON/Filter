@@ -142,9 +142,9 @@ public class SavePhotoActivity extends BaseActivity {
             intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
             intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
 
-            List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+            List<FilterDtoCreateRequest.FaceSticker> stickers = new ArrayList<>();
             for (FaceStickerData d : faceStickers) {
-                FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
+                FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
                 s.placementType = "face";
                 s.x = d.relX;
                 s.y = d.relY;

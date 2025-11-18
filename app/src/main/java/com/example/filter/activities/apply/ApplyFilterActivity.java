@@ -326,18 +326,20 @@ public class ApplyFilterActivity extends BaseActivity {
     }
 
     private void applyAdjustments(FilterDtoCreateRequest.ColorAdjustments a) {
-        renderer.updateValue("밝기", a.brightness * 100f);
-        renderer.updateValue("노출", a.exposure * 100f);
-        renderer.updateValue("대비", a.contrast * 100f);
-        renderer.updateValue("하이라이트", a.highlight * 100f);
-        renderer.updateValue("그림자", a.shadow * 100f);
-        renderer.updateValue("온도", a.temperature * 100f);
-        renderer.updateValue("색조", a.hue * 100f);
-        renderer.updateValue("채도", (a.saturation - 1.0f) * 100f);
-        renderer.updateValue("선명하게", a.sharpen * 100f);
-        renderer.updateValue("흐리게", a.blur * 100f);
-        renderer.updateValue("비네트", a.vignette * 100f);
-        renderer.updateValue("노이즈", a.noise * 100f);
+        renderer.updateValue("밝기", (float) a.brightness * 100f);
+        renderer.updateValue("노출", (float) a.exposure * 100f);
+        renderer.updateValue("대비", (float) a.contrast * 100f);
+        renderer.updateValue("하이라이트", (float) a.highlight * 100f);
+        renderer.updateValue("그림자", (float) a.shadow * 100f);
+        renderer.updateValue("온도", (float) a.temperature * 100f);
+        renderer.updateValue("색조", (float) a.hue * 100f);
+
+        // 채도는 계산식이 있으므로 전체를 괄호로 묶거나 변수를 먼저 캐스팅
+        renderer.updateValue("채도", ((float) a.saturation - 1.0f) * 100f);
+        renderer.updateValue("선명하게", (float) a.sharpen * 100f);
+        renderer.updateValue("흐리게", (float) a.blur * 100f);
+        renderer.updateValue("비네트", (float) a.vignette * 100f);
+        renderer.updateValue("노이즈", (float) a.noise * 100f);
 
         glSurfaceView.requestRender();
         glSurfaceView.postDelayed(() -> {

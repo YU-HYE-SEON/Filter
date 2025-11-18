@@ -603,11 +603,11 @@ public class RegisterActivity extends BaseActivity {
 
         ///  얼굴인식스티커 정보 전달 ///
         intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
-        intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+        intent.putExtra("face_stickers", new ArrayList<>(this.faceStickers));
 
-        List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
-        for (FaceStickerData d : faceStickers) {
-            FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
+        List<FilterDtoCreateRequest.FaceSticker> faceStickers = new ArrayList<>();
+        for (FaceStickerData d : this.faceStickers) {
+            FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
             s.placementType = "face";
             s.x = d.relX;
             s.y = d.relY;
@@ -616,7 +616,7 @@ public class RegisterActivity extends BaseActivity {
             //s.relH = d.relH;
             s.rotation = d.rot;
             s.stickerId = d.groupId;
-            stickers.add(s);
+            faceStickers.add(s);
 
             /*Log.d("StickerFlow", String.format(
                     "[RegisterActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
