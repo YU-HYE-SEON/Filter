@@ -1,8 +1,7 @@
 package com.example.filter.fragments.filters;
 
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,8 +17,12 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.adapters.MyStickersAdapter;
+import com.example.filter.apis.client.AppRetrofitClient; // ✅ 내 클라이언트 Import
+import com.example.filter.apis.dto.StickerResponseDto;
+import com.example.filter.apis.service.StickerApi;
 import com.example.filter.dialogs.StickerDeleteDialog;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
@@ -27,7 +30,12 @@ import com.example.filter.etc.StickerStore;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.items.StickerItem;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MyStickersFragment extends Fragment {
     private AppCompatButton saveBtn;
@@ -38,7 +46,7 @@ public class MyStickersFragment extends Fragment {
     private View selectSticker = null;
     private int selectStickerId = RecyclerView.NO_POSITION;
     private LayoutInflater inflater;
-    //private ImageButton undoSticker, redoSticker, originalSticker;
+
     private View stickerFrame;
     private ImageView stickerImage, moveController, rotateController, sizeController, deleteController;
 
@@ -47,39 +55,32 @@ public class MyStickersFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_my_stickers, container, false);
         this.inflater = inflater;
+
         stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
         myStickers = view.findViewById(R.id.myStickers);
         deleteStickerIcon = view.findViewById(R.id.deleteStickerIcon);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
 
-        /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
-        redoSticker = requireActivity().findViewById(R.id.redoSticker);
-        originalSticker = requireActivity().findViewById(R.id.originalSticker);
-
-        if (undoSticker != null) undoSticker.setVisibility(View.INVISIBLE);
-        if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
-        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);*/
-
         checkBtn.setEnabled(false);
         checkBtn.setAlpha(0.4f);
-
-        StickerStore.get().init(requireContext().getApplicationContext());
 
         deleteStickerIcon.setEnabled(false);
         deleteStickerIcon.setAlpha(0.4f);
 
+        StickerStore.get().init(requireContext().getApplicationContext());
+
         LinearLayoutManager lm = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
         myStickers.setLayoutManager(lm);
-        adapter = new MyStickersAdapter(StickerStore.get().snapshotAll());
+        adapter = new MyStickersAdapter(new ArrayList<>());
         myStickers.setAdapter(adapter);
         myStickers.setItemAnimator(null);
 
-        adapter.setOnStickerClickListener((position, stickerKey) -> {
+        adapter.setOnStickerClickListener((position, item) -> {
             selectStickerId = position;
             deleteStickerIcon.setEnabled(true);
             deleteStickerIcon.setAlpha(1.0f);
-            showStickerCentered(stickerKey);
+            showStickerCentered(item.getImageUrl(), item.getId());
         });
 
         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
@@ -87,41 +88,53 @@ public class MyStickersFragment extends Fragment {
             Controller.setStickerActive(child, false);
         }
 
-        deleteStickerIcon.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            if (!deleteStickerIcon.isEnabled()) return;
-            confirmDeleteSticker();
-        });
+        setupBottomButtons();
 
-        cancelBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-
-            Controller.removeStickerFrame(stickerFrame);
-
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new StickersFragment())
-                    .commit();
-        });
-
-        checkBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-
-            Controller.removeStickerFrame(stickerFrame);
-            Controller.setControllersVisible(stickerFrame, false);
-
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new StickersFragment())
-                    .commit();
-        });
+        // 서버에서 로드
+        loadStickersFromServer();
 
         return view;
     }
 
-    private void showStickerCentered(String stickerKey) {
+    // ---------------------------------------------------------------
+    // ✅ [수정됨] AppRetrofitClient를 사용하여 서버 호출
+    // ---------------------------------------------------------------
+    private void loadStickersFromServer() {
+        // 1. 내가 만든 클라이언트로 API 생성 (토큰 처리는 내부에서 자동 해결)
+        StickerApi api = AppRetrofitClient.getInstance(requireContext()).create(StickerApi.class);
+
+        // 2. 호출 (파라미터 없이 호출 가능!)
+        api.getMyStickers().enqueue(new Callback<List<StickerResponseDto>>() {
+            @Override
+            public void onResponse(Call<List<StickerResponseDto>> call, Response<List<StickerResponseDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<StickerResponseDto> dtos = response.body();
+                    List<StickerItem> items = new ArrayList<>();
+
+                    for (StickerResponseDto dto : dtos) {
+                        if (dto.getImageUrl() != null) {
+                            // DTO -> StickerItem 변환
+                            items.add(StickerItem.fromServer(
+                                    dto.getId(),
+                                    dto.getImageUrl(),
+                                    dto.getType()
+                            ));
+                        }
+                    }
+                    adapter.updateData(items);
+                } else {
+                    Log.e("StickerAPI", "목록 조회 실패: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<StickerResponseDto>> call, Throwable t) {
+                Log.e("StickerAPI", "통신 오류", t);
+            }
+        });
+    }
+
+    private void showStickerCentered(String stickerUrl, long stickerId) {
         Controller.clearCurrentSticker(stickerOverlay, selectSticker);
 
         stickerFrame = inflater.inflate(R.layout.v_sticker_edit, stickerOverlay, false);
@@ -134,16 +147,10 @@ public class MyStickersFragment extends Fragment {
         rotateController.setVisibility(View.INVISIBLE);
         sizeController.setVisibility(View.INVISIBLE);
 
-        File f = new File(stickerKey);
-        if (f.exists()) {
-            stickerImage.setImageURI(Uri.fromFile(f));
-            if (stickerImage.getDrawable() == null) {
-                stickerImage.setImageBitmap(BitmapFactory.decodeFile(f.getAbsolutePath()));
-            }
-        } else {
-            int resId = getResources().getIdentifier(stickerKey, "drawable", requireContext().getPackageName());
-            if (resId != 0) stickerImage.setImageResource(resId);
-        }
+        // Glide 로드 (로딩/에러 이미지 제거하여 깔끔하게)
+        Glide.with(this)
+                .load(stickerUrl)
+                .into(stickerImage);
 
         int sizePx = Controller.dp(230, getResources());
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(sizePx, sizePx);
@@ -159,35 +166,54 @@ public class MyStickersFragment extends Fragment {
             stickerFrame.setX(cx);
             stickerFrame.setY(cy);
 
+            // DB ID 저장
+            stickerFrame.setTag(R.id.tag_sticker_db_id, stickerId);
+
             stickerOverlay.addView(stickerFrame);
 
-            //stickerFrame.post(() -> {
-            //    Log.d("스티커", String.format("마이 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
-            //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
-            //});
-
-
             this.selectSticker = stickerFrame;
-
             Controller.setStickerActive(stickerFrame, true);
-
             stickerFrame.setOnClickListener(v -> moveEditSticker(stickerFrame));
         });
 
         deleteController.setOnClickListener(x -> {
             Controller.removeStickerFrame(stickerFrame);
             Controller.setControllersVisible(stickerFrame, false);
-
-            int old = adapter.getSelectedPos();
-            if (old != RecyclerView.NO_POSITION) {
-                adapter.clearSelection();
-            }
-
+            adapter.clearSelection();
             deleteStickerIcon.setEnabled(false);
             deleteStickerIcon.setAlpha(0.4f);
         });
 
         stickerFrame.bringToFront();
+    }
+
+    private void setupBottomButtons() {
+        deleteStickerIcon.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            if (!deleteStickerIcon.isEnabled()) return;
+            confirmDeleteSticker();
+        });
+
+        cancelBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            Controller.removeStickerFrame(stickerFrame);
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .setCustomAnimations(R.anim.slide_up, 0)
+                    .replace(R.id.bottomArea2, new StickersFragment())
+                    .commit();
+        });
+
+        checkBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            Controller.removeStickerFrame(stickerFrame);
+            Controller.setControllersVisible(stickerFrame, false);
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .setCustomAnimations(R.anim.slide_up, 0)
+                    .replace(R.id.bottomArea2, new StickersFragment())
+                    .commit();
+        });
     }
 
     private void moveEditSticker(View stickerFrame) {
@@ -201,6 +227,7 @@ public class MyStickersFragment extends Fragment {
 
         EditStickerFragment editStickerFragment = new EditStickerFragment();
         StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
+
         int currentId = EditStickerFragment.stickerId + 1;
         viewModel.setTempView(currentId, stickerFrame);
 
@@ -220,20 +247,13 @@ public class MyStickersFragment extends Fragment {
 
         new StickerDeleteDialog(requireContext(), new StickerDeleteDialog.StickerDeleteDialogListener() {
             @Override
-            public void onKeep() {
-
-            }
+            public void onKeep() { }
 
             @Override
             public void onDelete() {
                 if (selectStickerId != RecyclerView.NO_POSITION) {
-                    StickerItem toRemove = adapter.getItem(selectStickerId);
-                    String key = toRemove.getImageUrl();
-
                     Controller.clearCurrentSticker(stickerOverlay, selectSticker);
-                    StickerStore.get().removeByKey(key);
                     adapter.removeAt(selectStickerId);
-
                     selectStickerId = RecyclerView.NO_POSITION;
                     deleteStickerIcon.setEnabled(false);
                     deleteStickerIcon.setAlpha(0.4f);
@@ -249,20 +269,6 @@ public class MyStickersFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
-        StickerItem newly;
-        boolean inserted = false;
-        while ((newly = StickerStore.get().pollPending()) != null) {
-            adapter.insertAtFront(newly);
-            StickerStore.get().addToAllFront(newly);
-            inserted = true;
-        }
-        if (inserted) {
-            myStickers.scrollToPosition(0);
-            deleteStickerIcon.setEnabled(false);
-            deleteStickerIcon.setAlpha(0.4f);
-        }
-
         saveBtn = requireActivity().findViewById(R.id.saveBtn);
         if (saveBtn != null) {
             saveBtn.setEnabled(false);

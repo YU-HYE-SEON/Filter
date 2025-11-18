@@ -1,8 +1,6 @@
 package com.example.filter.adapters;
 
 import android.annotation.SuppressLint;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,24 +9,25 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide; // Glide 라이브러리 필요
 import com.example.filter.R;
 import com.example.filter.items.StickerItem;
 
-import java.io.File;
 import java.util.List;
 
 public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.ViewHolder> {
-    private final List<StickerItem> items;
+    private List<StickerItem> items;
     private OnStickerClickListener clickListener;
     private OnStickerDeleteListener deleteListener;
     private int selectedPos = RecyclerView.NO_POSITION;
 
+    // [수정] 클릭 시 StickerItem 객체 자체를 전달 (ID 접근을 위해)
     public interface OnStickerClickListener {
-        void onStickerClick(int position, String stickerNameOrPath);
+        void onStickerClick(int position, StickerItem item);
     }
 
     public interface OnStickerDeleteListener {
-        void onDeleteRequested(int position, String stickerNameOrPath);
+        void onDeleteRequested(int position, StickerItem item);
     }
 
     public void setOnStickerClickListener(OnStickerClickListener l) {
@@ -41,6 +40,13 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
 
     public MyStickersAdapter(List<StickerItem> items) {
         this.items = items;
+    }
+
+    // [추가] 서버 데이터 갱신용 메서드
+    @SuppressLint("NotifyDataSetChanged")
+    public void updateData(List<StickerItem> newItems) {
+        this.items = newItems;
+        notifyDataSetChanged();
     }
 
     public void insertAtFront(StickerItem item) {
@@ -73,7 +79,8 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
     }
 
     public StickerItem getItem(int pos) {
-        return items.get(pos);
+        if (pos >= 0 && pos < items.size()) return items.get(pos);
+        return null;
     }
 
     @NonNull
@@ -83,57 +90,55 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
         return new ViewHolder(v);
     }
 
-    private final int[] fallback = {};
-
     @Override
     public void onBindViewHolder(@NonNull ViewHolder h, @SuppressLint("RecyclerView") int position) {
         StickerItem item = items.get(position);
 
+        // [수정] Glide를 사용하여 이미지 로딩 통합 (URL, 파일 경로, 리소스 ID 모두 처리)
+        Object imageSource;
         if (item.isFile()) {
-            File f = new File(item.getImageUrl());
-            if (f.exists()) {
-                h.stickerImage.setImageURI(Uri.fromFile(f));
-                if (h.stickerImage.getDrawable() == null) {
-                    h.stickerImage.setImageBitmap(BitmapFactory.decodeFile(f.getAbsolutePath()));
-                }
-            } else if (fallback.length > 0) {
-                h.stickerImage.setImageResource(fallback[Math.min(position, fallback.length - 1)]);
-            } else {
-                h.stickerImage.setImageDrawable(null);
-            }
+            // 서버 URL 또는 로컬 파일 경로
+            imageSource = item.getImageUrl();
         } else {
+            // 리소스 이름으로 ID 찾기
+            int resId = 0;
             if (item.getResName() != null) {
-                int resId = h.itemView.getResources()
-                        .getIdentifier(item.getResName(), "drawable", h.itemView.getContext().getPackageName());
-                if (resId != 0) h.stickerImage.setImageResource(resId);
-                else if (fallback.length > 0)
-                    h.stickerImage.setImageResource(fallback[Math.min(position, fallback.length - 1)]);
-                else
-                    h.stickerImage.setImageDrawable(null);
+                resId = h.itemView.getResources().getIdentifier(
+                        item.getResName(), "drawable", h.itemView.getContext().getPackageName());
             }
+            imageSource = (resId != 0) ? resId : null;
         }
 
+        Glide.with(h.itemView.getContext())
+                .load(imageSource)
+                // .placeholder(R.drawable.bg_trans_pattern) // 로딩 중 표시할 이미지 (선택)
+                .error(R.drawable.btn_close) // 에러 시 표시할 이미지 (선택)
+                .into(h.stickerImage);
+
+        // 선택 상태 UI 처리
         if (position == selectedPos) {
             h.box.setBackgroundResource(R.drawable.bg_sticker_choose_yes);
         } else {
             h.box.setBackgroundResource(R.drawable.bg_sticker_choose_no);
         }
 
+        // 클릭 리스너
         h.stickerImage.setOnClickListener(v -> {
             int old = selectedPos;
             selectedPos = position;
             if (old != RecyclerView.NO_POSITION) notifyItemChanged(old);
             notifyItemChanged(selectedPos);
+
             if (clickListener != null) {
-                String key = item.isFile() ? item.getImageUrl() : item.getResName();
-                clickListener.onStickerClick(position, key);
+                // [수정] Item 객체 통째로 전달
+                clickListener.onStickerClick(position, item);
             }
         });
 
+        // 롱클릭 리스너 (삭제)
         h.itemView.setOnLongClickListener(v -> {
             if (deleteListener != null) {
-                String key = item.isFile() ? item.getImageUrl() : item.getResName();
-                deleteListener.onDeleteRequested(position, key);
+                deleteListener.onDeleteRequested(position, item);
             }
             return true;
         });
@@ -141,7 +146,7 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
 
     @Override
     public int getItemCount() {
-        return items.size();
+        return items != null ? items.size() : 0;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
