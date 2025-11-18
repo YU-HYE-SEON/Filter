@@ -37,6 +37,8 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
     public FilterAdapter() {
     }
 
+
+    /// 어댑터에 이미 존재하는 필터인지 판단 ///
     public boolean containsId(String id) {
         if (id == null) return false;
         for (FilterItem item : items) {
@@ -47,6 +49,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         return false;
     }
 
+    /// 새로운 필터 추가 ///
     public void addItem(FilterItem item) {
         items.add(0, item);
         if (items.size() > maxItems) {
@@ -56,6 +59,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         }
     }
 
+    ///  필터 삭제 ///
     public void removeItem(String id) {
         if (id == null) return;
 
@@ -71,7 +75,6 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         if (targetIndex == -1) return;
         items.remove(targetIndex);
         notifyDataSetChanged();
-
     }
 
     @NonNull
