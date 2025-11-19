@@ -35,6 +35,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.palette.graphics.Palette;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -46,12 +47,17 @@ import com.example.filter.activities.MainActivity;
 import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.apply.CameraActivity;
 import com.example.filter.activities.review.ReviewActivity;
+import com.example.filter.dialogs.PointChangeDialog;
+import com.example.filter.dialogs.StickerDeleteDialog;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.etc.Controller;
 import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ReviewStore;
+import com.example.filter.etc.StickerStore;
 import com.example.filter.etc.UserManager;
 import com.example.filter.items.ReviewItem;
+import com.example.filter.items.StickerItem;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -276,8 +282,7 @@ public class FilterInfoActivity extends BaseActivity {
         String n = UserManager.get(FilterInfoActivity.this).getNickname();
         if (n.equals(nick)) {
             deleteORreportBtn.setText("삭제");
-            //changeORbuyBtn.setText("가격 수정");
-            changeORbuyBtn.setText(price + "P 구매");
+            changeORbuyBtn.setText("가격 수정");
         } else {
             deleteORreportBtn.setText("신고");
             changeORbuyBtn.setText(price + "P 구매");
@@ -310,7 +315,7 @@ public class FilterInfoActivity extends BaseActivity {
 
         changeORbuyBtn.setOnClickListener(v -> {
             if (changeORbuyBtn.getText().equals("가격 수정")) {
-
+                showPointChangePopUp();
             } else {
                 if (ClickUtils.isFastClick(v, 400)) return;
                 if (isModalVisible) return;
@@ -414,19 +419,48 @@ public class FilterInfoActivity extends BaseActivity {
 
     private void updateButtonState() {
         boolean boughtOrFree = isBuy || isFree;
+        String n = UserManager.get(FilterInfoActivity.this).getNickname();
 
         if (selectModeBtn2 != null) {
-            selectModeBtn2.setVisibility(boughtOrFree ? View.VISIBLE : View.INVISIBLE);
+            if (n.equals(nick)) {
+                selectModeBtn2.setVisibility(View.INVISIBLE);
+            } else {
+                selectModeBtn2.setVisibility(boughtOrFree ? View.VISIBLE : View.INVISIBLE);
+            }
         }
         if (changeORbuyBtn != null) {
-            changeORbuyBtn.setVisibility(boughtOrFree ? View.INVISIBLE : View.VISIBLE);
+            if (n.equals(nick)) {
+                changeORbuyBtn.setVisibility(View.VISIBLE);
+            } else {
+                changeORbuyBtn.setVisibility(boughtOrFree ? View.INVISIBLE : View.VISIBLE);
+            }
         }
         if (selectModeBtn != null) {
-            selectModeBtn.setVisibility(boughtOrFree ? View.INVISIBLE : View.VISIBLE);
+            if (n.equals(nick)) {
+                selectModeBtn.setVisibility(View.VISIBLE);
+            } else {
+                selectModeBtn.setVisibility(boughtOrFree ? View.INVISIBLE : View.VISIBLE);
+            }
         }
         if (alertTxt != null) {
-            alertTxt.setVisibility(boughtOrFree ? View.INVISIBLE : View.VISIBLE);
+            if (n.equals(nick)) {
+                alertTxt.setVisibility(View.INVISIBLE);
+            } else {
+                alertTxt.setVisibility(boughtOrFree ? View.INVISIBLE : View.VISIBLE);
+            }
         }
+    }
+
+    private void showPointChangePopUp() {
+        int currentPrice = 0;
+        currentPrice = Integer.parseInt(price);
+
+        new PointChangeDialog(this, title, currentPrice, new PointChangeDialog.PointChangeDialogListener() {
+            @Override
+            public void onChange(int oldPrice, int newPrice) {
+                price = String.valueOf(newPrice);
+            }
+        }).show();
     }
 
     private void setupModal() {

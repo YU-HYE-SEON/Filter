@@ -8,7 +8,7 @@
     android:orientation="vertical">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="360dp"
+        android:layout_width="380dp"
         android:layout_height="wrap_content"
         android:background="@drawable/border_dialog"
         android:gravity="center"
@@ -123,9 +123,12 @@
                     android:layout_height="50dp"
                     android:background="@android:color/transparent"
                     android:fontFamily="@font/roboto_medium"
-                    android:text="000"
+                    android:hint="0"
+                    android:inputType="number"
+                    android:maxLength="3"
                     android:textAlignment="center"
                     android:textColor="@color/black"
+                    android:textColorHint="#90989F"
                     android:textSize="25sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -149,7 +152,7 @@
             <TextView
                 android:id="@+id/txt2"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:fontFamily="@font/roboto_medium"
                 android:text="가격을 0% 낮췄습니다."
