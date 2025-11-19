@@ -400,9 +400,15 @@ public class MainActivity extends BaseActivity {
             );
 
             /// 여기가 실질적으로 필터를 등록할지 말지를 결정 ///
-            /// 이미 어댑터에 존재하는 필터라면 새로 등록하지 않음. 존재하지 않는 필터라면 등록 ///
-            if (filterAdapter != null && !filterAdapter.containsId(newId)) {
-                filterAdapter.addItem(newItem);
+            /// 존재하는 필터라면 새로 등록하지 않음 ///
+            /// 이미 어댑터에 존재하는 필터인 경우, 가격 바뀌면 가격 업데이트 ///
+            /// 존재하지 않는 필터라면 등록 ///
+            if (filterAdapter != null) {
+                if (filterAdapter.containsId(newId)) {
+                    filterAdapter.updatePriceItem(newId, price);
+                } else {
+                    filterAdapter.addItem(newItem);
+                }
             }
         }
     }

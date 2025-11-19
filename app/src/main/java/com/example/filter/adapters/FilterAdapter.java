@@ -59,6 +59,38 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         }
     }
 
+    public void updatePriceItem(String id, String newPrice) {
+        if (id == null) return;
+        int targetIndex = -1;
+        for (int i = 0; i < items.size(); i++) {
+            FilterItem item = items.get(i);
+            if (item != null && id.equals(item.id)) {
+                targetIndex = i;
+                FilterItem updatedItem = new FilterItem(
+                        item.id,
+                        item.nickname,
+                        item.originalPath,
+                        item.filterImageUrl,
+                        item.filterTitle,
+                        item.tags,
+                        newPrice,
+                        item.count,
+                        item.isMockData,
+                        item.colorAdjustments,
+                        item.brushPath,
+                        item.stickerImageNoFacePath,
+                        item.faceStickers
+                );
+                items.set(i, updatedItem);
+                break;
+            }
+        }
+
+        if (targetIndex != -1) {
+            notifyItemChanged(targetIndex);
+        }
+    }
+
     ///  필터 삭제 ///
     public void removeItem(String id) {
         if (id == null) return;

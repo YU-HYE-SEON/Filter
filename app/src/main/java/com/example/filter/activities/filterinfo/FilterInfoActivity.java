@@ -282,7 +282,8 @@ public class FilterInfoActivity extends BaseActivity {
         String n = UserManager.get(FilterInfoActivity.this).getNickname();
         if (n.equals(nick)) {
             deleteORreportBtn.setText("삭제");
-            changeORbuyBtn.setText("가격 수정");
+            //changeORbuyBtn.setText("가격 수정");
+            changeORbuyBtn.setText(price + "P 구매");
         } else {
             deleteORreportBtn.setText("신고");
             changeORbuyBtn.setText(price + "P 구매");
@@ -453,7 +454,11 @@ public class FilterInfoActivity extends BaseActivity {
 
     private void showPointChangePopUp() {
         int currentPrice = 0;
-        currentPrice = Integer.parseInt(price);
+
+        try {
+            currentPrice = Integer.parseInt(price);
+        } catch (NumberFormatException ignored) {
+        }
 
         new PointChangeDialog(this, title, currentPrice, new PointChangeDialog.PointChangeDialogListener() {
             @Override
