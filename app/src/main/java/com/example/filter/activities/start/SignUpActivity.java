@@ -22,7 +22,6 @@ import com.example.filter.activities.BaseActivity;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.service.UserApi;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.UserManager;
 
 import org.json.JSONObject;
 
@@ -82,6 +81,9 @@ public class SignUpActivity extends BaseActivity {
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setVisibility(View.INVISIBLE);
                     btn.setEnabled(false);
+
+                    Log.d("닉네임", "닉네임 초과");
+
                 } else if (bad != null) {
                     alertTxt.setTextColor(Color.parseColor("#FF5C8A"));
                     alertTxt.setText(bad + "은 사용할 수 없는 문자입니다");
@@ -90,6 +92,9 @@ public class SignUpActivity extends BaseActivity {
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setEnabled(false);
                     btn.setVisibility(View.INVISIBLE);
+
+                    Log.d("닉네임", "유효하지 않은 문자");
+
                 } else if (lengthByCodePoint == 0) {
                     alertTxt.setTextColor(Color.parseColor("#FF5C8A"));
                     alertTxt.setText("닉네임을 입력해주세요");
@@ -98,6 +103,9 @@ public class SignUpActivity extends BaseActivity {
                     alertTxt.setVisibility(View.VISIBLE);
                     btn.setVisibility(View.INVISIBLE);
                     btn.setEnabled(false);
+
+                    Log.d("닉네임", "닉네임 비어있음");
+
                 } else {  //닉네임 중복 확인
                     checkNicknameDuplicate(input);
                 }
@@ -223,13 +231,7 @@ public class SignUpActivity extends BaseActivity {
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     // ✅ 성공 시
-                    Log.d("SignUp", "✅ 닉네임 설정 성공");
-
-
-                    /// 닉네임 저장 임시 테스트
-                    UserManager.get(SignUpActivity.this).setNickname(nickname);
-                    Log.d("닉네임 테스트", "닉네임 : " + nickname);
-
+                    Log.d("닉네임", "✅ 닉네임 설정 성공");
 
                     // ④ 다음 화면으로 이동
                     Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
@@ -237,24 +239,14 @@ public class SignUpActivity extends BaseActivity {
                     finish();
                 } else {
                     // ❌ 서버 응답은 왔지만 실패 코드 (400, 409 등)
-                    Log.e("SignUp", "❌ 닉네임 설정 실패: " + response.code());
-
-
-                    /// 임시용 나중에 삭제
-                    /// 닉네임 저장 임시 테스트
-                    UserManager.get(SignUpActivity.this).setNickname(nickname);
-                    Log.d("닉네임 테스트", "닉네임 : " + nickname);
-                    // ④ 다음 화면으로 이동
-                    Intent intent = new Intent(SignUpActivity.this, OnBoardingActivity.class);
-                    startActivity(intent);
-                    finish();
+                    Log.e("닉네임", "❌ 닉네임 설정 실패: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 // ❌ 네트워크 자체 실패 (서버 다운, 연결 실패 등)
-                Log.e("SignUp", "❌ 서버 연결 오류", t);
+                Log.e("닉네임", "❌ 서버 연결 오류", t);
             }
         });
     }
@@ -275,7 +267,7 @@ public class SignUpActivity extends BaseActivity {
                         boolean exists = json.optBoolean("exists", false);
 
                         if (exists) {
-                            Log.d("닉네임중복", "닉네임 중복 o");
+                            Log.d("닉네임", "닉네임 중복 o");
 
                             alertTxt.setTextColor(Color.RED);
                             alertTxt.setText("이미 사용중인 닉네임입니다");
@@ -284,7 +276,7 @@ public class SignUpActivity extends BaseActivity {
                             btn.setVisibility(View.INVISIBLE);
                             btn.setEnabled(false);
                         } else {
-                            Log.d("닉네임중복", "닉네임 중복 x");
+                            Log.d("닉네임", "닉네임 중복 x");
 
                             alertTxt.setTextColor(Color.BLUE);
                             alertTxt.setText("사용 가능한 닉네임입니다");
@@ -294,29 +286,29 @@ public class SignUpActivity extends BaseActivity {
                             btn.setEnabled(true);
                         }
                     } catch (Exception e) {
-                        Log.e("닉네임중복", "JSON 파싱 실패", e);
+                        Log.e("닉네임", "JSON 파싱 실패", e);
                     }
                 } else {
-                    Log.e("닉네임중복", "닉네임 중복 확인 실패 : " + response.code());
+                    Log.e("닉네임", "닉네임 중복 확인 실패 : " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-                Log.e("닉네임중복", "닉네임 중복 확인 실패", t);
+                Log.e("닉네임", "닉네임 중복 확인 실패", t);
             }
         });
 
 
         ///  임시로 중복 확인 안 하고 넘기기
         /// 추후 삭제 필요
-        alertTxt.setTextColor(Color.BLUE);
-        alertTxt.setText("사용 가능한 닉네임입니다");
-        setEditSizePos(344, 75, true);
-        nickname.setBackgroundResource(R.drawable.edit_nick_o);
-        alertTxt.setVisibility(View.VISIBLE);
-        btn.setVisibility(View.VISIBLE);
-        btn.setEnabled(true);
+        //alertTxt.setTextColor(Color.BLUE);
+        //alertTxt.setText("사용 가능한 닉네임입니다");
+        //setEditSizePos(344, 75, true);
+        //nickname.setBackgroundResource(R.drawable.edit_nick_o);
+        //alertTxt.setVisibility(View.VISIBLE);
+        //btn.setVisibility(View.VISIBLE);
+        //btn.setEnabled(true);
     }
 
     private int dp(int v) {
