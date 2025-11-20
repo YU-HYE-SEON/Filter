@@ -35,7 +35,7 @@ import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
-import com.example.filter.activities.filterinfo.FilterInfoActivity;
+import com.example.filter.activities.filterinfo.*;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.dto.FilterResponse;
