@@ -1,6 +1,6 @@
-package com.example.filter.apis.service;
+package com.example.filter.apis;
 
-import com.example.filter.apis.dto.TokenRequest;
+import com.example.filter.api_datas.dto.TokenRequest;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;

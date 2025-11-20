@@ -4,9 +4,9 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.filter.apis.client.AppRetrofitClient;
-import com.example.filter.apis.dto.StickerCreateRequest;
-import com.example.filter.apis.dto.StickerResponseDto;
-import com.example.filter.apis.service.StickerApi;
+import com.example.filter.api_datas.dto.StickerCreateRequest;
+import com.example.filter.api_datas.dto.StickerResponseDto;
+import com.example.filter.apis.StickerApi;
 import com.example.filter.fragments.filters.MyStickersFragment;
 import com.example.filter.items.StickerItem;
 

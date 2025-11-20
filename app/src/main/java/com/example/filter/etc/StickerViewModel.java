@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.filter.R;
+import com.example.filter.api_datas.FaceStickerData;
 
 import java.util.ArrayList;
 import java.util.Collections;

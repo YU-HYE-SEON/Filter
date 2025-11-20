@@ -20,7 +20,7 @@ import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.FilterCreationData; // ✅ Import 필수
+import com.example.filter.api_datas.FilterCreationData; // ✅ Import 필수
 
 import java.io.File;
 

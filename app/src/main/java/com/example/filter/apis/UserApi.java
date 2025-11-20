@@ -1,4 +1,4 @@
-package com.example.filter.apis.service;
+package com.example.filter.apis;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;

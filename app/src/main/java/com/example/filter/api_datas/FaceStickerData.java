@@ -1,4 +1,4 @@
-package com.example.filter.etc;
+package com.example.filter.api_datas;
 
 import android.graphics.Bitmap;
 import java.io.Serializable;

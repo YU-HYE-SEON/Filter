@@ -33,7 +33,7 @@ import com.example.filter.activities.filter.LoadActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
 import com.example.filter.etc.FaceDetect;
-import com.example.filter.etc.FaceStickerData;
+import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.FaceBoxOverlayView;

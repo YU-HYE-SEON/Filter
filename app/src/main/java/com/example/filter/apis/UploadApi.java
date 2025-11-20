@@ -1,4 +1,4 @@
-package com.example.filter.apis.service;
+package com.example.filter.apis;
 
 import java.util.Map;
 import okhttp3.MultipartBody;

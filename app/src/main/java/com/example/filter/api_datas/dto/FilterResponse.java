@@ -1,4 +1,4 @@
-package com.example.filter.apis.dto;
+package com.example.filter.api_datas.dto;
 
 import java.io.Serializable;
 import java.util.List;

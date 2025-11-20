@@ -1,12 +1,10 @@
-package com.example.filter.apis.service;
+package com.example.filter.apis;
 
-import com.example.filter.apis.dto.FilterDtoCreateRequest;
-import com.example.filter.apis.dto.FilterResponse;
+import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
+import com.example.filter.api_datas.dto.FilterResponse;
 
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
-import retrofit2.http.Header;
 import retrofit2.http.POST;
 
 public interface FilterApi {

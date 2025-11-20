@@ -1,7 +1,7 @@
 package com.example.filter.items;
 
-import com.example.filter.apis.dto.FilterDtoCreateRequest;
-import com.example.filter.etc.FaceStickerData;
+import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
+import com.example.filter.api_datas.FaceStickerData;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -35,12 +35,13 @@ import androidx.core.splashscreen.SplashScreen;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
+import com.example.filter.apis.UserApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.dialogs.PopUpDialog;
 import com.example.filter.dialogs.SignUpDialog;
-import com.example.filter.apis.service.AuthApi;
+import com.example.filter.apis.AuthApi;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.apis.dto.TokenRequest;
+import com.example.filter.api_datas.dto.TokenRequest;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -378,7 +379,7 @@ public class StartActivity extends BaseActivity {
         Log.d("UserCheck", "✅ 가입된 회원 여부 확인 시작");
 
         Retrofit retrofit = AppRetrofitClient.getInstance(this);
-        com.example.filter.apis.service.UserApi userApi = retrofit.create(com.example.filter.apis.service.UserApi.class);
+        UserApi userApi = retrofit.create(UserApi.class);
 
         Call<ResponseBody> call = userApi.checkUserExists();
         call.enqueue(new Callback<ResponseBody>() {

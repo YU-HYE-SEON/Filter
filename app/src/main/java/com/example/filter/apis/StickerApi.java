@@ -1,7 +1,7 @@
-package com.example.filter.apis.service;
+package com.example.filter.apis;
 
-import com.example.filter.apis.dto.StickerCreateRequest;
-import com.example.filter.apis.dto.StickerResponseDto;
+import com.example.filter.api_datas.dto.StickerCreateRequest;
+import com.example.filter.api_datas.dto.StickerResponseDto;
 
 import java.util.List;
 
@@ -10,7 +10,6 @@ import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
-import retrofit2.http.Header;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;

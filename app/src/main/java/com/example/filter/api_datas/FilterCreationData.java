@@ -1,12 +1,12 @@
-package com.example.filter.etc;
+package com.example.filter.api_datas;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.example.filter.apis.dto.FilterDtoCreateRequest;
+import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
 // DTO 내부 클래스 import
-import com.example.filter.apis.dto.FilterDtoCreateRequest.ColorAdjustments;
-import com.example.filter.apis.dto.FilterDtoCreateRequest.FaceSticker;
+import com.example.filter.api_datas.dto.FilterDtoCreateRequest.ColorAdjustments;
+import com.example.filter.api_datas.dto.FilterDtoCreateRequest.FaceSticker;
 
 import java.util.ArrayList;
 import java.util.List;

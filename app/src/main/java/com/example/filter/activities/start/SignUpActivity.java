@@ -20,7 +20,7 @@ import androidx.core.splashscreen.SplashScreen;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.apis.client.AppRetrofitClient;
-import com.example.filter.apis.service.UserApi;
+import com.example.filter.apis.UserApi;
 import com.example.filter.etc.ClickUtils;
 
 import org.json.JSONObject;
