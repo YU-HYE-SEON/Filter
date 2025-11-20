@@ -34,7 +34,7 @@ public class FaceBoxOverlayView extends View {
     private void init() {
         boxPaint.setStyle(Paint.Style.STROKE);
         boxPaint.setStrokeWidth(4f);
-        boxPaint.setColor(Color.CYAN);
+        boxPaint.setColor(Color.TRANSPARENT);
     }
 
     public void setFaceBox(Rect faceBox, int srcW, int srcH) {

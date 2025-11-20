@@ -69,7 +69,7 @@ public class ReviewActivity extends BaseActivity {
 
         adapter = new ReviewAdapter();
         recyclerView.setAdapter(adapter);
-        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
+        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(10), dp(10)));
 
         filterId = getIntent().getStringExtra("filterId");
         filterImage = getIntent().getStringExtra("filterImage");

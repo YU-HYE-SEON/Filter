@@ -392,6 +392,10 @@ public class StartActivity extends BaseActivity {
 
                         if (exists) {
                             Log.d("UserCheck", "✔️ 기존 회원 → MainActivity 이동");
+
+
+
+
                             loginSuccess();
                         } else {
                             Log.d("UserCheck", "🆕 신규 회원 → SignUpActivity 이동");

@@ -21,7 +21,7 @@ import java.util.List;
 
 public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
     public interface OnItemClickListener {
-        void onClick(View v, FilterItem item, String displayedTitle, String displayedNickname);
+        void onClick(View v, FilterItem item);
     }
 
     private OnItemClickListener listener;
@@ -56,6 +56,38 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
             notifyDataSetChanged();
         } else {
             notifyItemInserted(0);
+        }
+    }
+
+    public void updatePriceItem(String id, String newPrice) {
+        if (id == null) return;
+        int targetIndex = -1;
+        for (int i = 0; i < items.size(); i++) {
+            FilterItem item = items.get(i);
+            if (item != null && id.equals(item.id)) {
+                targetIndex = i;
+                FilterItem updatedItem = new FilterItem(
+                        item.id,
+                        item.nickname,
+                        item.originalPath,
+                        item.filterImageUrl,
+                        item.filterTitle,
+                        item.tags,
+                        newPrice,
+                        item.count,
+                        item.isMockData,
+                        item.colorAdjustments,
+                        item.brushPath,
+                        item.stickerImageNoFacePath,
+                        item.faceStickers
+                );
+                items.set(i, updatedItem);
+                break;
+            }
+        }
+
+        if (targetIndex != -1) {
+            notifyItemChanged(targetIndex);
         }
     }
 
@@ -178,10 +210,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
                 int pos = getAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION && listener != null) {
                     if (pos >= 0 && pos < items.size()) {
-                        String title = filterTitle.getText().toString();
-                        String nick = nickname.getText().toString();
-
-                        listener.onClick(v, items.get(pos), title, nick);
+                        listener.onClick(v, items.get(pos));
                     }
                 }
             });

@@ -90,10 +90,7 @@ public class AIStickerViewFragment extends Fragment {
                                     requireActivity().finish();
                                 }
                             }
-                            ).withMessage("편집한 내용을 저장하지 않고\n종료하시겠습니까?")
-                                    .withButton1Text("예")
-                                    .withButton2Text("아니오")
-                                    .show();
+                            ).show();
                         }
                     }
                 });

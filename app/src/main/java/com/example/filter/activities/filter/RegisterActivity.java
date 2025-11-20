@@ -77,7 +77,10 @@ public class RegisterActivity extends BaseActivity {
     private boolean isPriceFirstEdited = false;
 
     // 키보드 및 스크롤 제어
-    private enum Anchor {NONE, TAG_TXT, SALE_TXT, REGISTER_BTN}
+    private enum Anchor {
+        NONE, TAG_TXT, SALE_TXT, REGISTER_BTN
+    }
+
     private Anchor pendingAnchor = Anchor.NONE;
     private boolean keyboardVisible = false;
     private boolean wasKeyboardVisible = false;
@@ -141,11 +144,13 @@ public class RegisterActivity extends BaseActivity {
 
         // 5. 등록 버튼 리스너
         registerBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
+            if (ClickUtils.isFastClick(v, 400))
+                return;
             ClickUtils.disableTemporarily(v, 800);
 
             // 유효성 검사
-            if (!validateInputs()) return;
+            if (!validateInputs())
+                return;
 
             // 서버 전송
             sendFilterToServer();
@@ -159,7 +164,8 @@ public class RegisterActivity extends BaseActivity {
     // ---------------------------------------------------------------
     private void setupScrollAndInsets() {
         backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
+            if (ClickUtils.isFastClick(v, 400))
+                return;
             finish();
         });
 
@@ -167,14 +173,17 @@ public class RegisterActivity extends BaseActivity {
         scrollView.setOnTouchListener((v, ev) -> {
             Rect btnRect = new Rect();
             boolean btnVisible = backBtn.getGlobalVisibleRect(btnRect);
-            if (!btnVisible) return false;
+            if (!btnVisible)
+                return false;
 
             float rawX = ev.getRawX();
             float rawY = ev.getRawY();
 
             boolean hitBack = btnRect.contains((int) rawX, (int) rawY);
-            if (!hitBack) return false;
-            if (isCoveredByScrollContent(backBtn, contentContainer)) return true;
+            if (!hitBack)
+                return false;
+            if (isCoveredByScrollContent(backBtn, contentContainer))
+                return true;
 
             int[] btnLoc = new int[2];
             backBtn.getLocationOnScreen(btnLoc);
@@ -192,8 +201,10 @@ public class RegisterActivity extends BaseActivity {
         Runnable recomputeOverlay = () -> {
             int topH = topArea.getHeight();
             int photoH = photoView.getHeight();
-            if (topH <= 0) topH = dp(60);
-            if (photoH <= 0) photoH = dp(300);
+            if (topH <= 0)
+                topH = dp(60);
+            if (photoH <= 0)
+                photoH = dp(300);
             overlayHeights[0] = topH + photoH;
         };
         scrollView.post(recomputeOverlay);
@@ -204,7 +215,8 @@ public class RegisterActivity extends BaseActivity {
             Insets sys = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
 
-            topArea.setPadding(topArea.getPaddingLeft(), sys.top, topArea.getPaddingRight(), topArea.getPaddingBottom());
+            topArea.setPadding(topArea.getPaddingLeft(), sys.top, topArea.getPaddingRight(),
+                    topArea.getPaddingBottom());
 
             int topPad = overlayHeights[0] + sys.top;
             int bottomPad = Math.max(sys.bottom, ime.bottom);
@@ -258,8 +270,14 @@ public class RegisterActivity extends BaseActivity {
             return true;
         });
         titleEditText.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
             @Override
             public void afterTextChanged(Editable s) {
                 validateTitle();
@@ -275,10 +293,12 @@ public class RegisterActivity extends BaseActivity {
         });
         tagEditText.setOnFocusChangeListener((v, hasFocus) -> {
             setEdit(hasFocus, tagEditText);
-            if (hasFocus) focusWithAnchor(tagEditText, Anchor.SALE_TXT, false);
-            if (!hasFocus) applyFinalHashTagFix();
+            if (hasFocus)
+                focusWithAnchor(tagEditText, Anchor.SALE_TXT, false);
+            if (!hasFocus)
+                applyFinalHashTagFix();
         });
-        tagEditText.setFilters(new InputFilter[]{singleSpaceFilter, tagCharFilter});
+        tagEditText.setFilters(new InputFilter[] { singleSpaceFilter, tagCharFilter });
         tagEditText.setOnEditorActionListener((v, actionId, event) -> {
             applyFinalHashTagFix();
             hideKeyboardAndClearFocus();
@@ -286,11 +306,19 @@ public class RegisterActivity extends BaseActivity {
         });
         tagEditText.addTextChangedListener(new TextWatcher() {
             private boolean self = false;
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
             @Override
             public void afterTextChanged(Editable s) {
-                if (self) return;
+                if (self)
+                    return;
                 // 태그 자동 # 붙이기 로직
                 String text = s.toString();
                 if (text.endsWith(" ") && text.length() > 1) {
@@ -309,7 +337,7 @@ public class RegisterActivity extends BaseActivity {
                 }
 
                 String str = s.toString().trim();
-                String[] tags = str.isEmpty() ? new String[]{} : str.split(" ");
+                String[] tags = str.isEmpty() ? new String[] {} : str.split(" ");
 
                 if (tags.length > 5) {
                     alertTxt2.setText("태그는 최대 5개까지 입력가능합니다.\n\n");
@@ -330,7 +358,8 @@ public class RegisterActivity extends BaseActivity {
         priceEditText.setOnClickListener(v -> focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, false));
         priceEditText.setOnFocusChangeListener((v, hasFocus) -> {
             setPriceEdit(hasFocus);
-            if (hasFocus) focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, false);
+            if (hasFocus)
+                focusWithAnchor(priceEditText, Anchor.REGISTER_BTN, false);
         });
         priceEditText.setOnEditorActionListener((v, actionId, event) -> {
             hideKeyboardAndClearFocus();
@@ -338,16 +367,25 @@ public class RegisterActivity extends BaseActivity {
         });
         priceEditText.addTextChangedListener(new TextWatcher() {
             private boolean selfChange = false;
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
             @Override
             public void afterTextChanged(Editable s) {
-                if (selfChange || isFree) return;
+                if (selfChange || isFree)
+                    return;
 
                 String t = s.toString();
                 if (!isFree && t.length() > 1 && t.startsWith("0")) {
                     String newText = t.replaceFirst("^0+(?=\\d)", "");
-                    if (newText.isEmpty()) newText = "0";
+                    if (newText.isEmpty())
+                        newText = "0";
                     selfChange = true;
                     priceEditText.setText(newText);
                     priceEditText.setSelection(newText.length());
@@ -422,7 +460,7 @@ public class RegisterActivity extends BaseActivity {
     private boolean validateInputs() {
         String title = titleEditText.getText().toString().trim();
         String tagStr = tagEditText.getText().toString().trim().replace("#", "");
-        String[] tags = tagStr.isEmpty() ? new String[]{} : tagStr.split("\\s+");
+        String[] tags = tagStr.isEmpty() ? new String[] {} : tagStr.split("\\s+");
 
         if (title.isEmpty() || title.length() > 15) {
             focusWithAnchor(titleEditText, Anchor.TAG_TXT, true);
@@ -530,7 +568,7 @@ public class RegisterActivity extends BaseActivity {
         finish(); // 등록 화면 종료
     }
 
-    private void moveToMain() { ///  ??? 언제 main으로 가는거지
+    private void moveToMain() { /// ??? 언제 main으로 가는거지
         Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
         mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(mainIntent);
@@ -546,12 +584,14 @@ public class RegisterActivity extends BaseActivity {
         Rect contentRect = new Rect();
         boolean tOk = target.getGlobalVisibleRect(targetRect);
         boolean cOk = scrollContent.getGlobalVisibleRect(contentRect);
-        if (!tOk || !cOk) return false;
+        if (!tOk || !cOk)
+            return false;
         return Rect.intersects(targetRect, contentRect);
     }
 
     private final InputFilter singleSpaceFilter = (source, start, end, dest, dstart, dend) -> {
-        if (source == null || start >= end) return null;
+        if (source == null || start >= end)
+            return null;
         String in = source.subSequence(start, end).toString();
         String compact = in.replaceAll("\\s{2,}", " ");
         StringBuilder sb = new StringBuilder(compact);
@@ -570,20 +610,24 @@ public class RegisterActivity extends BaseActivity {
 
     private final InputFilter tagCharFilter = (source, start, end, dest, dstart, dend) -> {
         String input = source.subSequence(start, end).toString();
-        if (input.equals("#")) return "";
+        if (input.equals("#"))
+            return "";
         String filtered = input.replaceAll("[^\\u1100-\\u11FF\\u3131-\\u318F\\uAC00-\\uD7A3a-zA-Z0-9_ #]", "");
         return !input.equals(filtered) ? filtered : null;
     };
 
     private void applyFinalHashTagFix() {
         Editable s = tagEditText.getText();
-        if (s == null) return;
+        if (s == null)
+            return;
         String text = s.toString().trim();
-        if (text.isEmpty()) return;
+        if (text.isEmpty())
+            return;
 
         int lastSpace = text.lastIndexOf(' ');
         String lastTag = (lastSpace == -1) ? text : text.substring(lastSpace + 1);
-        if (lastTag.startsWith("#")) return;
+        if (lastTag.startsWith("#"))
+            return;
 
         String newTag = "#" + lastTag;
         String prefix = (lastSpace == -1) ? "" : text.substring(0, lastSpace + 1);
@@ -593,35 +637,47 @@ public class RegisterActivity extends BaseActivity {
     }
 
     private void anchor(EditText editText, Anchor anchor, boolean forceScroll) {
-        if (editText == null) return;
+        if (editText == null)
+            return;
         showKeyboard(editText);
         pendingAnchor = anchor;
         this.forceScroll = forceScroll;
-        if (keyboardVisible) new Handler().postDelayed(this::alignToPendingAnchor, 16);
+        if (keyboardVisible)
+            new Handler().postDelayed(this::alignToPendingAnchor, 16);
     }
 
     private void focusWithAnchor(EditText editText, Anchor anchor, boolean forceScroll) {
-        if (editText == null) return;
+        if (editText == null)
+            return;
         editText.requestFocus();
         showKeyboard(editText);
         pendingAnchor = anchor;
         this.forceScroll = forceScroll;
-        if (keyboardVisible) new Handler().postDelayed(this::alignToPendingAnchor, 16);
+        if (keyboardVisible)
+            new Handler().postDelayed(this::alignToPendingAnchor, 16);
     }
 
     private void alignToPendingAnchor() {
-        if (pendingAnchor == Anchor.NONE) return;
+        if (pendingAnchor == Anchor.NONE)
+            return;
         View target = null;
         switch (pendingAnchor) {
-            case TAG_TXT: target = tagTxt; break;
-            case SALE_TXT: target = saleTxt; break;
-            case REGISTER_BTN: target = registerBtn; break;
+            case TAG_TXT:
+                target = tagTxt;
+                break;
+            case SALE_TXT:
+                target = saleTxt;
+                break;
+            case REGISTER_BTN:
+                target = registerBtn;
+                break;
         }
         alignKeyboardTopToViewTop(target);
     }
 
     private void alignKeyboardTopToViewTop(View target) {
-        if (target == null) return;
+        if (target == null)
+            return;
         final int SAFE_SLACK_PX = dp(6);
         int[] loc = new int[2];
         target.getLocationInWindow(loc);
@@ -629,28 +685,34 @@ public class RegisterActivity extends BaseActivity {
         int keyboardTop = lastVisibleFrame.bottom;
         int dy = targetTop - keyboardTop;
         if (forceScroll) {
-            if (Math.abs(dy) > dp(1)) scrollView.smoothScrollBy(0, dy);
+            if (Math.abs(dy) > dp(1))
+                scrollView.smoothScrollBy(0, dy);
         } else {
-            if (dy > SAFE_SLACK_PX) scrollView.smoothScrollBy(0, dy);
+            if (dy > SAFE_SLACK_PX)
+                scrollView.smoothScrollBy(0, dy);
         }
     }
 
     private void showKeyboard(View view) {
         view.post(() -> {
             InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-            if (imm != null) imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+            if (imm != null)
+                imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
         });
     }
 
     private boolean isPointInsideView(MotionEvent ev, View v) {
-        if (v == null) return false;
+        if (v == null)
+            return false;
         Rect r = new Rect();
-        if (!v.getGlobalVisibleRect(r)) return false;
+        if (!v.getGlobalVisibleRect(r))
+            return false;
         return r.contains((int) ev.getRawX(), (int) ev.getRawY());
     }
 
     private boolean isPointInsideAnyEditText(MotionEvent ev) {
-        return isPointInsideView(ev, titleEditText) || isPointInsideView(ev, tagEditText) || isPointInsideView(ev, priceEditText);
+        return isPointInsideView(ev, titleEditText) || isPointInsideView(ev, tagEditText)
+                || isPointInsideView(ev, priceEditText);
     }
 
     @Override
@@ -669,7 +731,8 @@ public class RegisterActivity extends BaseActivity {
             case MotionEvent.ACTION_UP:
                 if (maybeTap) {
                     View focused = getCurrentFocus();
-                    if (focused instanceof EditText && !isPointInsideAnyEditText(ev) && !isPointInsideView(ev, registerBtn)) {
+                    if (focused instanceof EditText && !isPointInsideAnyEditText(ev)
+                            && !isPointInsideView(ev, registerBtn)) {
                         hideKeyboardAndClearFocus();
                     }
                 }
@@ -680,18 +743,23 @@ public class RegisterActivity extends BaseActivity {
 
     private void hideKeyboardAndClearFocus() {
         View v = getCurrentFocus();
-        if (v == null) v = scrollView;
+        if (v == null)
+            v = scrollView;
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        if (imm != null && v != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        if (imm != null && v != null)
+            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
         clearAllEditFocus();
         pendingAnchor = Anchor.NONE;
         forceScroll = false;
     }
 
     private void clearAllEditFocus() {
-        if (titleEditText != null) titleEditText.clearFocus();
-        if (tagEditText != null) tagEditText.clearFocus();
-        if (priceEditText != null) priceEditText.clearFocus();
+        if (titleEditText != null)
+            titleEditText.clearFocus();
+        if (tagEditText != null)
+            tagEditText.clearFocus();
+        if (priceEditText != null)
+            priceEditText.clearFocus();
     }
 
     private int dp(int value) {
@@ -716,8 +784,10 @@ public class RegisterActivity extends BaseActivity {
     private void setEdit(boolean hasFocus, EditText et) {
         String text = et.getText().toString().trim();
         boolean valid = true;
-        if (et == titleEditText) valid = !text.isEmpty() && text.length() <= 15;
-        else if (et == tagEditText) valid = text.isEmpty() || text.split(" ").length <= 5;
+        if (et == titleEditText)
+            valid = !text.isEmpty() && text.length() <= 15;
+        else if (et == tagEditText)
+            valid = text.isEmpty() || text.split(" ").length <= 5;
 
         int bgRes = hasFocus ? (valid ? R.drawable.border_edit_focus : R.drawable.border_edit_alert)
                 : (valid ? R.drawable.border_edit : R.drawable.border_edit_alert);
@@ -734,7 +804,8 @@ public class RegisterActivity extends BaseActivity {
         try {
             int price = Integer.parseInt(t);
             valid = (price >= 10 && price <= 300 && price % 10 == 0);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         int bgRes = hasFocus ? (valid ? R.drawable.border_price_focus : R.drawable.border_price_alert)
                 : (valid ? R.drawable.border_price : R.drawable.border_price_alert);
@@ -742,7 +813,8 @@ public class RegisterActivity extends BaseActivity {
     }
 
     private void setRegisterBtn() {
-        boolean titleValid = !titleEditText.getText().toString().trim().isEmpty() && titleEditText.getText().length() <= 15;
+        boolean titleValid = !titleEditText.getText().toString().trim().isEmpty()
+                && titleEditText.getText().length() <= 15;
         String tagStr = tagEditText.getText().toString().trim();
         boolean tagValid = tagStr.isEmpty() || tagStr.split(" ").length <= 5;
         boolean priceValid = isFree;
@@ -750,7 +822,9 @@ public class RegisterActivity extends BaseActivity {
             try {
                 int p = Integer.parseInt(priceEditText.getText().toString().trim());
                 priceValid = (p >= 10 && p <= 300 && p % 10 == 0);
-            } catch (Exception e) { priceValid = false; }
+            } catch (Exception e) {
+                priceValid = false;
+            }
         }
 
         if (titleValid && tagValid && priceValid) {

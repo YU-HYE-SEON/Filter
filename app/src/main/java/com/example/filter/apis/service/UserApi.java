@@ -32,7 +32,7 @@ public interface UserApi {
     }
 
 
-    /// 닉네임 중복 판단 필요
-    @GET("/api/v1/users/nickname/exists")
-    Call<ResponseBody> checkNicknameExists(@Query("nickname") String nickname);
+    /// 닉네임 중복
+    @GET("/api/v1/users/nickname")
+    Call<ResponseBody> checkNicknameExists(@Query("candidate") String nickname);
 }

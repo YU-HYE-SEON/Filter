@@ -21,7 +21,9 @@ import com.example.filter.activities.mypage.PointHistoryActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class MyPageFragment extends Fragment {
-    private TextView nickname, id, currentPoint;
+    private TextView nickname;
+    private TextView id;
+    private TextView currentPoint;
     private AppCompatButton nickEditBtn, logoutBtn, pointChargeBtn, salesManageBtn;
     private ConstraintLayout pointBox, ask, appInfo, withdraw, snsId;
     private SwitchCompat pushToggle;
@@ -54,11 +56,11 @@ public class MyPageFragment extends Fragment {
         ClickUtils.clickDim(nickEditBtn);
         ClickUtils.clickDim(logoutBtn);
         ClickUtils.clickDim(pointChargeBtn);
-        ClickUtils.clickDim(salesManageBtn);
-        ClickUtils.clickDim(ask);
-        ClickUtils.clickDim(appInfo);
-        ClickUtils.clickDim(withdraw);
-        ClickUtils.clickDim(snsId);
+        //ClickUtils.clickDim(salesManageBtn);
+        //ClickUtils.clickDim(ask);
+        //ClickUtils.clickDim(appInfo);
+        //ClickUtils.clickDim(withdraw);
+        //ClickUtils.clickDim(snsId);
 
         pointBox.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), PointHistoryActivity.class);
@@ -85,7 +87,7 @@ public class MyPageFragment extends Fragment {
 
         SharedPreferences sp2 = requireContext().getSharedPreferences("points", 0);
         int current = sp2.getInt("current_point", 0);
-        currentPoint.setText(current + "P");
+        currentPoint.setText(String.format("%,dP", current));
 
         pushToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
             requireContext()
@@ -102,6 +104,6 @@ public class MyPageFragment extends Fragment {
 
         SharedPreferences sp = requireContext().getSharedPreferences("points", 0);
         int current = sp.getInt("current_point", 0);
-        currentPoint.setText(current + "P");
+        currentPoint.setText(String.format("%,dP", current));
     }
 }

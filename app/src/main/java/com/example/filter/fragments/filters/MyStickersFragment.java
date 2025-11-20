@@ -333,8 +333,7 @@ public class MyStickersFragment extends Fragment {
                     deleteStickerIcon.setAlpha(0.4f);
                 }
             }
-        })
-                .withMessage("내 스티커에서 정말로 삭제하시겠습니까?")
+        }).withMessage("내 스티커에서 정말로 삭제하시겠습니까?")
                 .withButton1Text("예")
                 .withButton2Text("아니오")
                 .show();

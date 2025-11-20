@@ -642,7 +642,7 @@ public class LoadActivity extends BaseActivity {
                 startActivity(i);
                 finish();
             }
-        }).withMessage("편집한 내용을 저장하지 않고\n종료하시겠습니까?").withButton1Text("예").withButton2Text("아니오").show();
+        }).show();
     }
 
     private float spacing(MotionEvent e) {

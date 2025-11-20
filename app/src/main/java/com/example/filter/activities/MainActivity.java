@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -182,15 +183,16 @@ public class MainActivity extends BaseActivity {
 
         /// 홈화면에서 필터 아이템 눌렀을 때 상세화면으로 이동하는 부분 ///
         /// 홈에서 필터상세 갈 때도 정보값 유지시켜야 해서 해당 필터아이템의 정보값들을 전달 ///
-        filterAdapter.setOnItemClickListener((v, item, title, nickname) -> {
+        filterAdapter.setOnItemClickListener((v, item) -> {
             Intent intent = new Intent(MainActivity.this, FilterInfoActivity.class);
             intent.putExtra("filterId", item.id);
-            //intent.putExtra("nickname", item.nickname);
-            intent.putExtra("nickname", nickname);
+
+            intent.putExtra("nickname", item.nickname);
+            Log.d("닉네임 테스트", "메인 → 필터상세 | 닉네임 : " + item.nickname);
+
             intent.putExtra("original_image_path", item.originalPath);
             intent.putExtra("imgUrl", item.filterImageUrl);
-            //intent.putExtra("filterTitle", item.filterTitle);
-            intent.putExtra("filterTitle", title);
+            intent.putExtra("filterTitle", item.filterTitle);
             intent.putExtra("tags", item.tags);
             intent.putExtra("price", item.price);
             intent.putExtra("count", item.count);
@@ -394,9 +396,15 @@ public class MainActivity extends BaseActivity {
             );
 
             /// 여기가 실질적으로 필터를 등록할지 말지를 결정 ///
-            /// 이미 어댑터에 존재하는 필터라면 새로 등록하지 않음. 존재하지 않는 필터라면 등록 ///
-            if (filterAdapter != null && !filterAdapter.containsId(newId)) {
-                filterAdapter.addItem(newItem);
+            /// 존재하는 필터라면 새로 등록하지 않음 ///
+            /// 이미 어댑터에 존재하는 필터인 경우, 가격 바뀌면 가격 업데이트 ///
+            /// 존재하지 않는 필터라면 등록 ///
+            if (filterAdapter != null) {
+                if (filterAdapter.containsId(newId)) {
+                    filterAdapter.updatePriceItem(newId, price);
+                } else {
+                    filterAdapter.addItem(newItem);
+                }
             }
         }
     }
