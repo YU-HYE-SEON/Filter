@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -25,6 +26,7 @@ import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -38,8 +40,11 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
+import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.apis.service.UploadApi;
 import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.FaceStickerData;
+import com.example.filter.etc.FilterCreationData;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.fragments.filters.BrushFragment;
 import com.example.filter.overlayviews.BrushOverlayView;
@@ -58,7 +63,16 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FilterActivity extends BaseActivity {
     /// UI ///
@@ -67,7 +81,6 @@ public class FilterActivity extends BaseActivity {
     private ImageButton backBtn;
     private AppCompatButton saveBtn;
     private ImageButton undoColor, redoColor, originalColor;
-    //private ImageButton undoSticker, redoSticker, originalSticker;
 
     /// renderer, photoImage ///
     private FGLRenderer renderer;
@@ -78,7 +91,9 @@ public class FilterActivity extends BaseActivity {
     private OnBackPressedCallback backGateCallback;
 
     /// 크롭 ///
-    public enum CropMode {NONE, FREE, OTO, TTF, NTS}
+    public enum CropMode {
+        NONE, FREE, OTO, TTF, NTS
+    }
 
     private CropMode currentCropMode = CropMode.NONE;
     private CropMode lastCropMode = CropMode.NONE;
@@ -118,13 +133,12 @@ public class FilterActivity extends BaseActivity {
             this.before = b;
             this.after = a;
         }
-
     }
 
     private final ArrayList<ColorEdit> colorHistory = new ArrayList<>();
     private int colorCursor = -1;
     private boolean colorEdited = false;
-    private final String[] FILTER_KEYS = new String[]{
+    private final String[] FILTER_KEYS = new String[] {
             "밝기", "노출", "대비", "하이라이트", "그림자",
             "온도", "색조", "채도", "선명하게", "흐리게", "비네트", "노이즈"
     };
@@ -132,112 +146,13 @@ public class FilterActivity extends BaseActivity {
     private final HashMap<String, Integer> savedFilterValues = new HashMap<>();
     private boolean isPreviewingOriginalColors = false;
 
-    /// 브러쉬, 스티커 ///
-    /*private static class CloneGroupOp {
-        final boolean isEdit; // true면 수정, false면 생성
-        final int groupId;
-        final View stickerFrame;
-        final float prevRelX, prevRelY, prevRelW, prevRelH, prevRot;
-        final float nextRelX, nextRelY, nextRelW, nextRelH, nextRot;
-
-        CloneGroupOp(boolean isEdit, int groupId, View stickerFrame,
-                     float prevRelX, float prevRelY, float prevRelW, float prevRelH, float prevRot,
-                     float nextRelX, float nextRelY, float nextRelW, float nextRelH, float nextRot) {
-            this.isEdit = isEdit;
-            this.groupId = groupId;
-            this.stickerFrame = stickerFrame;
-            this.prevRelX = prevRelX;
-            this.prevRelY = prevRelY;
-            this.prevRelW = prevRelW;
-            this.prevRelH = prevRelH;
-            this.prevRot = prevRot;
-            this.nextRelX = nextRelX;
-            this.nextRelY = nextRelY;
-            this.nextRelW = nextRelW;
-            this.nextRelH = nextRelH;
-            this.nextRot = nextRot;
-        }
-    }
-
-    private static class StickerOp {
-        final ArrayList<View> views = new ArrayList<>();
-        final ArrayList<Integer> positions = new ArrayList<>();
-    }
-
-    private static class StickerEdit {
-        View view;
-        float bx, by, br;
-        int bw, bh, bz;
-        float ax, ay, ar;
-        int aw, ah, az;
-    }
-
-    private static class BrushOp {
-        final ArrayList<View> views = new ArrayList<>();
-        final ArrayList<Integer> positions = new ArrayList<>();
-    }
-
-    public static class ErasePatch {
-        public Rect rect;
-        public Bitmap before;
-    }
-
-    public static class EraseOp {
-        public ImageView view;
-        public ArrayList<ErasePatch> patches = new ArrayList<>();
-        public Path pathOnBitmap;
-        public float strokeWidthPx;
-    }
-
-    private static class HistoryOp {
-        CloneGroupOp cloneGroup;
-        List<View> cloneDelete;
-        List<Integer> cloneDeletePos;
-        StickerOp sticker;
-        StickerEdit edit;
-        View delete;
-        int deletedPos = -1;
-        BrushOp brush;
-        ArrayList<EraseOp> erases;
-
-        boolean hasCloneGroup() {
-            return cloneGroup != null;
-        }
-
-        boolean hasCloneDeletion() {
-            return cloneDelete != null && cloneDeletePos != null && !cloneDelete.isEmpty();
-        }
-
-        boolean hasSticker() {
-            return sticker != null && !sticker.views.isEmpty();
-        }
-
-        boolean hasStickerEdit() {
-            return edit != null && edit.view != null;
-        }
-
-        boolean hasDeletion() {
-            return delete != null && deletedPos >= 0;
-        }
-
-        boolean hasBrush() {
-            return brush != null && !brush.views.isEmpty();
-        }
-
-        boolean hasErase() {
-            return erases != null && !erases.isEmpty();
-        }
-    }
-
-    private final ArrayList<HistoryOp> history = new ArrayList<>();
-    private int historyCursor = -1;*/
     private List<FaceStickerData> faceStickerList = new ArrayList<>();
 
     /// 필터 등록 제한 ///
     private boolean allowRegister = false;
 
     /// life cycle ///
-    @SuppressLint({"ClickableViewAccessibility", "WrongConstant"})
+    @SuppressLint({ "ClickableViewAccessibility", "WrongConstant" })
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -251,11 +166,6 @@ public class FilterActivity extends BaseActivity {
         undoColor = findViewById(R.id.undoColor);
         redoColor = findViewById(R.id.redoColor);
         originalColor = findViewById(R.id.originalColor);
-
-        /*undoSticker = findViewById(R.id.undoSticker);
-        redoSticker = findViewById(R.id.redoSticker);
-        originalSticker = findViewById(R.id.originalSticker);*/
-
 
         Window window = getWindow();
         window.setNavigationBarColor(Color.BLACK);
@@ -297,7 +207,8 @@ public class FilterActivity extends BaseActivity {
         scaleDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
-                if (currentCropMode == CropMode.NONE) return true;
+                if (currentCropMode == CropMode.NONE)
+                    return true;
 
                 scaleFactor *= detector.getScaleFactor();
                 scaleFactor = Math.max(1.0f, Math.min(scaleFactor, 4.0f));
@@ -322,7 +233,6 @@ public class FilterActivity extends BaseActivity {
         });
 
         setupColorButtons();
-        //setupStickerButtons();
         setupSaveButton();
         setupBackNavigation();
         setupImagePicker();
@@ -359,9 +269,11 @@ public class FilterActivity extends BaseActivity {
         super.onResume();
         StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
         viewModel.getFaceStickerData().observe(this, data -> {
-            if (data == null) return;
+            if (data == null)
+                return;
 
-            if (faceStickerList == null) faceStickerList = new ArrayList<>();
+            if (faceStickerList == null)
+                faceStickerList = new ArrayList<>();
             faceStickerList.add(data);
 
             if (data.stickerBitmap != null) {
@@ -372,7 +284,8 @@ public class FilterActivity extends BaseActivity {
         });
 
         viewModel.getFaceStickerDataToDelete().observe(this, groupId -> {
-            if (groupId == null) return;
+            if (groupId == null)
+                return;
 
             if (faceStickerList != null) {
                 faceStickerList.removeIf(stickerData -> groupId.equals(stickerData.groupId));
@@ -428,41 +341,12 @@ public class FilterActivity extends BaseActivity {
         });
     }
 
-    /*@SuppressLint("ClickableViewAccessibility")
-    private void setupStickerButtons() {
-        originalSticker.setOnTouchListener((v, ev) -> {
-            if (!v.isEnabled()) return true;
-            switch (ev.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    v.setPressed(true);
-                    originalSticker.setAlpha(0.4f);
-                    if (undoSticker != null) {
-                        undoSticker.setEnabled(false);
-                        undoSticker.setAlpha(0.4f);
-                    }
-                    if (redoSticker != null) {
-                        redoSticker.setEnabled(false);
-                        redoSticker.setAlpha(0.4f);
-                    }
-                    previewOriginalStickers(true);
-                    return true;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    v.setPressed(false);
-                    //originalSticker.setAlpha(1f);
-                    previewOriginalStickers(false);
-                    refreshStickerButtons();
-                    return true;
-            }
-            return true;
-        });
-    }*/
-
-    /// 중첩 클릭되면 안 됨 ///
+    /// 저장 버튼 설정 (수정됨: S3 업로드 후 이동) ///
     private void setupSaveButton() {
         saveBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            ClickUtils.disableTemporarily(v, 800);
+            if (ClickUtils.isFastClick(v, 400))
+                return;
+            ClickUtils.disableTemporarily(v, 3000); // 업로드 시간 고려
 
             renderer.setOnBitmapCaptureListener(new FGLRenderer.OnBitmapCaptureListener() {
                 @Override
@@ -482,148 +366,248 @@ public class FilterActivity extends BaseActivity {
                     }
 
                     try {
-                        /// 얼굴인식스티커(클론스티커) 정보 입력 ///
-                        List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
-                        for (FaceStickerData d : faceStickerList) {
-                            FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-                            s.placementType = "face";
-                            s.x = d.relX;
-                            s.y = d.relY;
-                            s.scale = (d.relW + d.relH) / 2f;
-                            //s.relW = d.relW;
-                            //s.relH = d.relH;
-                            s.rotation = d.rot;
-                            s.stickerId = d.groupId;
-                            stickers.add(s);
+                        String tempFilterId = UUID.randomUUID().toString();
 
-                            /*Log.d("StickerFlow", String.format(
-                                    "[FilterActivity:Save] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
-                                    d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-                            ));*/
-                        }
-
-                        //조정값
-                        FilterDtoCreateRequest.ColorAdjustments adj = new FilterDtoCreateRequest.ColorAdjustments();
-                        adj.brightness = renderer.getCurrentValue("밝기") / 100f;
-                        adj.exposure = renderer.getCurrentValue("노출") / 100f;
-                        adj.contrast = renderer.getCurrentValue("대비") / 100f;
-                        adj.highlight = renderer.getCurrentValue("하이라이트") / 100f;
-                        adj.shadow = renderer.getCurrentValue("그림자") / 100f;
-                        adj.temperature = renderer.getCurrentValue("온도") / 100f;
-                        adj.hue = renderer.getCurrentValue("색조") / 100f;
-                        //adj.saturation = renderer.getCurrentValue("채도") / 100f;
-                        adj.saturation = (renderer.getCurrentValue("채도") / 100f) + 1.0f;
-                        adj.sharpen = renderer.getCurrentValue("선명하게") / 100f;
-                        adj.blur = renderer.getCurrentValue("흐리게") / 100f;
-                        adj.vignette = renderer.getCurrentValue("비네트") / 100f;
-                        adj.noise = renderer.getCurrentValue("노이즈") / 100f;
-
-                        //브러쉬 오버레이 굽기
+                        // 1. 브러쉬 오버레이 파일 저장
                         Bitmap brushBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas brushCanvas = new Canvas(brushBitmap);
                         brushCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
                         brushCanvas.save();
                         brushCanvas.translate(-vX, -vY);
-                        if (brushOverlay != null) brushOverlay.draw(brushCanvas);
+                        if (brushOverlay != null)
+                            brushOverlay.draw(brushCanvas);
                         brushCanvas.restore();
-
-                        String tempFilterId = UUID.randomUUID().toString();
 
                         File tempBrushFile = new File(getCacheDir(), "brush_" + tempFilterId + ".png");
                         try (FileOutputStream out = new FileOutputStream(tempBrushFile)) {
                             brushBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        //스티커 오버레이 전체 굽기
-                        Bitmap stickerBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
-                        Canvas stickerCanvas = new Canvas(stickerBitmap);
-                        stickerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                        stickerCanvas.save();
-                        stickerCanvas.translate(-vX, -vY);
-                        if (stickerOverlay != null) {
-                            stickerOverlay.draw(stickerCanvas);
-                        }
-                        stickerCanvas.restore();
-
-                        File tempStickerFile = new File(getCacheDir(), "sticker_" + tempFilterId + ".png");
-                        try (FileOutputStream out = new FileOutputStream(tempStickerFile)) {
-                            stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                        }
-
-                        //브러쉬와 스티커 포함된 최종 편집된 이미지
+                        // 2. 최종 편집본 (Preview) 파일 저장
                         Bitmap finalBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas finalCanvas = new Canvas(finalBitmap);
-
                         finalCanvas.drawBitmap(bitmap, 0, 0, null);
                         finalCanvas.save();
                         finalCanvas.translate(-vX, -vY);
-                        if (stickerOverlay != null) stickerOverlay.draw(finalCanvas);
-                        if (brushOverlay != null) brushOverlay.draw(finalCanvas);
+                        if (stickerOverlay != null)
+                            stickerOverlay.draw(finalCanvas);
+                        if (brushOverlay != null)
+                            brushOverlay.draw(finalCanvas);
                         finalCanvas.restore();
 
-                        File tempFile = new File(getCacheDir(), "temp_captured_image_" + tempFilterId + ".png");
-                        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+                        File previewFile = new File(getCacheDir(), "preview_" + tempFilterId + ".png");
+                        try (FileOutputStream out = new FileOutputStream(previewFile)) {
                             finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        //얼굴인식스티커 제외 버전으로 굽기
+                        // ---------------------------------------------------------
+                        // ✅ 3. [수정됨] 원본 이미지 (Original) 파일 저장
+                        // (회전/크롭은 적용하되, 필터는 없는 깨끗한 이미지 생성)
+                        // ---------------------------------------------------------
+                        File originalFile = new File(getCacheDir(), "original_" + tempFilterId + ".png");
+                        try (FileOutputStream out = new FileOutputStream(originalFile)) {
+                            // ★ 헬퍼 메서드로 '지오메트리만 적용된' 비트맵 생성
+                            Bitmap geomBitmap = createGeometryOnlyBitmap();
+
+                            if (geomBitmap != null) {
+                                geomBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                            } else {
+                                // 만약 생성 실패시 fallback으로 현재 캡처본 사용
+                                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                            }
+                        }
+
+                        // 4. 얼굴 인식 스티커 제외 이미지 (No Face) 파일 저장
                         Bitmap stickerBitmap_noFace = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                         Canvas stickerCanvas_noFace = new Canvas(stickerBitmap_noFace);
                         stickerCanvas_noFace.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
                         stickerCanvas_noFace.save();
                         stickerCanvas_noFace.translate(-vX, -vY);
-
                         if (stickerOverlay != null) {
-                            for (View child : clonesToHide) {
+                            for (View child : clonesToHide)
                                 child.setAlpha(0f);
-                            }
                             stickerOverlay.draw(stickerCanvas_noFace);
-                            for (View child : clonesToHide) {
+                            for (View child : clonesToHide)
                                 child.setAlpha(1f);
-                            }
                         }
                         stickerCanvas_noFace.restore();
 
-                        File tempStickerFile_noFace = new File(getCacheDir(), "sticker_image_no_face_" + tempFilterId + ".png");
+                        File tempStickerFile_noFace = new File(getCacheDir(),
+                                "sticker_image_no_face_" + tempFilterId + ".png");
                         try (FileOutputStream out = new FileOutputStream(tempStickerFile_noFace)) {
                             stickerBitmap_noFace.compress(Bitmap.CompressFormat.PNG, 100, out);
                         }
 
-                        //데이터 전달
-                        Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
-                        intent.putExtra("allowRegister", allowRegister);
+                        // ✅ 2. 서버에 이미지 업로드 시작 -> 성공 시 다음 화면 이동
+                        uploadImagesAndProceed(originalFile, previewFile, bitmap, tempStickerFile_noFace);
 
-                        intent.putExtra("saved_image", tempFile.getAbsolutePath());
-                        intent.putExtra("original_image_path", getIntent().getData().toString());
-
-                        if (appliedCropRectN != null) {
-                            intent.putExtra("cropRectN_l", appliedCropRectN.left);
-                            intent.putExtra("cropRectN_t", appliedCropRectN.top);
-                            intent.putExtra("cropRectN_r", appliedCropRectN.right);
-                            intent.putExtra("cropRectN_b", appliedCropRectN.bottom);
-                        }
-                        intent.putExtra("accumRotationDeg", accumRotationDeg);
-                        intent.putExtra("accumFlipH", accumFlipH);
-                        intent.putExtra("accumFlipV", accumFlipV);
-
-                        intent.putExtra("color_adjustments", adj);
-                        //intent.putExtra("brush_image_path", tempBrushFile.getAbsolutePath());
-                        //intent.putE`xtra("sticker_image_path", tempStickerFile.getAbsolutePath());
-
-                        /// 얼굴인식스티커 정보 전달 ///
-                        intent.putExtra("sticker_image_no_face_path", tempStickerFile_noFace.getAbsolutePath());
-                        intent.putExtra("face_stickers", new ArrayList<>(faceStickerList));
-
-                        startActivity(intent);
-                        finish();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             });
-
             renderer.captureBitmap();
         });
+    }
+
+    // ✅ [추가] 이미지 업로드 및 화면 전환 메서드
+    // ---------------------------------------------------------------
+    // ✅ [수정됨] 1단계: 필터 이미지(Original, Preview) 업로드
+    // ---------------------------------------------------------------
+    private void uploadImagesAndProceed(File originalFile, File previewFile, Bitmap bitmap, File stickerNoFaceFile) {
+        // 1. 필터 이미지 Body 생성
+        RequestBody reqOriginal = RequestBody.create(MediaType.parse("image/png"), originalFile);
+        MultipartBody.Part partOriginal = MultipartBody.Part.createFormData("original", originalFile.getName(),
+                reqOriginal);
+
+        RequestBody reqPreview = RequestBody.create(MediaType.parse("image/png"), previewFile);
+        MultipartBody.Part partPreview = MultipartBody.Part.createFormData("preview", previewFile.getName(),
+                reqPreview);
+
+        UploadApi api = AppRetrofitClient.getInstance(this).create(UploadApi.class);
+
+        // 2. 필터 이미지 업로드 요청
+        api.uploadFilterImages(partOriginal, partPreview).enqueue(new Callback<Map<String, String>>() {
+            @Override
+            public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Map<String, String> urls = response.body();
+                    String s3OriginalUrl = urls.get("originalImageUrl");
+                    String s3PreviewUrl = urls.get("previewImageUrl");
+
+                    // ★ 성공 시 2단계: 스티커 이미지 업로드 호출 (연쇄 호출)
+                    uploadStickerImageAndMove(s3OriginalUrl, s3PreviewUrl, bitmap, stickerNoFaceFile);
+
+                } else {
+                    Log.e("FilterUpload", "필터 이미지 업로드 실패: " + response.code());
+                    Toast.makeText(FilterActivity.this, "필터 업로드 실패", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, String>> call, Throwable t) {
+                Log.e("FilterUpload", "통신 오류", t);
+                Toast.makeText(FilterActivity.this, "업로드 중 오류 발생", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // ✅ [추가됨] 2단계: 스티커 이미지 업로드 후 화면 이동
+    // ---------------------------------------------------------------
+    private void uploadStickerImageAndMove(String s3OriginalUrl, String s3PreviewUrl, Bitmap bitmap,
+            File stickerNoFaceFile) {
+        // 파일 존재 여부 확인
+        if (stickerNoFaceFile == null || !stickerNoFaceFile.exists() || stickerNoFaceFile.length() == 0) {
+            moveToNextActivity(s3OriginalUrl, s3PreviewUrl, null, bitmap);
+            return;
+        }
+
+        // RequestBody 생성
+        RequestBody reqSticker = RequestBody.create(MediaType.parse("image/png"), stickerNoFaceFile);
+        MultipartBody.Part partSticker = MultipartBody.Part.createFormData("file", stickerNoFaceFile.getName(),
+                reqSticker);
+
+        UploadApi api = AppRetrofitClient.getInstance(this).create(UploadApi.class);
+
+        // ⚠️ [수정] Call<String> -> Call<ResponseBody>
+        api.uploadStickerImage(partSticker).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        // ✅ [핵심] 날것의 데이터를 문자열로 변환 (이게 S3 URL임)
+                        String s3StickerUrl = response.body().string();
+
+                        Log.d("FilterUpload", "스티커 이미지 업로드 완료: " + s3StickerUrl);
+
+                        // 화면 이동
+                        moveToNextActivity(s3OriginalUrl, s3PreviewUrl, s3StickerUrl, bitmap);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        moveToNextActivity(s3OriginalUrl, s3PreviewUrl, null, bitmap); // 실패 시 null 넘기고 진행
+                    }
+                } else {
+                    Log.e("FilterUpload", "스티커 이미지 업로드 실패: " + response.code());
+                    // 실패해도 일단 다음 화면으로 넘어가게 처리 (선택 사항)
+                    moveToNextActivity(s3OriginalUrl, s3PreviewUrl, null, bitmap);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("FilterUpload", "스티커 통신 오류", t);
+                // 통신 오류 시에도 일단 진행 (선택 사항)
+                moveToNextActivity(s3OriginalUrl, s3PreviewUrl, null, bitmap);
+            }
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // ✅ [수정됨] 화면 이동 (URL들을 받아서 DTO에 담음)
+    // ---------------------------------------------------------------
+    private void moveToNextActivity(String s3OriginalUrl, String s3PreviewUrl, String s3StickerUrl, Bitmap bitmap) {
+        FilterCreationData data = new FilterCreationData();
+
+        // 1. 서버에서 받은 S3 URL들을 DTO에 주입
+        data.originalImageUrl = s3OriginalUrl;
+        data.editedImageUrl = s3PreviewUrl;
+        data.stickerImageNoFaceUrl = s3StickerUrl;
+
+        // 2. 나머지 데이터 설정 (기존 코드 유지)
+        data.aspectX = bitmap.getWidth();
+        data.aspectY = bitmap.getHeight();
+
+        data.colorAdjustments.brightness = renderer.getCurrentValue("밝기") / 100.0;
+        data.colorAdjustments.exposure = renderer.getCurrentValue("노출") / 100.0;
+        // ... (색상 값 매핑 생략 - 기존 유지) ...
+        data.colorAdjustments.contrast = renderer.getCurrentValue("대비") / 100.0;
+        data.colorAdjustments.highlight = renderer.getCurrentValue("하이라이트") / 100.0;
+        data.colorAdjustments.shadow = renderer.getCurrentValue("그림자") / 100.0;
+        data.colorAdjustments.temperature = renderer.getCurrentValue("온도") / 100.0;
+        data.colorAdjustments.hue = renderer.getCurrentValue("색조") / 100.0;
+        data.colorAdjustments.saturation = (renderer.getCurrentValue("채도") / 100.0) + 1.0;
+        data.colorAdjustments.sharpen = renderer.getCurrentValue("선명하게") / 100.0;
+        data.colorAdjustments.blur = renderer.getCurrentValue("흐리게") / 100.0;
+        data.colorAdjustments.vignette = renderer.getCurrentValue("비네트") / 100.0;
+        data.colorAdjustments.noise = renderer.getCurrentValue("노이즈") / 100.0;
+
+        // 스티커 정보 (DB ID 사용)
+        if (faceStickerList != null) {
+            for (FaceStickerData d : faceStickerList) {
+                FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
+                // ✅ FaceStickerData의 서버 ID 사용
+                s.stickerId = d.stickerDbId;
+
+                s.relX = d.relX;
+                s.relY = d.relY;
+                s.relW = d.relW;
+                s.relH = d.relH;
+                s.rot = d.rot;
+                data.stickers.add(s);
+            }
+        }
+
+        Intent intent = new Intent(FilterActivity.this, SavePhotoActivity.class);
+        intent.putExtra("allowRegister", allowRegister);
+        intent.putExtra("filter_data", data);
+
+        // 화면 표시용으로는 로딩이 빠른 'Preview S3 URL'을 사용 (Glide가 캐싱함)
+        intent.putExtra("display_image_path", s3PreviewUrl);
+
+        if (appliedCropRectN != null) {
+            intent.putExtra("cropRectN_l", appliedCropRectN.left);
+            intent.putExtra("cropRectN_t", appliedCropRectN.top);
+            intent.putExtra("cropRectN_r", appliedCropRectN.right);
+            intent.putExtra("cropRectN_b", appliedCropRectN.bottom);
+        }
+        intent.putExtra("accumRotationDeg", accumRotationDeg);
+        intent.putExtra("accumFlipH", accumFlipH);
+        intent.putExtra("accumFlipV", accumFlipV);
+
+        startActivity(intent);
+        finish();
     }
 
     private void setupBackNavigation() {
@@ -633,8 +617,6 @@ public class FilterActivity extends BaseActivity {
                 Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
                 if (isBackEnabledFor(cur)) {
                     handleBackNavChain();
-                } else {
-
                 }
             }
         };
@@ -648,12 +630,11 @@ public class FilterActivity extends BaseActivity {
                             updateBackAndSaveUiEnabled(f);
                         }
                     }
-                }, true
-        );
-
+                }, true);
 
         backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
+            if (ClickUtils.isFastClick(v, 400))
+                return;
             Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
             if (isBackEnabledFor(cur)) {
                 handleBackNavChain();
@@ -674,8 +655,49 @@ public class FilterActivity extends BaseActivity {
                             finish();
                         }
                     }
-                }
-        );
+                });
+    }
+
+    // ---------------------------------------------------------------
+    // ✅ [추가] 필터/스티커 없이 '회전/반전/크롭'만 적용된 원본 비트맵 생성
+    // ---------------------------------------------------------------
+    private Bitmap createGeometryOnlyBitmap() {
+        // 1. 회전/반전이 적용된 비트맵 사용 (transformedBitmap이 최신 회전 상태임)
+        Bitmap source = transformedBitmap != null ? transformedBitmap : originalBitmap;
+
+        if (source == null)
+            return null;
+
+        // 2. 크롭 정보 가져오기 (적용된 크롭이 없으면 현재 크롭 모드의 영역 사용)
+        RectF cropRectN = appliedCropRectN;
+        if (cropRectN == null && lastCropRectN != null) {
+            cropRectN = lastCropRectN;
+        }
+
+        // 3. 크롭이 없으면 회전된 상태 그대로 반환
+        if (cropRectN == null) {
+            return source;
+        }
+
+        // 4. 정규화 좌표(0.0 ~ 1.0)를 픽셀 좌표로 변환하여 자르기
+        int width = source.getWidth();
+        int height = source.getHeight();
+
+        int left = (int) (cropRectN.left * width);
+        int top = (int) (cropRectN.top * height);
+        int right = (int) (cropRectN.right * width);
+        int bottom = (int) (cropRectN.bottom * height);
+
+        // 범위 안전 장치
+        left = Math.max(0, left);
+        top = Math.max(0, top);
+        int cropW = Math.min(right - left, width - left);
+        int cropH = Math.min(bottom - top, height - top);
+
+        if (cropW <= 0 || cropH <= 0)
+            return source;
+
+        return Bitmap.createBitmap(source, left, top, cropW, cropH);
     }
 
     /// 사진 이미지 가져오기 ///
@@ -687,7 +709,8 @@ public class FilterActivity extends BaseActivity {
         try {
             InputStream inputStream = getContentResolver().openInputStream(photoUri);
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            if (inputStream != null) inputStream.close();
+            if (inputStream != null)
+                inputStream.close();
 
             if (bitmap == null) {
                 return;
@@ -708,7 +731,8 @@ public class FilterActivity extends BaseActivity {
                     r = 270;
                     break;
             }
-            if (exifInputStream != null) exifInputStream.close();
+            if (exifInputStream != null)
+                exifInputStream.close();
 
             if (r != 0) {
                 Matrix matrix = new Matrix();
@@ -854,7 +878,8 @@ public class FilterActivity extends BaseActivity {
         }
 
         FrameLayout photoContainer = findViewById(R.id.photoContainer);
-        if (cropOverlay != null) photoContainer.removeView(cropOverlay);
+        if (cropOverlay != null)
+            photoContainer.removeView(cropOverlay);
 
         if (restorePrevRect && baseImageForCrop != null) {
             renderer.setBitmap(baseImageForCrop);
@@ -912,7 +937,8 @@ public class FilterActivity extends BaseActivity {
     public void snapshotViewTransformForRestore() {
         int vpW = renderer.getViewportWidth();
         int vpH = renderer.getViewportHeight();
-        if (vpW <= 0 || vpH <= 0) return;
+        if (vpW <= 0 || vpH <= 0)
+            return;
 
         lastScale = scaleFactor;
         lastTxN = translateX / (float) vpW;
@@ -1005,7 +1031,8 @@ public class FilterActivity extends BaseActivity {
     }
 
     private Rect getLastCropRectInViewportPx() {
-        if (lastCropRectN == null || renderer == null) return null;
+        if (lastCropRectN == null || renderer == null)
+            return null;
         int vpX = renderer.getViewportX();
         int vpY = renderer.getViewportY();
         int vpW = renderer.getViewportWidth();
@@ -1018,7 +1045,8 @@ public class FilterActivity extends BaseActivity {
         return new Rect(l, t, r, b);
     }
 
-    private Rect calcCenteredCropRect(int vpX, int vpY, int vpW, int vpH, boolean fullSize, boolean fixed, int ratioX, int ratioY) {
+    private Rect calcCenteredCropRect(int vpX, int vpY, int vpW, int vpH, boolean fullSize, boolean fixed, int ratioX,
+            int ratioY) {
         final float factor = fullSize ? 1.0f : 0.9f;
 
         if (!fixed || ratioX <= 0 || ratioY <= 0) {
@@ -1053,8 +1081,10 @@ public class FilterActivity extends BaseActivity {
     }
 
     public void flipPhoto(boolean horizontal) {
-        if (horizontal) flipHorizontal = !flipHorizontal;
-        else flipVertical = !flipVertical;
+        if (horizontal)
+            flipHorizontal = !flipHorizontal;
+        else
+            flipVertical = !flipVertical;
         applyTransform();
     }
 
@@ -1112,8 +1142,7 @@ public class FilterActivity extends BaseActivity {
             baseImageForCrop = Bitmap.createBitmap(
                     baseImageForCrop, 0, 0,
                     baseImageForCrop.getWidth(), baseImageForCrop.getHeight(),
-                    m, true
-            );
+                    m, true);
 
             if (lastCropRectN != null) {
                 int rot = ((int) rotationDegree % 360 + 360) % 360;
@@ -1129,8 +1158,10 @@ public class FilterActivity extends BaseActivity {
 
         if (imageGeometryChanged) {
             accumRotationDeg = normDeg(accumRotationDeg + pendingRot);
-            if (pendingFlipH) accumFlipH = !accumFlipH;
-            if (pendingFlipV) accumFlipV = !accumFlipV;
+            if (pendingFlipH)
+                accumFlipH = !accumFlipH;
+            if (pendingFlipV)
+                accumFlipV = !accumFlipV;
             refreshRotationEditedFlag();
 
             if (normDeg(accumRotationDeg) == 0 && !isAccumFlipH() && !isAccumFlipV()) {
@@ -1148,7 +1179,8 @@ public class FilterActivity extends BaseActivity {
     }
 
     private void applyTransform() {
-        if (originalBitmap == null) return;
+        if (originalBitmap == null)
+            return;
         Matrix matrix = new Matrix();
         matrix.postRotate(rotationDegree);
         float sx = flipHorizontal ? -1f : 1f;
@@ -1173,8 +1205,10 @@ public class FilterActivity extends BaseActivity {
 
     private boolean isGeometrySameAsOriginal() {
         int r = normDeg(accumRotationDeg);
-        if (r == 0 && !accumFlipH && !accumFlipV) return true;
-        if (r == 180 && accumFlipH && accumFlipV) return true;
+        if (r == 0 && !accumFlipH && !accumFlipV)
+            return true;
+        if (r == 180 && accumFlipH && accumFlipV)
+            return true;
         return false;
     }
 
@@ -1197,8 +1231,10 @@ public class FilterActivity extends BaseActivity {
 
     /// 컬러 ///
     public void recordColorEdit(String filterType, int before, int after) {
-        if (filterType == null) return;
-        if (before == after) return;
+        if (filterType == null)
+            return;
+        if (before == after)
+            return;
 
         while (colorHistory.size() > colorCursor + 1) {
             colorHistory.remove(colorHistory.size() - 1);
@@ -1218,28 +1254,34 @@ public class FilterActivity extends BaseActivity {
     }
 
     public void undoColor() {
-        if (!canUndoColor()) return;
+        if (!canUndoColor())
+            return;
         ColorEdit e = colorHistory.get(colorCursor);
-        if (renderer != null) renderer.updateValue(e.filterType, e.before);
+        if (renderer != null)
+            renderer.updateValue(e.filterType, e.before);
         colorCursor--;
         photoPreview.requestRender();
         refreshOriginalColorButton();
     }
 
     public void redoColor() {
-        if (!canRedoColor()) return;
+        if (!canRedoColor())
+            return;
         ColorEdit e = colorHistory.get(colorCursor + 1);
-        if (renderer != null) renderer.updateValue(e.filterType, e.after);
+        if (renderer != null)
+            renderer.updateValue(e.filterType, e.after);
         colorCursor++;
         photoPreview.requestRender();
         refreshOriginalColorButton();
     }
 
     public void previewOriginalColors(boolean on) {
-        if (renderer == null) return;
+        if (renderer == null)
+            return;
 
         if (on) {
-            if (isPreviewingOriginalColors) return;
+            if (isPreviewingOriginalColors)
+                return;
             savedFilterValues.clear();
             for (String k : FILTER_KEYS) {
                 savedFilterValues.put(k, getCurrentValue(k));
@@ -1251,7 +1293,8 @@ public class FilterActivity extends BaseActivity {
             if (!savedFilterValues.isEmpty()) {
                 for (String k : FILTER_KEYS) {
                     Integer v = savedFilterValues.get(k);
-                    if (v != null) renderer.updateValue(k, v);
+                    if (v != null)
+                        renderer.updateValue(k, v);
                 }
                 savedFilterValues.clear();
                 photoPreview.requestRender();
@@ -1272,7 +1315,8 @@ public class FilterActivity extends BaseActivity {
         for (String k : FILTER_KEYS) {
             int cur = getCurrentValue(k);
             int base = baselineFilterValues.containsKey(k) ? baselineFilterValues.get(k) : 0;
-            if (cur != base) return false;
+            if (cur != base)
+                return false;
         }
         return true;
     }
@@ -1310,63 +1354,67 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
-    /*public void resetColorState() {
-        isPreviewingOriginalColors = false;
-        savedFilterValues.clear();
-
-        if (renderer != null) {
-            renderer.resetAllFilter();
-            photoPreview.requestRender();
-        }
-
-        colorHistory.clear();
-        colorCursor = -1;
-        colorEdited = false;
-
-        baselineFilterValues.clear();
-        for (String k : FILTER_KEYS) {
-            baselineFilterValues.put(k, getCurrentValue(k));
-        }
-
-        if (undoColor != null) {
-            undoColor.setEnabled(false);
-            undoColor.setAlpha(0.4f);
-        }
-        if (redoColor != null) {
-            redoColor.setEnabled(false);
-            redoColor.setAlpha(0.4f);
-        }
-        refreshOriginalColorButton();
-    }*/
+    /*
+     * public void resetColorState() {
+     * isPreviewingOriginalColors = false;
+     * savedFilterValues.clear();
+     * 
+     * if (renderer != null) {
+     * renderer.resetAllFilter();
+     * photoPreview.requestRender();
+     * }
+     * 
+     * colorHistory.clear();
+     * colorCursor = -1;
+     * colorEdited = false;
+     * 
+     * baselineFilterValues.clear();
+     * for (String k : FILTER_KEYS) {
+     * baselineFilterValues.put(k, getCurrentValue(k));
+     * }
+     * 
+     * if (undoColor != null) {
+     * undoColor.setEnabled(false);
+     * undoColor.setAlpha(0.4f);
+     * }
+     * if (redoColor != null) {
+     * redoColor.setEnabled(false);
+     * redoColor.setAlpha(0.4f);
+     * }
+     * refreshOriginalColorButton();
+     * }
+     */
 
     /// geometry ///
     private float[] mapPointN(float x, float y, int rotDeg, boolean flipH, boolean flipV) {
-        if (flipH) x = 1f - x;
-        if (flipV) y = 1f - y;
+        if (flipH)
+            x = 1f - x;
+        if (flipV)
+            y = 1f - y;
 
         int r = ((rotDeg % 360) + 360) % 360;
         switch (r) {
             case 90:
-                return new float[]{1f - y, x};
+                return new float[] { 1f - y, x };
             case 180:
-                return new float[]{1f - x, 1f - y};
+                return new float[] { 1f - x, 1f - y };
             case 270:
-                return new float[]{y, 1f - x};
+                return new float[] { y, 1f - x };
             default:
-                return new float[]{x, y};
+                return new float[] { x, y };
         }
     }
 
     private RectF mapRectN(RectF src, int rotDeg, boolean flipH, boolean flipV) {
-        if (src == null) return null;
+        if (src == null)
+            return null;
         float[] lt = mapPointN(src.left, src.top, rotDeg, flipH, flipV);
         float[] rb = mapPointN(src.right, src.bottom, rotDeg, flipH, flipV);
         RectF out = new RectF(
                 Math.min(lt[0], rb[0]),
                 Math.min(lt[1], rb[1]),
                 Math.max(lt[0], rb[0]),
-                Math.max(lt[1], rb[1])
-        );
+                Math.max(lt[1], rb[1]));
 
         out.left = Math.max(0f, Math.min(1f, out.left));
         out.top = Math.max(0f, Math.min(1f, out.top));
@@ -1376,25 +1424,28 @@ public class FilterActivity extends BaseActivity {
     }
 
     private float[] mapPanN(float txN, float tyN, int rotDeg, boolean flipH, boolean flipV) {
-        if (flipH) txN = -txN;
-        if (flipV) tyN = -tyN;
+        if (flipH)
+            txN = -txN;
+        if (flipV)
+            tyN = -tyN;
 
         int r = ((rotDeg % 360) + 360) % 360;
         switch (r) {
             case 90:
-                return new float[]{tyN, -txN};
+                return new float[] { tyN, -txN };
             case 180:
-                return new float[]{-txN, -tyN};
+                return new float[] { -txN, -tyN };
             case 270:
-                return new float[]{-tyN, txN};
+                return new float[] { -tyN, txN };
             default:
-                return new float[]{txN, tyN};
+                return new float[] { txN, tyN };
         }
     }
 
     /// 브러쉬, 스티커 ///
     public void applyBrushClipRect(BrushOverlayView brush) {
-        if (renderer == null || brush == null) return;
+        if (renderer == null || brush == null)
+            return;
         int x = renderer.getViewportX();
         int y = renderer.getViewportY();
         int w = renderer.getViewportWidth();
@@ -1403,7 +1454,8 @@ public class FilterActivity extends BaseActivity {
     }
 
     private void updateBrushClipFromRenderer() {
-        if (brushOverlay == null || renderer == null) return;
+        if (brushOverlay == null || renderer == null)
+            return;
         for (int i = 0; i < brushOverlay.getChildCount(); i++) {
             View v = brushOverlay.getChildAt(i);
             if (v instanceof BrushOverlayView) {
@@ -1413,554 +1465,488 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
-    /*private BrushOverlayView findBrushView() {
-        if (brushOverlay == null) return null;
-        for (int i = 0; i < brushOverlay.getChildCount(); i++) {
-            View v = brushOverlay.getChildAt(i);
-            if (v instanceof BrushOverlayView) return (BrushOverlayView) v;
-        }
-        return null;
-    }
-
-    private boolean hasAnyBrushPlaced() {
-        FrameLayout so = findViewById(R.id.stickerOverlay);
-        if (so == null) return false;
-        for (int i = 0; i < so.getChildCount(); i++) {
-            View child = so.getChildAt(i);
-            if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
-            return true;
-        }
-        return false;
-    }
-
-    private boolean bitmapHasAnyVisiblePixel(Bitmap bmp) {
-        final int w = bmp.getWidth(), h = bmp.getHeight();
-        int[] row = new int[w];
-        for (int y = 0; y < h; y++) {
-            bmp.getPixels(row, 0, w, 0, y, w, 1);
-            for (int x = 0; x < w; x++) {
-                if (((row[x] >>> 24) & 0xFF) != 0) return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean hasVisibleBrushContent() {
-        BrushOverlayView bv = findBrushView();
-        if (bv != null) {
-            try {
-                if (bv.hasEffectiveContent()) return true;
-            } catch (Throwable ignore) {
-                if (bv.getVisibleStrokeCount() > 0) return true;
-            }
-        }
-
-        FrameLayout so = findViewById(R.id.stickerOverlay);
-        if (so != null) {
-            for (int i = 0; i < so.getChildCount(); i++) {
-                View child = so.getChildAt(i);
-                if (!(child instanceof ImageView)) continue;
-                if (!Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
-
-                Drawable d = ((ImageView) child).getDrawable();
-                if (!(d instanceof BitmapDrawable)) continue;
-
-                Bitmap bmp = ((BitmapDrawable) d).getBitmap();
-                if (bmp != null && !bmp.isRecycled() && bitmapHasAnyVisiblePixel(bmp)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public void recordBrushErase(List<EraseOp> ops) {
-        if (ops == null || ops.isEmpty()) {
-            refreshStickerButtons();
-            return;
-        }
-        HistoryOp hop = new HistoryOp();
-        hop.erases = new ArrayList<>(ops);
-        pushHistory(hop);
-    }
-
-    public void recordBrush(int baselineIndex) {
-        FrameLayout overlay = findViewById(R.id.stickerOverlay);
-        if (overlay == null) {
-            refreshStickerButtons();
-            return;
-        }
-
-        int childCount = overlay.getChildCount();
-        if (baselineIndex < 0 || baselineIndex >= childCount) {
-            refreshStickerButtons();
-            return;
-        }
-
-        BrushOp bop = new BrushOp();
-        for (int i = baselineIndex; i < childCount; i++) {
-            View v = overlay.getChildAt(i);
-            bop.views.add(v);
-            bop.positions.add(i);
-        }
-        if (bop.views.isEmpty()) {
-            refreshStickerButtons();
-            return;
-        }
-
-        HistoryOp hop = new HistoryOp();
-        hop.brush = bop;
-
-        pushHistory(hop);
-    }
-
-    public void recordSticker(int baselineIndex) {
-        if (stickerOverlay == null) {
-            refreshStickerButtons();
-            return;
-        }
-
-        int childCount = stickerOverlay.getChildCount();
-        if (baselineIndex < 0 || baselineIndex > childCount) {
-            refreshStickerButtons();
-            return;
-        }
-
-        StickerOp sop = new StickerOp();
-        for (int i = baselineIndex; i < childCount; i++) {
-            View v = stickerOverlay.getChildAt(i);
-            sop.views.add(v);
-            sop.positions.add(i);
-        }
-        if (sop.views.isEmpty()) {
-            refreshStickerButtons();
-            return;
-        }
-
-        HistoryOp hop = new HistoryOp();
-        hop.sticker = sop;
-
-        pushHistory(hop);
-    }
-
-    public void recordStickerEdit(View v,
-                                  float bx, float by, int bw, int bh, float br, int bz,
-                                  float ax, float ay, int aw, int ah, float ar, int az) {
-        boolean samePos = Math.abs(bx - ax) < 0.5f && Math.abs(by - ay) < 0.5f;
-        boolean sameRot = Math.abs(br - ar) < 0.5f;
-        boolean sameSize = (bw == aw) && (bh == ah);
-        boolean sameZ = (bz == az);
-        if (samePos && sameRot && sameSize && sameZ) {
-            refreshStickerButtons();
-            return;
-        }
-
-        if (v == null || stickerOverlay == null) {
-            refreshStickerButtons();
-            return;
-        }
-
-        StickerEdit se = new StickerEdit();
-        se.view = v;
-        se.bx = bx;
-        se.by = by;
-        se.bw = bw;
-        se.bh = bh;
-        se.br = br;
-        se.bz = bz;
-        se.ax = ax;
-        se.ay = ay;
-        se.aw = aw;
-        se.ah = ah;
-        se.ar = ar;
-        se.az = az;
-
-        HistoryOp hop = new HistoryOp();
-        hop.edit = se;
-
-        pushHistory(hop);
-    }
-
-    public void recordStickerDelete(View v) {
-        if (stickerOverlay == null) {
-            refreshStickerButtons();
-            return;
-        }
-
-        int pos = stickerOverlay.indexOfChild(v);
-        if (pos < 0) {
-            refreshStickerButtons();
-            return;
-        }
-
-        HistoryOp hop = new HistoryOp();
-        hop.delete = v;
-        hop.deletedPos = pos;
-        pushHistory(hop);
-    }
-
-    private void applyStickerGeom(View v, float x, float y, int w, int h, float rot) {
-        v.setX(x);
-        v.setY(y);
-        ViewGroup.LayoutParams lp = v.getLayoutParams();
-        if (lp != null) {
-            lp.width = w;
-            lp.height = h;
-            v.setLayoutParams(lp);
-        }
-        v.setPivotX(w / 2f);
-        v.setPivotY(h / 2f);
-        v.setRotation(rot);
-        v.requestLayout();
-    }
-
-    public void recordCloneGroup(boolean isEdit, int groupId, View stickerFrame, StickerMeta prevMeta, StickerMeta nextMeta) {
-        StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
-        if (viewModel == null) return;
-
-        HistoryOp hop = new HistoryOp();
-        hop.cloneGroup = new CloneGroupOp(isEdit, groupId, stickerFrame,
-                prevMeta.relX, prevMeta.relY, prevMeta.relW, prevMeta.relH, prevMeta.rot,
-                nextMeta.relX, nextMeta.relY, nextMeta.relW, nextMeta.relH, nextMeta.rot
-        );
-
-        pushHistory(hop);
-    }
-
-    public void recordCloneGroupDelete(int groupId, View stickerFrame, List<View> deletedClones, StickerMeta prevMeta) {
-        if (deletedClones == null || deletedClones.isEmpty()) return;
-
-        HistoryOp hop = new HistoryOp();
-
-        hop.cloneDelete = new ArrayList<>(deletedClones);
-        hop.cloneDeletePos = new ArrayList<>();
-        for (View v : deletedClones) {
-            hop.cloneDeletePos.add(stickerOverlay.indexOfChild(v));
-        }
-
-        StickerMeta nullMeta = new StickerMeta(0f, 0f, 0f, 0f, 0f);
-        hop.cloneGroup = new CloneGroupOp(true, groupId, stickerFrame,
-                prevMeta.relX, prevMeta.relY, prevMeta.relW, prevMeta.relH, prevMeta.rot,
-                nullMeta.relX, nullMeta.relY, nullMeta.relW, nullMeta.relH, nullMeta.rot
-        );
-
-        pushHistory(hop);
-    }
-
-    private void restoreCloneGroupFromMeta(int groupId, StickerMeta meta, View stickerFrame) {
-        StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
-        if (stickerOverlay == null || viewModel == null || stickerFrame == null) return;
-
-        // 현재 클론 그룹 제거
-        viewModel.removeCloneGroup(groupId, stickerOverlay);
-
-        // 저장된 메타데이터 기반으로 즉시 복원
-        List<View> restored = new ArrayList<>();
-        View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame, this,
-                new float[]{meta.relX, meta.relY, meta.relW, meta.relH, meta.rot});
-        if (cloneSticker != null) {
-            cloneSticker.setTag(R.id.tag_sticker_id, groupId);
-            cloneSticker.setTag(R.id.tag_sticker_clone, true);
-            viewModel.addCloneGroup(groupId, cloneSticker);
-            restored.add(cloneSticker);
-        }
-
-        Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-        if (f instanceof StickersFragment) {
-            ((StickersFragment) f).reapplyListenersToClones(restored);
-        }
-
-        refreshStickerButtons();
-    }
-
-    private void reapplyCloneGroup(int groupId, StickerMeta meta, View stickerFrame) {
-        StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
-
-        if (renderer == null || stickerOverlay == null || viewModel == null || stickerFrame == null)
-            return;
-
-        // 이 로직은 StickersFragment의 얼굴 감지 및 클론 생성 로직을 모방합니다.
-        photoPreview.queueEvent(() -> {
-            Bitmap bmp = renderer.getCurrentBitmap();
-            runOnUiThread(() -> FaceDetect.detectFaces(bmp, null, (faces, bitmap) -> { // null은 FaceBoxOverlayView 대신
-                if (faces.isEmpty()) return;
-
-                List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, meta, this);
-                runOnUiThread(() -> {
-
-                    /// 현재 보이는 클론스티커그룹 지우기
-                    viewModel.removeCloneGroup(groupId, stickerOverlay);
-
-                    /// 현재 세션 이전 또는 이후의 메타데이터로 클론스티커 다시 만들기
-                    List<View> newlyCreatedClones = new ArrayList<>();
-
-                    for (float[] p : placement) {
-                        View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame, this, p);
-                        if (cloneSticker != null) {
-                            cloneSticker.setTag(R.id.tag_sticker_id, groupId);
-                            cloneSticker.setTag(R.id.tag_sticker_clone, true);
-                            viewModel.addCloneGroup(groupId, cloneSticker);
-                            newlyCreatedClones.add(cloneSticker);
-                        }
-                    }
-                    Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-                    if (f instanceof StickersFragment) {
-                        ((StickersFragment) f).reapplyListenersToClones(newlyCreatedClones);
-                    }
-
-                    runOnUiThread(this::refreshStickerButtons);
-                });
-            }));
-        });
-    }
-
-    public void refreshStickerButtons() {
-        if (undoSticker == null || redoSticker == null || originalSticker == null) return;
-
-        boolean canUndo = canUndoSticker();
-        boolean canRedo = canRedoSticker();
-
-        boolean hasAnyPlacedStrict = hasAnyBrushPlaced() || hasVisibleBrushContent();
-
-        undoSticker.setEnabled(canUndo);
-        undoSticker.setAlpha(canUndo ? 1f : 0.4f);
-
-        redoSticker.setEnabled(canRedo);
-        redoSticker.setAlpha(canRedo ? 1f : 0.4f);
-
-        originalSticker.setEnabled(hasAnyPlacedStrict);
-        originalSticker.setAlpha(hasAnyPlacedStrict ? 1f : 0.4f);
-    }
-
-    private void pushHistory(HistoryOp op) {
-        while (history.size() > historyCursor + 1) history.remove(history.size() - 1);
-        history.add(op);
-        historyCursor = history.size() - 1;
-        refreshStickerButtons();
-    }
-
-    public boolean canUndoSticker() {
-        return historyCursor >= 0;
-    }
-
-    public boolean canRedoSticker() {
-        return historyCursor < history.size() - 1;
-    }
-
-    public void undoSticker() {
-        if (!canUndoSticker()) return;
-
-        HistoryOp op = history.get(historyCursor);
-
-        if (op.hasCloneGroup() && !op.hasCloneDeletion()) {
-            CloneGroupOp cg = op.cloneGroup;
-            int groupId = cg.groupId;
-
-            StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
-
-            /// 현재 보이는 클론스티커그룹 지우기
-            //if (viewModel != null && stickerOverlay != null) {
-            //    viewModel.removeCloneGroup(groupId, stickerOverlay);
-            //}
-
-            /// 현재 세션 이전의 메타데이터로 클론스티커 다시 만들기
-            if (viewModel != null && stickerOverlay != null) {
-                if (!cg.isEdit) {
-                    viewModel.removeCloneGroup(groupId, stickerOverlay);
-                } else {
-                    StickerMeta prevMeta = new StickerMeta(cg.prevRelX, cg.prevRelY, cg.prevRelW, cg.prevRelH, cg.prevRot);
-                    viewModel.setTempView(groupId, cg.stickerFrame);
-                    restoreCloneGroupFromMeta(groupId, prevMeta, cg.stickerFrame);
-                }
-            }
-        }
-        if (op.hasCloneDeletion()) {
-            StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
-            List<View> clones = op.cloneDelete;
-            List<Integer> positions = op.cloneDeletePos;
-            int groupId = op.cloneGroup != null ? op.cloneGroup.groupId : -1;
-            if (viewModel != null && stickerOverlay != null && groupId != -1) {
-                viewModel.removeCloneGroup(groupId, stickerOverlay);
-            }
-            List<View> restored = new ArrayList<>();
-            for (int i = 0; i < clones.size(); i++) {
-                View v = clones.get(i);
-                int pos = Math.min(positions.get(i), stickerOverlay.getChildCount());
-                if (v.getParent() != stickerOverlay) {
-                    stickerOverlay.addView(v, pos);
-                    restored.add(v);
-                }
-                Controller.setControllersVisible(v, false);
-
-                Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-                if (f instanceof StickersFragment) {
-                    ((StickersFragment) f).moveEditSticker(v);
-                }
-            }
-            if (viewModel != null && groupId != -1) {
-                for (View v : restored) {
-                    viewModel.addCloneGroup(groupId, v);
-                }
-            }
-        }
-
-        if (op.hasSticker()) {
-            for (int i = op.sticker.views.size() - 1; i >= 0; i--) {
-                View v = op.sticker.views.get(i);
-                if (v.getParent() == stickerOverlay) stickerOverlay.removeView(v);
-            }
-        }
-        if (op.hasStickerEdit()) {
-            applyStickerGeom(op.edit.view, op.edit.bx, op.edit.by, op.edit.bw, op.edit.bh, op.edit.br);
-            if (stickerOverlay != null) {
-                View v = op.edit.view;
-                int pos = op.edit.bz;
-                if (v.getParent() == stickerOverlay) {
-                    stickerOverlay.removeView(v);
-                    int safePos = Math.min(pos, stickerOverlay.getChildCount());
-                    stickerOverlay.addView(v, safePos);
-                }
-            }
-        }
-        if (op.hasDeletion()) {
-            if (op.delete.getParent() != stickerOverlay) {
-                int pos = Math.min(op.deletedPos, stickerOverlay.getChildCount());
-
-                View stickerFrame = op.delete;
-                if (stickerFrame != null) Controller.setControllersVisible(stickerFrame, false);
-
-                stickerOverlay.addView(op.delete, pos);
-            }
-        }
-        if (op.hasBrush()) {
-            for (int i = op.brush.views.size() - 1; i >= 0; i--) {
-                View v = op.brush.views.get(i);
-                if (v.getParent() == stickerOverlay) stickerOverlay.removeView(v);
-            }
-        }
-        if (op.hasErase()) {
-            for (EraseOp eo : op.erases) {
-                if (!(eo.view instanceof ImageView)) continue;
-                ImageView iv = eo.view;
-                if (iv.getDrawable() == null || !(iv.getDrawable() instanceof BitmapDrawable))
-                    continue;
-                Bitmap bmp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
-                if (bmp == null || bmp.isRecycled()) continue;
-
-                Canvas c = new Canvas(bmp);
-                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-                p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
-                for (int i = eo.patches.size() - 1; i >= 0; i--) {
-                    ErasePatch patch = eo.patches.get(i);
-                    if (patch.before == null || patch.before.isRecycled()) continue;
-                    c.save();
-                    c.clipRect(patch.rect);
-                    c.drawBitmap(patch.before, patch.rect.left, patch.rect.top, p);
-                    c.restore();
-                }
-                iv.invalidate();
-            }
-        }
-
-        historyCursor--;
-        refreshStickerButtons();
-    }
-
-    public void redoSticker() {
-        if (!canRedoSticker()) return;
-
-        HistoryOp op = history.get(historyCursor + 1);
-
-        StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
-
-        if (op.hasCloneGroup() && !op.hasCloneDeletion()) {
-            CloneGroupOp cg = op.cloneGroup;
-            int groupId = cg.groupId;
-
-            /// 현재 보이는 클론스티커그룹 지우기
-            //if (viewModel != null && stickerOverlay != null) {
-            //    viewModel.removeCloneGroup(groupId, stickerOverlay);
-            //}
-
-            /// 현재 세션 이후의 메타데이터로 클론스티커 다시 만들기
-            if (viewModel != null && stickerOverlay != null) {
-                StickerMeta meta = new StickerMeta(cg.nextRelX, cg.nextRelY, cg.nextRelW, cg.nextRelH, cg.nextRot);
-                viewModel.setTempView(groupId, cg.stickerFrame);
-                reapplyCloneGroup(groupId, meta, cg.stickerFrame);
-            }
-        }
-        if (op.hasCloneDeletion()) {
-            for (View v : op.cloneDelete) {
-                if (v.getParent() == stickerOverlay)
-                    stickerOverlay.removeView(v);
-            }
-        }
-
-        if (op.hasSticker()) {
-            for (int i = 0; i < op.sticker.views.size(); i++) {
-                View v = op.sticker.views.get(i);
-                if (v.getParent() == stickerOverlay) continue;
-                int pos = Math.min(op.sticker.positions.get(i), stickerOverlay.getChildCount());
-                stickerOverlay.addView(v, pos);
-            }
-        }
-        if (op.hasStickerEdit()) {
-            applyStickerGeom(op.edit.view, op.edit.ax, op.edit.ay, op.edit.aw, op.edit.ah, op.edit.ar);
-            if (stickerOverlay != null) {
-                View v = op.edit.view;
-                int pos = op.edit.az;
-                if (v.getParent() == stickerOverlay) {
-                    stickerOverlay.removeView(v);
-                    int safePos = Math.min(pos, stickerOverlay.getChildCount());
-                    stickerOverlay.addView(v, safePos);
-                }
-            }
-        }
-        if (op.hasDeletion()) {
-            if (op.delete.getParent() == stickerOverlay) {
-                stickerOverlay.removeView(op.delete);
-            }
-        }
-        if (op.hasBrush()) {
-            for (int i = 0; i < op.brush.views.size(); i++) {
-                View v = op.brush.views.get(i);
-                if (v.getParent() == stickerOverlay) continue;
-                int pos = Math.min(op.brush.positions.get(i), stickerOverlay.getChildCount());
-                stickerOverlay.addView(v, pos);
-            }
-        }
-        if (op.hasErase()) {
-            for (EraseOp eo : op.erases) {
-                if (!(eo.view instanceof ImageView)) continue;
-                ImageView iv = eo.view;
-                if (iv.getDrawable() == null || !(iv.getDrawable() instanceof BitmapDrawable))
-                    continue;
-                Bitmap bmp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
-                if (bmp == null || bmp.isRecycled()) continue;
-
-                Canvas c = new Canvas(bmp);
-                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-                p.setStyle(Paint.Style.STROKE);
-                p.setStrokeJoin(Paint.Join.ROUND);
-                p.setStrokeCap(Paint.Cap.ROUND);
-                p.setStrokeWidth(eo.strokeWidthPx);
-                p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-                if (eo.pathOnBitmap != null) {
-                    c.drawPath(eo.pathOnBitmap, p);
-                }
-                iv.invalidate();
-            }
-        }
-
-        historyCursor++;
-        refreshStickerButtons();
-    }
-
-    public void previewOriginalStickers(boolean on) {
-        if (stickerOverlay != null)
-            stickerOverlay.setVisibility(on ? View.INVISIBLE : View.VISIBLE);
-        if (brushOverlay != null) brushOverlay.setVisibility(on ? View.INVISIBLE : View.VISIBLE);
-    }*/
+    /*
+     * private BrushOverlayView findBrushView() {
+     * if (brushOverlay == null) return null;
+     * for (int i = 0; i < brushOverlay.getChildCount(); i++) {
+     * View v = brushOverlay.getChildAt(i);
+     * if (v instanceof BrushOverlayView) return (BrushOverlayView) v;
+     * }
+     * return null;
+     * }
+     * 
+     * private boolean hasAnyBrushPlaced() {
+     * FrameLayout so = findViewById(R.id.stickerOverlay);
+     * if (so == null) return false;
+     * for (int i = 0; i < so.getChildCount(); i++) {
+     * View child = so.getChildAt(i);
+     * if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
+     * return true;
+     * }
+     * return false;
+     * }
+     * 
+     * private boolean bitmapHasAnyVisiblePixel(Bitmap bmp) {
+     * final int w = bmp.getWidth(), h = bmp.getHeight();
+     * int[] row = new int[w];
+     * for (int y = 0; y < h; y++) {
+     * bmp.getPixels(row, 0, w, 0, y, w, 1);
+     * for (int x = 0; x < w; x++) {
+     * if (((row[x] >>> 24) & 0xFF) != 0) return true;
+     * }
+     * }
+     * return false;
+     * }
+     * 
+     * private boolean hasVisibleBrushContent() {
+     * BrushOverlayView bv = findBrushView();
+     * if (bv != null) {
+     * try {
+     * if (bv.hasEffectiveContent()) return true;
+     * } catch (Throwable ignore) {
+     * if (bv.getVisibleStrokeCount() > 0) return true;
+     * }
+     * }
+     * 
+     * FrameLayout so = findViewById(R.id.stickerOverlay);
+     * if (so != null) {
+     * for (int i = 0; i < so.getChildCount(); i++) {
+     * View child = so.getChildAt(i);
+     * if (!(child instanceof ImageView)) continue;
+     * if (!Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
+     * 
+     * Drawable d = ((ImageView) child).getDrawable();
+     * if (!(d instanceof BitmapDrawable)) continue;
+     * 
+     * Bitmap bmp = ((BitmapDrawable) d).getBitmap();
+     * if (bmp != null && !bmp.isRecycled() && bitmapHasAnyVisiblePixel(bmp)) {
+     * return true;
+     * }
+     * }
+     * }
+     * return false;
+     * }
+     * 
+     * public void recordBrushErase(List<EraseOp> ops) {
+     * if (ops == null || ops.isEmpty()) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * HistoryOp hop = new HistoryOp();
+     * hop.erases = new ArrayList<>(ops);
+     * pushHistory(hop);
+     * }
+     * 
+     * public void recordBrush(int baselineIndex) {
+     * FrameLayout overlay = findViewById(R.id.stickerOverlay);
+     * if (overlay == null) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * int childCount = overlay.getChildCount();
+     * if (baselineIndex < 0 || baselineIndex >= childCount) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * BrushOp bop = new BrushOp();
+     * for (int i = baselineIndex; i < childCount; i++) {
+     * View v = overlay.getChildAt(i);
+     * bop.views.add(v);
+     * bop.positions.add(i);
+     * }
+     * if (bop.views.isEmpty()) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * HistoryOp hop = new HistoryOp();
+     * hop.brush = bop;
+     * 
+     * pushHistory(hop);
+     * }
+     * 
+     * public void recordSticker(int baselineIndex) {
+     * if (stickerOverlay == null) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * int childCount = stickerOverlay.getChildCount();
+     * if (baselineIndex < 0 || baselineIndex > childCount) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * StickerOp sop = new StickerOp();
+     * for (int i = baselineIndex; i < childCount; i++) {
+     * View v = stickerOverlay.getChildAt(i);
+     * sop.views.add(v);
+     * sop.positions.add(i);
+     * }
+     * if (sop.views.isEmpty()) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * HistoryOp hop = new HistoryOp();
+     * hop.sticker = sop;
+     * 
+     * pushHistory(hop);
+     * }
+     * 
+     * public void recordStickerEdit(View v,
+     * float bx, float by, int bw, int bh, float br, int bz,
+     * float ax, float ay, int aw, int ah, float ar, int az) {
+     * boolean samePos = Math.abs(bx - ax) < 0.5f && Math.abs(by - ay) < 0.5f;
+     * boolean sameRot = Math.abs(br - ar) < 0.5f;
+     * boolean sameSize = (bw == aw) && (bh == ah);
+     * boolean sameZ = (bz == az);
+     * if (samePos && sameRot && sameSize && sameZ) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * if (v == null || stickerOverlay == null) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * StickerEdit se = new StickerEdit();
+     * se.view = v;
+     * se.bx = bx;
+     * se.by = by;
+     * se.bw = bw;
+     * se.bh = bh;
+     * se.br = br;
+     * se.bz = bz;
+     * se.ax = ax;
+     * se.ay = ay;
+     * se.aw = aw;
+     * se.ah = ah;
+     * se.ar = ar;
+     * se.az = az;
+     * 
+     * HistoryOp hop = new HistoryOp();
+     * hop.edit = se;
+     * 
+     * pushHistory(hop);
+     * }
+     * 
+     * public void recordStickerDelete(View v) {
+     * if (stickerOverlay == null) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * int pos = stickerOverlay.indexOfChild(v);
+     * if (pos < 0) {
+     * refreshStickerButtons();
+     * return;
+     * }
+     * 
+     * HistoryOp hop = new HistoryOp();
+     * hop.delete = v;
+     * hop.deletedPos = pos;
+     * pushHistory(hop);
+     * }
+     * 
+     * private void applyStickerGeom(View v, float x, float y, int w, int h, float
+     * rot) {
+     * v.setX(x);
+     * v.setY(y);
+     * ViewGroup.LayoutParams lp = v.getLayoutParams();
+     * if (lp != null) {
+     * lp.width = w;
+     * lp.height = h;
+     * v.setLayoutParams(lp);
+     * }
+     * v.setPivotX(w / 2f);
+     * v.setPivotY(h / 2f);
+     * v.setRotation(rot);
+     * v.requestLayout();
+     * }
+     * 
+     * public void recordCloneGroup(boolean isEdit, int groupId, View stickerFrame,
+     * StickerMeta prevMeta, StickerMeta nextMeta) {
+     * StickerViewModel viewModel = new
+     * ViewModelProvider(this).get(StickerViewModel.class);
+     * if (viewModel == null) return;
+     * 
+     * HistoryOp hop = new HistoryOp();
+     * hop.cloneGroup = new CloneGroupOp(isEdit, groupId, stickerFrame,
+     * prevMeta.relX, prevMeta.relY, prevMeta.relW, prevMeta.relH, prevMeta.rot,
+     * nextMeta.relX, nextMeta.relY, nextMeta.relW, nextMeta.relH, nextMeta.rot
+     * );
+     * 
+     * pushHistory(hop);
+     * }
+     * 
+     * public void recordCloneGroupDelete(int groupId, View stickerFrame, List<View>
+     * deletedClones, StickerMeta prevMeta) {
+     * if (deletedClones == null || deletedClones.isEmpty()) return;
+     * 
+     * HistoryOp hop = new HistoryOp();
+     * 
+     * hop.cloneDelete = new ArrayList<>(deletedClones);
+     * hop.cloneDeletePos = new ArrayList<>();
+     * for (View v : deletedClones) {
+     * hop.cloneDeletePos.add(stickerOverlay.indexOfChild(v));
+     * }
+     * 
+     * StickerMeta nullMeta = new StickerMeta(0f, 0f, 0f, 0f, 0f);
+     * hop.cloneGroup = new CloneGroupOp(true, groupId, stickerFrame,
+     * prevMeta.relX, prevMeta.relY, prevMeta.relW, prevMeta.relH, prevMeta.rot,
+     * nullMeta.relX, nullMeta.relY, nullMeta.relW, nullMeta.relH, nullMeta.rot
+     * );
+     * 
+     * pushHistory(hop);
+     * }
+     * 
+     * private void restoreCloneGroupFromMeta(int groupId, StickerMeta meta, View
+     * stickerFrame) {
+     * StickerViewModel viewModel = new
+     * ViewModelProvider(this).get(StickerViewModel.class);
+     * if (stickerOverlay == null || viewModel == null || stickerFrame == null)
+     * return;
+     * 
+     * // 현재 클론 그룹 제거
+     * viewModel.removeCloneGroup(groupId, stickerOverlay);
+     * 
+     * // 저장된 메타데이터 기반으로 즉시 복원
+     * List<View> restored = new ArrayList<>();
+     * View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame,
+     * this,
+     * new float[]{meta.relX, meta.relY, meta.relW, meta.relH, meta.rot});
+     * if (cloneSticker != null) {
+     * cloneSticker.setTag(R.id.tag_sticker_id, groupId);
+     * cloneSticker.setTag(R.id.tag_sticker_clone, true);
+     * viewModel.addCloneGroup(groupId, cloneSticker);
+     * restored.add(cloneSticker);
+     * }
+     * 
+     * Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+     * if (f instanceof StickersFragment) {
+     * ((StickersFragment) f).reapplyListenersToClones(restored);
+     * }
+     * 
+     * refreshStickerButtons();
+     * }
+     * 
+     * private void reapplyCloneGroup(int groupId, StickerMeta meta, View
+     * stickerFrame) {
+     * StickerViewModel viewModel = new
+     * ViewModelProvider(this).get(StickerViewModel.class);
+     * 
+     * if (renderer == null || stickerOverlay == null || viewModel == null ||
+     * stickerFrame == null)
+     * return;
+     * 
+     * // 이 로직은 StickersFragment의 얼굴 감지 및 클론 생성 로직을 모방합니다.
+     * photoPreview.queueEvent(() -> {
+     * Bitmap bmp = renderer.getCurrentBitmap();
+     * runOnUiThread(() -> FaceDetect.detectFaces(bmp, null, (faces, bitmap) -> { //
+     * null은 FaceBoxOverlayView 대신
+     * if (faces.isEmpty()) return;
+     * 
+     * List<float[]> placement = StickerMeta.recalculate(faces, bitmap,
+     * stickerOverlay, meta, this);
+     * runOnUiThread(() -> {
+     * 
+     * /// 현재 보이는 클론스티커그룹 지우기
+     * viewModel.removeCloneGroup(groupId, stickerOverlay);
+     * 
+     * /// 현재 세션 이전 또는 이후의 메타데이터로 클론스티커 다시 만들기
+     * List<View> newlyCreatedClones = new ArrayList<>();
+     * 
+     * for (float[] p : placement) {
+     * View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame,
+     * this, p);
+     * if (cloneSticker != null) {
+     * cloneSticker.setTag(R.id.tag_sticker_id, groupId);
+     * cloneSticker.setTag(R.id.tag_sticker_clone, true);
+     * viewModel.addCloneGroup(groupId, cloneSticker);
+     * newlyCreatedClones.add(cloneSticker);
+     * }
+     * }
+     * Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+     * if (f instanceof StickersFragment) {
+     * ((StickersFragment) f).reapplyListenersToClones(newlyCreatedClones);
+     * }
+     * 
+     * runOnUiThread(this::refreshStickerButtons);
+     * });
+     * }));
+     * });
+     * }
+     * 
+     * public void refreshStickerButtons() {
+     * if (undoSticker == null || redoSticker == null || originalSticker == null)
+     * return;
+     * 
+     * boolean canUndo = canUndoSticker();
+     * boolean canRedo = canRedoSticker();
+     * 
+     * boolean hasAnyPlacedStrict = hasAnyBrushPlaced() || hasVisibleBrushContent();
+     * 
+     * undoSticker.setEnabled(canUndo);
+     * undoSticker.setAlpha(canUndo ? 1f : 0.4f);
+     * 
+     * redoSticker.setEnabled(canRedo);
+     * redoSticker.setAlpha(canRedo ? 1f : 0.4f);
+     * 
+     * originalSticker.setEnabled(hasAnyPlacedStrict);
+     * originalSticker.setAlpha(hasAnyPlacedStrict ? 1f : 0.4f);
+     * }
+     * 
+     * private void pushHistory(HistoryOp op) {
+     * while (history.size() > historyCursor + 1) history.remove(history.size() -
+     * 1);
+     * history.add(op);
+     * historyCursor = history.size() - 1;
+     * refreshStickerButtons();
+     * }
+     * 
+     * public boolean canUndoSticker() {
+     * return historyCursor >= 0;
+     * }
+     * 
+     * public boolean canRedoSticker() {
+     * return historyCursor < history.size() - 1;
+     * }
+     * 
+     * public void undoSticker() {
+     * if (!canUndoSticker()) return;
+     * 
+     * HistoryOp op = history.get(historyCursor);
+     * 
+     * if (op.hasCloneGroup() && !op.hasCloneDeletion()) {
+     * CloneGroupOp cg = op.cloneGroup;
+     * int groupId = cg.groupId;
+     * 
+     * StickerViewModel viewModel = new
+     * ViewModelProvider(this).get(StickerViewModel.class);
+     * 
+     * /// 현재 보이는 클론스티커그룹 지우기
+     * //if (viewModel != null && stickerOverlay != null) {
+     * // viewModel.removeCloneGroup(groupId, stickerOverlay);
+     * //}
+     * 
+     * /// 현재 세션 이전의 메타데이터로 클론스티커 다시 만들기
+     * if (viewModel != null && stickerOverlay != null) {
+     * if (!cg.isEdit) {
+     * viewModel.removeCloneGroup(groupId, stickerOverlay);
+     * } else {
+     * StickerMeta prevMeta = new StickerMeta(cg.prevRelX, cg.prevRelY, cg.prevRelW,
+     * cg.prevRelH, cg.prevRot);
+     * viewModel.setTempView(groupId, cg.stickerFrame);
+     * restoreCloneGroupFromMeta(groupId, prevMeta, cg.stickerFrame);
+     * }
+     * }
+     * }
+     * if (op.hasCloneDeletion()) {
+     * StickerViewModel viewModel = new
+     * ViewModelProvider(this).get(StickerViewModel.class);
+     * List<View> clones = op.cloneDelete;
+     * List<Integer> positions = op.cloneDeletePos;
+     * int groupId = op.cloneGroup != null ? op.cloneGroup.groupId : -1;
+     * if (viewModel != null && stickerOverlay != null && groupId != -1) {
+     * viewModel.removeCloneGroup(groupId, stickerOverlay);
+     * }
+     * List<View> restored = new ArrayList<>();
+     * for (int i = 0; i < clones.size(); i++) {
+     * View v = clones.get(i);
+     * int pos = Math.min(positions.get(i), stickerOverlay.getChildCount());
+     * if (v.getParent() != stickerOverlay) {
+     * stickerOverlay.addView(v, pos);
+     * restored.add(v);
+     * }
+     * Controller.setControllersVisible(v, false);
+     * 
+     * Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+     * if (f instanceof StickersFragment) {
+     * ((StickersFragment) f).moveEditSticker(v);
+     * }
+     * }
+     * if (viewModel != null && groupId != -1) {
+     * for (View v : restored) {
+     * viewModel.addCloneGroup(groupId, v);
+     * }
+     * }
+     * }
+     * 
+     * if (op.hasSticker()) {
+     * for (int i = 0; i < op.sticker.views.size(); i++) {
+     * View v = op.sticker.views.get(i);
+     * if (v.getParent() == stickerOverlay) stickerOverlay.removeView(v);
+     * }
+     * }
+     * if (op.hasStickerEdit()) {
+     * applyStickerGeom(op.edit.view, op.edit.bx, op.edit.by, op.edit.bw,
+     * op.edit.bh, op.edit.br);
+     * if (stickerOverlay != null) {
+     * View v = op.edit.view;
+     * int pos = op.edit.bz;
+     * if (v.getParent() == stickerOverlay) {
+     * stickerOverlay.removeView(v);
+     * int safePos = Math.min(pos, stickerOverlay.getChildCount());
+     * stickerOverlay.addView(v, safePos);
+     * }
+     * }
+     * }
+     * if (op.hasDeletion()) {
+     * if (op.delete.getParent() != stickerOverlay) {
+     * int pos = Math.min(op.deletedPos, stickerOverlay.getChildCount());
+     * 
+     * View stickerFrame = op.delete;
+     * if (stickerFrame != null) Controller.setControllersVisible(stickerFrame,
+     * false);
+     * 
+     * stickerOverlay.addView(op.delete, pos);
+     * }
+     * }
+     * if (op.hasBrush()) {
+     * for (int i = op.brush.views.size(); i++) {
+     * View v = op.brush.views.get(i);
+     * if (v.getParent() == stickerOverlay) stickerOverlay.removeView(v);
+     * }
+     * }
+     * if (op.hasErase()) {
+     * for (EraseOp eo : op.erases) {
+     * if (!(eo.view instanceof ImageView)) continue;
+     * ImageView iv = eo.view;
+     * if (iv.getDrawable() == null || !(iv.getDrawable() instanceof
+     * BitmapDrawable))
+     * continue;
+     * Bitmap bmp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+     * if (bmp == null || bmp.isRecycled()) continue;
+     * 
+     * Canvas c = new Canvas(bmp);
+     * Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+     * p.setStyle(Paint.Style.STROKE);
+     * p.setStrokeJoin(Paint.Join.ROUND);
+     * p.setStrokeCap(Paint.Cap.ROUND);
+     * p.setStrokeWidth(eo.strokeWidthPx);
+     * p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+     * if (eo.pathOnBitmap != null) {
+     * c.drawPath(eo.pathOnBitmap, p);
+     * }
+     * iv.invalidate();
+     * }
+     * }
+     * 
+     * historyCursor++;
+     * refreshStickerButtons();
+     * }
+     * 
+     * public void previewOriginalStickers(boolean on) {
+     * if (stickerOverlay != null)
+     * stickerOverlay.setVisibility(on ? View.INVISIBLE : View.VISIBLE);
+     * if (brushOverlay != null) brushOverlay.setVisibility(on ? View.INVISIBLE :
+     * View.VISIBLE);
+     * }
+     */
 
     public void resetStickerState(boolean removeOverlayChildren) {
         FrameLayout overlay = findViewById(R.id.stickerOverlay);
@@ -1968,22 +1954,25 @@ public class FilterActivity extends BaseActivity {
             overlay.removeAllViews();
         }
 
-        /*BrushOverlayView bv = findBrushView();
-        if (removeOverlayChildren && bv != null) {
-            bv.clear();
-        }
-
-        history.clear();
-        historyCursor = -1;
-
-        previewOriginalStickers(false);
-
-        refreshStickerButtons();*/
+        /*
+         * BrushOverlayView bv = findBrushView();
+         * if (removeOverlayChildren && bv != null) {
+         * bv.clear();
+         * }
+         * 
+         * history.clear();
+         * historyCursor = -1;
+         * 
+         * previewOriginalStickers(false);
+         * 
+         * refreshStickerButtons();
+         */
     }
 
     /// UI, 시스템 ///
     public void updateSaveButtonState() {
-        if (stickerOverlay == null || saveBtn == null) return;
+        if (stickerOverlay == null || saveBtn == null)
+            return;
 
         boolean geometryEdited = isRotationEdited() || isCropEdited();
         boolean colorAdjusted = getCurrentValue("밝기") != 0 ||
@@ -2049,11 +2038,13 @@ public class FilterActivity extends BaseActivity {
             backBtn.setAlpha(enabled ? 1f : 0.3f);
         }
 
-        /*if (saveBtn != null) {
-            saveBtn.setEnabled(enabled);
-            saveBtn.setClickable(enabled);
-            saveBtn.setAlpha(enabled ? 1f : 0.3f);
-        }*/
+        /*
+         * if (saveBtn != null) {
+         * saveBtn.setEnabled(enabled);
+         * saveBtn.setClickable(enabled);
+         * saveBtn.setAlpha(enabled ? 1f : 0.3f);
+         * }
+         */
     }
 
     public void requestUpdateBackGate() {
@@ -2093,8 +2084,10 @@ public class FilterActivity extends BaseActivity {
         if (cur instanceof StickersFragment) {
             FrameLayout stickerOverlay = findViewById(R.id.stickerOverlay);
             FrameLayout brushOverlay = findViewById(R.id.brushOverlay);
-            if (stickerOverlay != null) stickerOverlay.removeAllViews();
-            if (brushOverlay != null) brushOverlay.removeAllViews();
+            if (stickerOverlay != null)
+                stickerOverlay.removeAllViews();
+            if (brushOverlay != null)
+                brushOverlay.removeAllViews();
 
             resetStickerState(false);
 
@@ -2110,7 +2103,7 @@ public class FilterActivity extends BaseActivity {
         }
 
         if (cur instanceof ColorsFragment) {
-            //resetColorState();
+            // resetColorState();
 
             fm.beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
@@ -2147,8 +2140,7 @@ public class FilterActivity extends BaseActivity {
             public void onExit() {
                 finish();
             }
-        }
-        ).show();
+        }).show();
     }
 
     /// getter ///
@@ -2159,4 +2151,5 @@ public class FilterActivity extends BaseActivity {
     public GLSurfaceView getPhotoPreview() {
         return photoPreview;
     }
+
 }

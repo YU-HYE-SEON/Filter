@@ -22,6 +22,17 @@ public class StickerItem {
         return new StickerItem(-1, null, filePath, type);
     }
 
+    public static StickerItem fromServer(long id, String imageUrl, String type) {
+        StickerType typeEnum;
+        try {
+            typeEnum = StickerType.valueOf(type); // 서버 String -> Enum 변환
+        } catch (Exception e) {
+            typeEnum = StickerType.IMAGE; // 기본값 설정 (에러 방지)
+        }
+        // filePath 자리에 imageUrl을 넣습니다.
+        return new StickerItem(id, null, imageUrl, typeEnum);
+    }
+
     // ✅ 리소스에서 불러오는 스티커 (앱 내 기본 스티커)
     public static StickerItem fromRes(String resName, StickerType type) {
         return new StickerItem(-1, resName, null, type);

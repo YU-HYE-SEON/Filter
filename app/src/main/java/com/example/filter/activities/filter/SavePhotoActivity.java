@@ -20,13 +20,9 @@ import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.apis.dto.FilterDtoCreateRequest;
-import com.example.filter.etc.FaceStickerData;
-import com.example.filter.etc.ImageUtils;
+import com.example.filter.etc.FilterCreationData; // ✅ Import 필수
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SavePhotoActivity extends BaseActivity {
     private ImageButton backBtn;
@@ -34,16 +30,22 @@ public class SavePhotoActivity extends BaseActivity {
     private ConstraintLayout bottomArea;
     private AppCompatButton toArchiveBtn, toRegisterBtn;
 
+    // ✅ 데이터를 담을 객체 선언
+    private FilterCreationData filterData;
+    private String displayImagePath; // 화면 표시용 이미지 경로
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_save_photo);
+
         backBtn = findViewById(R.id.backBtn);
         photo = findViewById(R.id.photo);
         bottomArea = findViewById(R.id.bottomArea);
         toArchiveBtn = findViewById(R.id.toArchiveBtn);
         toRegisterBtn = findViewById(R.id.toRegisterBtn);
 
+        // 시스템 바 인셋 처리 (기존 코드 유지)
         ViewCompat.setOnApplyWindowInsetsListener(bottomArea, (v, insets) -> {
             Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
             ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) v.getLayoutParams();
@@ -53,57 +55,51 @@ public class SavePhotoActivity extends BaseActivity {
             return insets;
         });
 
+        // ---------------------------------------------------------------
+        // ✅ [핵심 수정] 1. FilterActivity에서 보낸 데이터 받기
+        // ---------------------------------------------------------------
+        // 개별 데이터(String, int...)를 받는 대신 객체 하나를 통째로 받습니다.
+        filterData = getIntent().getParcelableExtra("filter_data");
+
+        // 화면에 보여줄 최종 이미지 경로는 별도로 받음 (로딩 속도 최적화)
+        // (만약 FilterCreationData 안에 editedImageUrl에 로컬 경로가 있다면 그걸 써도 됩니다)
+        displayImagePath = getIntent().getStringExtra("display_image_path");
+        if (displayImagePath == null && filterData != null) {
+            // 혹시 display_image_path가 안 넘어왔다면 editedImageUrl 사용
+            displayImagePath = filterData.editedImageUrl;
+        }
+
         boolean allow = getIntent().getBooleanExtra("allowRegister", true);
+
+        // ---------------------------------------------------------------
+        // ✅ UI 설정
+        // ---------------------------------------------------------------
         if (!allow) {
             toRegisterBtn.setEnabled(false);
-            //toRegisterBtn.setAlpha(0.4f);
             toRegisterBtn.getBackground().setColorFilter(Color.parseColor("#759749"), PorterDuff.Mode.SRC_ATOP);
             toRegisterBtn.setTextColor(Color.parseColor("#00499A"));
             toRegisterBtn.setClickable(false);
         }
 
-        String originalPath = getIntent().getStringExtra("original_image_path");
-        String savedImagePath = getIntent().getStringExtra("saved_image");
-
-        float cropN_l = getIntent().getFloatExtra("cropRectN_l", -1f);
-        float cropN_t = getIntent().getFloatExtra("cropRectN_t", -1f);
-        float cropN_r = getIntent().getFloatExtra("cropRectN_r", -1f);
-        float cropN_b = getIntent().getFloatExtra("cropRectN_b", -1f);
-
-        int accumRotationDeg = getIntent().getIntExtra("accumRotationDeg", 0);
-        boolean accumFlipH = getIntent().getBooleanExtra("accumFlipH", false);
-        boolean accumFlipV = getIntent().getBooleanExtra("accumFlipV", false);
-
-        //String brushImagePath = getIntent().getStringExtra("brush_image_path");
-
-        /// 얼굴인식스티커 정보 받기 ///
-        String stickerImageNoFacePath = getIntent().getStringExtra("sticker_image_no_face_path");
-        ArrayList<FaceStickerData> faceStickers =
-                (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
-        /*if (faceStickers != null && !faceStickers.isEmpty()) {
-            for (FaceStickerData d : faceStickers) {
-                Log.d("StickerFlow", String.format(
-                        "[SavePhotoActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
-                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-                ));
-            }
-        } else {
-            Log.d("StickerFlow", "[SavePhotoActivity] faceStickers가 비어있음 혹은 null입니다.");
-        }*/
-
-
-        if (savedImagePath != null) {
-            File file = new File(savedImagePath);
+        // 이미지 표시
+        if (displayImagePath != null) {
+            // 로컬 파일인지 확인 (S3 URL일 경우 Glide를 써야 하지만,
+            // 여기서는 FilterActivity가 로컬 경로를 넘겨준다고 가정)
+            File file = new File(displayImagePath);
             if (file.exists()) {
-                Bitmap bitmap = BitmapFactory.decodeFile(savedImagePath);
+                Bitmap bitmap = BitmapFactory.decodeFile(displayImagePath);
                 if (bitmap != null) {
                     photo.setImageBitmap(bitmap);
-                    //사진 저장 메서드 호출
-                    //ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, bitmap);
                 }
+            } else if (displayImagePath.startsWith("http")) {
+                // 만약 S3 URL이라면 Glide 사용 (build.gradle에 Glide가 있어야 함)
+                com.bumptech.glide.Glide.with(this).load(displayImagePath).into(photo);
             }
         }
 
+        // ---------------------------------------------------------------
+        // ✅ 버튼 리스너 설정
+        // ---------------------------------------------------------------
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             Intent intent = new Intent(SavePhotoActivity.this, MainActivity.class);
@@ -114,57 +110,26 @@ public class SavePhotoActivity extends BaseActivity {
         ClickUtils.clickDim(toArchiveBtn);
         toArchiveBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
+            // 단순히 종료하면 Archive(갤러리/보관함)로 간 것으로 간주
             finish();
         });
 
         ClickUtils.clickDim(toRegisterBtn);
-        /// 중첩 클릭되면 안 됨 ///
+
+        // ★ [핵심 수정] 2. RegisterActivity로 데이터 넘기기
         toRegisterBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             ClickUtils.disableTemporarily(v, 800);
 
+            if (filterData == null) return; // 데이터가 없으면 진행 불가
+
             Intent intent = new Intent(SavePhotoActivity.this, RegisterActivity.class);
-            intent.putExtra("final_image", savedImagePath);
-            intent.putExtra("original_image_path", originalPath);
 
-            intent.putExtra("cropRectN_l", cropN_l);
-            intent.putExtra("cropRectN_t", cropN_t);
-            intent.putExtra("cropRectN_r", cropN_r);
-            intent.putExtra("cropRectN_b", cropN_b);
+            // 받은 객체를 그대로 다시 넘깁니다. (Toss)
+            intent.putExtra("filter_data", filterData);
 
-            intent.putExtra("accumRotationDeg", accumRotationDeg);
-            intent.putExtra("accumFlipH", accumFlipH);
-            intent.putExtra("accumFlipV", accumFlipV);
-
-            //intent.putExtra("brush_image_path", brushImagePath);
-            //intent.putExtra("sticker_image_path", stickerImagePath);
-
-            /// 얼굴인식스티커 정보 전달 ///
-            intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
-            intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
-
-            List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
-            for (FaceStickerData d : faceStickers) {
-                FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-                s.placementType = "face";
-                s.x = d.relX;
-                s.y = d.relY;
-                s.scale = (d.relW + d.relH) / 2f;
-                //s.relW = d.relW;
-                //s.relH = d.relH;
-                s.rotation = d.rot;
-                s.stickerId = d.groupId;
-                stickers.add(s);
-
-                /*Log.d("StickerFlow", String.format(
-                        "[SavePhotoActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
-                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-                ));*/
-            }
-
-            FilterDtoCreateRequest.ColorAdjustments adj =
-                    (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
-            if (adj != null) intent.putExtra("color_adjustments", adj);
+            // 화면 표시용 경로도 편의상 같이 넘김
+            intent.putExtra("display_image_path", displayImagePath);
 
             startActivity(intent);
         });

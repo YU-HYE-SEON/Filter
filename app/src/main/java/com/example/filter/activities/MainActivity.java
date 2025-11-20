@@ -82,7 +82,7 @@ public class MainActivity extends BaseActivity {
         // ✅ ① StickerStore 초기화 및 서버 업로더 설정
         StickerStore store = StickerStore.get();
         store.init(getApplicationContext());
-        store.setUploader(new StickerRepository(getApplicationContext()));
+        store.setUploader(new StickerRepository(getApplicationContext(), null));
 
 
         // UI 초기화
@@ -208,20 +208,18 @@ public class MainActivity extends BaseActivity {
                 intent.putExtra("face_stickers", new ArrayList<>(item.faceStickers));
             }
 
-            List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+            List<FilterDtoCreateRequest.FaceSticker> faceStickers = new ArrayList<>();
             if (item.faceStickers != null) {
                 for (FaceStickerData d : item.faceStickers) {
 
-                    FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-                    s.placementType = "face";
-                    s.x = d.relX;
-                    s.y = d.relY;
-                    s.scale = (d.relW + d.relH) / 2f;
-                    //s.relW = d.relW;
-                    //s.relH = d.relH;
-                    s.rotation = d.rot;
-                    s.stickerId = d.groupId;
-                    stickers.add(s);
+                    FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
+                    // s.stickerId
+                    s.relX = d.relX;
+                    s.relY = d.relY;
+                    s.relW = d.relW;
+                    s.relH = d.relH;
+                    s.rot = Math.round(d.rot);
+                    faceStickers.add(s);
                 }
             }
 

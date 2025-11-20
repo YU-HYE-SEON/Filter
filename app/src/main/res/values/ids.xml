@@ -3,6 +3,7 @@
     <item name="tag_brush_layer" type="id" />
     <item name="tag_session_id" type="id" />
     <item name="tag_sticker_id" type="id" />
+    <item name="tag_sticker_db_id" type="id"/>
     <item name="tag_sticker_clone" type="id" />
     <item name="tag_temp_editing" type="id" />
 </resources>

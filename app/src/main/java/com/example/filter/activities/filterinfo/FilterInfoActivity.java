@@ -98,26 +98,26 @@ public class FilterInfoActivity extends BaseActivity {
 
                 /// 얼굴인식스티커 정보 전달 ///
                 intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
-                intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+                intent.putExtra("face_stickers", new ArrayList<>(this.faceStickers));
 
-                List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
-                for (FaceStickerData d : faceStickers) {
-                    FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-                    s.placementType = "face";
-                    s.x = d.relX;
-                    s.y = d.relY;
-                    s.scale = (d.relW + d.relH) / 2f;
-                    //s.relW = d.relW;
-                    //s.relH = d.relH;
-                    s.rotation = d.rot;
-                    s.stickerId = d.groupId;
-                    stickers.add(s);
-
-                    /*Log.d("StickerFlow", String.format(
-                            "[FilterDetailActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
-                            d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-                    ));*/
-                }
+                List<FilterDtoCreateRequest.FaceSticker> faceStickers = new ArrayList<>();
+//                for (FaceStickerData d : this.faceStickers) {
+//                    FilterDtoCreateRequest.FaceSticker s = new FilterDtoCreateRequest.FaceSticker();
+//                    s.placementType = "face";
+//                    s.x = d.relX;
+//                    s.y = d.relY;
+//                    s.scale = (d.relW + d.relH) / 2f;
+//                    //s.relW = d.relW;
+//                    //s.relH = d.relH;
+//                    s.rotation = d.rot;
+//                    s.stickerId = d.groupId;
+//                    faceStickers.add(s);
+//
+//                    /*Log.d("StickerFlow", String.format(
+//                            "[FilterDetailActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
+//                            d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
+//                    ));*/
+//                }
 
                 intent.putExtra("filterId", filterId);
                 intent.putExtra("filterImage", imgUrl);

@@ -52,8 +52,8 @@ public class StickersFragment extends Fragment {
     private FrameLayout photoContainer, stickerOverlay, fullScreenContainer;
     private ConstraintLayout filterActivity, bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
-    //private ImageButton undoSticker, redoSticker, originalSticker;
     private LinearLayout brushToSticker;
+
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -98,34 +98,12 @@ public class StickersFragment extends Fragment {
         undoColor = activity.findViewById(R.id.undoColor);
         redoColor = activity.findViewById(R.id.redoColor);
         originalColor = activity.findViewById(R.id.originalColor);
-
-        /*undoSticker = activity.findViewById(R.id.undoSticker);
-        redoSticker = activity.findViewById(R.id.redoSticker);
-        originalSticker = activity.findViewById(R.id.originalSticker);*/
         brushToSticker = activity.findViewById(R.id.brushToSticker);
-
-       /* FilterActivity a = (FilterActivity) getActivity();
-        if (a != null) {
-            undoSticker.setOnClickListener(v -> {
-                a.previewOriginalStickers(false);
-                a.undoSticker();
-            });
-
-            redoSticker.setOnClickListener(v -> {
-                a.previewOriginalStickers(false);
-                a.redoSticker();
-            });
-
-            a.refreshStickerButtons();
-        }*/
 
         if (bottomArea1 != null) {
             undoColor.setVisibility(View.INVISIBLE);
             redoColor.setVisibility(View.INVISIBLE);
             originalColor.setVisibility(View.INVISIBLE);
-            /*undoSticker.setVisibility(View.VISIBLE);
-            redoSticker.setVisibility(View.VISIBLE);
-            originalSticker.setVisibility(View.VISIBLE);*/
             bottomArea1.setVisibility(View.VISIBLE);
             brushToSticker.setVisibility(View.GONE);
         }
@@ -149,6 +127,11 @@ public class StickersFragment extends Fragment {
                     StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
                     int groupId = args.getInt("editingStickerId", EditStickerFragment.stickerId);
                     View stickerFrame = viewModel.getTempView(groupId);
+
+                    // ✅ [추가] 인자에서 서버 DB ID 가져오기 (없으면 -1)
+                    // (이전 프래그먼트에서 "sticker_db_id"라는 키로 넘겨줘야 함)
+                    long serverId = args.getLong("sticker_db_id", -1L);
+
                     StickerMeta meta = new StickerMeta(
                             args.getFloat("relX"),
                             args.getFloat("relY"),
@@ -168,6 +151,12 @@ public class StickersFragment extends Fragment {
                                 cloneSticker.setTag(R.id.tag_sticker_id, groupId);
                                 cloneSticker.setTag(R.id.tag_sticker_clone, true);
                                 cloneSticker.setTag(R.id.tag_brush_layer, false);
+
+                                // ✅ [핵심] 뷰에 서버 DB ID 태그 저장
+                                if (serverId != -1L) {
+                                    cloneSticker.setTag(R.id.tag_sticker_db_id, serverId);
+                                }
+
                                 viewModel.addCloneGroup(groupId, cloneSticker);
                                 moveEditSticker(cloneSticker);
                                 ((FilterActivity) getActivity()).updateSaveButtonState();
@@ -198,33 +187,16 @@ public class StickersFragment extends Fragment {
                             }
                         }
 
-                        FaceStickerData data = new FaceStickerData(meta.relX, meta.relY, meta.relW, meta.relH, meta.rot, groupId, stickerBitmap, stickerPath);
+                        // ✅ [수정] FaceStickerData에 serverId 포함하여 생성
+                        // (FaceStickerData 생성자를 수정하지 않았다면 serverId 부분만 지우세요)
+                        FaceStickerData data = new FaceStickerData(
+                                meta.relX, meta.relY, meta.relW, meta.relH, meta.rot,
+                                groupId,
+                                serverId, // ★ 추가된 DB ID
+                                stickerBitmap, stickerPath
+                        );
                         viewModel.setFaceStickerData(data);
-
-                        //List<View> group = viewModel.getCloneGroup(groupId);
-                        //StringBuilder sb = new StringBuilder();
-                        //for (View v : group) {
-                        //    sb.append(v.hashCode()).append(" ");
-                        //}
-                        //Log.d("스티커", String.format("최종 | [세션ID = %d] | [클론스티커ID = %d] | 개수 = %d, 구성 = %s", sessionId, groupId, group.size(), sb.toString()));
-                        //viewModel.setTempView(null);
                     });
-
-                    /*StickerMeta prevMeta = new StickerMeta(
-                            args.getFloat("prev_relX"), args.getFloat("prev_relY"),
-                            args.getFloat("prev_relW"), args.getFloat("prev_relH"),
-                            args.getFloat("prev_rot")
-                    );
-
-                    StickerMeta nextMeta = new StickerMeta(
-                            args.getFloat("next_relX"), args.getFloat("next_relY"),
-                            args.getFloat("next_relW"), args.getFloat("next_relH"),
-                            args.getFloat("next_rot")
-                    );
-
-                    boolean isCloneModify = args.getBoolean("IS_CLONE_MODIFY", false);
-
-                    activity.recordCloneGroup(isCloneModify, groupId, stickerFrame, prevMeta, nextMeta);*/
                 }
             }));
         });
@@ -290,27 +262,14 @@ public class StickersFragment extends Fragment {
         return view;
     }
 
-    /*public void reapplyListenersToClones(List<View> clones) {
-        if (clones == null) return;
-        for (View clone : clones) {
-            moveEditSticker(clone);
-        }
-    }*/
-
     public void moveEditSticker(View stickerFrame) {
         if (stickerFrame == null || stickerFrame.getParent() == null) return;
-
 
         stickerFrame.setOnClickListener(v -> {
             Controller.setControllersVisible(stickerFrame, true);
 
             stickerFrame.setPivotX(stickerFrame.getWidth() / 2f);
             stickerFrame.setPivotY(stickerFrame.getHeight() / 2f);
-
-            //stickerFrame.post(() -> {
-            //    Log.d("스티커", String.format("스 | 스티커프레임 pivotX = %.1f, pivotY = %.1f, x = %.1f, y = %.1f, w=%d, h=%d, r=%.1f",
-            //            stickerFrame.getPivotX(), stickerFrame.getPivotY(), stickerFrame.getX(), stickerFrame.getY(), stickerFrame.getWidth(), stickerFrame.getHeight(), stickerFrame.getRotation()));
-            //});
 
             EditStickerFragment editStickerFragment = new EditStickerFragment();
             Bundle args = new Bundle();
@@ -329,6 +288,12 @@ public class StickersFragment extends Fragment {
                 args.putFloat("x", stickerFrame.getX());
                 args.putFloat("y", stickerFrame.getY());
                 args.putFloat("r", stickerFrame.getRotation());
+            }
+
+            // ✅ [추가] 편집 화면으로 넘어갈 때도 DB ID를 유지해서 넘겨줍니다
+            Object dbTag = stickerFrame.getTag(R.id.tag_sticker_db_id);
+            if (dbTag instanceof Long) {
+                args.putLong("sticker_db_id", (Long) dbTag);
             }
 
             editStickerFragment.setArguments(args);
