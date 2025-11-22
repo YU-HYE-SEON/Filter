@@ -46,4 +46,9 @@ public interface FilterApi {
     @POST("/api/v1/filters/{filterId}/usage")
     Call<Void> useFilter(@Path("filterId") Long filterId);
 
+    // ✔️ 북마크 토글
+    @PUT("/api/v1/filters/{filterId}/bookmark")
+    Call<Boolean> toggleBookmark(@Path("filterId") Long filterId);
+
+
 }

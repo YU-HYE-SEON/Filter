@@ -93,6 +93,7 @@ public class FilterInfoActivity extends BaseActivity {
     private boolean isFree = false;
     private boolean isBuy = false; // 현재 사용자가 구매했는지 여부
     private boolean isMine = false; // 내가 만든 필터인지 여부
+    private boolean isBookmarked = false;
 
     // 데이터 변수
     private FilterResponse filterData; // 서버 응답 객체
@@ -238,6 +239,7 @@ public class FilterInfoActivity extends BaseActivity {
         this.isMine = Boolean.TRUE.equals(data.isMine);
         this.isBuy = Boolean.TRUE.equals(data.isUsed);
         this.isFree = (data.price == null || data.price == 0);
+        this.isBookmarked = Boolean.TRUE.equals(data.isBookmarked);
 
         if (data.tags != null && !data.tags.isEmpty()) {
             StringBuilder sb = new StringBuilder();
@@ -393,6 +395,15 @@ public class FilterInfoActivity extends BaseActivity {
             });
         }
 
+        // ★ [추가] 북마크 버튼 클릭
+        if (bookmark != null) {
+            bookmark.setOnClickListener(v -> {
+                if (ClickUtils.isFastClick(v, 400)) return;
+                // API 호출
+                requestToggleBookmark(Long.parseLong(filterId));
+            });
+        }
+
         // 삭제 / 신고
         deleteORreportBtn.setOnClickListener(v -> {
             if (isMine) {
@@ -432,6 +443,48 @@ public class FilterInfoActivity extends BaseActivity {
         new PointChangeDialog(this, title, currentPrice, (oldPrice, newPrice) -> {
             requestUpdatePrice(Long.parseLong(filterId), newPrice);
         }).show();
+    }
+
+    // ✅ 2. 북마크 서버 API 호출 (토글 요청)
+    private void requestToggleBookmark(long id) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+
+        api.toggleBookmark(id).enqueue(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean newState = response.body(); // 서버가 준 현재 상태 (true/false)
+
+                    // UI 업데이트
+                    updateBookmarkUI(newState);
+
+                    // (선택) 토스트 메시지
+                    String msg = newState ? "북마크에 저장되었습니다." : "북마크가 해제되었습니다.";
+                    Toast.makeText(FilterInfoActivity.this, msg, Toast.LENGTH_SHORT).show();
+
+                } else {
+                    Log.e("FilterInfo", "북마크 실패: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Log.e("FilterInfo", "통신 오류", t);
+            }
+        });
+    }
+
+    // ✅ 3. 북마크 UI 업데이트 (아이콘 변경)
+    private void updateBookmarkUI(boolean active) {
+        this.isBookmarked = active; // 상태 변수 업데이트
+
+        if (active) {
+            // 북마크 된 상태 아이콘 (리소스 이름 확인 필요!)
+            bookmark.setImageResource(R.drawable.icon_bookmark_no_blue);
+        } else {
+            // 북마크 해제된 상태 아이콘
+            bookmark.setImageResource(R.drawable.icon_bookmark_no_gray);
+        }
     }
 
     // ✅ [추가] 서버에 가격 수정 요청
