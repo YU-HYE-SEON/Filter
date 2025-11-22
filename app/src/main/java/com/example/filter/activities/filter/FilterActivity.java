@@ -51,7 +51,7 @@ import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.overlayviews.CropBoxOverlayView;
 import com.example.filter.etc.FGLRenderer;
-import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
+import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.etc.StickerStore;
 import com.example.filter.fragments.filters.ColorsFragment;
 import com.example.filter.fragments.filters.StickersFragment;

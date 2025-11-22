@@ -23,7 +23,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
+import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.api_datas.FaceStickerData;

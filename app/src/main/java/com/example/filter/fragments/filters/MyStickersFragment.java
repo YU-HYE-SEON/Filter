@@ -21,7 +21,7 @@ import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.adapters.MyStickersAdapter;
 import com.example.filter.apis.client.AppRetrofitClient;
-import com.example.filter.api_datas.dto.StickerResponseDto;
+import com.example.filter.api_datas.response_dto.StickerResponseDto;
 import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.apis.StickerApi;
 import com.example.filter.dialogs.StickerDeleteDialog;
