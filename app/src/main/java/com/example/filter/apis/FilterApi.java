@@ -21,8 +21,15 @@ public interface FilterApi {
     Call<FilterResponse> getFilter(@Path("filterId") Long filterId);
 
     // ✔️ 필터 최신순 페이징 조회
-    @GET("/api/v1/filters/recent")
+    @GET("/api/v1/filter-lists/recent")
     Call<PageResponse<FilterListResponse>> getRecentFilters(
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    // ✔️ 인기순 조회
+    @GET("/api/v1/filter-lists/hot")
+    Call<PageResponse<FilterListResponse>> getHotFilters(
             @Query("page") int page,
             @Query("size") int size
     );

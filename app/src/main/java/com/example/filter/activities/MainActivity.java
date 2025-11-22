@@ -196,12 +196,11 @@ public class MainActivity extends BaseActivity {
                         break;
                     case R.id.hot:
                         setFilterButtons(false, true, false);
+                        loadHotFilters(); // 인기순 목록 불러오기
                         break;
                     case R.id.newest:
                         setFilterButtons(false, false, true);
-
-                        // ✅ [추가] 서버에서 최신 필터 목록 가져오기
-                        loadRecentFilters();
+                        loadRecentFilters(); // 서버에서 최신 필터 목록 가져오기
                         break;
                 }
             }
@@ -296,6 +295,56 @@ public class MainActivity extends BaseActivity {
 
                 } else {
                     Log.e("MainActivity", "목록 조회 실패: " + response.code());
+                    Toast.makeText(MainActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
+                Log.e("MainActivity", "통신 오류", t);
+                Toast.makeText(MainActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // ✅ [추가] 서버 API 통신: 인기 필터 목록 조회
+    // ---------------------------------------------------------------
+    private void loadHotFilters() {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+
+        // page=0, size=20 (인기순 API 호출)
+        api.getHotFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+            @Override
+            public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<FilterListResponse> serverList = response.body().content;
+
+                    // 1. Adapter 비우기
+                    if (filterAdapter != null) {
+                        filterAdapter.clear();
+                    }
+
+                    // 2. 변환 후 추가
+                    for (FilterListResponse dto : serverList) {
+                        FilterListItem item = new FilterListItem(
+                                dto.id,
+                                dto.name,
+                                dto.thumbnailUrl,
+                                dto.creator,
+                                dto.pricePoint,
+                                dto.useCount != null ? dto.useCount : 0,
+                                dto.usage,
+                                dto.bookmark
+                        );
+                        filterAdapter.addItem(item);
+                    }
+
+                    // 3. UI 갱신
+                    updateRecyclerVisibility();
+
+                } else {
+                    Log.e("MainActivity", "인기 목록 조회 실패: " + response.code());
                     Toast.makeText(MainActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
             }
