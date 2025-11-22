@@ -176,6 +176,14 @@ public class MainActivity extends BaseActivity {
             detailActivityLauncher.launch(intent);
         });
 
+        // 북마크 클릭 리스너
+        filterAdapter.setOnBookmarkClickListener((v, item, position) -> {
+            if (ClickUtils.isFastClick(v, 500)) return;
+
+            // API 호출 메서드 실행
+            requestToggleBookmark(item.id, position, item);
+        });
+
         // 로고 클릭 (맨 위로)
         logo.setOnClickListener(v -> {
             recyclerView.post(() -> {
@@ -254,6 +262,49 @@ public class MainActivity extends BaseActivity {
         random.setBackgroundResource(r ? R.drawable.btn_random_contents_yes : R.drawable.btn_random_contents_no);
         hot.setBackgroundResource(h ? R.drawable.btn_hot_contents_yes : R.drawable.btn_hot_contents_no);
         newest.setBackgroundResource(n ? R.drawable.btn_newest_contents_yes : R.drawable.btn_newest_contents_no);
+    }
+
+    // ---------------------------------------------------------------
+    // ✅ [추가] 북마크 토글 API 호출
+    // ---------------------------------------------------------------
+    private void requestToggleBookmark(long filterId, int position, FilterListItem oldItem) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+
+        api.toggleBookmark(filterId).enqueue(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean newState = response.body();
+
+                    // ✅ 성공 시: 리스트 데이터 갱신
+                    // FilterListItem의 필드가 final이라 수정이 안 되므로, 새 객체를 만들어 교체합니다.
+                    FilterListItem newItem = new FilterListItem(
+                            oldItem.id,
+                            oldItem.filterTitle,
+                            oldItem.thumbmailUrl,
+                            oldItem.nickname,
+                            oldItem.price,
+                            oldItem.useCount,
+                            oldItem.usage,
+                            newState // ★ 변경된 북마크 상태
+                    );
+
+                    // 어댑터의 해당 위치 아이템만 갱신
+                    filterAdapter.updateItem(position, newItem);
+
+                    String msg = newState ? "북마크 저장됨" : "북마크 해제됨";
+                    // Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show(); (선택 사항)
+
+                } else {
+                    Log.e("Bookmark", "실패: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Log.e("Bookmark", "통신 오류", t);
+            }
+        });
     }
 
     // ---------------------------------------------------------------
