@@ -7,6 +7,7 @@ import java.util.Map;
 public class FilterResponse implements Serializable {
     public Boolean isMine;
     public Boolean isUsed; // 사용이나 구매 여부
+    public Boolean isBookmarked;
 
     public Long id;
     public String name;
