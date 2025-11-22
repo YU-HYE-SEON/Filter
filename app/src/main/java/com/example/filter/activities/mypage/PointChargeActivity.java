@@ -3,15 +3,19 @@ package com.example.filter.activities.mypage;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
+import com.example.filter.apis.PointApi;
+import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.dialogs.ChargeDialog;
 import com.example.filter.etc.ClickUtils;
 
@@ -21,6 +25,11 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PointChargeActivity extends BaseActivity {
     private ImageButton backBtn;
@@ -179,16 +188,50 @@ public class PointChargeActivity extends BaseActivity {
     }
 
 
+    // ✅ [수정됨] 다이얼로그 확인 후 서버 통신
     public void showChargeConfirmDialog() {
         ChargeDialog dialog = new ChargeDialog(this, () -> {
-            if (isSuccess) {
-                addPoint(selectPoint);
-                saveHistory(selectPoint);
-                finish();
-            }
+            // 실제로는 여기서 PG 결제 로직이 들어가야 하지만,
+            // 테스트용으로 즉시 서버에 충전 요청을 보냅니다.
+            requestPointCharge(selectPoint * 10);
         });
         dialog.show();
-        dialog.setMessage(isSuccess);
+        dialog.setMessage(true); // 일단 성공 메시지 띄움 (API 호출 전 UI 처리)
+    }
+
+    // ✅ [추가] 서버 충전 요청 메서드
+    private void requestPointCharge(int cashAmount) {
+        PointApi api = AppRetrofitClient.getInstance(this).create(PointApi.class);
+
+        api.chargePoint(cashAmount).enqueue(new Callback<Map<String, Integer>>() {
+            @Override
+            public void onResponse(Call<Map<String, Integer>> call, Response<Map<String, Integer>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // 서버 충전 성공
+                    int newBalance = response.body().get("point");
+                    Log.d("PointCharge", "충전 성공. 잔액: " + newBalance);
+
+                    // 1. 로컬 SharedPreferences 동기화 (최신 잔액으로 덮어쓰기)
+                    SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
+                    sp.edit().putInt("current_point", newBalance).apply();
+
+                    // 2. 히스토리 저장 (기존 로직 활용)
+                    saveHistory(cashAmount);
+
+                    // 3. 종료
+                    finish();
+                } else {
+                    Log.e("PointCharge", "충전 실패: " + response.code());
+                    Toast.makeText(PointChargeActivity.this, "충전에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Integer>> call, Throwable t) {
+                Log.e("PointCharge", "통신 오류", t);
+                Toast.makeText(PointChargeActivity.this, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
