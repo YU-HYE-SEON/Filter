@@ -257,26 +257,20 @@ public class MainActivity extends BaseActivity {
     }
 
     // ---------------------------------------------------------------
-    // ✅ [추가] 서버 API 통신: 최신 필터 목록 조회
+    // ✅ [수정됨] 서버 API 통신: 최신 필터 목록 조회
     // ---------------------------------------------------------------
     private void loadRecentFilters() {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        // page=0, size=20
         api.getRecentFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<FilterListResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
 
-                    // 1. Adapter 비우기 (FilterListAdapter에 clear 메서드 필요)
-                    if (filterAdapter != null) {
-                        filterAdapter.clear();
-                    }
-
-                    // 2. 변환 후 추가
+                    // 1. 변환하여 리스트에 담기 (순서 그대로 유지됨)
                     for (FilterListResponse dto : serverList) {
-                        // DTO -> FilterListItem 변환
                         FilterListItem item = new FilterListItem(
                                 dto.id,
                                 dto.name,
@@ -287,7 +281,12 @@ public class MainActivity extends BaseActivity {
                                 dto.usage,
                                 dto.bookmark
                         );
-                        filterAdapter.addItem(item);
+                        uiList.add(item);
+                    }
+
+                    // 2. Adapter에 리스트 통째로 전달 (한 번에 갱신)
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
                     }
 
                     // 3. UI 갱신
@@ -308,24 +307,19 @@ public class MainActivity extends BaseActivity {
     }
 
     // ---------------------------------------------------------------
-    // ✅ [추가] 서버 API 통신: 인기 필터 목록 조회
+    // ✅ [수정됨] 서버 API 통신: 인기 필터 목록 조회
     // ---------------------------------------------------------------
     private void loadHotFilters() {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        // page=0, size=20 (인기순 API 호출)
         api.getHotFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<FilterListResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
 
-                    // 1. Adapter 비우기
-                    if (filterAdapter != null) {
-                        filterAdapter.clear();
-                    }
-
-                    // 2. 변환 후 추가
+                    // 1. 변환하여 리스트에 담기
                     for (FilterListResponse dto : serverList) {
                         FilterListItem item = new FilterListItem(
                                 dto.id,
@@ -337,7 +331,12 @@ public class MainActivity extends BaseActivity {
                                 dto.usage,
                                 dto.bookmark
                         );
-                        filterAdapter.addItem(item);
+                        uiList.add(item);
+                    }
+
+                    // 2. Adapter에 리스트 통째로 전달
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
                     }
 
                     // 3. UI 갱신

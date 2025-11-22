@@ -57,12 +57,24 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
 
     /// 새로운 필터 추가 ///
     public void addItem(FilterListItem item) {
-        items.add(0, item);
-        if (items.size() > maxItems) {
-            notifyDataSetChanged();
-        } else {
-            notifyItemInserted(0);
+        items.add(item); // ✅ 수정 코드 (맨 뒤에 추가 -> 정순 유지)
+
+        // 갱신 알림 (전체 갱신보다는 효율적으로)
+        notifyItemInserted(items.size() - 1);
+
+        // (MaxItems 로직이 필요하다면 유지하되, 뒤에 추가하는 로직에 맞게 조정 필요)
+        /* if (items.size() > maxItems) {
+            items.remove(0); // 개수 초과 시 맨 앞(오래된 것?) 삭제? -> 상황에 따라 다름
+            notifyItemRemoved(0);
         }
+        */
+    }
+
+    // 리스트 전체를 받아서 갱신하는 메서드 (서버에서 받아온 순서 보장)
+    public void setItems(List<FilterListItem> newItems) {
+        this.items.clear();
+        this.items.addAll(newItems);
+        notifyDataSetChanged();
     }
 
     // ✅ [수정됨] FilterListItem 생성자에 맞춰 수정
