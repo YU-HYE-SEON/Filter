@@ -9,6 +9,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -32,6 +33,13 @@ public interface FilterApi {
     Call<PageResponse<FilterListResponse>> getHotFilters(
             @Query("page") int page,
             @Query("size") int size
+    );
+
+    // ✔️ 가격 수정
+    @PUT("/api/v1/filters/{filterId}/price")
+    Call<Void> updatePrice(
+            @Path("filterId") Long filterId,
+            @Body java.util.HashMap<String, Object> requestBody
     );
 
 }
