@@ -527,34 +527,60 @@ public class FilterInfoActivity extends BaseActivity {
         if(buyBtn != null) {
             buyBtn.setOnClickListener(v -> {
                 if (ClickUtils.isFastClick(v, 400)) return;
-                // TODO: 서버 구매 API 호출
 
-                // (임시 로컬 로직)
+                // 1. 로컬 포인트 체크 (사전 검증)
                 SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
                 int current = sp.getInt("current_point", 0);
-                int priceInt = Integer.parseInt(price);
+                int priceInt = 0;
+                try { priceInt = Integer.parseInt(price); } catch(Exception e){}
+
                 if (current < priceInt) {
                     Toast.makeText(this, "포인트가 부족합니다.", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                sp.edit().putInt("current_point", current - priceInt).apply();
-                isBuy = true;
-                updateButtonState();
 
-                buyFilterOn.setVisibility(View.GONE);
-                if(currentPoint2 != null) currentPoint2.setText((current - priceInt) + "P");
-                showModal(buyFilterSuccessOn);
+                // ✅ [수정] 2. 서버 구매 API 호출
+                requestPurchaseFilter(Long.parseLong(filterId), current, priceInt);
             });
         }
+    }
 
-        // 성공 후 사용 버튼
-        if(useBtn != null) {
-            useBtn.setOnClickListener(v -> {
-                if (ClickUtils.isFastClick(v, 400)) return;
-                buyFilterSuccessOn.setVisibility(View.GONE);
-                showModal(chooseUseModeOn);
-            });
-        }
+    // ✅ [추가] 서버에 구매/사용 요청
+    private void requestPurchaseFilter(long id, int currentPoint, int priceInt) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+
+        api.useFilter(id).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    // 1. 성공 시 로컬 포인트 차감 및 저장
+                    int newCurrent = currentPoint - priceInt;
+                    SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
+                    sp.edit().putInt("current_point", newCurrent).apply();
+
+                    // 2. 상태 변경
+                    isBuy = true;
+                    updateButtonState();
+
+                    // 3. 모달 전환 애니메이션 (구매 -> 성공)
+                    buyFilterOn.setVisibility(View.GONE);
+                    if (currentPoint2 != null) currentPoint2.setText(newCurrent + "P");
+                    showModal(buyFilterSuccessOn);
+
+                    Log.d("FilterInfo", "구매 성공");
+                } else {
+                    // 실패 시 (이미 구매했거나, 포인트 부족 등 서버 에러)
+                    Log.e("FilterInfo", "구매 실패: " + response.code());
+                    Toast.makeText(FilterInfoActivity.this, "구매에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e("FilterInfo", "통신 오류", t);
+                Toast.makeText(FilterInfoActivity.this, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void showModal(View view) {

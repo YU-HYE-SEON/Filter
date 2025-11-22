@@ -42,4 +42,8 @@ public interface FilterApi {
             @Body java.util.HashMap<String, Object> requestBody
     );
 
+    // ✔️ 필터 구매
+    @POST("/api/v1/filters/{filterId}/usage")
+    Call<Void> useFilter(@Path("filterId") Long filterId);
+
 }
