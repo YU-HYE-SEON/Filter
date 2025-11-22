@@ -1,7 +1,7 @@
 package com.example.filter.apis;
 
-import com.example.filter.api_datas.dto.AIStickerResponse;
-import com.example.filter.api_datas.dto.PromptRequest;
+import com.example.filter.api_datas.response_dto.AIStickerResponse;
+import com.example.filter.api_datas.request_dto.PromptRequest;
 
 import retrofit2.Call;
 import retrofit2.http.Body;

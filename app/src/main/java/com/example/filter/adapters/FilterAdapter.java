@@ -108,14 +108,16 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         items.remove(targetIndex);
         notifyDataSetChanged();
     }
-
+    
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // (XML 파일을 읽어서) 빈 View Holder를 만듦
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.i_filter, parent, false);
         return new VH(v);
     }
 
+    // 실제 데이터를 뷰에 매핑(binding) 함
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
         if (position < 0 || position >= items.size()) {

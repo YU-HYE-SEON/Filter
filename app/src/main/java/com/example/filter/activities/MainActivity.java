@@ -27,7 +27,7 @@ import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.FilterAdapter;
 import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
+import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.etc.StickerStore;
 import com.example.filter.fragments.mypages.MyPageFragment;
@@ -66,7 +66,7 @@ public class MainActivity extends BaseActivity {
             });
     private TextView textView;
     private RecyclerView recyclerView;
-    private FilterAdapter filterAdapter;
+    private FilterAdapter filterAdapter; // 필터 목록을 보여주는 view adapter?? 정확히는 잘 모르겠음
     private static final int MAX_ITEMS = 50;
     /*private boolean isLoading = false;
     private int page = 0;

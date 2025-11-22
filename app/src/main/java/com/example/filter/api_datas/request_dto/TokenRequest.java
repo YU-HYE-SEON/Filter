@@ -1,4 +1,4 @@
-package com.example.filter.api_datas.dto;
+package com.example.filter.api_datas.request_dto;
 
 public class TokenRequest {
     private String idToken;

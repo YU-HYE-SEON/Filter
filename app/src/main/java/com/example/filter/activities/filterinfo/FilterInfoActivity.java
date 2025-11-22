@@ -1,66 +1,6 @@
 package com.example.filter.activities.filterinfo;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.annotation.SuppressLint;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.graphics.ColorUtils;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.palette.graphics.Palette;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
-import com.bumptech.glide.signature.ObjectKey;
-import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.MainActivity;
-import com.example.filter.activities.apply.ApplyFilterActivity;
-import com.example.filter.activities.apply.CameraActivity;
-import com.example.filter.activities.review.ReviewActivity;
-import com.example.filter.dialogs.PointChangeDialog;
-import com.example.filter.etc.ClickUtils;
-import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
-import com.example.filter.api_datas.FaceStickerData;
-import com.example.filter.etc.ReviewStore;
-import com.example.filter.items.ReviewItem;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 
 public class FilterInfoActivity extends BaseActivity {
 //    private ImageButton backBtn, originalBtn;
