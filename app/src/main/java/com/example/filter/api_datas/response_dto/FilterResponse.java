@@ -1,4 +1,4 @@
-package com.example.filter.api_datas.dto;
+package com.example.filter.api_datas.response_dto;
 
 import java.io.Serializable;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class FilterResponse implements Serializable {
     public Boolean isMine;
+    public Boolean isUsed; // 사용이나 구매 여부
 
     public Long id;
     public String name;
@@ -25,7 +26,6 @@ public class FilterResponse implements Serializable {
     // 내부 클래스 리스트 사용
     public List<FaceStickerResponse> stickers;
 
-    public Boolean isDeleted;
     public Long saveCount;
     public Long useCount;
 

@@ -41,7 +41,7 @@ import com.example.filter.dialogs.PopUpDialog;
 import com.example.filter.dialogs.SignUpDialog;
 import com.example.filter.apis.AuthApi;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.api_datas.dto.TokenRequest;
+import com.example.filter.api_datas.request_dto.TokenRequest;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;

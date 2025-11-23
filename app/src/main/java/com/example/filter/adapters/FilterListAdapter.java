@@ -14,14 +14,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
-import com.example.filter.items.FilterItem;
+import com.example.filter.items.FilterListItem; // ✅ 올바른 Import 확인
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
+public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH> {
+
     public interface OnItemClickListener {
-        void onClick(View v, FilterItem item);
+        void onClick(View v, FilterListItem item);
     }
 
     private OnItemClickListener listener;
@@ -30,19 +31,24 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         this.listener = l;
     }
 
-    private final List<FilterItem> items = new ArrayList<>();
+    private final List<FilterListItem> items = new ArrayList<>();
     private int maxItems = Integer.MAX_VALUE;
-    private Context context;
 
-    public FilterAdapter() {
+    public FilterListAdapter() {
     }
 
+    // ✅ 데이터 초기화 메서드 추가 (MainActivity에서 사용됨)
+    public void clear() {
+        this.items.clear();
+        notifyDataSetChanged();
+    }
 
     /// 어댑터에 이미 존재하는 필터인지 판단 ///
     public boolean containsId(String id) {
         if (id == null) return false;
-        for (FilterItem item : items) {
-            if (item != null && id.equals(item.id)) {
+        for (FilterListItem item : items) {
+            // FilterListItem의 id는 Long이므로 String으로 변환해 비교
+            if (item != null && id.equals(String.valueOf(item.id))) {
                 return true;
             }
         }
@@ -50,7 +56,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
     }
 
     /// 새로운 필터 추가 ///
-    public void addItem(FilterItem item) {
+    public void addItem(FilterListItem item) {
         items.add(0, item);
         if (items.size() > maxItems) {
             notifyDataSetChanged();
@@ -59,27 +65,32 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
         }
     }
 
-    public void updatePriceItem(String id, String newPrice) {
+    // ✅ [수정됨] FilterListItem 생성자에 맞춰 수정
+    public void updatePriceItem(String id, String newPriceStr) {
         if (id == null) return;
         int targetIndex = -1;
+
+        int newPrice = 0;
+        try {
+            newPrice = Integer.parseInt(newPriceStr);
+        } catch (NumberFormatException e) { return; }
+
         for (int i = 0; i < items.size(); i++) {
-            FilterItem item = items.get(i);
-            if (item != null && id.equals(item.id)) {
+            FilterListItem item = items.get(i);
+            // ID 비교 (Long vs String)
+            if (item != null && id.equals(String.valueOf(item.id))) {
                 targetIndex = i;
-                FilterItem updatedItem = new FilterItem(
+
+                // ✅ FilterListItem 생성자 규격에 맞게 수정
+                FilterListItem updatedItem = new FilterListItem(
                         item.id,
-                        item.nickname,
-                        item.originalPath,
-                        item.filterImageUrl,
                         item.filterTitle,
-                        item.tags,
-                        newPrice,
-                        item.count,
-                        item.isMockData,
-                        item.colorAdjustments,
-                        item.brushPath,
-                        item.stickerImageNoFacePath,
-                        item.faceStickers
+                        item.thumbmailUrl,
+                        item.nickname,
+                        newPrice,       // 업데이트된 가격
+                        item.useCount,
+                        item.usage,
+                        item.bookmark
                 );
                 items.set(i, updatedItem);
                 break;
@@ -97,8 +108,8 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
 
         int targetIndex = -1;
         for (int i = 0; i < items.size(); i++) {
-            FilterItem item = items.get(i);
-            if (item != null && id.equals(item.id)) {
+            FilterListItem item = items.get(i);
+            if (item != null && id.equals(String.valueOf(item.id))) {
                 targetIndex = i;
                 break;
             }
@@ -118,69 +129,46 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.VH> {
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
-        if (position < 0 || position >= items.size()) {
-            return;
-        }
+        if (position < 0 || position >= items.size()) return;
 
-        FilterItem item = items.get(position);
+        FilterListItem item = items.get(position);
         if (item == null) return;
 
-        String titleToShow;
-        String nicknameToShow;
-        if (item.isMockData) {
-            int mockIndex = 0;
-            for (int i = 0; i <= position; i++) {
-                if (items.get(i).isMockData) {
-                    mockIndex++;
-                }
-            }
-            titleToShow = "필터이름" + mockIndex;
-            nicknameToShow = "@" + "닉네임" + mockIndex;
-        } else {
-            titleToShow = item.filterTitle;
-            nicknameToShow = item.nickname;
-        }
-        holder.nickname.setText(nicknameToShow);
-        holder.filterTitle.setText(titleToShow);
+        // ✅ [수정됨] 복잡한 Mock 데이터 로직 제거하고 단순 매핑
+        // FilterListItem에는 표시할 데이터가 다 들어있다고 가정합니다.
 
-        //holder.nickname.setText(item.nickname);
-        //holder.filterTitle.setText(item.filterTitle);
+        holder.nickname.setText(item.nickname);
+        holder.filterTitle.setText(item.filterTitle);
         holder.price.setText(String.valueOf(item.price));
-        holder.count.setText(String.valueOf(item.count + "회 사용"));
 
-        Glide.with(holder.filterImage.getContext())
-                .load(item.filterImageUrl)
-                .signature(new ObjectKey(item.id))
-                .fitCenter()
-                .into(holder.filterImage);
+        // useCount 사용
+        holder.count.setText(item.useCount + "회 사용");
 
-        if (titleToShow != null) {
+        // ✅ [수정됨] 필드명 변경 (filterImageUrl -> thumbmailUrl)
+        if (item.thumbmailUrl != null) {
+            Glide.with(holder.filterImage.getContext())
+                    .load(item.thumbmailUrl)
+                    .signature(new ObjectKey(String.valueOf(item.id))) // Long ID -> String
+                    .fitCenter()
+                    .into(holder.filterImage);
+        }
+
+        // 제목 길이 처리 로직 (기존 유지)
+        if (item.filterTitle != null) {
             holder.filterTitle.post(() -> {
                 int currentPosition = holder.getAdapterPosition();
-                if (currentPosition == RecyclerView.NO_POSITION) {
-                    return;
-                }
-                if (currentPosition < 0 || currentPosition >= items.size()) {
-                    return;
-                }
+                if (currentPosition == RecyclerView.NO_POSITION || currentPosition >= items.size()) return;
 
-                FilterItem currentItem = items.get(currentPosition);
-                if (currentItem != null && currentItem.filterTitle != null) {
-                    float threshold = holder.filterTitle.getWidth();
-                    float textWidth = holder.filterTitle.getPaint().measureText(titleToShow);
-
-                    if (textWidth > threshold) {
-                        holder.filterTitle.setSingleLine(true);
-                        holder.filterTitle.setEllipsize(TextUtils.TruncateAt.END);
-                    } else {
-                        holder.filterTitle.setSingleLine(false);
-                        holder.filterTitle.setEllipsize(null);
-                    }
+                // 텍스트 길이 체크 로직 (뷰가 재활용되므로 안전장치 필요)
+                // ... (기존 로직 유지하되 item 참조만 주의)
+                if (holder.filterTitle.getPaint().measureText(item.filterTitle) > holder.filterTitle.getWidth()) {
+                    holder.filterTitle.setSingleLine(true);
+                    holder.filterTitle.setEllipsize(TextUtils.TruncateAt.END);
+                } else {
+                    holder.filterTitle.setSingleLine(false);
+                    holder.filterTitle.setEllipsize(null);
                 }
             });
-        } else {
-            holder.filterTitle.setSingleLine(false);
-            holder.filterTitle.setEllipsize(null);
         }
     }
 

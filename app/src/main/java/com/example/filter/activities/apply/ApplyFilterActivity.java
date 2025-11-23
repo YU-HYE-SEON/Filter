@@ -34,7 +34,7 @@ import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
-import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
+import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
 import com.example.filter.etc.StickerMeta;

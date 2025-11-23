@@ -1,7 +1,7 @@
 package com.example.filter.apis;
 
-import com.example.filter.api_datas.dto.StickerCreateRequest;
-import com.example.filter.api_datas.dto.StickerResponseDto;
+import com.example.filter.api_datas.request_dto.StickerCreateRequest;
+import com.example.filter.api_datas.response_dto.StickerResponseDto;
 
 import java.util.List;
 

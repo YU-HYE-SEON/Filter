@@ -1,4 +1,4 @@
-package com.example.filter.api_datas.dto;
+package com.example.filter.api_datas.response_dto;
 
 public class AIStickerResponse {
     private boolean fromAIServer;
