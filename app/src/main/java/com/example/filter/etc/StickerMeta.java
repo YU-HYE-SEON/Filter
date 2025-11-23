@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.filter.FilterActivity;
@@ -218,18 +219,13 @@ public class StickerMeta {
         return resultList;
     }
 
-    public static View cloneSticker(FrameLayout stickerOverlay, View stickerFrame, Context context, float[] placement) {
-        if (stickerFrame == null || context == null) return null;
+    public static View faceSticker(FrameLayout stickerOverlay, String stickerUrl, Context context, float[] placement) {
+        if (stickerUrl == null || context == null) return null;
 
         LayoutInflater inflater = LayoutInflater.from(context);
         View cloneSticker = inflater.inflate(R.layout.v_sticker_edit, (ViewGroup) stickerOverlay, false);
-
-        ImageView oldImage = stickerFrame.findViewById(R.id.stickerImage);
-        ImageView newImage = cloneSticker.findViewById(R.id.stickerImage);
-
-        if (oldImage != null && oldImage.getDrawable() != null && newImage != null) {
-            newImage.setImageDrawable(oldImage.getDrawable().getConstantState().newDrawable());
-        }
+        ImageView stickerImage = cloneSticker.findViewById(R.id.stickerImage);
+        Glide.with(context).load(stickerUrl).into(stickerImage);
 
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Math.round(placement[2]), Math.round(placement[3]));
         cloneSticker.setLayoutParams(lp);
@@ -241,6 +237,10 @@ public class StickerMeta {
         Controller.setStickerActive(cloneSticker, true);
 
         stickerOverlay.addView(cloneSticker);
+
+        cloneSticker.setTag(R.id.tag_sticker_clone, Boolean.TRUE);
+        cloneSticker.setTag(R.id.tag_brush_layer, Boolean.FALSE);
+        cloneSticker.setTag(R.id.tag_sticker_url, stickerUrl);
 
         return cloneSticker;
     }

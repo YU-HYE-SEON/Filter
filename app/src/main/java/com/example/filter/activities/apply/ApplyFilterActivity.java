@@ -418,15 +418,15 @@ public class ApplyFilterActivity extends BaseActivity {
                                 StickerMeta meta = new StickerMeta(d.relX, d.relY, d.relW, d.relH, d.rot);
                                 List<float[]> placements = StickerMeta.recalculate(faces, original, stickerOverlay, meta, this);
                                 for (float[] p : placements) {
-                                    View dummyFrame = LayoutInflater.from(this).inflate(R.layout.v_sticker_edit, stickerOverlay, false);
+                                    /*View dummyFrame = LayoutInflater.from(this).inflate(R.layout.v_sticker_edit, stickerOverlay, false);
                                     ImageView dummyImage = dummyFrame.findViewById(R.id.stickerImage);
                                     if (d.stickerBitmap != null) {
                                         dummyImage.setImageBitmap(d.stickerBitmap);
                                     } else {
                                         dummyImage.setImageBitmap(BitmapFactory.decodeFile(d.stickerPath));
-                                    }
-                                    StickerMeta.cloneSticker(stickerOverlay, dummyFrame,this, p);
-                                    stickerOverlay.removeView(dummyFrame);
+                                    }*/
+                                    StickerMeta.faceSticker(stickerOverlay, d.stickerPath,this, p);
+                                    //stickerOverlay.removeView(dummyFrame);
                                 }
                             }
                         }

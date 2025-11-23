@@ -46,10 +46,12 @@ import com.example.filter.activities.MainActivity;
 import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.apply.CameraActivity;
 import com.example.filter.activities.review.ReviewActivity;
+import com.example.filter.api_datas.FaceStickerData;
+import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
 import com.example.filter.dialogs.PointChangeDialog;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
-import com.example.filter.api_datas.FaceStickerData;
+//import com.example.filter.apis.dto.FilterDtoCreateRequest;
+//import com.example.filter.etc.FaceStickerData;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
 
@@ -381,24 +383,24 @@ public class FilterInfoActivity extends BaseActivity {
         intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
         intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
 
-//        List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
-//        for (FaceStickerData d : faceStickers) {
-//            FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
-//            s.placementType = "face";
-//            s.x = d.relX;
-//            s.y = d.relY;
-//            s.scale = (d.relW + d.relH) / 2f;
-//            //s.relW = d.relW;
-//            //s.relH = d.relH;
-//            s.rotation = d.rot;
-//            s.stickerId = d.groupId;
-//            stickers.add(s);
+        /*List<FilterDtoCreateRequest.Sticker> stickers = new ArrayList<>();
+        for (FaceStickerData d : faceStickers) {
+            FilterDtoCreateRequest.Sticker s = new FilterDtoCreateRequest.Sticker();
+            s.placementType = "face";
+            s.x = d.relX;
+            s.y = d.relY;
+            s.scale = (d.relW + d.relH) / 2f;
+            //s.relW = d.relW;
+            //s.relH = d.relH;
+            s.rotation = d.rot;
+            s.stickerId = d.groupId;
+            stickers.add(s);
 
-            /*Log.d("StickerFlow", String.format(
+            *//*Log.d("StickerFlow", String.format(
                     "[RegisterActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
                     d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-            ));*/
-        }
+            ));*//*
+        }*/
     }
 
     private void updateButtonState() {

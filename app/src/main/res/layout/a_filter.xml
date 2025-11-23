@@ -199,6 +199,20 @@
                 app:layout_constraintLeft_toRightOf="@+id/undoSticker"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <ImageButton
+                android:id="@+id/originalSticker"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_original_white"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- 브러쉬를 스티커로 변환? 체크박스 -->
             <LinearLayout
                 android:id="@+id/brushToSticker"
                 android:layout_width="wrap_content"
@@ -238,18 +252,45 @@
 
             </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/originalSticker"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginRight="16dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:scaleType="fitCenter"
-                android:src="@drawable/icon_original_white"
+            <!-- 얼굴 인식 모드로 스티커 배치? 체크박스 -->
+            <LinearLayout
+                android:id="@+id/stickerEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_medium"
+                    android:text="AI 얼굴 인식으로 위치 지정하기"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+                <FrameLayout
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_marginLeft="5dp">
+
+                    <CheckBox
+                        android:id="@+id/faceCheckBox"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:layout_marginTop="3dp"
+                        android:background="@drawable/checkbox_states"
+                        android:button="@null"
+                        android:checked="false" />
+
+                </FrameLayout>
+
+            </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

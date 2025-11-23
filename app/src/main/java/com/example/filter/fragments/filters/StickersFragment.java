@@ -24,9 +24,11 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.activities.filter.LoadActivity;
@@ -43,16 +45,13 @@ import java.io.FileOutputStream;
 import java.util.List;
 
 public class StickersFragment extends Fragment {
-    private ConstraintLayout topArea;
-    private boolean isToastVisible = false;
-    private FaceBoxOverlayView faceBox;
     private LinearLayout myStickerBtn, loadStickerBtn, brushBtn, AIStickerBtn;
     private ImageView myStickerIcon, brushIcon;
     private TextView myStickerTxt, brushTxt;
-    private FrameLayout photoContainer, stickerOverlay, fullScreenContainer;
+    private FrameLayout stickerOverlay, fullScreenContainer;
     private ConstraintLayout filterActivity, bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
-    private LinearLayout brushToSticker;
+    private LinearLayout brushToSticker, stickerEdit;
 
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -91,14 +90,13 @@ public class StickersFragment extends Fragment {
 
         FilterActivity activity = (FilterActivity) requireActivity();
 
-        topArea = activity.findViewById(R.id.topArea);
-        photoContainer = activity.findViewById(R.id.photoContainer);
         stickerOverlay = activity.findViewById(R.id.stickerOverlay);
         bottomArea1 = activity.findViewById(R.id.bottomArea1);
         undoColor = activity.findViewById(R.id.undoColor);
         redoColor = activity.findViewById(R.id.redoColor);
         originalColor = activity.findViewById(R.id.originalColor);
         brushToSticker = activity.findViewById(R.id.brushToSticker);
+        stickerEdit = activity.findViewById(R.id.stickerEdit);
 
         if (bottomArea1 != null) {
             undoColor.setVisibility(View.INVISIBLE);
@@ -106,100 +104,8 @@ public class StickersFragment extends Fragment {
             originalColor.setVisibility(View.INVISIBLE);
             bottomArea1.setVisibility(View.VISIBLE);
             brushToSticker.setVisibility(View.GONE);
+            stickerEdit.setVisibility(View.GONE);
         }
-
-        Bundle args = getArguments();
-        boolean fromCheck = args != null && args.getBoolean("TRIGGERED_BY_CHECK", false);
-        faceBox = new FaceBoxOverlayView(requireContext());
-
-        photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        activity.getPhotoPreview().queueEvent(() -> {
-            Bitmap bmp = activity.getRenderer().getCurrentBitmap();
-            activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
-                if (faces.isEmpty()) {
-                    if (fromCheck) {
-                        showToast("얼굴을 감지하지 못했습니다");
-                    }
-                    return;
-                }
-
-                if (!faces.isEmpty() && args != null && (args.getBoolean("IS_FACE_MODE"))) {
-                    StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-                    int groupId = args.getInt("editingStickerId", EditStickerFragment.stickerId);
-                    View stickerFrame = viewModel.getTempView(groupId);
-
-                    // ✅ [추가] 인자에서 서버 DB ID 가져오기 (없으면 -1)
-                    // (이전 프래그먼트에서 "sticker_db_id"라는 키로 넘겨줘야 함)
-                    long serverId = args.getLong("sticker_db_id", -1L);
-
-                    StickerMeta meta = new StickerMeta(
-                            args.getFloat("relX"),
-                            args.getFloat("relY"),
-                            args.getFloat("relW"),
-                            args.getFloat("relH"),
-                            args.getFloat("rot")
-                    );
-
-                    List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, meta, requireContext());
-                    requireActivity().runOnUiThread(() -> {
-                        viewModel.removeCloneGroup(groupId, stickerOverlay);
-                        viewModel.setFaceStickerDataToDelete(groupId);
-
-                        for (float[] p : placement) {
-                            View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame, requireContext(), p);
-                            if (cloneSticker != null) {
-                                cloneSticker.setTag(R.id.tag_sticker_id, groupId);
-                                cloneSticker.setTag(R.id.tag_sticker_clone, true);
-                                cloneSticker.setTag(R.id.tag_brush_layer, false);
-
-                                // ✅ [핵심] 뷰에 서버 DB ID 태그 저장
-                                if (serverId != -1L) {
-                                    cloneSticker.setTag(R.id.tag_sticker_db_id, serverId);
-                                }
-
-                                viewModel.addCloneGroup(groupId, cloneSticker);
-                                moveEditSticker(cloneSticker);
-                                ((FilterActivity) getActivity()).updateSaveButtonState();
-                            }
-                        }
-
-                        setIcon();
-                        showToast("얼굴 인식 성공");
-
-                        ImageView stickerImage = stickerFrame.findViewById(R.id.stickerImage);
-                        Bitmap stickerBitmap = null;
-                        if (stickerImage != null && stickerImage.getDrawable() != null) {
-                            stickerImage.setDrawingCacheEnabled(true);
-                            stickerBitmap = Bitmap.createBitmap(stickerImage.getDrawingCache());
-                            stickerImage.setDrawingCacheEnabled(false);
-                        }
-                        String stickerPath = null;
-                        if (stickerBitmap != null) {
-                            try {
-                                File file = new File(requireContext().getCacheDir(),
-                                        "face_sticker_" + System.currentTimeMillis() + ".png");
-                                FileOutputStream out = new FileOutputStream(file);
-                                stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                                out.close();
-                                stickerPath = file.getAbsolutePath();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        // ✅ [수정] FaceStickerData에 serverId 포함하여 생성
-                        // (FaceStickerData 생성자를 수정하지 않았다면 serverId 부분만 지우세요)
-                        FaceStickerData data = new FaceStickerData(
-                                meta.relX, meta.relY, meta.relW, meta.relH, meta.rot,
-                                groupId,
-                                serverId, // ★ 추가된 DB ID
-                                stickerBitmap, stickerPath
-                        );
-                        viewModel.setFaceStickerData(data);
-                    });
-                }
-            }));
-        });
 
         myStickerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -262,7 +168,7 @@ public class StickersFragment extends Fragment {
         return view;
     }
 
-    public void moveEditSticker(View stickerFrame) {
+    /*public void moveEditSticker(View stickerFrame) {
         if (stickerFrame == null || stickerFrame.getParent() == null) return;
 
         stickerFrame.setOnClickListener(v -> {
@@ -271,51 +177,72 @@ public class StickersFragment extends Fragment {
             stickerFrame.setPivotX(stickerFrame.getWidth() / 2f);
             stickerFrame.setPivotY(stickerFrame.getHeight() / 2f);
 
-            EditStickerFragment editStickerFragment = new EditStickerFragment();
             Bundle args = new Bundle();
-
-            args.putString("prev_frag", "stickerF");
             args.putInt("selected_index", ((ViewGroup) stickerFrame.getParent()).indexOfChild(stickerFrame));
 
-            Object tag = stickerFrame.getTag(R.id.tag_sticker_clone);
-            if (tag != null) {
-                args.putBoolean("IS_CLONED_STICKER", true);
+            boolean fromMySticker = Boolean.TRUE.equals(stickerFrame.getTag(R.id.tag_from_mysticker));
+            if (fromMySticker) {
+                MyStickersFragment myStickersFragment = new MyStickersFragment();
+
+                args.putString("stickerUrl", (String) stickerFrame.getTag(R.id.tag_sticker_url));
+                args.putBoolean("EDIT_EXISTING", true);
+                args.putFloat("prevElevation", ViewCompat.getZ(stickerFrame));
+                args.putInt("sticker_index", ((ViewGroup) stickerFrame.getParent()).indexOfChild(stickerFrame));
+
+                myStickersFragment.setArguments(args);
+
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.slide_up, 0)
+                        .replace(R.id.bottomArea2, myStickersFragment)
+                        .commit();
             } else {
-                args.putInt("w", stickerFrame.getLayoutParams().width);
-                args.putInt("h", stickerFrame.getLayoutParams().height);
-                args.putFloat("pivotX", stickerFrame.getPivotX());
-                args.putFloat("pivotY", stickerFrame.getPivotY());
-                args.putFloat("x", stickerFrame.getX());
-                args.putFloat("y", stickerFrame.getY());
-                args.putFloat("r", stickerFrame.getRotation());
+                EditStickerFragment editStickerFragment = new EditStickerFragment();
+
+                Object tag = stickerFrame.getTag(R.id.tag_sticker_clone);
+                if (tag != null) {
+                    args.putBoolean("IS_CLONED_STICKER", true);
+                } else {
+                    args.putInt("w", stickerFrame.getLayoutParams().width);
+                    args.putInt("h", stickerFrame.getLayoutParams().height);
+                    args.putFloat("pivotX", stickerFrame.getPivotX());
+                    args.putFloat("pivotY", stickerFrame.getPivotY());
+                    args.putFloat("x", stickerFrame.getX());
+                    args.putFloat("y", stickerFrame.getY());
+                    args.putFloat("r", stickerFrame.getRotation());
+                }
+
+                // ✅ [추가] 편집 화면으로 넘어갈 때도 DB ID를 유지해서 넘겨줍니다
+                Object dbTag = stickerFrame.getTag(R.id.tag_sticker_db_id);
+                if (dbTag instanceof Long) {
+                    args.putLong("sticker_db_id", (Long) dbTag);
+                }
+
+                editStickerFragment.setArguments(args);
+
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.slide_up, 0)
+                        .replace(R.id.bottomArea2, editStickerFragment)
+                        .commit();
             }
-
-            // ✅ [추가] 편집 화면으로 넘어갈 때도 DB ID를 유지해서 넘겨줍니다
-            Object dbTag = stickerFrame.getTag(R.id.tag_sticker_db_id);
-            if (dbTag instanceof Long) {
-                args.putLong("sticker_db_id", (Long) dbTag);
-            }
-
-            editStickerFragment.setArguments(args);
-
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, editStickerFragment)
-                    .commit();
         });
-    }
+    }*/
 
     private void setIcon() {
         int count = stickerOverlay.getChildCount();
+        boolean hasSticker = false;
+        boolean hasBrush = false;
 
         for (int i = 0; i < count; i++) {
             View child = stickerOverlay.getChildAt(i);
             Boolean isBrush = (Boolean) child.getTag(R.id.tag_brush_layer);
+            String url = (String) child.getTag(R.id.tag_sticker_url);
 
-            if (!Boolean.TRUE.equals(isBrush)) {
-                myStickerIcon.setImageResource(R.drawable.icon_mysticker_yes);
-                myStickerTxt.setTextColor(Color.parseColor("#C2FA7A"));
+            if (url != null && child.getVisibility() == View.VISIBLE) {
+                hasSticker = true;
+                ImageView img = child.findViewById(R.id.stickerImage);
+                Glide.with(this).load(url).into(img);
             }
 
             if (Boolean.TRUE.equals(isBrush)) {
@@ -327,58 +254,31 @@ public class StickersFragment extends Fragment {
                         Bitmap bmp = ((BitmapDrawable) drawable).getBitmap();
                         if (bmp != null && !bmp.isRecycled()) {
                             if (BrushFragment.hasAnyVisiblePixel(bmp)) {
-                                brushIcon.setImageResource(R.drawable.icon_brush_yes);
-                                brushTxt.setTextColor(Color.parseColor("#C2FA7A"));
+                                hasBrush = true;
                             }
                         }
                     }
                 }
             }
         }
+
+        if (hasSticker) {
+            myStickerIcon.setImageResource(R.drawable.icon_mysticker_yes);
+            myStickerTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            myStickerIcon.setImageResource(R.drawable.icon_mysticker_no);
+            myStickerTxt.setTextColor(Color.parseColor("#90989F"));
+        }
+
+        if (hasBrush) {
+            brushIcon.setImageResource(R.drawable.icon_brush_yes);
+            brushTxt.setTextColor(Color.parseColor("#C2FA7A"));
+        } else {
+            brushIcon.setImageResource(R.drawable.icon_brush_no);
+            brushTxt.setTextColor(Color.parseColor("#90989F"));
+        }
     }
 
-    public void showToast(String message) {
-        isToastVisible = true;
-
-        View old = topArea.findViewWithTag("inline_banner");
-        if (old != null) topArea.removeView(old);
-
-        TextView tv = new TextView(requireContext());
-        tv.setTag("inline_banner");
-        tv.setText(message);
-        tv.setTextColor(0XFFFFFFFF);
-        tv.setTextSize(16);
-        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        tv.setPadding(Controller.dp(14, getResources()), Controller.dp(10, getResources()), Controller.dp(14, getResources()), Controller.dp(10, getResources()));
-        tv.setElevation(Controller.dp(4, getResources()));
-
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(0xCC222222);
-        bg.setCornerRadius(Controller.dp(16, getResources()));
-        tv.setBackground(bg);
-
-        ConstraintLayout.LayoutParams lp =
-                new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
-                        ConstraintLayout.LayoutParams.WRAP_CONTENT);
-        lp.startToStart = topArea.getId();
-        lp.endToEnd = topArea.getId();
-        lp.topToTop = topArea.getId();
-        lp.bottomToBottom = topArea.getId();
-        tv.setLayoutParams(lp);
-
-        tv.setAlpha(0f);
-        topArea.addView(tv);
-        tv.animate().alpha(1f).setDuration(150).start();
-
-        tv.postDelayed(() -> tv.animate()
-                .alpha(0f)
-                .setDuration(200)
-                .withEndAction(() -> {
-                    if (tv.getParent() == topArea) topArea.removeView(tv);
-                    isToastVisible = false;
-                })
-                .start(), 2000);
-    }
 
     @Override
     public void onResume() {
@@ -396,14 +296,24 @@ public class StickersFragment extends Fragment {
                 continue;
             }
 
+            String url = (String) child.getTag(R.id.tag_sticker_url);
+            if (url != null) {
+                ImageView img = child.findViewById(R.id.stickerImage);
+                if (img != null) {
+                    Glide.with(requireContext())
+                            .load(url)
+                            .into(img);
+                }
+            }
+
             child.post(() -> {
                 child.setPivotX(child.getWidth() / 2f);
                 child.setPivotY(child.getHeight() / 2f);
             });
 
-            Controller.setStickerActive(child, true);
+            //Controller.setStickerActive(child, true);
             Controller.setControllersVisible(child, false);
-            moveEditSticker(child);
+            //moveEditSticker(child);
         }
 
         setIcon();
@@ -418,12 +328,8 @@ public class StickersFragment extends Fragment {
             for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                 View child = stickerOverlay.getChildAt(i);
                 child.setOnClickListener(null);
+                child.setOnTouchListener(null);
             }
-        }
-
-        if (faceBox != null) {
-            faceBox.clearBoxes();
-            faceBox.setVisibility(View.GONE);
         }
     }
 }
