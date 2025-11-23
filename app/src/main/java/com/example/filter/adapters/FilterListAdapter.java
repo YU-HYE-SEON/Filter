@@ -25,10 +25,19 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         void onClick(View v, FilterListItem item);
     }
 
+    // 북마크 클릭 리스너 인터페이스
+    public interface OnBookmarkClickListener {
+        void onBookmarkClick(View v, FilterListItem item, int position);
+    }
+
     private OnItemClickListener listener;
+    private OnBookmarkClickListener bookmarkListener;
 
     public void setOnItemClickListener(OnItemClickListener l) {
         this.listener = l;
+    }
+    public void setOnBookmarkClickListener(OnBookmarkClickListener l) {
+        this.bookmarkListener = l;
     }
 
     private final List<FilterListItem> items = new ArrayList<>();
@@ -57,11 +66,30 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
 
     /// 새로운 필터 추가 ///
     public void addItem(FilterListItem item) {
-        items.add(0, item);
-        if (items.size() > maxItems) {
-            notifyDataSetChanged();
-        } else {
-            notifyItemInserted(0);
+        items.add(item); // ✅ 수정 코드 (맨 뒤에 추가 -> 정순 유지)
+
+        // 갱신 알림 (전체 갱신보다는 효율적으로)
+        notifyItemInserted(items.size() - 1);
+
+        // (MaxItems 로직이 필요하다면 유지하되, 뒤에 추가하는 로직에 맞게 조정 필요)
+        /* if (items.size() > maxItems) {
+            items.remove(0); // 개수 초과 시 맨 앞(오래된 것?) 삭제? -> 상황에 따라 다름
+            notifyItemRemoved(0);
+        }
+        */
+    }
+
+    // 리스트 전체를 받아서 갱신하는 메서드 (서버에서 받아온 순서 보장)
+    public void setItems(List<FilterListItem> newItems) {
+        this.items.clear();
+        this.items.addAll(newItems);
+        notifyDataSetChanged();
+    }
+
+    public void updateItem(int position, FilterListItem newItem) {
+        if (position >= 0 && position < items.size()) {
+            items.set(position, newItem);
+            notifyItemChanged(position); // 깜빡임 없이 해당 줄만 갱신
         }
     }
 
@@ -134,7 +162,7 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         FilterListItem item = items.get(position);
         if (item == null) return;
 
-        // ✅ [수정됨] 복잡한 Mock 데이터 로직 제거하고 단순 매핑
+        // 복잡한 Mock 데이터 로직 제거하고 단순 매핑
         // FilterListItem에는 표시할 데이터가 다 들어있다고 가정합니다.
 
         holder.nickname.setText(item.nickname);
@@ -144,13 +172,20 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         // useCount 사용
         holder.count.setText(item.useCount + "회 사용");
 
-        // ✅ [수정됨] 필드명 변경 (filterImageUrl -> thumbmailUrl)
+        // 필드명 변경 (filterImageUrl -> thumbmailUrl)
         if (item.thumbmailUrl != null) {
             Glide.with(holder.filterImage.getContext())
                     .load(item.thumbmailUrl)
                     .signature(new ObjectKey(String.valueOf(item.id))) // Long ID -> String
                     .fitCenter()
                     .into(holder.filterImage);
+        }
+
+        // (i_filter.xml에 bookmark 아이콘 id가 'bookmark'라고 가정)
+        if (item.bookmark) {
+            holder.bookmark.setImageResource(R.drawable.icon_bookmark_no_blue);
+        } else {
+            holder.bookmark.setImageResource(R.drawable.icon_bookmark_no_gray); // 배경이 있으면 white/gray 적절히 선택
         }
 
         // 제목 길이 처리 로직 (기존 유지)
@@ -182,7 +217,7 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
     }
 
     public class VH extends RecyclerView.ViewHolder {
-        ImageView filterImage, coin;
+        ImageView filterImage, coin, bookmark;
         TextView nickname, filterTitle, price, count;
 
         public VH(@NonNull View itemView) {
@@ -193,6 +228,7 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
             filterTitle = itemView.findViewById(R.id.filterTitle);
             price = itemView.findViewById(R.id.price);
             count = itemView.findViewById(R.id.countTxt);
+            bookmark = itemView.findViewById(R.id.bookmark);
 
             itemView.setOnClickListener(v -> {
                 int pos = getAdapterPosition();
@@ -202,6 +238,16 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
                     }
                 }
             });
+
+            // 북마크 아이콘 클릭
+            if (bookmark != null) {
+                bookmark.setOnClickListener(v -> {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION && bookmarkListener != null) {
+                        bookmarkListener.onBookmarkClick(v, items.get(pos), pos);
+                    }
+                });
+            }
         }
     }
 }

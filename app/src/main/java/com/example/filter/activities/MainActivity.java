@@ -176,6 +176,14 @@ public class MainActivity extends BaseActivity {
             detailActivityLauncher.launch(intent);
         });
 
+        // 북마크 클릭 리스너
+        filterAdapter.setOnBookmarkClickListener((v, item, position) -> {
+            if (ClickUtils.isFastClick(v, 500)) return;
+
+            // API 호출 메서드 실행
+            requestToggleBookmark(item.id, position, item);
+        });
+
         // 로고 클릭 (맨 위로)
         logo.setOnClickListener(v -> {
             recyclerView.post(() -> {
@@ -257,26 +265,63 @@ public class MainActivity extends BaseActivity {
     }
 
     // ---------------------------------------------------------------
-    // ✅ [추가] 서버 API 통신: 최신 필터 목록 조회
+    // ✅ [추가] 북마크 토글 API 호출
+    // ---------------------------------------------------------------
+    private void requestToggleBookmark(long filterId, int position, FilterListItem oldItem) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+
+        api.toggleBookmark(filterId).enqueue(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean newState = response.body();
+
+                    // ✅ 성공 시: 리스트 데이터 갱신
+                    // FilterListItem의 필드가 final이라 수정이 안 되므로, 새 객체를 만들어 교체합니다.
+                    FilterListItem newItem = new FilterListItem(
+                            oldItem.id,
+                            oldItem.filterTitle,
+                            oldItem.thumbmailUrl,
+                            oldItem.nickname,
+                            oldItem.price,
+                            oldItem.useCount,
+                            oldItem.usage,
+                            newState // ★ 변경된 북마크 상태
+                    );
+
+                    // 어댑터의 해당 위치 아이템만 갱신
+                    filterAdapter.updateItem(position, newItem);
+
+                    String msg = newState ? "북마크 저장됨" : "북마크 해제됨";
+                    // Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show(); (선택 사항)
+
+                } else {
+                    Log.e("Bookmark", "실패: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Log.e("Bookmark", "통신 오류", t);
+            }
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // ✅ [수정됨] 서버 API 통신: 최신 필터 목록 조회
     // ---------------------------------------------------------------
     private void loadRecentFilters() {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        // page=0, size=20
         api.getRecentFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<FilterListResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
 
-                    // 1. Adapter 비우기 (FilterListAdapter에 clear 메서드 필요)
-                    if (filterAdapter != null) {
-                        filterAdapter.clear();
-                    }
-
-                    // 2. 변환 후 추가
+                    // 1. 변환하여 리스트에 담기 (순서 그대로 유지됨)
                     for (FilterListResponse dto : serverList) {
-                        // DTO -> FilterListItem 변환
                         FilterListItem item = new FilterListItem(
                                 dto.id,
                                 dto.name,
@@ -287,7 +332,12 @@ public class MainActivity extends BaseActivity {
                                 dto.usage,
                                 dto.bookmark
                         );
-                        filterAdapter.addItem(item);
+                        uiList.add(item);
+                    }
+
+                    // 2. Adapter에 리스트 통째로 전달 (한 번에 갱신)
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
                     }
 
                     // 3. UI 갱신
@@ -308,24 +358,19 @@ public class MainActivity extends BaseActivity {
     }
 
     // ---------------------------------------------------------------
-    // ✅ [추가] 서버 API 통신: 인기 필터 목록 조회
+    // ✅ [수정됨] 서버 API 통신: 인기 필터 목록 조회
     // ---------------------------------------------------------------
     private void loadHotFilters() {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        // page=0, size=20 (인기순 API 호출)
         api.getHotFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<FilterListResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
 
-                    // 1. Adapter 비우기
-                    if (filterAdapter != null) {
-                        filterAdapter.clear();
-                    }
-
-                    // 2. 변환 후 추가
+                    // 1. 변환하여 리스트에 담기
                     for (FilterListResponse dto : serverList) {
                         FilterListItem item = new FilterListItem(
                                 dto.id,
@@ -337,7 +382,12 @@ public class MainActivity extends BaseActivity {
                                 dto.usage,
                                 dto.bookmark
                         );
-                        filterAdapter.addItem(item);
+                        uiList.add(item);
+                    }
+
+                    // 2. Adapter에 리스트 통째로 전달
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
                     }
 
                     // 3. UI 갱신
