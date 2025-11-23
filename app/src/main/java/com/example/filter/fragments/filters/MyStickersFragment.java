@@ -1,17 +1,26 @@
 package com.example.filter.fragments.filters;
 
+import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,7 +28,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
+import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.adapters.MyStickersAdapter;
+import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.api_datas.response_dto.StickerResponseDto;
 import com.example.filter.apis.repositories.StickerRepository;
@@ -27,9 +38,12 @@ import com.example.filter.apis.StickerApi;
 import com.example.filter.dialogs.StickerDeleteDialog;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
+import com.example.filter.etc.FaceDetect;
+import com.example.filter.etc.StickerMeta;
 import com.example.filter.etc.StickerStore;
 import com.example.filter.etc.StickerViewModel;
 import com.example.filter.items.StickerItem;
+import com.example.filter.overlayviews.FaceBoxOverlayView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +53,18 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MyStickersFragment extends Fragment {
+    private ConstraintLayout topArea;
+    private FrameLayout photoContainer;
+    private boolean isToastVisible = false;
+    private FaceBoxOverlayView faceBox;
+    private View editingSticker = null;
+    private String stickerUrl;
+    private Float prevElevation = null;
+
+    //private float prevElevation;
+    private ConstraintLayout bottomArea1;
+    private LinearLayout stickerEdit;
+    private CheckBox faceCheckBox;
     private AppCompatButton saveBtn;
     private ImageButton cancelBtn, checkBtn, deleteStickerIcon;
     private MyStickersAdapter adapter;
@@ -49,7 +75,7 @@ public class MyStickersFragment extends Fragment {
     private LayoutInflater inflater;
 
     private View stickerFrame;
-    private ImageView stickerImage, moveController, rotateController, sizeController, deleteController;
+    private ImageView stickerImage, deleteController;
 
     private int pendingUploadCount = 0;
 
@@ -78,11 +104,116 @@ public class MyStickersFragment extends Fragment {
         View view = inflater.inflate(R.layout.f_my_stickers, container, false);
         this.inflater = inflater;
 
-        stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
         myStickers = view.findViewById(R.id.myStickers);
         deleteStickerIcon = view.findViewById(R.id.deleteStickerIcon);
         cancelBtn = view.findViewById(R.id.cancelBtn);
         checkBtn = view.findViewById(R.id.checkBtn);
+
+        FilterActivity activity = (FilterActivity) requireActivity();
+
+        topArea = activity.findViewById(R.id.topArea);
+        photoContainer = activity.findViewById(R.id.photoContainer);
+        stickerOverlay = activity.findViewById(R.id.stickerOverlay);
+        faceCheckBox = activity.findViewById(R.id.faceCheckBox);
+        stickerEdit = activity.findViewById(R.id.stickerEdit);
+        bottomArea1 = activity.findViewById(R.id.bottomArea1);
+
+        if (bottomArea1 != null) {
+            stickerEdit.setVisibility(View.VISIBLE);
+            stickerEdit.setAlpha(0.4f);
+            faceCheckBox.setEnabled(false);
+            setCheckboxSize(25f, 3f);
+        }
+
+        Bundle args = getArguments();
+        boolean fromFace = args != null && args.getBoolean("IS_FACE", false);
+        faceBox = new FaceBoxOverlayView(requireContext());
+        photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        activity.getPhotoPreview().queueEvent(() -> {
+            Bitmap bmp = activity.getRenderer().getCurrentBitmap();
+            activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
+                if (faces.isEmpty()) {
+                    if (fromFace) {
+                        showToast("얼굴을 감지하지 못했습니다");
+                    }
+                    return;
+                }
+
+                if (!faces.isEmpty() && args != null) {
+                    StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
+                    int groupId = EditStickerFragment.stickerId;
+                    //View stickerFrame = viewModel.getTempView(groupId);
+                    String stickerPath = args.getString("stickerUrl");
+
+                    // ✅ [추가] 인자에서 서버 DB ID 가져오기 (없으면 -1)
+                    // (이전 프래그먼트에서 "sticker_db_id"라는 키로 넘겨줘야 함)
+                    long serverId = args.getLong("sticker_db_id", -1L);
+
+                    StickerMeta meta = new StickerMeta(
+                            args.getFloat("relX"),
+                            args.getFloat("relY"),
+                            args.getFloat("relW"),
+                            args.getFloat("relH"),
+                            args.getFloat("rot")
+                    );
+
+                    List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, meta, requireContext());
+                    requireActivity().runOnUiThread(() -> {
+                        //viewModel.removeCloneGroup(groupId, stickerOverlay);
+                        //viewModel.setFaceStickerDataToDelete(groupId);
+
+                        for (float[] p : placement) {
+                            View cloneSticker = StickerMeta.faceSticker(stickerOverlay, stickerPath, requireContext(), p);
+                            if (cloneSticker != null) {
+
+                                // ✅ [핵심] 뷰에 서버 DB ID 태그 저장
+                                if (serverId != -1L) {
+                                    cloneSticker.setTag(R.id.tag_sticker_db_id, serverId);
+                                }
+
+                                viewModel.addCloneGroup(groupId, cloneSticker);
+                                updateCheckButtonState();
+                                //moveEditSticker(cloneSticker);
+                                ((FilterActivity) getActivity()).updateSaveButtonState();
+                            }
+                        }
+
+                        showToast("얼굴 인식 성공");
+
+                        /*ImageView stickerImage = stickerFrame.findViewById(R.id.stickerImage);
+                        Bitmap stickerBitmap = null;
+                        if (stickerImage != null && stickerImage.getDrawable() != null) {
+                            stickerImage.setDrawingCacheEnabled(true);
+                            stickerBitmap = Bitmap.createBitmap(stickerImage.getDrawingCache());
+                            stickerImage.setDrawingCacheEnabled(false);
+                        }
+                        String stickerPath = null;
+                        if (stickerBitmap != null) {
+                            try {
+                                File file = new File(requireContext().getCacheDir(),
+                                        "face_sticker_" + System.currentTimeMillis() + ".png");
+                                FileOutputStream out = new FileOutputStream(file);
+                                stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                                out.close();
+                                stickerPath = file.getAbsolutePath();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }*/
+
+                        // ✅ [수정] FaceStickerData에 serverId 포함하여 생성
+                        // (FaceStickerData 생성자를 수정하지 않았다면 serverId 부분만 지우세요)
+                        FaceStickerData data = new FaceStickerData(
+                                meta.relX, meta.relY, meta.relW, meta.relH, meta.rot,
+                                groupId,
+                                serverId, // ★ 추가된 DB ID
+                                null, stickerPath
+                        );
+                        viewModel.setFaceStickerData(data);
+                    });
+                }
+            }));
+        });
 
         checkBtn.setEnabled(false);
         checkBtn.setAlpha(0.4f);
@@ -103,10 +234,32 @@ public class MyStickersFragment extends Fragment {
             selectStickerId = position;
             deleteStickerIcon.setEnabled(true);
             deleteStickerIcon.setAlpha(1.0f);
+
+            stickerUrl = item.getImageUrl();
+
             showStickerCentered(item.getImageUrl(), item.getId());
         });
 
-        setupOverlayControllers();
+
+        faceCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                setCheckboxSize(28.5f, 1f);
+                EditStickerFragment editStickerFragment = new EditStickerFragment();
+                Bundle args2 = new Bundle();
+                args2.putString("stickerUrl", stickerUrl);
+                editStickerFragment.setArguments(args2);
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.slide_up, 0)
+                        .replace(R.id.bottomArea2, editStickerFragment)
+                        .commit();
+
+                Controller.removeStickerFrame(stickerFrame);
+            }else{
+                setCheckboxSize(25f, 3f);
+            }
+        });
+
         setupBottomButtons();
 
         // 2. 임시 스티커 업로드 시작 (조회는 콜백에서 호출됨)
@@ -125,11 +278,18 @@ public class MyStickersFragment extends Fragment {
             saveBtn.setEnabled(false);
             saveBtn.setAlpha(0.4f);
         }
+
+        if (bottomArea1 != null) {
+            stickerEdit.setVisibility(View.VISIBLE);
+            faceCheckBox.setChecked(false);
+        }
+
+        updateCheckButtonState();
     }
 
     // ---------------------------------------------------------------
-    // ✅ Pending Sticker 업로드 (순서 보장 로직)
-    // ---------------------------------------------------------------
+// ✅ Pending Sticker 업로드 (순서 보장 로직)
+// ---------------------------------------------------------------
     private void uploadPendingStickers() {
         List<StickerItem> itemsToUpload = new ArrayList<>();
         StickerItem pendingItem;
@@ -161,8 +321,8 @@ public class MyStickersFragment extends Fragment {
     }
 
     // ---------------------------------------------------------------
-    // ✅ 서버 API 호출: 내 스티커 목록 가져오기 (콜백 완료 후 실행)
-    // ---------------------------------------------------------------
+// ✅ 서버 API 호출: 내 스티커 목록 가져오기 (콜백 완료 후 실행)
+// ---------------------------------------------------------------
     private void loadStickersFromServer() {
         StickerApi api = AppRetrofitClient.getInstance(requireContext()).create(StickerApi.class);
 
@@ -197,20 +357,16 @@ public class MyStickersFragment extends Fragment {
     }
 
     // ---------------------------------------------------------------
-    // ✅ 스티커 화면 배치 (Glide + ID 태그 저장)
-    // ---------------------------------------------------------------
+// ✅ 스티커 화면 배치 (Glide + ID 태그 저장)
+// ---------------------------------------------------------------
+    @SuppressLint("ClickableViewAccessibility")
     private void showStickerCentered(String stickerUrl, long stickerId) {
-        Controller.clearCurrentSticker(stickerOverlay, selectSticker);
-
         stickerFrame = inflater.inflate(R.layout.v_sticker_edit, stickerOverlay, false);
         stickerImage = stickerFrame.findViewById(R.id.stickerImage);
-        moveController = stickerFrame.findViewById(R.id.moveController);
-        rotateController = stickerFrame.findViewById(R.id.rotateController);
-        sizeController = stickerFrame.findViewById(R.id.sizeController);
         deleteController = stickerFrame.findViewById(R.id.deleteController);
 
-        rotateController.setVisibility(View.INVISIBLE);
-        sizeController.setVisibility(View.INVISIBLE);
+        stickerEdit.setAlpha(1.0f);
+        faceCheckBox.setEnabled(true);
 
         // Glide로 이미지 로드 (URL 처리)
         Glide.with(this)
@@ -236,27 +392,62 @@ public class MyStickersFragment extends Fragment {
 
             stickerOverlay.addView(stickerFrame);
 
+            this.editingSticker = stickerFrame;
+           // stickerFrame.setTag(R.id.tag_from_mysticker, true);
+            stickerFrame.setTag(R.id.tag_sticker_url, stickerUrl);
+
+            updateCheckButtonState();
+
             this.selectSticker = stickerFrame;
             Controller.setStickerActive(stickerFrame, true);
-            stickerFrame.setOnClickListener(v -> moveEditSticker(stickerFrame));
+
+            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                View child = stickerOverlay.getChildAt(i);
+                if (child == stickerFrame) {
+                    Controller.setControllersVisible(child, true);
+                } else {
+                    Controller.setControllersVisible(child, false);
+                }
+            }
+
+            stickerFrame.setOnTouchListener((v, event) -> {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN: {
+                        editingSticker = v;
+
+                        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                            View child = stickerOverlay.getChildAt(i);
+                            Controller.setControllersVisible(child, child == v);
+                        }
+                        v.bringToFront();
+
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+            Controller.enableStickerControl(null, null, stickerFrame, stickerOverlay, getResources());
+            Controller.updateControllersSizeAndAngle(stickerFrame, getResources());
         });
 
         deleteController.setOnClickListener(x -> {
-            Controller.removeStickerFrame(stickerFrame);
-            Controller.setControllersVisible(stickerFrame, false);
+            if (editingSticker != null) {
+                Controller.removeStickerFrame(editingSticker);
+                editingSticker = null;
+            }
+
             adapter.clearSelection();
-            deleteStickerIcon.setEnabled(false);
             deleteStickerIcon.setAlpha(0.4f);
+            deleteStickerIcon.setEnabled(false);
+
+            stickerEdit.setAlpha(0.4f);
+            faceCheckBox.setEnabled(false);
+
+            updateCheckButtonState();
         });
 
         stickerFrame.bringToFront();
-    }
-
-    private void setupOverlayControllers() {
-        for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-            View child = stickerOverlay.getChildAt(i);
-            Controller.setStickerActive(child, false);
-        }
     }
 
     private void setupBottomButtons() {
@@ -269,6 +460,9 @@ public class MyStickersFragment extends Fragment {
         cancelBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             Controller.removeStickerFrame(stickerFrame);
+
+            restoreElevation();
+
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
@@ -278,8 +472,7 @@ public class MyStickersFragment extends Fragment {
 
         checkBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            Controller.removeStickerFrame(stickerFrame);
-            Controller.setControllersVisible(stickerFrame, false);
+
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
@@ -288,30 +481,53 @@ public class MyStickersFragment extends Fragment {
         });
     }
 
-    private void moveEditSticker(View stickerFrame) {
-        if (rotateController != null) rotateController.setVisibility(View.VISIBLE);
-        if (sizeController != null) sizeController.setVisibility(View.VISIBLE);
-
+    private boolean hasAnySticker() {
         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
             View child = stickerOverlay.getChildAt(i);
-            Controller.setStickerActive(child, child == stickerFrame);
+
+            Boolean isBrush = (Boolean) child.getTag(R.id.tag_brush_layer);
+            if (Boolean.TRUE.equals(isBrush)) continue;
+
+            String url = (String) child.getTag(R.id.tag_sticker_url);
+            if (url != null && child.getVisibility() == View.VISIBLE) {
+                return true;
+            }
+
+            Boolean isClone = (Boolean) child.getTag(R.id.tag_sticker_clone);
+            if (Boolean.TRUE.equals(isClone) && child.getVisibility() == View.VISIBLE) {
+                return true;
+            }
         }
+        return false;
+    }
 
-        EditStickerFragment editStickerFragment = new EditStickerFragment();
-        StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
+    private void updateCheckButtonState() {
+        boolean hasSticker = hasAnySticker();
 
-        int currentId = EditStickerFragment.stickerId + 1;
-        viewModel.setTempView(currentId, stickerFrame);
+        if (hasSticker) {
+            checkBtn.setEnabled(true);
+            checkBtn.setAlpha(1.0f);
+        } else {
+            checkBtn.setEnabled(false);
+            checkBtn.setAlpha(0.4f);
+        }
+    }
 
-        Bundle args = new Bundle();
-        args.putString("prev_frag", "myStickerF");
-        editStickerFragment.setArguments(args);
+    private void restoreElevation() {
+        if (stickerFrame != null && prevElevation != null) {
+            ViewCompat.setZ(stickerFrame, prevElevation);
+            stickerFrame.invalidate();
+        }
+    }
 
-        requireActivity().getSupportFragmentManager()
-                .beginTransaction()
-                .setCustomAnimations(R.anim.slide_up, 0)
-                .replace(R.id.bottomArea2, editStickerFragment)
-                .commit();
+    private void raiseStickerTop(@NonNull View sticker, @NonNull ViewGroup parent) {
+        float maxZ = 0f;
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            maxZ = Math.max(maxZ, ViewCompat.getZ(parent.getChildAt(i)));
+        }
+        ViewCompat.setZ(sticker, maxZ + 1000f);
+        sticker.bringToFront();
+        parent.invalidate();
     }
 
     private void confirmDeleteSticker() {
@@ -319,7 +535,8 @@ public class MyStickersFragment extends Fragment {
 
         new StickerDeleteDialog(requireContext(), new StickerDeleteDialog.StickerDeleteDialogListener() {
             @Override
-            public void onKeep() { }
+            public void onKeep() {
+            }
 
             @Override
             public void onDelete() {
@@ -337,13 +554,84 @@ public class MyStickersFragment extends Fragment {
                 .show();
     }
 
+    public void showToast(String message) {
+        isToastVisible = true;
+
+        View old = topArea.findViewWithTag("inline_banner");
+        if (old != null) topArea.removeView(old);
+
+        TextView tv = new TextView(requireContext());
+        tv.setTag("inline_banner");
+        tv.setText(message);
+        tv.setTextColor(0XFFFFFFFF);
+        tv.setTextSize(16);
+        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        tv.setPadding(Controller.dp(14, getResources()), Controller.dp(10, getResources()), Controller.dp(14, getResources()), Controller.dp(10, getResources()));
+        tv.setElevation(Controller.dp(4, getResources()));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xCC222222);
+        bg.setCornerRadius(Controller.dp(16, getResources()));
+        tv.setBackground(bg);
+
+        ConstraintLayout.LayoutParams lp =
+                new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                        ConstraintLayout.LayoutParams.WRAP_CONTENT);
+        lp.startToStart = topArea.getId();
+        lp.endToEnd = topArea.getId();
+        lp.topToTop = topArea.getId();
+        lp.bottomToBottom = topArea.getId();
+        tv.setLayoutParams(lp);
+
+        tv.setAlpha(0f);
+        topArea.addView(tv);
+        tv.animate().alpha(1f).setDuration(150).start();
+
+        tv.postDelayed(() -> tv.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction(() -> {
+                    if (tv.getParent() == topArea) topArea.removeView(tv);
+                    isToastVisible = false;
+                })
+                .start(), 2000);
+    }
+
+    private void setCheckboxSize(float dp1, float dp2) {
+        int px = (int) dp(dp1);
+
+        ViewGroup.LayoutParams lp = faceCheckBox.getLayoutParams();
+        lp.width = px;
+        lp.height = px;
+        faceCheckBox.setLayoutParams(lp);
+
+        faceCheckBox.requestLayout();
+
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) faceCheckBox.getLayoutParams();
+        params.topMargin = (int) dp(dp2);
+        faceCheckBox.setLayoutParams(params);
+    }
+
+    private float dp(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+
+        if (faceBox != null) {
+            faceBox.clearBoxes();
+            faceBox.setVisibility(View.GONE);
+        }
+
         if (stickerOverlay != null) {
             for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                 View child = stickerOverlay.getChildAt(i);
                 child.setOnClickListener(null);
+                child.setOnTouchListener(null);
+                Controller.setControllersVisible(child, false);
+                Controller.setStickerActive(child, false);
             }
         }
     }

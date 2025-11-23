@@ -33,7 +33,7 @@
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="face" />
 
-        <!--<activity
+       <!-- <activity
             android:name=".activities.start.SignUpActivity"
             android:exported="true"
             android:theme="@style/Theme.Filter.Splash">

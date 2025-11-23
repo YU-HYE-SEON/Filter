@@ -23,26 +23,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/pretendard_medium"
-                android:text="AI 얼굴 인식으로 위치 지정하기"
+                android:text="현재 모드로 배치된 스티커는\n재편집이 불가능하며 삭제만 가능합니다."
                 android:textAlignment="center"
                 android:textColor="@color/white"
                 android:textSize="18sp" />
-
-            <FrameLayout
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginLeft="5dp">
-
-                <CheckBox
-                    android:id="@+id/checkBox"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:layout_marginTop="3dp"
-                    android:background="@drawable/checkbox_states"
-                    android:button="@null"
-                    android:checked="false" />
-
-            </FrameLayout>
 
         </LinearLayout>
 
@@ -68,7 +52,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/pretendard_medium"
-                android:text="스티커 편집"
+                android:text="얼굴 인식 모드"
                 android:textAlignment="center"
                 android:textColor="@color/white"
                 android:textSize="18sp"

@@ -271,6 +271,7 @@ public class SignUpActivity extends BaseActivity {
 
                             alertTxt.setTextColor(Color.RED);
                             alertTxt.setText("이미 사용중인 닉네임입니다");
+                            setEditSizePos(320, 51, false);
                             nickname.setBackgroundResource(R.drawable.edit_nick_x);
                             alertTxt.setVisibility(View.VISIBLE);
                             btn.setVisibility(View.INVISIBLE);
@@ -280,6 +281,7 @@ public class SignUpActivity extends BaseActivity {
 
                             alertTxt.setTextColor(Color.BLUE);
                             alertTxt.setText("사용 가능한 닉네임입니다");
+                            setEditSizePos(344, 75, true);
                             nickname.setBackgroundResource(R.drawable.edit_nick_o);
                             alertTxt.setVisibility(View.VISIBLE);
                             btn.setVisibility(View.VISIBLE);
@@ -298,17 +300,6 @@ public class SignUpActivity extends BaseActivity {
                 Log.e("닉네임", "닉네임 중복 확인 실패", t);
             }
         });
-
-
-        ///  임시로 중복 확인 안 하고 넘기기
-        /// 추후 삭제 필요
-        //alertTxt.setTextColor(Color.BLUE);
-        //alertTxt.setText("사용 가능한 닉네임입니다");
-        //setEditSizePos(344, 75, true);
-        //nickname.setBackgroundResource(R.drawable.edit_nick_o);
-        //alertTxt.setVisibility(View.VISIBLE);
-        //btn.setVisibility(View.VISIBLE);
-        //btn.setEnabled(true);
     }
 
     private int dp(int v) {

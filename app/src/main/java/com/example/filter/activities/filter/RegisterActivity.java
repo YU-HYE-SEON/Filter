@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +30,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.widget.NestedScrollView;
 
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
@@ -61,7 +61,7 @@ public class RegisterActivity extends BaseActivity {
     // UI 요소
     private View topArea, photoView, contentContainer;
     private ImageView photo;
-    private NestedScrollView scrollView;
+    private ScrollView scrollView;
     private LinearLayout priceBox;
     private EditText titleEditText, tagEditText, priceEditText;
     private TextView alertTxt1, alertTxt2, alertTxt3, tagTxt, saleTxt;
@@ -159,6 +159,7 @@ public class RegisterActivity extends BaseActivity {
     // ---------------------------------------------------------------
     // ✅ UI 설정 및 리스너 (키보드, 인셋, 스크롤)
     // ---------------------------------------------------------------
+    @SuppressLint("ClickableViewAccessibility")
     private void setupScrollAndInsets() {
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400))
@@ -193,15 +194,24 @@ public class RegisterActivity extends BaseActivity {
             return handled || ev.getAction() == MotionEvent.ACTION_UP;
         });
 
+        // 초기 스크롤뷰 위치 설정
+        scrollView.post(() -> {
+            int topH = topArea.getHeight();
+            int photoH = photoView.getHeight();
+            if (topH <= 0) topH = dp(60);
+            if (photoH <= 0) photoH = dp(300);
+            int initialPadding = topH + photoH;
+
+            scrollView.setPadding(scrollView.getPaddingLeft(), initialPadding, scrollView.getPaddingRight(), scrollView.getPaddingBottom());
+        });
+
         // 상단 여백 계산
         final int[] overlayHeights = new int[1];
         Runnable recomputeOverlay = () -> {
             int topH = topArea.getHeight();
             int photoH = photoView.getHeight();
-            if (topH <= 0)
-                topH = dp(60);
-            if (photoH <= 0)
-                photoH = dp(300);
+            if (topH <= 0) topH = dp(60);
+            if (photoH <= 0) photoH = dp(300);
             overlayHeights[0] = topH + photoH;
         };
         scrollView.post(recomputeOverlay);

@@ -3,17 +3,15 @@ package com.example.filter.etc;
 import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 import com.example.filter.R;
+//import com.example.filter.fragments.filters.EditStickerFragment;
 import com.example.filter.fragments.filters.EditStickerFragment;
 import com.google.mlkit.vision.face.Face;
 
@@ -37,12 +35,12 @@ public class Controller {
     }
 
     public static void setStickerActive(View view, boolean active) {
-        ImageView img = view.findViewById(R.id.stickerImage);
+        //ImageView img = view.findViewById(R.id.stickerImage);
 
         view.setEnabled(active);
         view.setClickable(active);
 
-        if (img != null) {
+        /*if (img != null) {
             if (active) {
                 img.setAlpha(1.0f);
                 img.clearColorFilter();
@@ -50,7 +48,7 @@ public class Controller {
                 img.setAlpha(0.4f);
                 img.setColorFilter(Color.parseColor("#141414"), PorterDuff.Mode.SRC_ATOP);
             }
-        }
+        }*/
     }
 
     public static void updateControllerAngles(View stickerFrame, View controller) {
@@ -169,7 +167,7 @@ public class Controller {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    public static void enableStickerControl(Face face, Bitmap bitmap, View stickerFrame, FrameLayout stickerOverlay, FrameLayout faceOverlay, Resources resources) {
+    public static void enableStickerControl(Face face, Bitmap bitmap, View stickerFrame, FrameLayout overlay, Resources resources) {
         View moveController = stickerFrame.findViewById(R.id.moveController);
         View rotateController = stickerFrame.findViewById(R.id.rotateController);
         View sizeController = stickerFrame.findViewById(R.id.sizeController);
@@ -197,8 +195,8 @@ public class Controller {
                     return true;
                 }
                 case MotionEvent.ACTION_UP: {
-                    if (EditStickerFragment.isFace && face != null && bitmap != null) {
-                        StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
+                    if (face != null && bitmap != null) {
+                        StickerMeta.calculate(face, bitmap, stickerFrame, overlay);
                     }
 
                     //stickerFrame.post(() -> {
@@ -217,7 +215,7 @@ public class Controller {
                     ViewParent p = v.getParent();
                     if (p != null) p.requestDisallowInterceptTouchEvent(true);
                     float[] c = getFrameCenterInOverlay(stickerFrame);
-                    float[] t = getTouchInOverlay(event, stickerOverlay);
+                    float[] t = getTouchInOverlay(event, overlay);
                     float r = dist(t[0], t[1], c[0], c[1]);
                     if (r < dp((int) ROT_MIN_RADIUS_DP, resources)) return false;
                     startDeg = stickerFrame.getRotation();
@@ -228,7 +226,7 @@ public class Controller {
                 }
                 case MotionEvent.ACTION_MOVE: {
                     float[] c = getFrameCenterInOverlay(stickerFrame);
-                    float[] t = getTouchInOverlay(event, stickerOverlay);
+                    float[] t = getTouchInOverlay(event, overlay);
                     float r = dist(t[0], t[1], c[0], c[1]);
                     if (r < dp((int) ROT_MIN_RADIUS_DP, resources)) return true;
                     float cur = angleDeg(c[0], c[1], t[0], t[1]);
@@ -246,8 +244,8 @@ public class Controller {
                     return true;
                 }
                 case MotionEvent.ACTION_UP: {
-                    if (EditStickerFragment.isFace && face != null && bitmap != null) {
-                        StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
+                    if (face != null && bitmap != null) {
+                        StickerMeta.calculate(face, bitmap, stickerFrame, overlay);
                     }
 
                     //stickerFrame.post(() -> {
@@ -263,7 +261,7 @@ public class Controller {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN: {
                     float[] c = getFrameCenterInOverlay(stickerFrame);
-                    float[] t = getTouchInOverlay(event, stickerOverlay);
+                    float[] t = getTouchInOverlay(event, overlay);
                     float vx = t[0] - c[0];
                     float vy = t[1] - c[1];
                     float startRadius = (float) Math.hypot(vx, vy);
@@ -277,7 +275,7 @@ public class Controller {
                     float[] tag = (float[]) v.getTag();
                     if (tag == null) return false;
                     float cX = tag[0], cY = tag[1], dirX = tag[2], dirY = tag[3], startRadius = tag[4];
-                    float[] t = getTouchInOverlay(event, stickerOverlay);
+                    float[] t = getTouchInOverlay(event, overlay);
                     float cx = t[0] - cX, cy = t[1] - cY;
                     float proj = cx * dirX + cy * dirY;
                     float rawScale = proj / startRadius;
@@ -306,8 +304,8 @@ public class Controller {
                     return true;
                 }
                 case MotionEvent.ACTION_UP: {
-                    if (EditStickerFragment.isFace && face != null && bitmap != null) {
-                        StickerMeta.calculate(face, bitmap, stickerFrame, faceOverlay);
+                    if (face != null && bitmap != null) {
+                        StickerMeta.calculate(face, bitmap, stickerFrame, overlay);
                     }
 
                     //stickerFrame.post(() -> {
