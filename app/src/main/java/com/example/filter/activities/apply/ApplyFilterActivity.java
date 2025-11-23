@@ -135,7 +135,7 @@ public class ApplyFilterActivity extends BaseActivity {
                 finalBitmapWithStickers = finalBitmap;
 
                 //사진 저장 메서드 호출
-                //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
+                ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -279,6 +279,11 @@ public class MyStickersFragment extends Fragment {
             saveBtn.setAlpha(0.4f);
         }
 
+        if (bottomArea1 != null) {
+            stickerEdit.setVisibility(View.VISIBLE);
+            faceCheckBox.setChecked(false);
+        }
+
         updateCheckButtonState();
     }
 

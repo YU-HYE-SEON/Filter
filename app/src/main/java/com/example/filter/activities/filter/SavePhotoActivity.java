@@ -1,21 +1,30 @@
 package com.example.filter.activities.filter;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
@@ -34,6 +43,8 @@ public class SavePhotoActivity extends BaseActivity {
     // ✅ 데이터를 담을 객체 선언
     private FilterCreationData filterData;
     private String displayImagePath; // 화면 표시용 이미지 경로
+    private static final int PERMISSION_REQUEST_CODE = 100;
+    private Bitmap imageToSave;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -91,10 +102,30 @@ public class SavePhotoActivity extends BaseActivity {
                 Bitmap bitmap = BitmapFactory.decodeFile(displayImagePath);
                 if (bitmap != null) {
                     photo.setImageBitmap(bitmap);
+
+                    imageToSave = bitmap;
+                    checkAndSaveImage();
                 }
             } else if (displayImagePath.startsWith("http")) {
                 // 만약 S3 URL이라면 Glide 사용 (build.gradle에 Glide가 있어야 함)
-                com.bumptech.glide.Glide.with(this).load(displayImagePath).into(photo);
+                //com.bumptech.glide.Glide.with(this).load(displayImagePath).into(photo);
+
+
+                /// 갤러리에 Feel'em앨범으로 사진 저장
+                com.bumptech.glide.Glide.with(this).asBitmap().load(displayImagePath).into(new CustomTarget<Bitmap>() {
+
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        photo.setImageBitmap(resource);
+                        imageToSave = resource;
+                        checkAndSaveImage();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                    }
+                });
             }
         }
 
@@ -134,5 +165,44 @@ public class SavePhotoActivity extends BaseActivity {
 
             startActivity(intent);
         });
+    }
+
+    private void checkAndSaveImage() {
+        if (imageToSave == null) return;
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_MEDIA_IMAGES},
+                        PERMISSION_REQUEST_CODE);
+                return;
+            }
+        } else if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.P) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        PERMISSION_REQUEST_CODE);
+                return;
+            }
+        }
+
+        /// 사진 저장 메서드 호출
+        ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
+            } else {
+                Toast.makeText(this, "갤러리 저장 권한이 거부되어 이미지를 저장할 수 없습니다.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }

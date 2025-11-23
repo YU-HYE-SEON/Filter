@@ -247,6 +247,14 @@ public class EditStickerFragment extends Fragment {
             saveBtn.setEnabled(false);
             saveBtn.setAlpha(0.4f);
         }
+
+        if (bottomArea1 != null) {
+            stickerEdit.setVisibility(View.VISIBLE);
+            stickerEdit.setAlpha(0.4f);
+            setCheckboxSize(28.5f, 1f);
+            faceCheckBox.setChecked(true);
+            faceCheckBox.setEnabled(false);
+        }
     }
 
     @Override

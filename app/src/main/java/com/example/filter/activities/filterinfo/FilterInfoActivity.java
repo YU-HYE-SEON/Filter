@@ -46,10 +46,10 @@ import com.example.filter.activities.MainActivity;
 import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.apply.CameraActivity;
 import com.example.filter.activities.review.ReviewActivity;
+import com.example.filter.api_datas.FaceStickerData;
+import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.dialogs.PointChangeDialog;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.api_datas.dto.FilterDtoCreateRequest;
-import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
 
@@ -398,7 +398,116 @@ public class FilterInfoActivity extends BaseActivity {
                     "[RegisterActivity] 전달 준비 → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
                     d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
             ));*/
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupOriginalButton() {
+        if (originalBtn == null) return;
+
+        originalBtn.setOnTouchListener((v, ev) -> {
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (originalPath != null) {
+                        v.setPressed(true);
+                        originalBtn.setAlpha(0.4f);
+                        loadOriginalImage(originalPath, img);
+                    }
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (imgUrl != null) {
+                        v.setPressed(false);
+                        originalBtn.setAlpha(1f);
+                        Glide.with(FilterInfoActivity.this)
+                                .load(imgUrl)
+                                .dontAnimate()
+                                .placeholder(img.getDrawable())
+                                .fitCenter()
+                                .into(img);
+                    }
+                    return true;
+            }
+            return true;
+        });
+    }
+
+    private void loadOriginalImage(String path, ImageView target) {
+        Glide.with(this)
+                .asBitmap()
+                .load(path)
+                .dontAnimate()
+                .placeholder(img.getDrawable())
+                .fitCenter()
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        Bitmap transformedBitmap = resource;
+
+                        if (accumRotationDeg != 0 || accumFlipH || accumFlipV) {
+                            Matrix matrix = new Matrix();
+                            matrix.postRotate(accumRotationDeg);
+                            float sx = accumFlipH ? -1f : 1f;
+                            float sy = accumFlipV ? -1f : 1f;
+                            matrix.postScale(sx, sy);
+
+                            try {
+                                transformedBitmap = Bitmap.createBitmap(resource, 0, 0,
+                                        resource.getWidth(), resource.getHeight(), matrix, true
+                                );
+                            } catch (Exception e) {
+                                transformedBitmap = resource;
+                            }
+                        }
+
+                        Bitmap finalBitmap = transformedBitmap;
+
+                        if (cropN_l >= 0 && cropN_t >= 0 && cropN_r >= 0 && cropN_b >= 0) {
+                            int w = transformedBitmap.getWidth();
+                            int h = transformedBitmap.getHeight();
+
+                            int x = (int) (cropN_l * w);
+                            int y = (int) (cropN_t * h);
+                            int cropW = (int) ((cropN_r - cropN_l) * w);
+                            int cropH = (int) ((cropN_b - cropN_t) * h);
+
+                            try {
+                                x = Math.max(0, x);
+                                y = Math.max(0, y);
+                                cropW = Math.min(w - x, cropW);
+                                cropH = Math.min(h - y, cropH);
+
+                                if (cropW > 0 && cropH > 0) {
+                                    finalBitmap = Bitmap.createBitmap(transformedBitmap, x, y, cropW, cropH);
+                                }
+                            } catch (Exception e) {
+                                finalBitmap = transformedBitmap;
+                            }
+                        }
+
+                        target.setImageBitmap(finalBitmap);
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        target.setImageDrawable(placeholder);
+                    }
+                });
+    }
+
+    private void showPointChangePopUp() {
+        int currentPrice = 0;
+
+        try {
+            currentPrice = Integer.parseInt(price);
+        } catch (NumberFormatException ignored) {
         }
+
+        new PointChangeDialog(this, title, currentPrice, new PointChangeDialog.PointChangeDialogListener() {
+            @Override
+            public void onChange(int oldPrice, int newPrice) {
+                price = String.valueOf(newPrice);
+            }
+        }).show();
     }
 
     private void updateButtonState() {
@@ -423,22 +532,6 @@ public class FilterInfoActivity extends BaseActivity {
                 alertTxt.setVisibility(boughtOrFree ? View.INVISIBLE : View.VISIBLE);
             }
         }
-    }
-
-    private void showPointChangePopUp() {
-        int currentPrice = 0;
-
-        try {
-            currentPrice = Integer.parseInt(price);
-        } catch (NumberFormatException ignored) {
-        }
-
-        new PointChangeDialog(this, title, currentPrice, new PointChangeDialog.PointChangeDialogListener() {
-            @Override
-            public void onChange(int oldPrice, int newPrice) {
-                price = String.valueOf(newPrice);
-            }
-        }).show();
     }
 
     private void setupModal() {
@@ -658,11 +751,6 @@ public class FilterInfoActivity extends BaseActivity {
         }
     }
 
-    private String getCurrentDate() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm", Locale.getDefault());
-        return sdf.format(new Date());
-    }
-
     private void saveBuyHistory(int priceUsed, int newCurrentPoint) {
         SharedPreferences sp = getSharedPreferences("point_buy_history", MODE_PRIVATE);
         String json = sp.getString("buy_history_list", "[]");
@@ -686,6 +774,11 @@ public class FilterInfoActivity extends BaseActivity {
         } catch (Exception e) {
             Log.e("HistorySave", "구매 내역 저장 오류", e);
         }
+    }
+
+    private String getCurrentDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm", Locale.getDefault());
+        return sdf.format(new Date());
     }
 
     @Override
@@ -766,100 +859,6 @@ public class FilterInfoActivity extends BaseActivity {
             intent.putExtra("reviewSnsId", reviewSnsId);
             startActivity(intent);
         }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private void setupOriginalButton() {
-        if (originalBtn == null) return;
-
-        originalBtn.setOnTouchListener((v, ev) -> {
-            switch (ev.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    if (originalPath != null) {
-                        v.setPressed(true);
-                        originalBtn.setAlpha(0.4f);
-                        loadOriginalImage(originalPath, img);
-                    }
-                    return true;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    if (imgUrl != null) {
-                        v.setPressed(false);
-                        originalBtn.setAlpha(1f);
-                        Glide.with(FilterInfoActivity.this)
-                                .load(imgUrl)
-                                .dontAnimate()
-                                .placeholder(img.getDrawable())
-                                .fitCenter()
-                                .into(img);
-                    }
-                    return true;
-            }
-            return true;
-        });
-    }
-
-    private void loadOriginalImage(String path, ImageView target) {
-        Glide.with(this)
-                .asBitmap()
-                .load(path)
-                .dontAnimate()
-                .placeholder(img.getDrawable())
-                .fitCenter()
-                .into(new CustomTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        Bitmap transformedBitmap = resource;
-
-                        if (accumRotationDeg != 0 || accumFlipH || accumFlipV) {
-                            Matrix matrix = new Matrix();
-                            matrix.postRotate(accumRotationDeg);
-                            float sx = accumFlipH ? -1f : 1f;
-                            float sy = accumFlipV ? -1f : 1f;
-                            matrix.postScale(sx, sy);
-
-                            try {
-                                transformedBitmap = Bitmap.createBitmap(resource, 0, 0,
-                                        resource.getWidth(), resource.getHeight(), matrix, true
-                                );
-                            } catch (Exception e) {
-                                transformedBitmap = resource;
-                            }
-                        }
-
-                        Bitmap finalBitmap = transformedBitmap;
-
-                        if (cropN_l >= 0 && cropN_t >= 0 && cropN_r >= 0 && cropN_b >= 0) {
-                            int w = transformedBitmap.getWidth();
-                            int h = transformedBitmap.getHeight();
-
-                            int x = (int) (cropN_l * w);
-                            int y = (int) (cropN_t * h);
-                            int cropW = (int) ((cropN_r - cropN_l) * w);
-                            int cropH = (int) ((cropN_b - cropN_t) * h);
-
-                            try {
-                                x = Math.max(0, x);
-                                y = Math.max(0, y);
-                                cropW = Math.min(w - x, cropW);
-                                cropH = Math.min(h - y, cropH);
-
-                                if (cropW > 0 && cropH > 0) {
-                                    finalBitmap = Bitmap.createBitmap(transformedBitmap, x, y, cropW, cropH);
-                                }
-                            } catch (Exception e) {
-                                finalBitmap = transformedBitmap;
-                            }
-                        }
-
-                        target.setImageBitmap(finalBitmap);
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                        target.setImageDrawable(placeholder);
-                    }
-                });
     }
 
     @Override
