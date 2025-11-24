@@ -719,14 +719,13 @@ public class FilterInfoActivity extends BaseActivity {
 
         if (tempTarget != null) {
             final View target = tempTarget;
-            target.animate().translationY(800).setDuration(250).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    target.setVisibility(View.GONE);
-                    dimBackground.setVisibility(View.GONE);
-                    isModalVisible = false;
-                }
-            }).start();
+            target.animate().translationY(800).setDuration(250).setInterpolator(new AccelerateDecelerateInterpolator())
+                    .withEndAction(() -> {
+                        target.setVisibility(View.GONE);
+                        dimBackground.setVisibility(View.GONE);
+                        isModalVisible = false;
+                    })
+                    .start();
         } else {
             dimBackground.setVisibility(View.GONE);
             isModalVisible = false;
@@ -746,6 +745,9 @@ public class FilterInfoActivity extends BaseActivity {
                     }*/
                     if (preloadedOriginalImage != null) {
                         v.setPressed(true);
+
+                        Log.d("원본보기", "원본버튼 누름 : " + v.isPressed());
+
                         originalBtn.setAlpha(0.4f);
                         img.setImageBitmap(preloadedOriginalImage);
                     }
@@ -760,6 +762,9 @@ public class FilterInfoActivity extends BaseActivity {
 
                     if (preloadedEditedImage != null) {
                         v.setPressed(false);
+
+                        Log.d("원본보기", "원본버튼 뗌 : " + v.isPressed());
+
                         originalBtn.setAlpha(1f);
                         img.setImageBitmap(preloadedEditedImage);
                     }
@@ -816,6 +821,7 @@ public class FilterInfoActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         setupOriginalButton();
+
         if (dimBackground != null && dimBackground.getVisibility() == View.VISIBLE) hideModal();
 
         String key = (filterId != null && !filterId.isEmpty()) ? filterId : (nick + "_" + title);

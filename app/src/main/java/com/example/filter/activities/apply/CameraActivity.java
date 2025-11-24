@@ -135,6 +135,8 @@ public class CameraActivity extends BaseActivity {
         overlay.addView(imageView);
     }
 
+
+
     private void startCamera() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
