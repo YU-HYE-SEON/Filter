@@ -9,6 +9,7 @@ public class FilterListResponse implements Serializable {
     public String creator;
     public int pricePoint;
     public Long useCount;
-    public boolean usage; // 사용 혹은 구매 여부
+    // public boolean usage; // 사용 혹은 구매 여부
+    public String priceDisplayType; // NONE, PURCHASED, NUMBER
     public boolean bookmark;
 }

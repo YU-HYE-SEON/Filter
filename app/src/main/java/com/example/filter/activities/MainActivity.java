@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Filter;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -37,6 +38,7 @@ import com.example.filter.fragments.archives.ArchiveFragment;
 import com.example.filter.fragments.mains.SearchMainFragment;
 import com.example.filter.fragments.mypages.MyPageFragment;
 import com.example.filter.items.FilterListItem;
+import com.example.filter.items.PriceDisplayEnum;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -273,9 +275,6 @@ public class MainActivity extends BaseActivity {
             archive.setImageResource(R.drawable.icon_archive_no);
         });
 
-        // 새 필터 등록 후 돌아왔을 때 처리
-        handleIntent(getIntent());
-
         // (선택) 앱 시작 시 최신순 자동 로드하려면 아래 주석 해제
         // newest.performClick();
     }
@@ -308,7 +307,7 @@ public class MainActivity extends BaseActivity {
                             oldItem.nickname,
                             oldItem.price,
                             oldItem.useCount,
-                            oldItem.usage,
+                            oldItem.type,
                             newState // ★ 변경된 북마크 상태
                     );
 
@@ -345,16 +344,7 @@ public class MainActivity extends BaseActivity {
 
                     // 1. 변환하여 리스트에 담기 (순서 그대로 유지됨)
                     for (FilterListResponse dto : serverList) {
-                        FilterListItem item = new FilterListItem(
-                                dto.id,
-                                dto.name,
-                                dto.thumbnailUrl,
-                                dto.creator,
-                                dto.pricePoint,
-                                dto.useCount != null ? dto.useCount : 0,
-                                dto.usage,
-                                dto.bookmark
-                        );
+                        FilterListItem item = FilterListItem.convertFromDto(dto);
                         uiList.add(item);
                     }
 
@@ -395,16 +385,7 @@ public class MainActivity extends BaseActivity {
 
                     // 1. 변환하여 리스트에 담기
                     for (FilterListResponse dto : serverList) {
-                        FilterListItem item = new FilterListItem(
-                                dto.id,
-                                dto.name,
-                                dto.thumbnailUrl,
-                                dto.creator,
-                                dto.pricePoint,
-                                dto.useCount != null ? dto.useCount : 0,
-                                dto.usage,
-                                dto.bookmark
-                        );
+                        FilterListItem item = FilterListItem.convertFromDto(dto);
                         uiList.add(item);
                     }
 
@@ -430,48 +411,6 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    // ---------------------------------------------------------------
-    // ✅ [수정] Intent 처리 (FilterListItem 생성)
-    // ---------------------------------------------------------------
-    private void handleIntent(Intent intent) {
-        if (intent == null) return;
-
-        String newImagePath = intent.getStringExtra("imgUrl");
-
-        if (newImagePath != null) {
-            String filterIdStr = intent.getStringExtra("filterId");
-            long newId = (filterIdStr != null) ? Long.parseLong(filterIdStr) : -1L;
-
-            String nickname = intent.getStringExtra("nickname");
-            String title = intent.getStringExtra("filterTitle");
-            String priceStr = intent.getStringExtra("price");
-            int price = (priceStr != null) ? Integer.parseInt(priceStr) : 0;
-
-            if (title == null) title = "New Filter";
-            if (nickname == null) nickname = "@닉네임";
-
-            // 새로운 FilterListItem 생성
-            FilterListItem newItem = new FilterListItem(
-                    newId,
-                    title,
-                    newImagePath,
-                    nickname,
-                    price,
-                    0L,     // useCount
-                    false,  // usage
-                    false   // bookmark
-            );
-
-            if (filterAdapter != null) {
-                // Adapter에 containsId 메서드가 있다고 가정 (없으면 구현 필요)
-                // 또는 무조건 맨 앞에 추가
-                filterAdapter.addItem(newItem);
-
-                // 스크롤 맨 위로
-                recyclerView.smoothScrollToPosition(0);
-            }
-        }
-    }
 
     private void updateRecyclerVisibility() {
         if (filterAdapter.getItemCount() == 0) {
@@ -488,7 +427,6 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        handleIntent(intent);
     }
 
     @Override

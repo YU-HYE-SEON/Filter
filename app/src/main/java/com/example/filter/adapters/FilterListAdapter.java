@@ -117,7 +117,7 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
                         item.nickname,
                         newPrice,       // 업데이트된 가격
                         item.useCount,
-                        item.usage,
+                        item.type,
                         item.bookmark
                 );
                 items.set(i, updatedItem);
