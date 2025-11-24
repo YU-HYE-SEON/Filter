@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
 import com.example.filter.items.FilterListItem; // ✅ 올바른 Import 확인
+import com.example.filter.items.PriceDisplayEnum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -167,7 +168,15 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
 
         holder.nickname.setText(item.nickname);
         holder.filterTitle.setText(item.filterTitle);
-        holder.price.setText(String.valueOf(item.price));
+
+        // 가격 표시
+        if(item.type.equals(PriceDisplayEnum.NONE)) {
+            holder.price.setText(" ");
+        } else if (item.type.equals(PriceDisplayEnum.PURCHASED)) {
+            holder.price.setText("구매 완료");
+        } else if (item.type.equals(PriceDisplayEnum.NUMBER)) {
+            holder.price.setText(String.valueOf(item.price));
+        }
 
         // useCount 사용
         holder.count.setText(item.useCount + "회 사용");
