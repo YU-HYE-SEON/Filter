@@ -19,7 +19,7 @@ public class FilterDtoCreateRequest implements Serializable {
     // JSON 직렬화 시 이 객체의 필드명("brightness" 등)이 Map의 Key가 되므로 호환됩니다.
     public ColorAdjustments colorAdjustments = new ColorAdjustments();
 
-    public List<FaceSticker> faceStickers;
+    public List<FaceSticker> stickers;
 
     // [유지] 기존 UI 코드 수정 최소화를 위해 클래스 구조 유지
     public static class ColorAdjustments implements Serializable {
