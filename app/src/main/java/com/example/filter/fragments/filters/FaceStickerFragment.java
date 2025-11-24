@@ -37,6 +37,7 @@ import com.example.filter.overlayviews.FaceBoxOverlayView;
 import java.util.List;
 
 public class FaceStickerFragment extends Fragment {
+    private Fragment previousFragment;
     private String stickerUrl;
     private long sticker_db_id;
     public static int stickerId;
@@ -108,58 +109,6 @@ public class FaceStickerFragment extends Fragment {
         };
         cancelBtn.setOnClickListener(listener);
         checkBtn.setOnClickListener(listener);
-
-        /*cancelBtn.setOnClickListener(view -> {
-            if (ClickUtils.isFastClick(view, 400)) return;
-
-            if (faceBox != null && faceOverlay != null) {
-                faceBox.clearBoxes();
-                faceBox.setVisibility(View.GONE);
-                faceOverlay.setVisibility(View.GONE);
-            }
-
-            Controller.removeStickerFrame(stickerFrame);
-
-            // 프래그먼트 종료 후 직전 프래그먼트인 EditStickerFragment로 돌아감
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new EditStickerFragment())
-                    .commit();
-        });
-
-        checkBtn.setOnClickListener(view -> {
-            if (ClickUtils.isFastClick(view, 400)) return;
-
-            EditStickerFragment editStickerFragment = new EditStickerFragment();
-            Bundle args2 = new Bundle();
-
-            args2.putBoolean("IS_FACE", true);
-            args2.putString("stickerUrl", stickerUrl);
-            args2.putFloat("relX", meta.relX);
-            args2.putFloat("relY", meta.relY);
-            args2.putFloat("relW", meta.relW);
-            args2.putFloat("relH", meta.relH);
-            args2.putFloat("rot", meta.rot);
-
-            editStickerFragment.setArguments(args2);
-
-            Controller.removeStickerFrame(stickerFrame);
-
-            if (faceBox != null && faceOverlay != null) {
-                faceBox.clearBoxes();
-                faceBox.setVisibility(View.GONE);
-                faceOverlay.setVisibility(View.GONE);
-            }
-
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, editStickerFragment)
-                    .commit();
-
-            stickerId++;
-        });*/
     }
 
     private void showStickerCentered(String stickerUrl) {
@@ -193,22 +142,6 @@ public class FaceStickerFragment extends Fragment {
             Controller.updateControllersSizeAndAngle(stickerFrame, getResources());
         });
 
-        /*deleteController.setOnClickListener(view -> {
-            if (faceBox != null && faceOverlay != null) {
-                faceBox.clearBoxes();
-                faceBox.setVisibility(View.GONE);
-                faceOverlay.setVisibility(View.GONE);
-            }
-
-            Controller.removeStickerFrame(stickerFrame);
-
-            // 프래그먼트 종료 후 직전 프래그먼트인 EditStickerFragment로 돌아감
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new EditStickerFragment())
-                    .commit();
-        });*/
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -248,9 +181,6 @@ public class FaceStickerFragment extends Fragment {
             }
         });
     }
-
-
-    private Fragment previousFragment;
 
     private void showPreviousFagement(View v) {
         if (previousFragment != null) {

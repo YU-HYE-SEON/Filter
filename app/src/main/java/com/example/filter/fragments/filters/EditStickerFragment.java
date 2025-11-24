@@ -53,6 +53,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class EditStickerFragment extends Fragment {
+    private StickerMeta pendingMeta;
+    private Long pendingServerId = null;
     public static int sessionId = 0;
     private ConstraintLayout topArea;
     private FrameLayout photoContainer;
@@ -61,9 +63,6 @@ public class EditStickerFragment extends Fragment {
     private View editingSticker = null;
     private String stickerUrl;
     private long sticker_db_id;
-    private Float prevElevation = null;
-
-    //private float prevElevation;
     private ConstraintLayout bottomArea1;
     private LinearLayout stickerEdit;
     private CheckBox faceCheckBox;
@@ -75,10 +74,8 @@ public class EditStickerFragment extends Fragment {
     private View selectSticker = null;
     private int selectStickerId = RecyclerView.NO_POSITION;
     private LayoutInflater inflater;
-
     private View stickerFrame;
     private ImageView stickerImage, deleteController;
-
     private int pendingUploadCount = 0;
 
     // ✅ 업로드 완료 리스너 정의 (콜백 구현체)
@@ -207,9 +204,6 @@ public class EditStickerFragment extends Fragment {
 
         return view;
     }
-
-    private StickerMeta pendingMeta;
-    private Long pendingServerId = null;
 
     public void setFaceMeta(StickerMeta meta, String url, long serverId) {
         pendingMeta = meta;
@@ -564,7 +558,6 @@ public class EditStickerFragment extends Fragment {
                 Object sessionTag = child.getTag(R.id.tag_sticker_session);
                 int childSession = sessionTag != null ? (Integer) sessionTag : -1;
                 Boolean isDelete = (Boolean) child.getTag(R.id.tag_sticker_delete);
-                Boolean isClone = (Boolean) child.getTag(R.id.tag_sticker_clone);
 
                 if (Boolean.FALSE.equals(isOriginal) && childSession == sessionId) {
                     stickerOverlay.removeView(child);
@@ -579,14 +572,8 @@ public class EditStickerFragment extends Fragment {
                     }
 
                     /// 이전 세션에서 배치된 기존 스티커 복구되도록 이전 상태로 돌리고 보이게 하기 ///
+                    ///  얼굴스티커 삭제도 취소 ///
                     if (Boolean.TRUE.equals(isDelete)) {
-                        Controller.setControllersVisible(child, false);
-                        child.setVisibility(View.VISIBLE);
-                        child.setTag(R.id.tag_sticker_delete, false);
-                    }
-
-                    ///  얼굴스티커 삭제 취소 ///
-                    if (Boolean.TRUE.equals(isClone) && Boolean.TRUE.equals(isDelete)) {
                         Controller.setControllersVisible(child, false);
                         child.setVisibility(View.VISIBLE);
                         child.setTag(R.id.tag_sticker_delete, false);
@@ -606,24 +593,14 @@ public class EditStickerFragment extends Fragment {
 
             StickerViewModel vm = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
 
-            /// 이전 세션에서 배치된 기존 스티커를 실제로 삭제하기 ///
+            /// 이전 세션에서 배치된 기존 스티커와 얼굴스티커 실제로 삭제하기 ///
             for (int i = stickerOverlay.getChildCount() - 1; i >= 0; i--) {
                 View child = stickerOverlay.getChildAt(i);
                 Boolean isDelete = (Boolean) child.getTag(R.id.tag_sticker_delete);
-                Boolean isClone = (Boolean) child.getTag(R.id.tag_sticker_clone);
 
                 if (Boolean.TRUE.equals(isDelete)) {
                     stickerOverlay.removeView(child);
                 }
-
-                /// 얼굴스티커 진짜 삭제 ///
-                //if (Boolean.TRUE.equals(isClone) && Boolean.TRUE.equals(isDelete)) {
-                //    Integer gid = (Integer) child.getTag(R.id.tag_sticker_group);
-                //    if (gid != null) {
-                //        vm.setFaceStickerDataToDelete(gid);
-                //        vm.removeCloneGroup(gid, stickerOverlay);
-                //    }
-                //}
             }
 
             requireActivity().getSupportFragmentManager()
@@ -680,6 +657,9 @@ public class EditStickerFragment extends Fragment {
     private void confirmDeleteSticker() {
         if (selectStickerId == RecyclerView.NO_POSITION) return;
 
+        StickerItem targetItem = adapter.getItem(selectStickerId);
+        long serverId = targetItem.getId();
+
         new StickerDeleteDialog(requireContext(), new StickerDeleteDialog.StickerDeleteDialogListener() {
             @Override
             public void onKeep() {
@@ -687,13 +667,33 @@ public class EditStickerFragment extends Fragment {
 
             @Override
             public void onDelete() {
-                if (selectStickerId != RecyclerView.NO_POSITION) {
-                    Controller.clearCurrentSticker(stickerOverlay, selectSticker);
-                    adapter.removeAt(selectStickerId);
-                    selectStickerId = RecyclerView.NO_POSITION;
-                    deleteStickerIcon.setEnabled(false);
-                    deleteStickerIcon.setAlpha(0.4f);
-                }
+                StickerApi api = AppRetrofitClient.getInstance(requireContext()).create(StickerApi.class);
+
+                api.deleteSticker(serverId).enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        if (response.isSuccessful()) {
+                            if (selectStickerId != RecyclerView.NO_POSITION) {
+                                Log.e("목록에서스티커삭제", "삭제 성공" + serverId);
+
+                                Controller.clearCurrentSticker(stickerOverlay, selectSticker);
+                                adapter.removeAt(selectStickerId);
+                                selectStickerId = RecyclerView.NO_POSITION;
+                                deleteStickerIcon.setEnabled(false);
+                                deleteStickerIcon.setAlpha(0.4f);
+
+                                //loadStickersFromServer();
+                            }
+                        } else {
+                            Log.e("목록에서스티커삭제", "서버 응답 실패 코드: " + response.code());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        Log.e("목록에서스티커삭제", "삭제 요청 실패", t);
+                    }
+                });
             }
         }).withMessage("내 스티커에서 정말로 삭제하시겠습니까?")
                 .withButton1Text("예")
