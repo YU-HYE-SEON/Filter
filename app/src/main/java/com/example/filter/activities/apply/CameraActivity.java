@@ -42,10 +42,9 @@ public class CameraActivity extends BaseActivity {
 
 
     private ImageButton backBtn;
-    private ImageView camera;
     private FGLRenderer renderer;
     private AppCompatButton ratioBtn, photoBtn;
-    private FrameLayout cameraContainer, overlay;
+    private FrameLayout cameraContainer,camera, overlay;
     //private ExecutorService cameraExecutor;
     private FilterDtoCreateRequest.ColorAdjustments adj;
     private String brushPath;
@@ -67,7 +66,7 @@ public class CameraActivity extends BaseActivity {
 
         previewView = new PreviewView(this);
         previewView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        cameraContainer.addView(previewView, 0);
+        camera.addView(previewView, 0);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera();
