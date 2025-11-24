@@ -9,7 +9,7 @@ public class ReviewResponse implements Serializable {
     public boolean isMine;
 
     @SerializedName("id")
-    public Long id;
+    public Long id; // 리뷰 ID
 
     @SerializedName("imageUrl")
     public String imageUrl;
