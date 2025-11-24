@@ -38,6 +38,7 @@ import java.util.List;
 
 public class FaceStickerFragment extends Fragment {
     private String stickerUrl;
+    private long sticker_db_id;
     public static int stickerId;
     private AppCompatButton saveBtn;
     private LayoutInflater inflater;
@@ -95,6 +96,7 @@ public class FaceStickerFragment extends Fragment {
         /// EditStickerFragment의 stickerFrame을 아예 faceOverlay 위로 올리기 가능?
         Bundle args = getArguments();
         stickerUrl = args.getString("stickerUrl");
+        sticker_db_id = args.getLong("sticker_db_id", -1L);
         showStickerCentered(stickerUrl);
         faceMode();
 
@@ -185,6 +187,7 @@ public class FaceStickerFragment extends Fragment {
             stickerFrame.setRotation(0);
 
             faceOverlay.addView(stickerFrame);
+            stickerFrame.setTag(R.id.tag_sticker_db_id, sticker_db_id);
 
             Controller.enableStickerControl(null, null, stickerFrame, faceOverlay, getResources());
             Controller.updateControllersSizeAndAngle(stickerFrame, getResources());
@@ -261,6 +264,7 @@ public class FaceStickerFragment extends Fragment {
             if (v.getId() == R.id.checkBtn) {
                 /// ⭐ Bundle로 넘겨주던 serverId 방식을 바꿨습니다 ⭐ ///
                 Object dbTag = stickerFrame.getTag(R.id.tag_sticker_db_id);
+                Log.e("SERVER_ID_TEST", "View clicked, tag=" + dbTag);
                 long serverId = -1L;
                 if (dbTag instanceof Long) {
                     serverId = (Long) dbTag;
@@ -269,7 +273,7 @@ public class FaceStickerFragment extends Fragment {
                 ((EditStickerFragment) previousFragment).setFaceMeta(meta, stickerUrl, serverId);
                 ((EditStickerFragment) previousFragment).applyPendingMeta();
 
-                Log.d("얼굴스티커", String.format("페이스스티커프래그먼트 | relX = %.1f, relY = %.1f, relW = %.1f, relH = %.1f, rot = %.1f", meta.relX, meta.relY, meta.relW, meta.relH, meta.rot));
+                //Log.d("얼굴스티커", String.format("페이스스티커프래그먼트 | relX = %.1f, relY = %.1f, relW = %.1f, relH = %.1f, rot = %.1f", meta.relX, meta.relY, meta.relW, meta.relH, meta.rot));
 
                 stickerId++;
             }

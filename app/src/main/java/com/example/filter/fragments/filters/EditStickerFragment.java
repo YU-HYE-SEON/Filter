@@ -60,6 +60,7 @@ public class EditStickerFragment extends Fragment {
     private FaceBoxOverlayView faceBox;
     private View editingSticker = null;
     private String stickerUrl;
+    private long sticker_db_id;
     private Float prevElevation = null;
 
     //private float prevElevation;
@@ -149,6 +150,7 @@ public class EditStickerFragment extends Fragment {
             deleteStickerIcon.setAlpha(1.0f);
 
             stickerUrl = item.getImageUrl();
+            sticker_db_id = item.getId();
 
             showStickerCentered(item.getImageUrl(), item.getId());
         });
@@ -160,6 +162,7 @@ public class EditStickerFragment extends Fragment {
                 FaceStickerFragment faceStickerFragment = new FaceStickerFragment();
                 Bundle args2 = new Bundle();
                 args2.putString("stickerUrl", stickerUrl);
+                args2.putLong("sticker_db_id", sticker_db_id);
                 faceStickerFragment.setArguments(args2);
                 faceStickerFragment.setPreviousFragment(EditStickerFragment.this);
 
@@ -243,7 +246,9 @@ public class EditStickerFragment extends Fragment {
                         //long serverId = args.getLong("sticker_db_id", -1L);
                         long serverId = (pendingServerId != null ? pendingServerId : -1L);
 
-                        Log.d("얼굴스티커", String.format("에딧스티커프래그먼트 | relX = %.1f, relY = %.1f, relW = %.1f, relH = %.1f, rot = %.1f", pendingMeta.relX, pendingMeta.relY, pendingMeta.relW, pendingMeta.relH, pendingMeta.rot));
+                        Log.e("SERVER_ID_TEST", "applyPendingMeta(): serverId=" + serverId);
+
+                        //Log.d("얼굴스티커", String.format("에딧스티커프래그먼트 | relX = %.1f, relY = %.1f, relW = %.1f, relH = %.1f, rot = %.1f", pendingMeta.relX, pendingMeta.relY, pendingMeta.relW, pendingMeta.relH, pendingMeta.rot));
 
                         List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, pendingMeta, requireContext());
                         requireActivity().runOnUiThread(() -> {
@@ -257,6 +262,8 @@ public class EditStickerFragment extends Fragment {
                                     // ✅ [핵심] 뷰에 서버 DB ID 태그 저장
                                     if (serverId != -1L) {
                                         faceSticker.setTag(R.id.tag_sticker_db_id, serverId);
+
+                                        Log.e("SERVER_ID_TEST", "Tag set on view: " + serverId);
                                     }
 
                                     viewModel.addCloneGroup(groupId, faceSticker);
@@ -610,13 +617,13 @@ public class EditStickerFragment extends Fragment {
                 }
 
                 /// 얼굴스티커 진짜 삭제 ///
-                if (Boolean.TRUE.equals(isClone) && Boolean.TRUE.equals(isDelete)) {
-                    Integer gid = (Integer) child.getTag(R.id.tag_sticker_group);
-                    if (gid != null) {
-                        vm.setFaceStickerDataToDelete(gid);
-                        vm.removeCloneGroup(gid, stickerOverlay);
-                    }
-                }
+                //if (Boolean.TRUE.equals(isClone) && Boolean.TRUE.equals(isDelete)) {
+                //    Integer gid = (Integer) child.getTag(R.id.tag_sticker_group);
+                //    if (gid != null) {
+                //        vm.setFaceStickerDataToDelete(gid);
+                //        vm.removeCloneGroup(gid, stickerOverlay);
+                //    }
+                //}
             }
 
             requireActivity().getSupportFragmentManager()
