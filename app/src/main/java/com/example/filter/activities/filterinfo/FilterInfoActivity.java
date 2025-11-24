@@ -864,4 +864,9 @@ public class FilterInfoActivity extends BaseActivity {
         startActivity(mainIntent);
         finish();
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }

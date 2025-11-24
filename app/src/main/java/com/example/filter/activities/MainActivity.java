@@ -33,6 +33,7 @@ import com.example.filter.apis.repositories.StickerRepository;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.etc.StickerStore;
+import com.example.filter.fragments.archives.ArchiveFragment;
 import com.example.filter.fragments.mains.SearchMainFragment;
 import com.example.filter.fragments.mypages.MyPageFragment;
 import com.example.filter.items.FilterListItem;
@@ -49,8 +50,8 @@ public class MainActivity extends BaseActivity {
     private ConstraintLayout mainActivity;
     private ImageView logo;
     private ImageButton searchBtn, random, hot, newest;
-    private ImageButton home, filter, myPage;
-    private FrameLayout searchFrame, mypageFrame;
+    private ImageButton home, filter, archive, myPage;
+    private FrameLayout searchFrame, archiveFrame, mypageFrame;
 
     private TextView textView;
     private RecyclerView recyclerView;
@@ -99,8 +100,10 @@ public class MainActivity extends BaseActivity {
         recyclerView = findViewById(R.id.recyclerView);
         home = findViewById(R.id.home);
         filter = findViewById(R.id.filter);
+        archive = findViewById(R.id.archive);
         myPage = findViewById(R.id.myPage);
         searchFrame = findViewById(R.id.searchFrame);
+        archiveFrame = findViewById(R.id.archiveFrame);
         mypageFrame = findViewById(R.id.mypageFrame);
 
         // 3. 필터 상세 화면 런처
@@ -145,10 +148,12 @@ public class MainActivity extends BaseActivity {
             public void onChanged() {
                 updateRecyclerVisibility();
             }
+
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 updateRecyclerVisibility();
             }
+
             @Override
             public void onItemRangeRemoved(int positionStart, int itemCount) {
                 updateRecyclerVisibility();
@@ -221,10 +226,12 @@ public class MainActivity extends BaseActivity {
         // 하단 네비게이션 (홈)
         home.setOnClickListener(v -> {
             searchFrame.setVisibility(View.GONE);
+            archiveFrame.setVisibility(View.GONE);
             mypageFrame.setVisibility(View.GONE);
             mainActivity.setVisibility(View.VISIBLE);
             getSupportFragmentManager().popBackStack(null, getSupportFragmentManager().POP_BACK_STACK_INCLUSIVE);
             home.setImageResource(R.drawable.icon_home_yes);
+            archive.setImageResource(R.drawable.icon_archive_no);
             myPage.setImageResource(R.drawable.icon_mypage_no);
         });
 
@@ -238,6 +245,20 @@ public class MainActivity extends BaseActivity {
             filter.postDelayed(() -> filter.setEnabled(true), 500);
         });
 
+        // 하단 네비게이션 (아카이브)
+        archive.setOnClickListener(v -> {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.archiveFrame, new ArchiveFragment())
+                    .commitNow();
+            archiveFrame.setVisibility(View.VISIBLE);
+            searchFrame.setVisibility(View.GONE);
+            mypageFrame.setVisibility(View.GONE);
+            mainActivity.setVisibility(View.GONE);
+            archive.setImageResource(R.drawable.icon_archive_yes);
+            home.setImageResource(R.drawable.icon_home_no);
+            myPage.setImageResource(R.drawable.icon_mypage_no);
+        });
+
         // 하단 네비게이션 (마이페이지)
         myPage.setOnClickListener(v -> {
             getSupportFragmentManager().beginTransaction()
@@ -245,9 +266,11 @@ public class MainActivity extends BaseActivity {
                     .commitNow();
             mypageFrame.setVisibility(View.VISIBLE);
             searchFrame.setVisibility(View.GONE);
+            archiveFrame.setVisibility(View.GONE);
             mainActivity.setVisibility(View.GONE);
             myPage.setImageResource(R.drawable.icon_mypage_yes);
             home.setImageResource(R.drawable.icon_home_no);
+            archive.setImageResource(R.drawable.icon_archive_no);
         });
 
         // 새 필터 등록 후 돌아왔을 때 처리
@@ -517,6 +540,7 @@ public class MainActivity extends BaseActivity {
             searchFrame.setVisibility(View.GONE);
             mainActivity.setVisibility(View.VISIBLE);
             home.setImageResource(R.drawable.icon_home_yes);
+            archive.setImageResource(R.drawable.icon_archive_no);
             myPage.setImageResource(R.drawable.icon_mypage_no);
             return;
         }

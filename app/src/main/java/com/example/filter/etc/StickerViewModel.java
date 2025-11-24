@@ -103,13 +103,6 @@ public class StickerViewModel extends ViewModel {
         faceStickerDataToDelete.setValue(groupId);
     }
 
-    public void removeFaceStickerData(int groupId) {
-        FaceStickerData currentData = faceStickerLiveData.getValue();
-        if (currentData != null && currentData.groupId == groupId) {
-            faceStickerDataToDelete.setValue(groupId);
-        }
-    }
-
     public LiveData<Integer> getFaceStickerDataToDelete() {
         return faceStickerDataToDelete;
     }
