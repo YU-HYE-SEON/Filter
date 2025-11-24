@@ -542,6 +542,8 @@ public class RegisterActivity extends BaseActivity {
 
                     /// ⭐태그 전달이 안 돼서 임시로 직접 넣어줌⭐ ///
                     filterResponse.tags = filterData.tags;
+                    Log.e("Register123", "얼굴스티커 | " + filterData.stickers);
+                    Log.e("Register123", "얼굴스티커 | " + filterResponse.stickers);
 
                     // 다음 화면으로 데이터 전달하며 이동
                     moveToFilterInfo(response.body());

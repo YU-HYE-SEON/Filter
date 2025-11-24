@@ -109,16 +109,16 @@ public class FilterInfoActivity extends BaseActivity {
                 Intent intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
                 intent.setData(photoUri);
                 // 필요한 데이터 전달
-                intent.putExtra("color_adjustments", adj);
-                intent.putExtra("brush_image_path", brushPath);
-                intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
-                if (faceStickers != null) {
-                    intent.putExtra("face_stickers", new ArrayList<>(this.faceStickers));
-                }
+                //intent.putExtra("color_adjustments", adj);
+                //intent.putExtra("brush_image_path", brushPath);
+                //intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
+                //if (faceStickers != null) {
+                //    intent.putExtra("face_stickers", new ArrayList<>(this.faceStickers));
+                //}
                 intent.putExtra("filterId", filterId);
-                intent.putExtra("filterImage", imgUrl);
-                intent.putExtra("filterTitle", title);
-                intent.putExtra("nickname", nick);
+                //intent.putExtra("filterImage", imgUrl);
+                //intent.putExtra("filterTitle", title);
+                //intent.putExtra("nickname", nick);
 
                 startActivity(intent);
             } else {
@@ -214,8 +214,6 @@ public class FilterInfoActivity extends BaseActivity {
             @Override
             public void onResponse(Call<FilterResponse> call, Response<FilterResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Log.d("DEBUG_TAGS", "받는 데이터: " + new Gson().toJson(response.body()));
-
                     setFilterData(response.body());
                 } else {
                     Log.e("FilterInfo", "상세 조회 실패: " + response.code());
@@ -600,11 +598,12 @@ public class FilterInfoActivity extends BaseActivity {
         cameraModeBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             Intent intent = new Intent(this, CameraActivity.class);
-            intent.putExtra("color_adjustments", adj);
-            intent.putExtra("brush_image_path", brushPath);
-            intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
-            if (faceStickers != null)
-                intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+            intent.putExtra("filterId", filterId);
+            //intent.putExtra("color_adjustments", adj);
+            //intent.putExtra("brush_image_path", brushPath);
+            //intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
+            //if (faceStickers != null)
+            //    intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
             startActivity(intent);
             hideModal();
         });

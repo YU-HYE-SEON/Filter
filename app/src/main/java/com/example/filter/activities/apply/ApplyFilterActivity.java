@@ -17,6 +17,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -24,13 +25,18 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.review.ReviewActivity;
+import com.example.filter.api_datas.response_dto.FilterResponse;
+import com.example.filter.apis.FilterApi;
+import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
@@ -46,6 +52,11 @@ import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ApplyFilterActivity extends BaseActivity {
     public interface FaceDetectionCallback {
@@ -59,8 +70,6 @@ public class ApplyFilterActivity extends BaseActivity {
     private ImageButton toArchiveBtn, toReviewBtn;
     private GLSurfaceView glSurfaceView;
     private FGLRenderer renderer;
-    private String brushPath, stickerImageNoFacePath;
-    private FilterDtoCreateRequest.ColorAdjustments adj;
     private ArrayList<FaceStickerData> faceStickers;
     private Bitmap finalBitmapWithStickers = null;
     private FrameLayout reviewPopOff;
@@ -140,6 +149,8 @@ public class ApplyFilterActivity extends BaseActivity {
             }
         });
 
+        filterId = getIntent().getStringExtra("filterId");
+
         Uri imageUri = getIntent().getData();
         if (imageUri != null) {
             try {
@@ -156,42 +167,14 @@ public class ApplyFilterActivity extends BaseActivity {
                         if (faces.isEmpty()) return;
                     });
                 }
+
+                if (filterId != null) {
+                    loadFilterData(Long.parseLong(filterId));
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-        filterId = getIntent().getStringExtra("filterId");
-        imgUrl = getIntent().getStringExtra("filterImage");
-        title = getIntent().getStringExtra("filterTitle");
-        nick = getIntent().getStringExtra("nickname");
-
-        adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
-
-
-
-        brushPath = getIntent().getStringExtra("brush_image_path");
-        /// 얼굴인식스티커 정보 받기 ///
-        stickerImageNoFacePath = getIntent().getStringExtra("stickerImageNoFacePath");
-        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
-        /*if (faceStickers != null && !faceStickers.isEmpty()) {
-            for (FaceStickerData d : faceStickers) {
-                Log.d("StickerFlow", String.format(
-                        "[ApplyFilterActivity] 받은 FaceStickerData → relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f, groupId=%d",
-                        d.relX, d.relY, d.relW, d.relH, d.rot, d.groupId
-                ));
-            }
-        } else {
-            Log.d("StickerFlow", "[ApplyFilterActivity] faceStickers가 비어있음 혹은 null입니다.");
-        }*/
-
-
-
-
-        if (adj != null) applyAdjustments(adj);
-        if (brushPath != null) applyBrushStickerImage(brushOverlay, brushPath);
-        if (stickerImageNoFacePath != null)
-            applyBrushStickerImage(stickerOverlay, stickerImageNoFacePath);
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
@@ -353,13 +336,91 @@ public class ApplyFilterActivity extends BaseActivity {
         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         imageView.setAdjustViewBounds(true);
         imageView.setImageBitmap(BitmapFactory.decodeFile(path));
-        imageView.setLayoutParams(
-                new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT
-                )
-        );
+        imageView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         overlay.addView(imageView);
+
+        if (path == null) return;
+
+        if (path.startsWith("http")) {
+            Glide.with(this).load(path).into(imageView);
+        } else {
+            imageView.setImageBitmap(BitmapFactory.decodeFile(path));
+        }
+    }
+
+    private FilterDtoCreateRequest.ColorAdjustments mapColorAdjustments(Map<String, Double> map) {
+        if (map == null) return new FilterDtoCreateRequest.ColorAdjustments();
+
+        FilterDtoCreateRequest.ColorAdjustments adj = new FilterDtoCreateRequest.ColorAdjustments();
+        adj.brightness = map.getOrDefault("brightness", 0.0);
+        adj.exposure = map.getOrDefault("exposure", 0.0);
+        adj.contrast = map.getOrDefault("contrast", 0.0);
+        adj.highlight = map.getOrDefault("highlight", 0.0);
+        adj.shadow = map.getOrDefault("shadow", 0.0);
+        adj.temperature = map.getOrDefault("temperature", 0.0);
+        adj.hue = map.getOrDefault("hue", 0.0);
+        adj.saturation = map.getOrDefault("saturation", 0.0);
+        adj.sharpen = map.getOrDefault("sharpen", 0.0);
+        adj.blur = map.getOrDefault("blur", 0.0);
+        adj.vignette = map.getOrDefault("vignette", 0.0);
+        adj.noise = map.getOrDefault("noise", 0.0);
+        return adj;
+    }
+
+    private ArrayList<FaceStickerData> mapFaceStickers(List<FilterResponse.FaceStickerResponse> responses) {
+        ArrayList<FaceStickerData> dataList = new ArrayList<>();
+        if (responses == null) return dataList;
+
+        for (FilterResponse.FaceStickerResponse resp : responses) {
+            FaceStickerData data = new FaceStickerData();
+            data.stickerDbId = resp.stickerId;
+            data.relX = (float) resp.relX;
+            data.relY = (float) resp.relY;
+            data.relW = (float) resp.relW;
+            data.relH = (float) resp.relH;
+            data.rot = (float) resp.rot;
+            data.stickerPath = resp.stickerImageUrl;
+
+            Log.e("Register123", "얼굴스티커 | " + data);
+            Log.e("Register123", "얼굴스티커 | " + resp);
+
+            dataList.add(data);
+        }
+        return dataList;
+    }
+
+    private void loadFilterData(long id) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+        api.getFilter(id).enqueue(new Callback<FilterResponse>() {
+            @Override
+            public void onResponse(Call<FilterResponse> call, Response<FilterResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    FilterResponse data = response.body();
+
+                    applyAdjustments(mapColorAdjustments(data.colorAdjustments));
+
+                    if (data.stickerImageNoFaceUrl != null) {
+                        applyBrushStickerImage(stickerOverlay, data.stickerImageNoFaceUrl);
+                    }
+
+                    ArrayList<FaceStickerData> stickers = mapFaceStickers(data.stickers);
+                    if (!stickers.isEmpty() && originalImageBitmap != null) {
+                        ApplyFilterActivity.this.faceStickers = stickers;
+                        detectFaces(originalImageBitmap, null);
+                    }
+
+                } else {
+                    Log.e("ApplyFilter", "필터 정보 조회 실패: " + response.code());
+                    Toast.makeText(ApplyFilterActivity.this, "필터 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FilterResponse> call, Throwable t) {
+                Log.e("ApplyFilter", "통신 오류", t);
+                Toast.makeText(ApplyFilterActivity.this, "필터 정보를 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /// 얼굴인식스티커 적용하기 ///
@@ -405,7 +466,7 @@ public class ApplyFilterActivity extends BaseActivity {
                     }
 
 
-                    if (faceStickers == null|| faceStickers.isEmpty())
+                    if (faceStickers == null || faceStickers.isEmpty())
                         return;
 
                     runOnUiThread(() -> {
@@ -424,7 +485,7 @@ public class ApplyFilterActivity extends BaseActivity {
                                     } else {
                                         dummyImage.setImageBitmap(BitmapFactory.decodeFile(d.stickerPath));
                                     }*/
-                                    StickerMeta.cloneSticker(stickerOverlay, d.stickerPath,this, p);
+                                    StickerMeta.cloneSticker(stickerOverlay, d.stickerPath, this, p);
                                     //stickerOverlay.removeView(dummyFrame);
                                 }
                             }

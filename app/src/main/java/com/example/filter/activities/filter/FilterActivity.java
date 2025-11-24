@@ -37,6 +37,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
@@ -276,9 +277,9 @@ public class FilterActivity extends BaseActivity {
                 faceStickerList = new ArrayList<>();
             faceStickerList.add(data);
 
-            if (data.stickerBitmap != null) {
+            if (data.stickerPath != null && !data.stickerPath.isEmpty()) {
                 ImageView iv = new ImageView(this);
-                iv.setImageBitmap(data.stickerBitmap);
+                Glide.with(this).load(data.stickerPath).into(iv);
                 iv.setRotation(data.rot);
             }
         });
