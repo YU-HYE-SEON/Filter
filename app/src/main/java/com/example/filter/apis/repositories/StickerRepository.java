@@ -7,7 +7,7 @@ import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.api_datas.request_dto.StickerCreateRequest;
 import com.example.filter.api_datas.response_dto.StickerResponseDto;
 import com.example.filter.apis.StickerApi;
-import com.example.filter.fragments.filters.MyStickersFragment;
+import com.example.filter.fragments.filters.EditStickerFragment;
 import com.example.filter.items.StickerItem;
 
 import java.io.File;
@@ -26,10 +26,10 @@ public class StickerRepository implements StickerUploader { // StickerUploader �
 
     private static final String TAG = "StickerRepository";
     private final StickerApi stickerApi;
-    private final MyStickersFragment.StickerUploadListener uploadListener; // ✅ 리스너 필드
+    private final EditStickerFragment.StickerUploadListener uploadListener; // ✅ 리스너 필드
 
     // ✅ Constructor: Fragment에서 리스너를 받도록 수정
-    public StickerRepository(Context context, MyStickersFragment.StickerUploadListener listener) {
+    public StickerRepository(Context context, EditStickerFragment.StickerUploadListener listener) {
         this.stickerApi = AppRetrofitClient.getInstance(context).create(StickerApi.class);
         this.uploadListener = listener;
     }

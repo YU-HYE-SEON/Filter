@@ -1716,14 +1716,14 @@ public class FilterActivity extends BaseActivity {
      * 
      * // 저장된 메타데이터 기반으로 즉시 복원
      * List<View> restored = new ArrayList<>();
-     * View faceSticker = StickerMeta.faceSticker(stickerOverlay, stickerFrame,
+     * View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame,
      * this,
      * new float[]{meta.relX, meta.relY, meta.relW, meta.relH, meta.rot});
-     * if (faceSticker != null) {
-     * faceSticker.setTag(R.id.tag_sticker_id, groupId);
-     * faceSticker.setTag(R.id.tag_sticker_clone, true);
-     * viewModel.addCloneGroup(groupId, faceSticker);
-     * restored.add(faceSticker);
+     * if (cloneSticker != null) {
+     * cloneSticker.setTag(R.id.tag_sticker_id, groupId);
+     * cloneSticker.setTag(R.id.tag_sticker_clone, true);
+     * viewModel.addCloneGroup(groupId, cloneSticker);
+     * restored.add(cloneSticker);
      * }
      * 
      * Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
@@ -1761,13 +1761,13 @@ public class FilterActivity extends BaseActivity {
      * List<View> newlyCreatedClones = new ArrayList<>();
      * 
      * for (float[] p : placement) {
-     * View faceSticker = StickerMeta.faceSticker(stickerOverlay, stickerFrame,
+     * View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame,
      * this, p);
-     * if (faceSticker != null) {
-     * faceSticker.setTag(R.id.tag_sticker_id, groupId);
-     * faceSticker.setTag(R.id.tag_sticker_clone, true);
-     * viewModel.addCloneGroup(groupId, faceSticker);
-     * newlyCreatedClones.add(faceSticker);
+     * if (cloneSticker != null) {
+     * cloneSticker.setTag(R.id.tag_sticker_id, groupId);
+     * cloneSticker.setTag(R.id.tag_sticker_clone, true);
+     * viewModel.addCloneGroup(groupId, cloneSticker);
+     * newlyCreatedClones.add(cloneSticker);
      * }
      * }
      * Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);

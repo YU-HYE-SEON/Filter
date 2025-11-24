@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.filter.FilterActivity;
+import com.example.filter.fragments.filters.FaceStickerFragment;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceLandmark;
 
@@ -219,7 +220,7 @@ public class StickerMeta {
         return resultList;
     }
 
-    public static View faceSticker(FrameLayout stickerOverlay, String stickerUrl, Context context, float[] placement) {
+    public static View cloneSticker(FrameLayout stickerOverlay, String stickerUrl, Context context, float[] placement) {
         if (stickerUrl == null || context == null) return null;
 
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -238,9 +239,9 @@ public class StickerMeta {
 
         stickerOverlay.addView(cloneSticker);
 
-        cloneSticker.setTag(R.id.tag_sticker_clone, Boolean.TRUE);
-        cloneSticker.setTag(R.id.tag_brush_layer, Boolean.FALSE);
-        cloneSticker.setTag(R.id.tag_sticker_url, stickerUrl);
+        //cloneSticker.setTag(R.id.tag_sticker_clone, Boolean.TRUE);
+        //cloneSticker.setTag(R.id.tag_brush_layer, Boolean.FALSE);
+        //cloneSticker.setTag(R.id.tag_sticker_url, stickerUrl);
 
         return cloneSticker;
     }

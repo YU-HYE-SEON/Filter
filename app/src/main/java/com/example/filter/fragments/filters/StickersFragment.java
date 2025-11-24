@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -24,9 +23,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
@@ -34,15 +31,6 @@ import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.activities.filter.LoadActivity;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
-import com.example.filter.etc.FaceDetect;
-import com.example.filter.api_datas.FaceStickerData;
-import com.example.filter.etc.StickerMeta;
-import com.example.filter.etc.StickerViewModel;
-import com.example.filter.overlayviews.FaceBoxOverlayView;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.List;
 
 public class StickersFragment extends Fragment {
     private LinearLayout myStickerBtn, loadStickerBtn, brushBtn, AIStickerBtn;
@@ -115,7 +103,7 @@ public class StickersFragment extends Fragment {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea2, new MyStickersFragment())
+                        .replace(R.id.bottomArea2, new EditStickerFragment())
                         .commit();
             }
         });
@@ -167,67 +155,6 @@ public class StickersFragment extends Fragment {
 
         return view;
     }
-
-    /*public void moveEditSticker(View stickerFrame) {
-        if (stickerFrame == null || stickerFrame.getParent() == null) return;
-
-        stickerFrame.setOnClickListener(v -> {
-            Controller.setControllersVisible(stickerFrame, true);
-
-            stickerFrame.setPivotX(stickerFrame.getWidth() / 2f);
-            stickerFrame.setPivotY(stickerFrame.getHeight() / 2f);
-
-            Bundle args = new Bundle();
-            args.putInt("selected_index", ((ViewGroup) stickerFrame.getParent()).indexOfChild(stickerFrame));
-
-            boolean fromMySticker = Boolean.TRUE.equals(stickerFrame.getTag(R.id.tag_from_mysticker));
-            if (fromMySticker) {
-                MyStickersFragment myStickersFragment = new MyStickersFragment();
-
-                args.putString("stickerUrl", (String) stickerFrame.getTag(R.id.tag_sticker_url));
-                args.putBoolean("EDIT_EXISTING", true);
-                args.putFloat("prevElevation", ViewCompat.getZ(stickerFrame));
-                args.putInt("sticker_index", ((ViewGroup) stickerFrame.getParent()).indexOfChild(stickerFrame));
-
-                myStickersFragment.setArguments(args);
-
-                requireActivity().getSupportFragmentManager()
-                        .beginTransaction()
-                        .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea2, myStickersFragment)
-                        .commit();
-            } else {
-                EditStickerFragment editStickerFragment = new EditStickerFragment();
-
-                Object tag = stickerFrame.getTag(R.id.tag_sticker_clone);
-                if (tag != null) {
-                    args.putBoolean("IS_CLONED_STICKER", true);
-                } else {
-                    args.putInt("w", stickerFrame.getLayoutParams().width);
-                    args.putInt("h", stickerFrame.getLayoutParams().height);
-                    args.putFloat("pivotX", stickerFrame.getPivotX());
-                    args.putFloat("pivotY", stickerFrame.getPivotY());
-                    args.putFloat("x", stickerFrame.getX());
-                    args.putFloat("y", stickerFrame.getY());
-                    args.putFloat("r", stickerFrame.getRotation());
-                }
-
-                // ✅ [추가] 편집 화면으로 넘어갈 때도 DB ID를 유지해서 넘겨줍니다
-                Object dbTag = stickerFrame.getTag(R.id.tag_sticker_db_id);
-                if (dbTag instanceof Long) {
-                    args.putLong("sticker_db_id", (Long) dbTag);
-                }
-
-                editStickerFragment.setArguments(args);
-
-                requireActivity().getSupportFragmentManager()
-                        .beginTransaction()
-                        .setCustomAnimations(R.anim.slide_up, 0)
-                        .replace(R.id.bottomArea2, editStickerFragment)
-                        .commit();
-            }
-        });
-    }*/
 
     private void setIcon() {
         int count = stickerOverlay.getChildCount();
@@ -285,6 +212,15 @@ public class StickersFragment extends Fragment {
         super.onResume();
         if (stickerOverlay == null) return;
 
+        if (stickerOverlay != null) {
+            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
+                View child = stickerOverlay.getChildAt(i);
+                child.setEnabled(false);
+                child.setClickable(false);
+                child.setLongClickable(false);
+            }
+        }
+
         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
             View child = stickerOverlay.getChildAt(i);
 
@@ -311,25 +247,10 @@ public class StickersFragment extends Fragment {
                 child.setPivotY(child.getHeight() / 2f);
             });
 
-            //Controller.setStickerActive(child, true);
             Controller.setControllersVisible(child, false);
-            //moveEditSticker(child);
         }
 
         setIcon();
         ((FilterActivity) getActivity()).updateSaveButtonState();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        FrameLayout stickerOverlay = getActivity() != null ? getActivity().findViewById(R.id.stickerOverlay) : null;
-        if (stickerOverlay != null) {
-            for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
-                View child = stickerOverlay.getChildAt(i);
-                child.setOnClickListener(null);
-                child.setOnTouchListener(null);
-            }
-        }
     }
 }

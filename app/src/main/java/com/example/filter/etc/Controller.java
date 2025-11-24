@@ -12,7 +12,6 @@ import android.widget.FrameLayout;
 
 import com.example.filter.R;
 //import com.example.filter.fragments.filters.EditStickerFragment;
-import com.example.filter.fragments.filters.EditStickerFragment;
 import com.google.mlkit.vision.face.Face;
 
 public class Controller {
@@ -35,20 +34,8 @@ public class Controller {
     }
 
     public static void setStickerActive(View view, boolean active) {
-        //ImageView img = view.findViewById(R.id.stickerImage);
-
         view.setEnabled(active);
         view.setClickable(active);
-
-        /*if (img != null) {
-            if (active) {
-                img.setAlpha(1.0f);
-                img.clearColorFilter();
-            } else {
-                img.setAlpha(0.4f);
-                img.setColorFilter(Color.parseColor("#141414"), PorterDuff.Mode.SRC_ATOP);
-            }
-        }*/
     }
 
     public static void updateControllerAngles(View stickerFrame, View controller) {

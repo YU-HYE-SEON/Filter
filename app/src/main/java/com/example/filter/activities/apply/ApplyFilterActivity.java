@@ -17,7 +17,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -425,7 +424,7 @@ public class ApplyFilterActivity extends BaseActivity {
                                     } else {
                                         dummyImage.setImageBitmap(BitmapFactory.decodeFile(d.stickerPath));
                                     }*/
-                                    StickerMeta.faceSticker(stickerOverlay, d.stickerPath,this, p);
+                                    StickerMeta.cloneSticker(stickerOverlay, d.stickerPath,this, p);
                                     //stickerOverlay.removeView(dummyFrame);
                                 }
                             }

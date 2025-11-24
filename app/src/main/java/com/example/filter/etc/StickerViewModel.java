@@ -13,21 +13,43 @@ import com.example.filter.api_datas.FaceStickerData;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StickerViewModel extends ViewModel {
-    private final SparseArray<View> tempViews = new SparseArray<>();
+    public static class StickerState {
+        public float x, y, rotation;
+        public int width, height;
+    }
+
+    private final Map<View, StickerState> originalStates = new HashMap<>();
+
+    public void saveOriginalState(View v, StickerState s) {
+        originalStates.put(v, s);
+    }
+
+    public StickerState getOriginalState(View v) {
+        return originalStates.get(v);
+    }
+
+    public void clearOriginalStates() {
+        originalStates.clear();
+    }
+
+
+    //private final SparseArray<View> tempViews = new SparseArray<>();
     private final SparseArray<ArrayList<View>> cloneGroups = new SparseArray<>();
     private final MutableLiveData<FaceStickerData> faceStickerLiveData = new MutableLiveData<>();
     private final MutableLiveData<Integer> faceStickerDataToDelete = new MutableLiveData<>();
 
-    public void setTempView(int groupId, View stickerFrame) {
+    /*public void setTempView(int groupId, View stickerFrame) {
         tempViews.put(groupId, stickerFrame);
     }
 
     public View getTempView(int groupId) {
         return tempViews.get(groupId);
-    }
+    }*/
 
     public void addCloneGroup(int groupId, View cloneSticker) {
         ArrayList<View> list = cloneGroups.get(groupId);

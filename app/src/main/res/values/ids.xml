@@ -3,5 +3,9 @@
     <item name="tag_brush_layer" type="id" />
     <item name="tag_sticker_db_id" type="id"/>
     <item name="tag_sticker_clone" type="id" />
+    <item name="tag_sticker_group" type="id" />
     <item name="tag_sticker_url" type="id" />
+    <item name="tag_sticker_session" type="id" />
+    <item name="tag_sticker_original" type="id" />
+    <item name="tag_sticker_delete" type="id" />
 </resources>
