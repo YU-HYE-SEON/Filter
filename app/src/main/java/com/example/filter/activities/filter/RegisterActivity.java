@@ -305,7 +305,7 @@ public class RegisterActivity extends BaseActivity {
             if (!hasFocus)
                 applyFinalHashTagFix();
         });
-        tagEditText.setFilters(new InputFilter[] { singleSpaceFilter, tagCharFilter });
+        tagEditText.setFilters(new InputFilter[]{singleSpaceFilter, tagCharFilter});
         tagEditText.setOnEditorActionListener((v, actionId, event) -> {
             applyFinalHashTagFix();
             hideKeyboardAndClearFocus();
@@ -344,7 +344,7 @@ public class RegisterActivity extends BaseActivity {
                 }
 
                 String str = s.toString().trim();
-                String[] tags = str.isEmpty() ? new String[] {} : str.split(" ");
+                String[] tags = str.isEmpty() ? new String[]{} : str.split(" ");
 
                 if (tags.length > 5) {
                     alertTxt2.setText("태그는 최대 5개까지 입력가능합니다.\n\n");
@@ -467,7 +467,7 @@ public class RegisterActivity extends BaseActivity {
     private boolean validateInputs() {
         String title = titleEditText.getText().toString().trim();
         String tagStr = tagEditText.getText().toString().trim().replace("#", "");
-        String[] tags = tagStr.isEmpty() ? new String[] {} : tagStr.split("\\s+");
+        String[] tags = tagStr.isEmpty() ? new String[]{} : tagStr.split("\\s+");
 
         if (title.isEmpty() || title.length() > 15) {
             focusWithAnchor(titleEditText, Anchor.TAG_TXT, true);
@@ -539,6 +539,9 @@ public class RegisterActivity extends BaseActivity {
 
                     // ✅ 서버에서 받은 응답 객체
                     FilterResponse filterResponse = response.body();
+
+                    /// ⭐태그 전달이 안 돼서 임시로 직접 넣어줌⭐ ///
+                    filterResponse.tags = filterData.tags;
 
                     // 다음 화면으로 데이터 전달하며 이동
                     moveToFilterInfo(response.body());

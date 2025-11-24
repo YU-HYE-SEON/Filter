@@ -6,13 +6,10 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -41,7 +38,6 @@ import androidx.palette.graphics.Palette;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.bumptech.glide.signature.ObjectKey;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
@@ -57,12 +53,11 @@ import com.example.filter.dialogs.PointChangeDialog; // ✅ Import 추가
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.ReviewStore;
 import com.example.filter.items.ReviewItem;
+import com.google.gson.Gson;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map; // Map 사용을 위해 추가
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -132,6 +127,10 @@ public class FilterInfoActivity extends BaseActivity {
         }
     });
 
+    /// 원본과 편집한 사진 미리 업로드되어있는 비트맵 ///
+    private Bitmap preloadedOriginalImage;
+    private Bitmap preloadedEditedImage;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -167,6 +166,9 @@ public class FilterInfoActivity extends BaseActivity {
         // 4. 모달 및 리스너 설정
         setupModal();
         setupListeners();
+
+
+        preloadImage();
     }
 
     private void initViews() {
@@ -212,12 +214,15 @@ public class FilterInfoActivity extends BaseActivity {
             @Override
             public void onResponse(Call<FilterResponse> call, Response<FilterResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    Log.d("DEBUG_TAGS", "받는 데이터: " + new Gson().toJson(response.body()));
+
                     setFilterData(response.body());
                 } else {
                     Log.e("FilterInfo", "상세 조회 실패: " + response.code());
                     Toast.makeText(FilterInfoActivity.this, "정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
             }
+
             @Override
             public void onFailure(Call<FilterResponse> call, Throwable t) {
                 Log.e("FilterInfo", "통신 오류", t);
@@ -246,6 +251,22 @@ public class FilterInfoActivity extends BaseActivity {
             for (String t : data.tags) sb.append(t).append(" ");
             this.tagsStr = sb.toString().trim();
         }
+
+        List<String> tags = filterData.tags;
+        if (tags != null) {
+            for (int i = 0; i < tags.size(); i++) {
+                if (tags.get(i) == null || tags.get(i).trim().isEmpty()) {
+                    tags.set(i, "null");
+                }
+            }
+        }
+        String t1 = tags.size() > 0 ? tags.get(0) : "null";
+        String t2 = tags.size() > 1 ? tags.get(1) : "null";
+        String t3 = tags.size() > 2 ? tags.get(2) : "null";
+        String t4 = tags.size() > 3 ? tags.get(3) : "null";
+        String t5 = tags.size() > 4 ? tags.get(4) : "null";
+        Log.d("태그", String.format("상세 태그 : 1번 = %s, 2번 = %s, 3번 = %s, 4번 = %s, 5번 = %s", t1, t2, t3, t4, t5));
+        Log.d("DEBUG_TAGS", "받는 데이터: " + new Gson().toJson(data.tags));
 
         updateUI();
         updateButtonState();
@@ -302,7 +323,10 @@ public class FilterInfoActivity extends BaseActivity {
                         originalBtn.setImageResource(isDark ? R.drawable.icon_original_white : R.drawable.icon_original_black);
                     });
                 }
-                @Override public void onLoadCleared(@Nullable Drawable placeholder) {}
+
+                @Override
+                public void onLoadCleared(@Nullable Drawable placeholder) {
+                }
             });
         }
 
@@ -312,7 +336,8 @@ public class FilterInfoActivity extends BaseActivity {
             String[] tags = tagsStr.trim().split("\\s+");
             for (int i = 0; i < Math.min(tags.length, tagViews.length); i++) {
                 String t = tags[i];
-                if (!t.startsWith("#")) t = "#" + t;
+                /// ⭐상세화면에서 #기호 없는 태그라서 #달기 삭제⭐ ///
+                //if (!t.startsWith("#")) t = "#" + t;
                 tagViews[i].setText(t);
                 tagViews[i].setVisibility(View.VISIBLE);
             }
@@ -364,9 +389,10 @@ public class FilterInfoActivity extends BaseActivity {
                     if (ClickUtils.isFastClick(v, 400)) return;
                     if (isModalVisible) return;
 
-                    if(point != null) point.setText(price + "P");
+                    if (point != null) point.setText(price + "P");
                     SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
-                    if(currentPoint1 != null) currentPoint1.setText(sp.getInt("current_point", 0) + "P");
+                    if (currentPoint1 != null)
+                        currentPoint1.setText(sp.getInt("current_point", 0) + "P");
 
                     showModal(buyFilterOn);
                 }
@@ -437,7 +463,10 @@ public class FilterInfoActivity extends BaseActivity {
 
     private void showPointChangePopUp() {
         int currentPrice = 0;
-        try { currentPrice = Integer.parseInt(price); } catch (Exception ignored) {}
+        try {
+            currentPrice = Integer.parseInt(price);
+        } catch (Exception ignored) {
+        }
 
         // 가격 수정 다이얼로그 호출 (무료 필터 제한 없음)
         new PointChangeDialog(this, title, currentPrice, (oldPrice, newPrice) -> {
@@ -549,12 +578,15 @@ public class FilterInfoActivity extends BaseActivity {
         rootView.addView(buyFilterOn);
         rootView.addView(buyFilterSuccessOn);
 
-        chooseUseModeOn.setVisibility(View.GONE); chooseUseModeOn.setTranslationY(800);
-        buyFilterOn.setVisibility(View.GONE); buyFilterOn.setTranslationY(800);
-        buyFilterSuccessOn.setVisibility(View.GONE); buyFilterSuccessOn.setTranslationY(800);
+        chooseUseModeOn.setVisibility(View.GONE);
+        chooseUseModeOn.setTranslationY(800);
+        buyFilterOn.setVisibility(View.GONE);
+        buyFilterOn.setTranslationY(800);
+        buyFilterSuccessOn.setVisibility(View.GONE);
+        buyFilterSuccessOn.setTranslationY(800);
 
         dimBackground.setOnClickListener(v -> hideModal());
-        if(closeBtn != null) closeBtn.setOnClickListener(v -> hideModal());
+        if (closeBtn != null) closeBtn.setOnClickListener(v -> hideModal());
 
         // 갤러리/카메라 선택
         galleryModeBtn.setOnClickListener(v -> {
@@ -571,13 +603,14 @@ public class FilterInfoActivity extends BaseActivity {
             intent.putExtra("color_adjustments", adj);
             intent.putExtra("brush_image_path", brushPath);
             intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
-            if (faceStickers != null) intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
+            if (faceStickers != null)
+                intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
             startActivity(intent);
             hideModal();
         });
 
         // 구매 버튼
-        if(buyBtn != null) {
+        if (buyBtn != null) {
             buyBtn.setOnClickListener(v -> {
                 if (ClickUtils.isFastClick(v, 400)) return;
 
@@ -585,7 +618,10 @@ public class FilterInfoActivity extends BaseActivity {
                 SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
                 int current = sp.getInt("current_point", 0);
                 int priceInt = 0;
-                try { priceInt = Integer.parseInt(price); } catch(Exception e){}
+                try {
+                    priceInt = Integer.parseInt(price);
+                } catch (Exception e) {
+                }
 
                 if (current < priceInt) {
                     Toast.makeText(this, "포인트가 부족합니다.", Toast.LENGTH_SHORT).show();
@@ -647,7 +683,8 @@ public class FilterInfoActivity extends BaseActivity {
         View tempTarget = null;
         if (chooseUseModeOn.getVisibility() == View.VISIBLE) tempTarget = chooseUseModeOn;
         else if (buyFilterOn.getVisibility() == View.VISIBLE) tempTarget = buyFilterOn;
-        else if (buyFilterSuccessOn.getVisibility() == View.VISIBLE) tempTarget = buyFilterSuccessOn;
+        else if (buyFilterSuccessOn.getVisibility() == View.VISIBLE)
+            tempTarget = buyFilterSuccessOn;
 
         if (tempTarget != null) {
             final View target = tempTarget;
@@ -671,31 +708,78 @@ public class FilterInfoActivity extends BaseActivity {
         originalBtn.setOnTouchListener((v, ev) -> {
             switch (ev.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
-                    if (originalPath != null) {
+                    /*if (originalPath != null) {
                         v.setPressed(true);
                         originalBtn.setAlpha(0.4f);
                         loadOriginalImage(originalPath);
+                    }*/
+                    if (preloadedOriginalImage != null) {
+                        v.setPressed(true);
+                        originalBtn.setAlpha(0.4f);
+                        img.setImageBitmap(preloadedOriginalImage);
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    if (imgUrl != null) {
+                    /*if (imgUrl != null) {
                         v.setPressed(false);
                         originalBtn.setAlpha(1f);
                         Glide.with(FilterInfoActivity.this).load(imgUrl).dontAnimate().fitCenter().into(img);
+                    }*/
+
+                    if (preloadedEditedImage != null) {
+                        v.setPressed(false);
+                        originalBtn.setAlpha(1f);
+                        img.setImageBitmap(preloadedEditedImage);
                     }
+
                     return true;
             }
             return true;
         });
     }
 
-    private void loadOriginalImage(String path) {
-        Glide.with(this).asBitmap().load(path).dontAnimate().fitCenter().into(new CustomTarget<Bitmap>() {
-            @Override public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) { img.setImageBitmap(resource); }
-            @Override public void onLoadCleared(@Nullable Drawable placeholder) {}
+
+    /// originalBtn 누를 때 전체적인 화면 하얗게 튀는 걸 방지하기 위해 두 이미지 미리 업로드해두기 ///
+    private void preloadImage() {
+        if (originalPath == null) return;
+        if (imgUrl == null) return;
+
+        Glide.with(this).asBitmap().load(originalPath).fitCenter().into(new CustomTarget<Bitmap>() {
+            @Override
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                preloadedOriginalImage = resource;
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+            }
+        });
+
+        Glide.with(this).asBitmap().load(imgUrl).fitCenter().into(new CustomTarget<Bitmap>() {
+            @Override
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                preloadedEditedImage = resource;
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+            }
         });
     }
+
+    /*private void loadOriginalImage(String path) {
+        Glide.with(this).asBitmap().load(path).dontAnimate().fitCenter().into(new CustomTarget<Bitmap>() {
+            @Override
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                img.setImageBitmap(resource);
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+            }
+        });
+    }*/
 
     @Override
     protected void onResume() {
@@ -709,15 +793,29 @@ public class FilterInfoActivity extends BaseActivity {
         if (reviewCount != null) reviewCount.setText("리뷰 (" + size + ")");
 
         if (noReviewTxt != null) noReviewTxt.setVisibility(size == 0 ? View.VISIBLE : View.GONE);
-        if (reviewBox1 != null) reviewBox1.setVisibility(size > 0 && size <= 4 ? View.VISIBLE : View.GONE);
+        if (reviewBox1 != null)
+            reviewBox1.setVisibility(size > 0 && size <= 4 ? View.VISIBLE : View.GONE);
         if (reviewBox2 != null) reviewBox2.setVisibility(size > 4 ? View.VISIBLE : View.GONE);
 
         if (size > 0 && size <= 4) {
-            if(rb1Img1 != null) { rb1Img1.setVisibility(View.INVISIBLE); if(size >= 1) { rb1Img1.setVisibility(View.VISIBLE); Glide.with(this).load(reviews.get(0).imageUrl).into(rb1Img1); } }
-            if(rb1Img2 != null) { rb1Img2.setVisibility(View.INVISIBLE); if(size >= 2) { rb1Img2.setVisibility(View.VISIBLE); Glide.with(this).load(reviews.get(1).imageUrl).into(rb1Img2); } }
+            if (rb1Img1 != null) {
+                rb1Img1.setVisibility(View.INVISIBLE);
+                if (size >= 1) {
+                    rb1Img1.setVisibility(View.VISIBLE);
+                    Glide.with(this).load(reviews.get(0).imageUrl).into(rb1Img1);
+                }
+            }
+            if (rb1Img2 != null) {
+                rb1Img2.setVisibility(View.INVISIBLE);
+                if (size >= 2) {
+                    rb1Img2.setVisibility(View.VISIBLE);
+                    Glide.with(this).load(reviews.get(1).imageUrl).into(rb1Img2);
+                }
+            }
         } else if (size > 4) {
             ImageView[] ivs = {rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5};
-            for(int i=0; i<5; i++) if(ivs[i] != null) Glide.with(this).load(reviews.get(i).imageUrl).into(ivs[i]);
+            for (int i = 0; i < 5; i++)
+                if (ivs[i] != null) Glide.with(this).load(reviews.get(i).imageUrl).into(ivs[i]);
         }
     }
 

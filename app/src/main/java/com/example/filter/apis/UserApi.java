@@ -5,6 +5,7 @@ import java.util.Map;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
@@ -46,4 +47,9 @@ public interface UserApi {
     // sns 아이디 설정 (업데이트)
     @POST("/api/v1/users/social")
     Call<Void> setSocialIds(@Body Map<String, String> ids);
+
+
+    // 계정 삭제
+    @DELETE("/api/v1/users")
+    Call<Void> deleteUser();
 }
