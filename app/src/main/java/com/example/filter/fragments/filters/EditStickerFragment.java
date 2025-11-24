@@ -592,6 +592,7 @@ public class EditStickerFragment extends Fragment {
             if (ClickUtils.isFastClick(v, 400)) return;
 
             StickerViewModel vm = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
+            List<Integer> deletedGroupId = new ArrayList<>();
 
             /// 이전 세션에서 배치된 기존 스티커와 얼굴스티커 실제로 삭제하기 ///
             for (int i = stickerOverlay.getChildCount() - 1; i >= 0; i--) {
@@ -599,8 +600,16 @@ public class EditStickerFragment extends Fragment {
                 Boolean isDelete = (Boolean) child.getTag(R.id.tag_sticker_delete);
 
                 if (Boolean.TRUE.equals(isDelete)) {
+                    Integer gid = (Integer) child.getTag(R.id.tag_sticker_group);
+                    if (gid != null && !deletedGroupId.contains(gid)) {
+                        deletedGroupId.add(gid);
+                    }
                     stickerOverlay.removeView(child);
                 }
+            }
+
+            for (Integer gid : deletedGroupId) {
+                vm.setFaceStickerDataToDelete(gid);
             }
 
             requireActivity().getSupportFragmentManager()
