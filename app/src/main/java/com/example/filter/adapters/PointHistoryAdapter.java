@@ -35,7 +35,7 @@ public class PointHistoryAdapter extends RecyclerView.Adapter<PointHistoryAdapte
         if (!item.isBuyHistory) {
             holder.point1.setText(String.format("%,dP 충전", item.point1));
             holder.point2.setText(String.format("%,dP", item.point2));
-            holder.txt.setText(item.price + " · Google 인앱결제");
+            holder.txt.setText(item.price + " · 웰컴포인트지급");
         } else {
             holder.point1.setText(String.format("%,dP 사용", item.point1));
             holder.point2.setText(String.format("%,dP", item.point2));

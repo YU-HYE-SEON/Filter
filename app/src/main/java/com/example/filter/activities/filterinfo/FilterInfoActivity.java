@@ -152,6 +152,9 @@ public class FilterInfoActivity extends BaseActivity {
         // 3. 데이터 수신 및 처리
         FilterResponse responseObj = (FilterResponse) getIntent().getSerializableExtra("filter_response");
 
+        //1. 수신 먼저 하고
+        //2. 수신 실패하면 intent
+
         if (responseObj != null) {
             // [Case A] 등록 직후 (객체 데이터 사용)
             setFilterData(responseObj);
@@ -431,10 +434,11 @@ public class FilterInfoActivity extends BaseActivity {
         // 삭제 / 신고
         deleteORreportBtn.setOnClickListener(v -> {
             if (isMine) {
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("deleted_filter_id", filterId);
-                setResult(RESULT_OK, resultIntent);
-                finish();
+                requestDeleteFilter(Long.parseLong(filterId));
+                //Intent resultIntent = new Intent();
+                //resultIntent.putExtra("deleted_filter_id", filterId);
+                //setResult(RESULT_OK, resultIntent);
+                //finish();
             } else {
                 Toast.makeText(this, "신고 기능 준비중", Toast.LENGTH_SHORT).show();
             }
@@ -456,6 +460,34 @@ public class FilterInfoActivity extends BaseActivity {
             intent2.putExtra("filterTitle", title);
             intent2.putExtra("nickname", nick);
             startActivityForResult(intent2, 1001);
+        });
+    }
+
+
+    private void requestDeleteFilter(long id) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+
+        api.deleteFilter(id).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+
+                    Toast.makeText(FilterInfoActivity.this, "필터가 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("deleted_filter_id", String.valueOf(id));
+                    setResult(RESULT_OK, resultIntent);
+
+                    finish();
+                } else {
+                    Toast.makeText(FilterInfoActivity.this, "삭제 실패", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(FilterInfoActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

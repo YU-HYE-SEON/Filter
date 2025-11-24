@@ -52,7 +52,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_medium"
-            android:text="00,000 · Google 인앱결제"
+            android:text="00,000 · 웰컴포인트지급"
             android:textAlignment="textEnd"
             android:textColor="#90989F"
             android:textSize="12sp"

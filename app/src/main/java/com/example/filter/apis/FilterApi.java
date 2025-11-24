@@ -7,6 +7,7 @@ import com.example.filter.api_datas.response_dto.PageResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
@@ -51,4 +52,6 @@ public interface FilterApi {
     Call<Boolean> toggleBookmark(@Path("filterId") Long filterId);
 
 
+    @DELETE("/api/v1/filters/{filterId}")
+    Call<Void> deleteFilter(@Path("filterId") Long filterId);
 }

@@ -339,13 +339,7 @@ public class ApplyFilterActivity extends BaseActivity {
         imageView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         overlay.addView(imageView);
 
-        if (path == null) return;
-
-        if (path.startsWith("http")) {
-            Glide.with(this).load(path).into(imageView);
-        } else {
-            imageView.setImageBitmap(BitmapFactory.decodeFile(path));
-        }
+        Glide.with(this).load(path).into(imageView);
     }
 
     private FilterDtoCreateRequest.ColorAdjustments mapColorAdjustments(Map<String, Double> map) {

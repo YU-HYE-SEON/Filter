@@ -31,7 +31,6 @@ import retrofit2.Response;
 
 public class MyPageFragment extends Fragment {
     private TextView nickname;
-    private TextView id;
     private TextView currentPoint;
     private AppCompatButton nickEditBtn, logoutBtn, pointChargeBtn, salesManageBtn;
     private ConstraintLayout pointBox, ask, appInfo, withdraw, snsId;
@@ -48,7 +47,6 @@ public class MyPageFragment extends Fragment {
         View view = inflater.inflate(R.layout.f_my_page, container, false);
 
         nickname = view.findViewById(R.id.nickname);
-        id = view.findViewById(R.id.id);
         nickEditBtn = view.findViewById(R.id.nickEditBtn);
         logoutBtn = view.findViewById(R.id.logoutBtn);
         pointBox = view.findViewById(R.id.pointBox);
@@ -132,11 +130,6 @@ public class MyPageFragment extends Fragment {
                     // 2. 포인트 설정 (천 단위 콤마)
                     if (currentPoint != null) {
                         currentPoint.setText(String.format("%,dP", data.pointAmount));
-                    }
-
-                    // 3. ID 설정 (필요하다면 표시)
-                    if (id != null) {
-                        id.setText("User ID: " + data.userId);
                     }
 
                     // 4. 로컬 저장소(points) 동기화
