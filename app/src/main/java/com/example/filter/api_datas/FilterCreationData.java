@@ -59,9 +59,9 @@ public class FilterCreationData implements Parcelable {
 
         // ✅ [수정] stickers가 null이면 빈 리스트로 초기화하여 NullPointerException 방지
         if (this.stickers != null) {
-            request.faceStickers = this.stickers;
+            request.stickers = this.stickers;
         } else {
-            request.faceStickers = new ArrayList<>(); // 빈 리스트 할당
+            request.stickers = new ArrayList<>(); // 빈 리스트 할당
         }
 
         return request;
