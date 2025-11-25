@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -115,6 +116,7 @@ public class SearchFragment extends Fragment {
     private View chooseOrderOn, dimBackground;
     private ConstraintLayout chooseOrder;
     private TextView recommend, sales, price, save, review;
+    private ImageView recommendCheck, salesCheck, priceCheck, saveCheck, reviewCheck;
     private boolean ischooseOrderVisible = false;
 
     private void setupChooseOrder() {
@@ -126,6 +128,11 @@ public class SearchFragment extends Fragment {
         price = chooseOrderOn.findViewById(R.id.price);
         save = chooseOrderOn.findViewById(R.id.save);
         review = chooseOrderOn.findViewById(R.id.review);
+        recommendCheck = chooseOrderOn.findViewById(R.id.recommendCheck);
+        salesCheck = chooseOrderOn.findViewById(R.id.salesCheck);
+        priceCheck = chooseOrderOn.findViewById(R.id.priceCheck);
+        saveCheck = chooseOrderOn.findViewById(R.id.saveCheck);
+        reviewCheck = chooseOrderOn.findViewById(R.id.reviewCheck);
 
         dimBackground = new View(requireContext());
         dimBackground.setLayoutParams(new FrameLayout.LayoutParams(
@@ -148,27 +155,27 @@ public class SearchFragment extends Fragment {
         });
 
         recommend.setOnClickListener(v -> {
-            setOrderTxt(recommend);
+            setOrder(recommend, recommendCheck);
             hideChooseOrder();
         });
 
         sales.setOnClickListener(v -> {
-            setOrderTxt(sales);
+            setOrder(sales, salesCheck);
             hideChooseOrder();
         });
 
         price.setOnClickListener(v -> {
-            setOrderTxt(price);
+            setOrder(price, priceCheck);
             hideChooseOrder();
         });
 
         save.setOnClickListener(v -> {
-            setOrderTxt(save);
+            setOrder(save, saveCheck);
             hideChooseOrder();
         });
 
         review.setOnClickListener(v -> {
-            setOrderTxt(review);
+            setOrder(review, reviewCheck);
             hideChooseOrder();
         });
     }
@@ -200,7 +207,7 @@ public class SearchFragment extends Fragment {
                 .start();
     }
 
-    private void setOrderTxt(TextView select) {
+    private void setOrder(TextView select, ImageView select2) {
         int gray = Color.parseColor("#90989F");
         recommend.setTextColor(gray);
         sales.setTextColor(gray);
@@ -209,6 +216,13 @@ public class SearchFragment extends Fragment {
         review.setTextColor(gray);
         select.setTextColor(Color.BLACK);
         txt.setText(select.getText().toString());
+
+        recommendCheck.setVisibility(View.INVISIBLE);
+        salesCheck.setVisibility(View.INVISIBLE);
+        priceCheck.setVisibility(View.INVISIBLE);
+        saveCheck.setVisibility(View.INVISIBLE);
+        reviewCheck.setVisibility(View.INVISIBLE);
+        select2.setVisibility(View.VISIBLE);
     }
 
     @Override

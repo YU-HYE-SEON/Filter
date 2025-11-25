@@ -66,6 +66,7 @@
             android:id="@+id/searchHistoryArea"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/border_info_top_area"
             android:paddingBottom="30dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -125,7 +126,6 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/border_info_top_area"
                 android:paddingTop="40dp"
                 android:paddingBottom="110dp">
 

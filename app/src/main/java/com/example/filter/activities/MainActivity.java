@@ -427,7 +427,33 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+
+        setIntent(intent); // 인텐트 갱신
+
+        String keyword = intent.getStringExtra("search_keyword");
+        if (keyword != null && !keyword.isEmpty()) {
+            openSearchWithTag(keyword);
+        }
     }
+
+    public void openSearchWithTag(String keyword) {
+        searchFrame.setVisibility(View.VISIBLE);
+        mainActivity.setVisibility(View.GONE);
+        archiveFrame.setVisibility(View.GONE);
+        mypageFrame.setVisibility(View.GONE);
+
+        SearchMainFragment fragment = new SearchMainFragment();
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.searchFrame, fragment)
+                .addToBackStack(null)
+                .commit();
+
+        getSupportFragmentManager().executePendingTransactions();
+
+        fragment.setSearchTag(keyword);
+    }
+
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {

@@ -205,17 +205,17 @@ public class LoadActivity extends BaseActivity {
         lassoCutBtn.setOnClickListener(v -> {
             if (lassoModeOn) {
                 lassoModeOn = false;
-                lassoCut.setImageResource(R.drawable.icon_rotation_no);
-                lassoCutTxt.setTextColor(Color.WHITE);
+                lassoCut.setImageResource(R.drawable.icon_lasso_no);
+                lassoCutTxt.setTextColor(Color.parseColor("#90989F"));
                 lassoOverlay.setLassoVisible(false);
             } else {
                 lassoModeOn = true;
-                lassoCut.setImageResource(R.drawable.icon_rotation_yes);
+                lassoCut.setImageResource(R.drawable.icon_lasso_yes);
                 lassoCutTxt.setTextColor(Color.parseColor("#C2FA7A"));
 
                 shapeModeOn = false;
-                shapeCut.setImageResource(R.drawable.icon_rotation_no);
-                shapeCutTxt.setTextColor(Color.WHITE);
+                shapeCut.setImageResource(R.drawable.icon_shape_no);
+                shapeCutTxt.setTextColor(Color.parseColor("#90989F"));
                 shapeOverlay.setShape(ShapeType.NONE);
 
                 updateOverlaysImageBounds();
@@ -235,20 +235,20 @@ public class LoadActivity extends BaseActivity {
         shapeCutBtn.setOnClickListener(v -> {
             if (shapeModeOn) {
                 shapeModeOn = false;
-                shapeCut.setImageResource(R.drawable.icon_rotation_no);
-                shapeCutTxt.setTextColor(Color.WHITE);
+                shapeCut.setImageResource(R.drawable.icon_shape_no);
+                shapeCutTxt.setTextColor(Color.parseColor("#90989F"));
                 shapeOverlay.setShape(ShapeType.NONE);
 
                 updateShapeIcons(null);
                 visibleOff();
             } else {
                 shapeModeOn = true;
-                shapeCut.setImageResource(R.drawable.icon_rotation_yes);
+                shapeCut.setImageResource(R.drawable.icon_shape_yes);
                 shapeCutTxt.setTextColor(Color.parseColor("#C2FA7A"));
 
                 lassoModeOn = false;
-                lassoCut.setImageResource(R.drawable.icon_rotation_no);
-                lassoCutTxt.setTextColor(Color.WHITE);
+                lassoCut.setImageResource(R.drawable.icon_lasso_no);
+                lassoCutTxt.setTextColor(Color.parseColor("#90989F"));
                 lassoOverlay.setLassoVisible(false);
 
                 visibleOn();

@@ -180,13 +180,20 @@ public class SearchMainFragment extends Fragment {
         if (keyword != null && !keyword.isEmpty()) {
             adapter.addItem(keyword);
             MainActivity act = (MainActivity) requireActivity();
-            //MainActivity act = (MainActivity) requireActivity();
             act.searchHistory.remove(keyword);
             act.searchHistory.add(0, keyword);
             act.saveSearchHistory();
         }
 
         navigateToSearch(keyword);
+    }
+
+    public void setSearchTag(String keyword) {
+        if (searchTxt != null) {
+            searchTxt.setText(keyword);
+        }
+
+        handleSearch(); // SearchFragment로 이동
     }
 
     public void setSearchButton() {

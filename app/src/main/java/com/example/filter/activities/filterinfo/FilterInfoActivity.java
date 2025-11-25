@@ -169,6 +169,8 @@ public class FilterInfoActivity extends BaseActivity {
         // 4. 모달 및 리스너 설정
         setupModal();
         setupListeners();
+
+        tagClick();
     }
 
     private void initViews() {
@@ -823,6 +825,25 @@ public class FilterInfoActivity extends BaseActivity {
             }
         });
     }*/
+
+    private void sendTagToSearch(String keyword) {
+        Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
+        intent.putExtra("search_keyword", keyword);
+
+        // 기존 MainActivity 재사용 (새 Activity를 계속 안 만들도록)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        startActivity(intent);
+        finish(); // 필터인포 닫기
+    }
+
+    private void tagClick(){
+        tag1.setOnClickListener(v -> sendTagToSearch(tag1.getText().toString()));
+        tag2.setOnClickListener(v -> sendTagToSearch(tag2.getText().toString()));
+        tag3.setOnClickListener(v -> sendTagToSearch(tag3.getText().toString()));
+        tag4.setOnClickListener(v -> sendTagToSearch(tag4.getText().toString()));
+        tag5.setOnClickListener(v -> sendTagToSearch(tag5.getText().toString()));
+    }
 
     @Override
     protected void onResume() {

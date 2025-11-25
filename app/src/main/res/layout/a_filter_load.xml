@@ -71,7 +71,7 @@
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:src="@drawable/icon_square_no"
-                android:visibility="invisible"
+                android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toLeftOf="@+id/starCut"
@@ -82,7 +82,7 @@
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:src="@drawable/icon_star_no"
-                android:visibility="invisible"
+                android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/squareCut"
                 app:layout_constraintRight_toLeftOf="@+id/triangleCut"
@@ -93,7 +93,7 @@
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:src="@drawable/icon_triangle_no"
-                android:visibility="invisible"
+                android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/starCut"
                 app:layout_constraintRight_toLeftOf="@+id/circleCut"
@@ -104,7 +104,7 @@
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:src="@drawable/icon_circle_no"
-                android:visibility="invisible"
+                android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/triangleCut"
                 app:layout_constraintRight_toLeftOf="@+id/heartCut"
@@ -115,7 +115,7 @@
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:src="@drawable/icon_heart_no"
-                android:visibility="invisible"
+                android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/circleCut"
                 app:layout_constraintRight_toRightOf="parent"
@@ -158,14 +158,14 @@
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:padding="5dp"
-                            android:src="@drawable/icon_rotation_no" />
+                            android:src="@drawable/icon_lasso_no" />
 
                         <TextView
                             android:id="@+id/lassoCutTxt"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="올가미"
-                            android:textColor="@color/white"
+                            android:textColor="#90989F"
                             android:textSize="16sp" />
 
                     </LinearLayout>
@@ -191,14 +191,14 @@
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:padding="5dp"
-                            android:src="@drawable/icon_rotation_no" />
+                            android:src="@drawable/icon_shape_no" />
 
                         <TextView
                             android:id="@+id/shapeCutTxt"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="모양 컷"
-                            android:textColor="@color/white"
+                            android:textColor="#90989F"
                             android:textSize="16sp" />
 
                     </LinearLayout>

@@ -35,6 +35,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <ImageView
+            android:id="@+id/recommendCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_check_blue"
+            app:layout_constraintBottom_toBottomOf="@+id/recommend"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/recommend" />
+
         <View
             android:id="@+id/a"
             android:layout_width="wrap_content"
@@ -61,6 +70,16 @@
             app:layout_constraintBottom_toTopOf="@+id/b"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/a" />
+
+        <ImageView
+            android:id="@+id/salesCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_check_blue"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/sales"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/sales" />
 
         <View
             android:id="@+id/b"
@@ -89,6 +108,16 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/b" />
 
+        <ImageView
+            android:id="@+id/priceCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_check_blue"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/price"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/price" />
+
         <View
             android:id="@+id/c"
             android:layout_width="wrap_content"
@@ -116,6 +145,16 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/c" />
 
+        <ImageView
+            android:id="@+id/saveCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_check_blue"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/save"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/save" />
+
         <View
             android:id="@+id/d"
             android:layout_width="wrap_content"
@@ -142,6 +181,16 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/d" />
+
+        <ImageView
+            android:id="@+id/reviewCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_check_blue"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/review"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/review" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
