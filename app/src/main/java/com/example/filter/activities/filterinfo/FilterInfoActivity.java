@@ -169,9 +169,6 @@ public class FilterInfoActivity extends BaseActivity {
         // 4. 모달 및 리스너 설정
         setupModal();
         setupListeners();
-
-
-        preloadImage();
     }
 
     private void initViews() {
@@ -271,6 +268,9 @@ public class FilterInfoActivity extends BaseActivity {
 
         updateUI();
         updateButtonState();
+
+        preloadImage();
+        setupOriginalButton();
     }
 
     // Intent로부터 기본 정보 세팅
@@ -751,6 +751,10 @@ public class FilterInfoActivity extends BaseActivity {
                         originalBtn.setAlpha(0.4f);
                         img.setImageBitmap(preloadedOriginalImage);
                     }
+
+                    if (preloadedOriginalImage == null)
+                        Log.d("원본보기", "원본버튼 눌렀지만 안 됨 " + v.isPressed());
+
                     return true;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
@@ -768,6 +772,9 @@ public class FilterInfoActivity extends BaseActivity {
                         originalBtn.setAlpha(1f);
                         img.setImageBitmap(preloadedEditedImage);
                     }
+
+                    if (preloadedEditedImage == null)
+                        Log.d("원본보기", "원본버튼 뗐지만 안 됨 " + v.isPressed());
 
                     return true;
             }
@@ -820,7 +827,6 @@ public class FilterInfoActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        setupOriginalButton();
 
         if (dimBackground != null && dimBackground.getVisibility() == View.VISIBLE) hideModal();
 
