@@ -61,14 +61,14 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/toArchiveBtn"
+            android:id="@+id/toGalleryBtn"
             android:layout_width="180dp"
             android:layout_height="60dp"
             android:layout_marginStart="10dp"
             android:background="@drawable/btn_to_archive"
             android:fontFamily="@font/pretendard_semibold"
             android:gravity="center"
-            android:text="아카이브로"
+            android:text="앨범으로"
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="16sp"
@@ -91,7 +91,7 @@
             android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/toArchiveBtn"
+            app:layout_constraintStart_toEndOf="@+id/toGalleryBtn"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

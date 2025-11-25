@@ -38,7 +38,7 @@ public class SavePhotoActivity extends BaseActivity {
     private ImageButton backBtn;
     private ImageView photo;
     private ConstraintLayout bottomArea;
-    private AppCompatButton toArchiveBtn, toRegisterBtn;
+    private AppCompatButton toGalleryBtn, toRegisterBtn;
 
     // ✅ 데이터를 담을 객체 선언
     private FilterCreationData filterData;
@@ -54,7 +54,7 @@ public class SavePhotoActivity extends BaseActivity {
         backBtn = findViewById(R.id.backBtn);
         photo = findViewById(R.id.photo);
         bottomArea = findViewById(R.id.bottomArea);
-        toArchiveBtn = findViewById(R.id.toArchiveBtn);
+        toGalleryBtn = findViewById(R.id.toGalleryBtn);
         toRegisterBtn = findViewById(R.id.toRegisterBtn);
 
         // 시스템 바 인셋 처리 (기존 코드 유지)
@@ -139,8 +139,8 @@ public class SavePhotoActivity extends BaseActivity {
             finish();
         });
 
-        ClickUtils.clickDim(toArchiveBtn);
-        toArchiveBtn.setOnClickListener(v -> {
+        ClickUtils.clickDim(toGalleryBtn);
+        toGalleryBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             // 단순히 종료하면 Archive(갤러리/보관함)로 간 것으로 간주
             finish();

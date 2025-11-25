@@ -28,14 +28,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
+import com.example.filter.activities.filter.RegisterActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.api_datas.response_dto.FilterResponse;
+import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.FilterApi;
+import com.example.filter.apis.ReviewApi;
+import com.example.filter.apis.UserApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
@@ -44,16 +50,22 @@ import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
 import com.example.filter.etc.StickerMeta;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
+import com.google.gson.Gson;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -67,7 +79,7 @@ public class ApplyFilterActivity extends BaseActivity {
     private FrameLayout photoContainer, brushOverlay, stickerOverlay;
     private View photoMask;
     private ConstraintLayout bottomArea;
-    private ImageButton toArchiveBtn, toReviewBtn;
+    private AppCompatButton toGalleryBtn, toRegisterReviewBtn;
     private GLSurfaceView glSurfaceView;
     private FGLRenderer renderer;
     private ArrayList<FaceStickerData> faceStickers;
@@ -75,9 +87,9 @@ public class ApplyFilterActivity extends BaseActivity {
     private FrameLayout reviewPopOff;
     private View reviewPopOn, dimBackground;
     private ConstraintLayout reviewPop;
-    private ImageView snsIcon;
+    private ImageView iconSnsNone, iconSnsInsta, iconSnsTwitter;
     private TextView snsId;
-    private ImageButton reviewBtn;
+    private AppCompatButton reviewBtn;
     private boolean isReviewPopVisible = false;
     private String filterId, imgUrl, title, nick;
     public static FaceBoxOverlayView faceBox;
@@ -93,8 +105,8 @@ public class ApplyFilterActivity extends BaseActivity {
         stickerOverlay = findViewById(R.id.stickerOverlay);
         photoMask = findViewById(R.id.photoMask);
         bottomArea = findViewById(R.id.bottomArea);
-        toArchiveBtn = findViewById(R.id.toArchiveBtn);
-        toReviewBtn = findViewById(R.id.toReviewBtn);
+        toGalleryBtn = findViewById(R.id.toGalleryBtn);
+        toRegisterReviewBtn = findViewById(R.id.toRegisterReviewBtn);
         reviewPopOff = findViewById(R.id.reviewPopOff);
 
         setupReviewPop();
@@ -186,7 +198,9 @@ public class ApplyFilterActivity extends BaseActivity {
         FrameLayout rootView = findViewById(R.id.reviewPopOff);
         reviewPopOn = getLayoutInflater().inflate(R.layout.f_review_pop, null);
         reviewPop = reviewPopOn.findViewById(R.id.reviewPop);
-        snsIcon = reviewPopOn.findViewById(R.id.snsIcon);
+        iconSnsNone = reviewPopOn.findViewById(R.id.iconSnsNone);
+        iconSnsInsta = reviewPopOn.findViewById(R.id.iconSnsInsta);
+        iconSnsTwitter = reviewPopOn.findViewById(R.id.iconSnsTwitter);
         snsId = reviewPopOn.findViewById(R.id.snsId);
         reviewBtn = reviewPopOn.findViewById(R.id.reviewBtn);
 
@@ -205,7 +219,7 @@ public class ApplyFilterActivity extends BaseActivity {
 
         dimBackground.setOnClickListener(v -> hideReviewPop());
 
-        toReviewBtn.setOnClickListener(v -> {
+        toRegisterReviewBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             if (isReviewPopVisible) return;
             showReviewPop();
@@ -220,20 +234,108 @@ public class ApplyFilterActivity extends BaseActivity {
 
             String savedPath = ImageUtils.saveBitmapToCache(ApplyFilterActivity.this, finalBitmapWithStickers);
 
-            Intent intent = new Intent(ApplyFilterActivity.this, ReviewActivity.class);
-            intent.putExtra("filterId", filterId);
-            intent.putExtra("filterImage", imgUrl);
-            intent.putExtra("filterTitle", title);
-            intent.putExtra("nickname", nick);
 
-            intent.putExtra("reviewImg", savedPath);
+            //intent.putExtra("filterImage", imgUrl);
+            //intent.putExtra("filterTitle", title);
+            //intent.putExtra("nickname", nick);
+
+            //intent.putExtra("reviewImg", savedPath);
             /// 일단 본인꺼 기준으로 리뷰 닉네임 설정
-            intent.putExtra("reviewNick", nick);
+            //intent.putExtra("reviewNick", nick);
 
-            startActivity(intent);
-            hideReviewPop();
-            finish();
+            loadSocialAndCreateReview(savedPath, Long.parseLong(filterId));
         });
+    }
+
+    private void loadSocialAndCreateReview(String imagePath, long filterId) {
+        UserApi userApi = AppRetrofitClient.getInstance(this).create(UserApi.class);
+
+        userApi.getSocialIds().enqueue(new Callback<Map<String, String>>() {
+            @Override
+            public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    requestCreateReview(imagePath, filterId, "NONE");
+                    return;
+                }
+
+                Map<String, String> ids = response.body();
+                String instagramId = ids.get("instagramId");
+                String xId = ids.get("xId");
+
+                String socialType;
+
+                if (instagramId != null && !instagramId.isEmpty()) {
+                    socialType = "INSTAGRAM";
+                } else if (xId != null && !xId.isEmpty()) {
+                    socialType = "X";
+                } else {
+                    socialType = "NONE";
+                }
+
+                Log.e("리뷰등록", "소셜 타입: " + socialType);
+
+                requestCreateReview(imagePath, filterId, socialType);
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, String>> call, Throwable t) {
+                requestCreateReview(imagePath, filterId, "NONE");
+            }
+        });
+    }
+
+    private void requestCreateReview(String imagePath, long filterId, String socialType) {
+        File file = new File(imagePath);
+        if (!file.exists()) {
+            Toast.makeText(this, "이미지 파일이 없습니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+        MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
+        RequestBody filterIdBody = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(filterId));
+        RequestBody socialTypeBody = RequestBody.create(MediaType.parse("text/plain"), socialType);
+
+        ReviewApi api = AppRetrofitClient.getInstance(this).create(ReviewApi.class);
+
+        api.createReview(body, filterIdBody, socialTypeBody).enqueue(new Callback<ReviewResponse>() {
+            @Override
+            public void onResponse(Call<ReviewResponse> call, Response<ReviewResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.d("리뷰등록", "등록 성공");
+
+                    ReviewResponse reviewResponse = response.body();
+                    Toast.makeText(ApplyFilterActivity.this, "리뷰가 등록되었습니다.", Toast.LENGTH_SHORT).show();
+
+                    moveToReview(reviewResponse);
+                } else {
+                    try {
+                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "Error";
+                        Log.e("리뷰등록", "등록 실패: " + response.code() + ", " + errorBody);
+                        Toast.makeText(ApplyFilterActivity.this, "등록 실패", Toast.LENGTH_SHORT).show();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ReviewResponse> call, Throwable t) {
+                Log.e("리뷰등록", "통신 오류", t);
+                Toast.makeText(ApplyFilterActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void moveToReview(ReviewResponse response) {
+        setResult(RESULT_OK);
+
+        Intent intent = new Intent(ApplyFilterActivity.this, ReviewActivity.class);
+        intent.putExtra("filterId", filterId);
+        intent.putExtra("review_response", response);
+        startActivity(intent);
+        hideReviewPop();
+        finish();
     }
 
     private void showReviewPop() {
@@ -342,7 +444,8 @@ public class ApplyFilterActivity extends BaseActivity {
         Glide.with(this).load(path).into(imageView);
     }
 
-    private FilterDtoCreateRequest.ColorAdjustments mapColorAdjustments(Map<String, Double> map) {
+    private FilterDtoCreateRequest.ColorAdjustments mapColorAdjustments
+            (Map<String, Double> map) {
         if (map == null) return new FilterDtoCreateRequest.ColorAdjustments();
 
         FilterDtoCreateRequest.ColorAdjustments adj = new FilterDtoCreateRequest.ColorAdjustments();
@@ -361,7 +464,8 @@ public class ApplyFilterActivity extends BaseActivity {
         return adj;
     }
 
-    private ArrayList<FaceStickerData> mapFaceStickers(List<FilterResponse.FaceStickerResponse> responses) {
+    private ArrayList<FaceStickerData> mapFaceStickers
+            (List<FilterResponse.FaceStickerResponse> responses) {
         ArrayList<FaceStickerData> dataList = new ArrayList<>();
         if (responses == null) return dataList;
 

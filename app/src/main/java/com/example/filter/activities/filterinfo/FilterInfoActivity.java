@@ -321,7 +321,7 @@ public class FilterInfoActivity extends BaseActivity {
                         double lum = ColorUtils.calculateLuminance(dom);
                         double contrast = ColorUtils.calculateContrast(dom, Color.WHITE);
                         boolean isDark = (lum < 0.4) && (contrast > 1.5);
-                        originalBtn.setImageResource(isDark ? R.drawable.icon_original_white : R.drawable.icon_original_black);
+                        originalBtn.setImageResource(isDark ? R.drawable.icon_dim_original_white : R.drawable.icon_dim_original_black);
                     });
                 }
 

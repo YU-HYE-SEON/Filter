@@ -47,6 +47,7 @@ public class ImageUtils {
         try (FileOutputStream out = new FileOutputStream(file)) {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
             out.flush();
+            out.close();
             return file.getAbsolutePath();
         } catch (Exception e) {
             e.printStackTrace();

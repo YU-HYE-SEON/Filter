@@ -6,6 +6,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/topArea"
+        android:background="@drawable/border_info_top_area"
         android:layout_width="match_parent"
         android:layout_height="120dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -14,11 +15,10 @@
 
         <ImageButton
             android:id="@+id/backBtn"
-            android:layout_width="55dp"
-            android:layout_height="55dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="18dp"
-            android:scaleType="centerCrop"
+            android:padding="16dp"
             android:src="@drawable/btn_back_black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -78,7 +78,6 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/border_info_top_area"
             android:paddingLeft="16dp"
             android:paddingRight="16dp">
 
@@ -96,7 +95,7 @@
                 <ImageView
                     android:id="@+id/img"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
                     android:adjustViewBounds="true"
                     android:background="#90989F"
                     android:scaleType="fitCenter"
@@ -106,13 +105,13 @@
 
                 <ImageButton
                     android:id="@+id/originalBtn"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_marginEnd="10dp"
                     android:layout_marginBottom="10dp"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/icon_original_black"
+                    android:src="@drawable/icon_dim_original_black"
                     app:layout_constraintBottom_toBottomOf="@+id/img"
                     app:layout_constraintEnd_toEndOf="@+id/img" />
 

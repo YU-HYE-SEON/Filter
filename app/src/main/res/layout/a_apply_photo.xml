@@ -103,55 +103,39 @@
             app:layout_constraintStart_toEndOf="@+id/backToHomeBtn"
             app:layout_constraintTop_toTopOf="parent" />-->
 
-        <ImageButton
-            android:id="@+id/toArchiveBtn"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/toGalleryBtn"
             android:layout_width="180dp"
             android:layout_height="60dp"
             android:layout_marginStart="10dp"
-            android:background="@drawable/border_search"
+            android:background="@drawable/btn_to_archive"
+            android:fontFamily="@font/pretendard_semibold"
+            android:gravity="center"
+            android:text="앨범으로"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/toReviewBtn"
+            app:layout_constraintEnd_toStartOf="@+id/toRegisterReviewBtn"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/toArchiveTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="서랍으로"
-            android:textAlignment="center"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="@+id/toArchiveBtn"
-            app:layout_constraintEnd_toEndOf="@+id/toArchiveBtn"
-            app:layout_constraintStart_toStartOf="@+id/toArchiveBtn"
-            app:layout_constraintTop_toTopOf="@+id/toArchiveBtn" />
-
-        <ImageButton
-            android:id="@+id/toReviewBtn"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/toRegisterReviewBtn"
             android:layout_width="180dp"
             android:layout_height="60dp"
             android:layout_marginEnd="10dp"
-            android:background="@drawable/border_search"
+            android:background="@drawable/btn_to_register"
+            android:fontFamily="@font/pretendard_semibold"
+            android:gravity="center"
+            android:text="포토 리뷰 등록"
+            android:textAlignment="center"
+            android:textColor="#007AFF"
+            android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/toArchiveBtn"
+            app:layout_constraintStart_toEndOf="@+id/toGalleryBtn"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/toReviewTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="리뷰 등록"
-            android:textAlignment="center"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="@+id/toReviewBtn"
-            app:layout_constraintEnd_toEndOf="@+id/toReviewBtn"
-            app:layout_constraintStart_toStartOf="@+id/toReviewBtn"
-            app:layout_constraintTop_toTopOf="@+id/toReviewBtn" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
