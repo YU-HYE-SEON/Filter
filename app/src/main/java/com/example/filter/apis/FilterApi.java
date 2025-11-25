@@ -22,16 +22,23 @@ public interface FilterApi {
     @GET("/api/v1/filters/{filterId}")
     Call<FilterResponse> getFilter(@Path("filterId") Long filterId);
 
-    // ✔️ 필터 최신순 페이징 조회
+    // ✔️ 홈- 필터 최신순 페이징 조회
     @GET("/api/v1/filter-lists/recent")
     Call<PageResponse<FilterListResponse>> getRecentFilters(
             @Query("page") int page,
             @Query("size") int size
     );
 
-    // ✔️ 인기순 조회
+    // ✔️ 홈- 인기순 조회
     @GET("/api/v1/filter-lists/hot")
     Call<PageResponse<FilterListResponse>> getHotFilters(
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    // ✔️ 홈- 랜덤 조회
+    @GET("/api/v1/filter-lists/random")
+    Call<PageResponse<FilterListResponse>> getRandomFilters(
             @Query("page") int page,
             @Query("size") int size
     );
@@ -51,7 +58,7 @@ public interface FilterApi {
     @PUT("/api/v1/filters/{filterId}/bookmark")
     Call<Boolean> toggleBookmark(@Path("filterId") Long filterId);
 
-
+    // 필터 삭제
     @DELETE("/api/v1/filters/{filterId}")
     Call<Void> deleteFilter(@Path("filterId") Long filterId);
 }
