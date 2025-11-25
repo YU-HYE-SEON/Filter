@@ -51,7 +51,7 @@ public interface FilterApi {
     @PUT("/api/v1/filters/{filterId}/bookmark")
     Call<Boolean> toggleBookmark(@Path("filterId") Long filterId);
 
-
+    // 필터 삭제
     @DELETE("/api/v1/filters/{filterId}")
     Call<Void> deleteFilter(@Path("filterId") Long filterId);
 }
