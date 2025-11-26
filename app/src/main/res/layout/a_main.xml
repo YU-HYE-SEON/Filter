@@ -69,8 +69,8 @@
 
                 <ImageButton
                     android:id="@+id/recommend"
-                    android:layout_width="96dp"
-                    android:layout_height="52dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/btn_recommend_contents_yes"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/random"
@@ -79,8 +79,8 @@
 
                 <ImageButton
                     android:id="@+id/random"
-                    android:layout_width="96dp"
-                    android:layout_height="52dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/btn_random_contents_no"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/hot"
@@ -89,8 +89,8 @@
 
                 <ImageButton
                     android:id="@+id/hot"
-                    android:layout_width="96dp"
-                    android:layout_height="52dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/btn_hot_contents_no"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/newest"
@@ -99,8 +99,8 @@
 
                 <ImageButton
                     android:id="@+id/newest"
-                    android:layout_width="96dp"
-                    android:layout_height="52dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/btn_newest_contents_no"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
