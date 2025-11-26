@@ -32,4 +32,11 @@ public interface ArchiveApi {
             @Query("page") int page,
             @Query("size") int size
     );
+
+    // 사용/구매 필터 목록
+    @GET("/api/v1/filter-lists/usage")
+    Call<PageResponse<FilterListResponse>> getUsage(
+            @Query("page") int page,
+            @Query("size") int size
+    );
 }

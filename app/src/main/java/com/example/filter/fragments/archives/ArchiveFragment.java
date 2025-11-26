@@ -69,12 +69,12 @@ public class ArchiveFragment extends Fragment {
                     case R.id.buy:
                         setArchiveButtons(false, true, false, false);
                         recyclerView.setAdapter(adapter2);
-                        //loadBuy();
+                        loadBuy();
                         break;
                     case R.id.create:
                         setArchiveButtons(false, false, true, false);
                         recyclerView.setAdapter(adapter3);
-                        //loadCreate();
+                        loadCreate();
                         break;
                     case R.id.review:
                         setArchiveButtons(false, false, false, true);
@@ -160,9 +160,69 @@ public class ArchiveFragment extends Fragment {
     }
 
     private void loadBuy() {
+        ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
+        api.getUsage(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+
+            @Override
+            public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<FilterListResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
+
+                    for (FilterListResponse dto : serverList) {
+                        FilterListItem item = FilterListItem.convertFromDto(dto);
+                        uiList.add(item);
+                    }
+
+                    if (adapter2 != null) {
+                        adapter2.setItems(uiList);
+                    }
+
+                } else {
+                    Log.e("아카이브", "목록 조회 실패: " + response.code());
+                    Toast.makeText(requireActivity(), "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
+                Log.e("아카이브", "통신 오류", t);
+                Toast.makeText(requireActivity(), "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void loadCreate() {
+        ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
+        api.getMyFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+
+            @Override
+            public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<FilterListResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
+
+                    for (FilterListResponse dto : serverList) {
+                        FilterListItem item = FilterListItem.convertFromDto(dto);
+                        uiList.add(item);
+                    }
+
+                    if (adapter3 != null) {
+                        adapter3.setItems(uiList);
+                    }
+
+                } else {
+                    Log.e("아카이브", "목록 조회 실패: " + response.code());
+                    Toast.makeText(requireActivity(), "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
+                Log.e("아카이브", "통신 오류", t);
+                Toast.makeText(requireActivity(), "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setArchiveButtons(boolean bm, boolean b, boolean c, boolean r) {
