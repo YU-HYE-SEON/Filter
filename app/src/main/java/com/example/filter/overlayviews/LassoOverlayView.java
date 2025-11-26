@@ -52,6 +52,7 @@ public class LassoOverlayView extends View {
     private boolean fullSelectionShown = false;
 
     private static final float EPS = 0.5f;
+    private boolean inverseDim = false;
 
     private RectF getVisibleImageRect() {
         if (imageBounds == null) return null;
@@ -131,6 +132,11 @@ public class LassoOverlayView extends View {
         }
     }
 
+    public void setInverseDim(boolean inverse) {
+        this.inverseDim = inverse;
+        invalidate();
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -138,13 +144,25 @@ public class LassoOverlayView extends View {
         if (forceDim && imageBounds != null) {
             int id = canvas.saveLayer(0, 0, getWidth(), getHeight(), null);
 
-            canvas.drawRect(imageBounds, dimPaint);
+            //canvas.drawRect(imageBounds, dimPaint);
 
-            if (!shapes.isEmpty()) {
-                for (Path s : shapes) {
-                    Path fill = new Path(s);
-                    fill.setFillType(Path.FillType.WINDING);
-                    canvas.drawPath(fill, clearPaint);
+            if (!inverseDim) {
+                canvas.drawRect(imageBounds, dimPaint);
+
+                if (!shapes.isEmpty()) {
+                    for (Path s : shapes) {
+                        Path fill = new Path(s);
+                        fill.setFillType(Path.FillType.WINDING);
+                        canvas.drawPath(fill, clearPaint);
+                    }
+                }
+            }else{
+                if (!shapes.isEmpty()) {
+                    for (Path s : shapes) {
+                        Path fill = new Path(s);
+                        fill.setFillType(Path.FillType.WINDING);
+                        canvas.drawPath(fill, dimPaint);
+                    }
                 }
             }
             canvas.restoreToCount(id);

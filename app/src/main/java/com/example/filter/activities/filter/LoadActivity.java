@@ -307,6 +307,10 @@ public class LoadActivity extends BaseActivity {
             } else {
                 setCheckboxSize(25f, 3f);
             }
+
+            if (lassoOverlay != null) {
+                lassoOverlay.setInverseDim(isChecked);
+            }
         });
 
         cancelBtn.setOnClickListener(v -> {
