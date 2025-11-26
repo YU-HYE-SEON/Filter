@@ -3,7 +3,9 @@ package com.example.filter.apis;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
 import com.example.filter.api_datas.response_dto.FilterResponse;
+import com.example.filter.api_datas.response_dto.FilterSortType;
 import com.example.filter.api_datas.response_dto.PageResponse;
+import com.example.filter.api_datas.response_dto.SearchType;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -39,6 +41,23 @@ public interface FilterApi {
     // ✔️ 홈- 랜덤 조회
     @GET("/api/v1/filter-lists/random")
     Call<PageResponse<FilterListResponse>> getRandomFilters(
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    // ✔️ AI 기반 홈 화면 추천
+    @GET("/api/v1/filter-lists/recommend")
+    Call<PageResponse<FilterListResponse>> getHomeRecommendations(
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    // ✔️ 검색 (자연어/태그 + 정렬)
+    @GET("/api/v1/filter-lists/search")
+    Call<PageResponse<FilterListResponse>> searchFilters(
+            @Query("query") String query,
+            @Query("search-type") SearchType searchType, // "NL" or "TAG"
+            @Query("sort") FilterSortType sortType,      // "ACCURACY", "LOW_PRICE"...
             @Query("page") int page,
             @Query("size") int size
     );
