@@ -175,10 +175,13 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         // 가격 표시
         if (item.type.equals(PriceDisplayEnum.NONE)) {
             holder.price.setText(" ");
+            holder.coin.setVisibility(View.GONE);
         } else if (item.type.equals(PriceDisplayEnum.PURCHASED)) {
             holder.price.setText("구매 완료");
+            holder.coin.setVisibility(View.GONE);
         } else if (item.type.equals(PriceDisplayEnum.NUMBER)) {
             holder.price.setText(String.valueOf(item.price));
+            holder.coin.setVisibility(View.VISIBLE);
         }
 
         // useCount 사용
