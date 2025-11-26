@@ -34,8 +34,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.filter.RegisterActivity;
-import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.api_datas.response_dto.FilterResponse;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
@@ -48,11 +46,8 @@ import com.example.filter.etc.FGLRenderer;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
-import com.example.filter.etc.ReviewStore;
 import com.example.filter.etc.StickerMeta;
-import com.example.filter.items.ReviewItem;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
-import com.google.gson.Gson;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
@@ -100,6 +95,7 @@ public class ApplyFilterActivity extends BaseActivity {
     // 서버로부터 받아온 sns 아이디 저장
     private String instagramId = "";
     private String xId = "";
+    private SocialType type = SocialType.NONE;
 
 
     @Override
@@ -116,6 +112,7 @@ public class ApplyFilterActivity extends BaseActivity {
         toRegisterReviewBtn = findViewById(R.id.toRegisterReviewBtn);
         reviewPopOff = findViewById(R.id.reviewPopOff);
 
+        loadSocial();
         setupReviewPop();
 
         glSurfaceView = new GLSurfaceView(this);
@@ -232,6 +229,35 @@ public class ApplyFilterActivity extends BaseActivity {
             showReviewPop();
         });
 
+
+        if (instagramId.isEmpty() || instagramId == null) {
+            iconSnsInsta.setEnabled(false);
+            iconSnsInsta.setVisibility(View.GONE);
+        } else {
+            iconSnsInsta.setOnClickListener(v -> {
+                type = SocialType.INSTAGRAM;
+                snsId.setText(instagramId);
+                Log.d("sns선택", "선택됨");
+            });
+        }
+
+        if (xId.isEmpty() || xId == null) {
+            iconSnsTwitter.setEnabled(false);
+            iconSnsTwitter.setVisibility(View.GONE);
+        } else {
+            iconSnsTwitter.setOnClickListener(v -> {
+                type = SocialType.X;
+                snsId.setText(xId);
+                Log.d("sns선택", "선택됨");
+            });
+        }
+
+        iconSnsNone.setOnClickListener(v -> {
+            type = SocialType.NONE;
+            snsId.setText("선택 안 함");
+            Log.d("sns선택", "선택됨");
+        });
+
         /// 중첩 클릭되면 안 됨 ///
         reviewBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
@@ -241,21 +267,14 @@ public class ApplyFilterActivity extends BaseActivity {
 
             String savedPath = ImageUtils.saveBitmapToCache(ApplyFilterActivity.this, finalBitmapWithStickers);
 
-
-            //intent.putExtra("filterImage", imgUrl);
-            //intent.putExtra("filterTitle", title);
-            //intent.putExtra("nickname", nick);
-
-            //intent.putExtra("reviewImg", savedPath);
-            /// 일단 본인꺼 기준으로 리뷰 닉네임 설정
-            //intent.putExtra("reviewNick", nick);
-
-            loadSocialAndCreateReview(savedPath, Long.parseLong(filterId));
+            requestCreateReview(savedPath, Long.parseLong(filterId), type);
         });
     }
 
-    /** 서버로부터 소셜 아이디 정보 받아오기 */
-    private void loadSocialAndCreateReview(String imagePath, long filterId) {
+    /**
+     * 서버로부터 소셜 아이디 정보 받아오기
+     */
+    private void loadSocial() {
         UserApi userApi = AppRetrofitClient.getInstance(this).create(UserApi.class);
 
         // 소셜 아이디 불러오기
@@ -263,11 +282,11 @@ public class ApplyFilterActivity extends BaseActivity {
             @Override
             public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
                 Map<String, String> ids = response.body();
-                
-                // todo: 값이 있는지 여부에 따라서 버튼 activation 결정
-                
+
                 instagramId = ids.get("instagramId");
                 xId = ids.get("xId");
+
+                // todo: 값이 있는지 여부에 따라서 버튼 activation 결정
             }
 
             @Override
