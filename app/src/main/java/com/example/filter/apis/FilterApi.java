@@ -55,7 +55,7 @@ public interface FilterApi {
     // ✔️ 검색 (자연어/태그 + 정렬)
     @GET("/api/v1/filter-lists/search")
     Call<PageResponse<FilterListResponse>> searchFilters(
-            @Query("query") String query,
+            @Query("query") String query, // 태그 여러 개면 공백 없이 ,로 구분
             @Query("search-type") SearchType searchType, // "NL" or "TAG"
             @Query("sort") FilterSortType sortType,      // "ACCURACY", "LOW_PRICE"...
             @Query("page") int page,
