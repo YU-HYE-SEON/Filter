@@ -146,7 +146,7 @@ public class MainActivity extends BaseActivity {
         recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
 
         setFilterButtons(true, false, false, false); // recommend 활성화
-        recommend.performClick();
+        loadRecommendFilters();
 
         // 데이터 변경 감지 및 뷰 갱신
         filterAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
