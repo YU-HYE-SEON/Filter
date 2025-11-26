@@ -19,8 +19,10 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -48,6 +50,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LoadActivity extends BaseActivity {
+    private ConstraintLayout bottomArea1;
+    private LinearLayout lassoEdit;
+    private CheckBox checkBox;
     private ConstraintLayout topArea;
     private ImageView loadImage;
     private ShapeOverlayView shapeOverlay;
@@ -96,6 +101,9 @@ public class LoadActivity extends BaseActivity {
         heartCut = findViewById(R.id.heartCut);
         cancelBtn = findViewById(R.id.cancelBtn);
         checkBtn = findViewById(R.id.checkBtn);
+        checkBox = findViewById(R.id.checkBox);
+        lassoEdit = findViewById(R.id.lassoEdit);
+        bottomArea1 = findViewById(R.id.bottomArea1);
 
         Window window = getWindow();
         window.setNavigationBarColor(Color.BLACK);
@@ -208,10 +216,18 @@ public class LoadActivity extends BaseActivity {
                 lassoCut.setImageResource(R.drawable.icon_lasso_no);
                 lassoCutTxt.setTextColor(Color.parseColor("#90989F"));
                 lassoOverlay.setLassoVisible(false);
+
+                if (bottomArea1 != null) {
+                    lassoEdit.setVisibility(View.INVISIBLE);
+                }
             } else {
                 lassoModeOn = true;
                 lassoCut.setImageResource(R.drawable.icon_lasso_yes);
                 lassoCutTxt.setTextColor(Color.parseColor("#C2FA7A"));
+
+                if (bottomArea1 != null) {
+                    lassoEdit.setVisibility(View.VISIBLE);
+                }
 
                 shapeModeOn = false;
                 shapeCut.setImageResource(R.drawable.icon_shape_no);
@@ -234,6 +250,10 @@ public class LoadActivity extends BaseActivity {
 
         shapeCutBtn.setOnClickListener(v -> {
             if (shapeModeOn) {
+                if (bottomArea1 != null) {
+                    lassoEdit.setVisibility(View.INVISIBLE);
+                }
+
                 shapeModeOn = false;
                 shapeCut.setImageResource(R.drawable.icon_shape_no);
                 shapeCutTxt.setTextColor(Color.parseColor("#90989F"));
@@ -242,6 +262,10 @@ public class LoadActivity extends BaseActivity {
                 updateShapeIcons(null);
                 visibleOff();
             } else {
+                if (bottomArea1 != null) {
+                    lassoEdit.setVisibility(View.INVISIBLE);
+                }
+
                 shapeModeOn = true;
                 shapeCut.setImageResource(R.drawable.icon_shape_yes);
                 shapeCutTxt.setTextColor(Color.parseColor("#C2FA7A"));
@@ -275,6 +299,14 @@ public class LoadActivity extends BaseActivity {
 
         heartCut.setOnClickListener(v -> {
             toggleShape(ShapeType.HEART);
+        });
+
+        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                setCheckboxSize(28.5f, 1f);
+            } else {
+                setCheckboxSize(25f, 3f);
+            }
         });
 
         cancelBtn.setOnClickListener(v -> {
@@ -312,7 +344,13 @@ public class LoadActivity extends BaseActivity {
 
                 try {
                     if (lassoVisible && !lassoShapes.isEmpty()) {
-                        Bitmap out = cropByPathsUnion(src, lassoShapes, viewToBmp);
+                        Bitmap out;
+                        if (checkBox.isChecked()) {
+                            out = cropByPathsInverse(src, lassoShapes, viewToBmp);
+                        } else {
+                            out = cropByPathsUnion(src, lassoShapes, viewToBmp);
+                        }
+
                         if (out != null) {
                             File f = savePngToStickers(out, LoadActivity.this);
                             created.add(f);
@@ -508,6 +546,50 @@ public class LoadActivity extends BaseActivity {
         return out;
     }
 
+    private Bitmap cropByPathsInverse(Bitmap src, List<Path> pathsInView, Matrix viewToBmp) {
+        if (src == null || pathsInView == null || pathsInView.isEmpty())
+            return null;
+
+        Path unionBmp = new Path();
+        boolean first = true;
+        for (Path pv : pathsInView) {
+            Path p = new Path(pv);
+            p.transform(viewToBmp);
+            if (first) {
+                unionBmp.set(p);
+                first = false;
+            } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                unionBmp.op(p, Path.Op.UNION);
+            } else {
+                unionBmp.addPath(p);
+            }
+        }
+        unionBmp.setFillType(Path.FillType.WINDING);
+
+        RectF b = new RectF();
+        unionBmp.computeBounds(b, true);
+        if (b.isEmpty()) return null;
+
+        b.inset(-1f, -1f);
+
+        int outW = src.getWidth();
+        int outH = src.getHeight();
+
+        Bitmap out = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(out);
+
+        c.drawBitmap(src, 0, 0, null);
+
+        Paint pm = new Paint(Paint.ANTI_ALIAS_FLAG);
+        pm.setStyle(Paint.Style.FILL);
+
+        pm.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
+        c.drawPath(unionBmp, pm);
+        pm.setXfermode(null);
+
+        return out;
+    }
+
     private Bitmap cropByMask(Bitmap src, Bitmap maskBmp, RectF maskRectView, Matrix viewToBmp) {
         if (src == null || maskBmp == null || maskRectView == null) return null;
 
@@ -618,7 +700,7 @@ public class LoadActivity extends BaseActivity {
 
     private void setAllControlsEnabled(boolean enabled) {
         View[] cuts = new View[]{
-                cancelBtn, checkBtn, lassoCutBtn, shapeCutBtn, squareCut, starCut, triangleCut, circleCut, heartCut
+                cancelBtn, checkBtn, lassoCutBtn, shapeCutBtn, squareCut, starCut, triangleCut, circleCut, heartCut, lassoEdit
         };
         for (View v : cuts) {
             if (v == null) continue;
@@ -708,5 +790,24 @@ public class LoadActivity extends BaseActivity {
             shapeOverlay.setImageBounds(r);
             lassoOverlay.setImageBounds(r);
         }
+    }
+
+    private void setCheckboxSize(float dp1, float dp2) {
+        int px = (int) dp(dp1);
+
+        ViewGroup.LayoutParams lp = checkBox.getLayoutParams();
+        lp.width = px;
+        lp.height = px;
+        checkBox.setLayoutParams(lp);
+
+        checkBox.requestLayout();
+
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) checkBox.getLayoutParams();
+        params.topMargin = (int) dp(dp2);
+        checkBox.setLayoutParams(params);
+    }
+
+    private float dp(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 }

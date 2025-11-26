@@ -32,6 +32,11 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
 
     private final List<ReviewResponse> items = new ArrayList<>();
 
+    public void addItem(ReviewResponse item) {
+        items.add(0, item);
+        notifyItemInserted(0);
+    }
+
     public void addItems(List<ReviewResponse> list) {
         int start = items.size();
         items.addAll(list);

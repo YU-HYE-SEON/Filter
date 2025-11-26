@@ -47,7 +47,10 @@ import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.api_datas.FaceStickerData; // ✅ 하나만 유지
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.response_dto.FilterResponse;
+import com.example.filter.api_datas.response_dto.PageResponse;
+import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.FilterApi;
+import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.dialogs.PointChangeDialog; // ✅ Import 추가
 import com.example.filter.etc.ClickUtils;
@@ -218,7 +221,7 @@ public class FilterInfoActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     setFilterData(response.body());
                 } else {
-                    Log.e("FilterInfo", "상세 조회 실패: " + response.code());
+                    Log.e("FilterInfo", "필터인포액티비티 | 상세 조회 실패: " + response.code());
                     Toast.makeText(FilterInfoActivity.this, "정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -837,12 +840,70 @@ public class FilterInfoActivity extends BaseActivity {
         finish(); // 필터인포 닫기
     }
 
-    private void tagClick(){
+    private void tagClick() {
         tag1.setOnClickListener(v -> sendTagToSearch(tag1.getText().toString()));
         tag2.setOnClickListener(v -> sendTagToSearch(tag2.getText().toString()));
         tag3.setOnClickListener(v -> sendTagToSearch(tag3.getText().toString()));
         tag4.setOnClickListener(v -> sendTagToSearch(tag4.getText().toString()));
         tag5.setOnClickListener(v -> sendTagToSearch(tag5.getText().toString()));
+    }
+
+    private void loadReviews(long filterLId) {
+        ReviewApi api = AppRetrofitClient.getInstance(this).create(ReviewApi.class);
+        api.getReviewPreview(filterLId).enqueue(new Callback<List<ReviewResponse>>() {
+
+            @Override
+            public void onResponse(Call<List<ReviewResponse>> call, Response<List<ReviewResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+
+                    //String key = (filterId != null && !filterId.isEmpty()) ? filterId : (nick + "_" + title);
+                    //List<ReviewItem> reviews = ReviewStore.getReviews(key);
+                    List<ReviewResponse> reviews = response.body();
+                    int size = reviews.size();
+                    if (reviewCount != null) reviewCount.setText("리뷰 (" + size + ")");
+
+                    if (noReviewTxt != null)
+                        noReviewTxt.setVisibility(size == 0 ? View.VISIBLE : View.GONE);
+                    if (reviewBox1 != null)
+                        reviewBox1.setVisibility(size > 0 && size <= 4 ? View.VISIBLE : View.GONE);
+                    if (reviewBox2 != null)
+                        reviewBox2.setVisibility(size > 4 ? View.VISIBLE : View.GONE);
+
+                    if (size > 0 && size <= 4) {
+                        if (rb1Img1 != null) {
+                            rb1Img1.setVisibility(View.INVISIBLE);
+                            if (size >= 1) {
+                                rb1Img1.setVisibility(View.VISIBLE);
+                                Glide.with(FilterInfoActivity.this).load(reviews.get(0).imageUrl).into(rb1Img1);
+                            }
+                        }
+                        if (rb1Img2 != null) {
+                            rb1Img2.setVisibility(View.INVISIBLE);
+                            if (size >= 2) {
+                                rb1Img2.setVisibility(View.VISIBLE);
+                                Glide.with(FilterInfoActivity.this).load(reviews.get(1).imageUrl).into(rb1Img2);
+                            }
+                        }
+                    } else if (size > 4) {
+                        ImageView[] ivs = {rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5};
+                        for (int i = 0; i < 5; i++)
+                            if (ivs[i] != null)
+                                Glide.with(FilterInfoActivity.this).load(reviews.get(i).imageUrl).into(ivs[i]);
+                    }
+                } else {
+                    Log.e("ReviewList", "필터인포액티비티 | 리뷰 조회 실패: " + response.code());
+                    if (reviewCount != null) reviewCount.setText("리뷰 (" + 0 + ")");
+                    if (noReviewTxt != null) noReviewTxt.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<ReviewResponse>> call, Throwable t) {
+                Log.e("ReviewList", "통신 오류", t);
+                if (reviewCount != null) reviewCount.setText("리뷰 (" + 0 + ")");
+                if (noReviewTxt != null) noReviewTxt.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     @Override
@@ -851,7 +912,13 @@ public class FilterInfoActivity extends BaseActivity {
 
         if (dimBackground != null && dimBackground.getVisibility() == View.VISIBLE) hideModal();
 
-        String key = (filterId != null && !filterId.isEmpty()) ? filterId : (nick + "_" + title);
+
+        if (filterId != null && !filterId.isEmpty()) {
+            loadFilterInfo(Long.parseLong(filterId));
+            loadReviews(Long.parseLong(filterId)); // 최신 리뷰 목록 및 리뷰 수 갱신
+        }
+
+        /*String key = (filterId != null && !filterId.isEmpty()) ? filterId : (nick + "_" + title);
         List<ReviewItem> reviews = ReviewStore.getReviews(key);
         int size = reviews.size();
         if (reviewCount != null) reviewCount.setText("리뷰 (" + size + ")");
@@ -880,7 +947,7 @@ public class FilterInfoActivity extends BaseActivity {
             ImageView[] ivs = {rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5};
             for (int i = 0; i < 5; i++)
                 if (ivs[i] != null) Glide.with(this).load(reviews.get(i).imageUrl).into(ivs[i]);
-        }
+        }*/
     }
 
     @Override

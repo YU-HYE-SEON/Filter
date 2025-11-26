@@ -9,8 +9,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
@@ -18,9 +16,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.adapters.ReviewAdapter;
-import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.api_datas.response_dto.FilterResponse;
 import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
@@ -29,10 +25,7 @@ import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.GridSpaceItemDecoration;
-import com.example.filter.etc.ReviewStore;
-import com.example.filter.items.ReviewItem;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -40,9 +33,11 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ReviewActivity extends BaseActivity {
+    private ReviewResponse reviewResponse;
     private ImageButton backBtn;
+    private String nick, imgUrl,title;
     ImageView img;
-    TextView title, nick;
+    TextView filterTitle, filterNickName;
     private RecyclerView recyclerView;
     private TextView textView;
     private ReviewAdapter adapter;
@@ -72,8 +67,8 @@ public class ReviewActivity extends BaseActivity {
         setContentView(R.layout.a_review);
         backBtn = findViewById(R.id.backBtn);
         img = findViewById(R.id.filterImage);
-        title = findViewById(R.id.filterTitle);
-        nick = findViewById(R.id.nickname);
+        filterTitle = findViewById(R.id.filterTitle);
+        filterNickName = findViewById(R.id.nickname);
         recyclerView = findViewById(R.id.recyclerView);
         textView = findViewById(R.id.textView);
 
@@ -112,7 +107,7 @@ public class ReviewActivity extends BaseActivity {
             title.setText(filterTitle);
         }
         if (nickname != null && !nickname.isEmpty()) {
-            nick.setText(nickname);
+            filterNickName.setText(nickname);
         }
 
         reviewList = ReviewStore.getReviews(key);
@@ -122,17 +117,20 @@ public class ReviewActivity extends BaseActivity {
         }*/
 
         filterId = getIntent().getStringExtra("filterId");
+        if (filterId != null) {
+            loadFilterInfo(Long.parseLong(filterId));
+        }
 
         filterIdLong = filterId != null ? Long.parseLong(filterId) : null;
 
-        Glide.with(this).load(getIntent().getStringExtra("filterImage")).fitCenter().into(img);
-        title.setText(getIntent().getStringExtra("filterTitle"));
-        nick.setText(getIntent().getStringExtra("nickname"));
+        reviewResponse = (ReviewResponse) getIntent().getSerializableExtra("review_response");
+
+        if (reviewResponse != null) {
+            adapter.addItem(reviewResponse);
+        }
 
         loadReviews(filterIdLong);
 
-
-        //adapter.setItems(reviewList);
         updateRecyclerVisibility();
 
         adapter.setOnItemClickListener((v, item) -> {
@@ -140,6 +138,37 @@ public class ReviewActivity extends BaseActivity {
             Intent intent = new Intent(this, ReviewInfoActivity.class);
             startActivity(intent);
         });
+    }
+
+    private void loadFilterInfo(long id) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+        api.getFilter(id).enqueue(new Callback<FilterResponse>() {
+            @Override
+            public void onResponse(Call<FilterResponse> call, Response<FilterResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    setFilterData(response.body());
+                } else {
+                    Log.e("FilterInfo", "리뷰액티비티 | 상세 조회 실패: " + response.code());
+                    Toast.makeText(ReviewActivity.this, "정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FilterResponse> call, Throwable t) {
+                Log.e("FilterInfo", "통신 오류", t);
+            }
+        });
+    }
+
+    private void setFilterData(FilterResponse data) {
+        this.title = data.name;
+        this.nick = data.creator;
+        this.imgUrl = data.editedImageUrl;
+
+        if (title != null) filterTitle.setText(title);
+        if (nick != null) filterNickName.setText(nick);
+        if (imgUrl != null) Glide.with(ReviewActivity.this).load(imgUrl).fitCenter().into(img);
+
     }
 
     private void loadReviews(long filterId) {
@@ -163,7 +192,7 @@ public class ReviewActivity extends BaseActivity {
                     isLastPage = pageData.last;
 
                 } else {
-                    Log.e("ReviewList", "목록 조회 실패: " + response.code());
+                    Log.e("ReviewList", "리뷰액티비티 | 목록 조회 실패: " + response.code());
                 }
             }
 

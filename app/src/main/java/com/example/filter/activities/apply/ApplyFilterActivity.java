@@ -48,7 +48,9 @@ import com.example.filter.etc.FGLRenderer;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
+import com.example.filter.etc.ReviewStore;
 import com.example.filter.etc.StickerMeta;
+import com.example.filter.items.ReviewItem;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.gson.Gson;
 import com.google.mlkit.vision.common.InputImage;
@@ -305,6 +307,10 @@ public class ApplyFilterActivity extends BaseActivity {
                     Log.d("리뷰등록", "등록 성공");
 
                     ReviewResponse reviewResponse = response.body();
+
+                    //String key = String.valueOf(filterId);
+                    //ReviewStore.addReview(key, new ReviewItem(reviewResponse.imageUrl, reviewResponse.reviewerNickname, reviewResponse.socialValue, reviewResponse.id));
+
                     Toast.makeText(ApplyFilterActivity.this, "리뷰가 등록되었습니다.", Toast.LENGTH_SHORT).show();
 
                     moveToReview(reviewResponse);
