@@ -41,10 +41,12 @@ public class ReviewInfoActivity extends BaseActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        Log.d("Review", "[Review Info Activity] onCreate called");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_review_info);
         backBtn = findViewById(R.id.backBtn);
-        recyclerView = findViewById(R.id.recyclerView);
+//        recyclerView = findViewById(R.id.recyclerView);
         use = findViewById(R.id.use);
 
         LinearLayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);

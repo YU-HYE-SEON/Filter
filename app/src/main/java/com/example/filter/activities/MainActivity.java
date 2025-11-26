@@ -208,6 +208,7 @@ public class MainActivity extends BaseActivity {
                 switch (id) {
                     case R.id.random:
                         setFilterButtons(true, false, false);
+                        loadRandomFilters(); // 랜덤 목록 불러오기
                         break;
                     case R.id.hot:
                         setFilterButtons(false, true, false);
@@ -411,6 +412,50 @@ public class MainActivity extends BaseActivity {
         });
     }
 
+    // ---------------------------------------------------------------
+    // ✅ 서버 API 통신: 랜덤 필터 목록 조회
+    // ---------------------------------------------------------------
+    private void loadRandomFilters() {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+
+        // API 인터페이스에 정의된 getRandomFilters 호출
+        api.getRandomFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+            @Override
+            public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<FilterListResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
+
+                    // 1. DTO -> UI Item 변환
+                    for (FilterListResponse dto : serverList) {
+                        FilterListItem item = FilterListItem.convertFromDto(dto);
+                        uiList.add(item);
+                    }
+
+                    // 2. 어댑터 데이터 교체
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
+                    }
+
+                    // 3. 화면 갱신 (리스트가 비었는지 확인 등)
+                    updateRecyclerVisibility();
+
+                    // (선택) 랜덤임을 알리기 위한 토스트 or 로그
+                    Log.d("MainActivity", "랜덤 필터 로드 완료: " + uiList.size() + "개");
+
+                } else {
+                    Log.e("MainActivity", "랜덤 목록 조회 실패: " + response.code());
+                    Toast.makeText(MainActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
+                Log.e("MainActivity", "통신 오류", t);
+                Toast.makeText(MainActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     private void updateRecyclerVisibility() {
         if (filterAdapter.getItemCount() == 0) {

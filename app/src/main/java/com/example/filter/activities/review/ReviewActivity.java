@@ -84,6 +84,7 @@ public class ReviewActivity extends BaseActivity {
 
         adapter.setOnItemClickListener((v, item) -> {
             if (ClickUtils.isFastClick(v, 400)) return;
+            // 리뷰 상세 정보 페이지로 이동
             Intent intent = new Intent(this, ReviewInfoActivity.class);
             startActivity(intent);
         });
