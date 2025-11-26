@@ -10,11 +10,15 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -47,15 +51,12 @@ import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.api_datas.FaceStickerData; // ✅ 하나만 유지
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.response_dto.FilterResponse;
-import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.dialogs.PointChangeDialog; // ✅ Import 추가
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.etc.ReviewStore;
-import com.example.filter.items.ReviewItem;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -67,13 +68,14 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FilterInfoActivity extends BaseActivity {
+    private ReviewResponse reviewResponse;
     // UI 요소
     private ImageButton backBtn, originalBtn;
     private ImageView shareBtn;
     private TextView nickname, deleteORreportBtn, filterTitle, moreBtn, noReviewTxt;
     private TextView tag1, tag2, tag3, tag4, tag5;
     private TextView saveCount, useCount, reviewCount;
-    private ImageView img, bookmark;
+    private ImageView img, bookmark, bookmarkImg;
     private LinearLayout reviewBox1, reviewBox2;
     private ImageView rb1Img1, rb1Img2, rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5;
     private ConstraintLayout tagBox, btnBox;
@@ -196,6 +198,7 @@ public class FilterInfoActivity extends BaseActivity {
         reviewCount = findViewById(R.id.reviewCount);
         img = findViewById(R.id.img);
         bookmark = findViewById(R.id.bookmark);
+        bookmarkImg = findViewById(R.id.bookmarkImg);
         reviewBox1 = findViewById(R.id.reviewBox1);
         reviewBox2 = findViewById(R.id.reviewBox2);
         rb1Img1 = findViewById(R.id.rb1Img1);
@@ -459,13 +462,21 @@ public class FilterInfoActivity extends BaseActivity {
 
         moreBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            Intent intent2 = new Intent(FilterInfoActivity.this, ReviewActivity.class);
-            intent2.putExtra("filterId", filterId);
-            intent2.putExtra("filterImage", imgUrl);
-            intent2.putExtra("filterTitle", title);
-            intent2.putExtra("nickname", nick);
-            startActivityForResult(intent2, 1001);
+            //Intent intent2 = new Intent(FilterInfoActivity.this, ReviewActivity.class);
+            //intent2.putExtra("filterId", filterId);
+            //intent2.putExtra("review_response", reviewResponse);
+            //startActivityForResult(intent2, 1001);
+            moveToReview(reviewResponse);
         });
+    }
+
+    private void moveToReview(ReviewResponse response) {
+        setResult(RESULT_OK);
+
+        Intent intent = new Intent(FilterInfoActivity.this, ReviewActivity.class);
+        intent.putExtra("filterId", filterId);
+        intent.putExtra("review_response", response);
+        startActivity(intent);
     }
 
 
@@ -525,7 +536,6 @@ public class FilterInfoActivity extends BaseActivity {
                     // (선택) 토스트 메시지
                     String msg = newState ? "북마크에 저장되었습니다." : "북마크가 해제되었습니다.";
                     Toast.makeText(FilterInfoActivity.this, msg, Toast.LENGTH_SHORT).show();
-
                 } else {
                     Log.e("FilterInfo", "북마크 실패: " + response.code());
                 }
@@ -544,11 +554,26 @@ public class FilterInfoActivity extends BaseActivity {
 
         if (active) {
             // 북마크 된 상태 아이콘 (리소스 이름 확인 필요!)
-            bookmark.setImageResource(R.drawable.icon_bookmark_no_blue);
+            bookmark.setImageResource(R.drawable.icon_bookmark_yes_blue);
+            setBookmarkSize(30f, 36f, -3f);
+            showBookmarkImg();
         } else {
             // 북마크 해제된 상태 아이콘
-            bookmark.setImageResource(R.drawable.icon_bookmark_no_gray);
+            bookmark.setImageResource(R.drawable.icon_bookmark_no_blue);
+            setBookmarkSize(30f, 30f, 0f);
         }
+    }
+
+    private void showBookmarkImg() {
+        if (bookmarkImg == null) return;
+
+        bookmarkImg.setVisibility(View.VISIBLE);
+
+        new Handler().postDelayed(() -> {
+            Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
+            bookmarkImg.startAnimation(fadeOut);
+            bookmarkImg.setVisibility(View.GONE);
+        }, 500);
     }
 
     // ✅ [추가] 서버에 가격 수정 요청
@@ -636,11 +661,6 @@ public class FilterInfoActivity extends BaseActivity {
             if (ClickUtils.isFastClick(v, 400)) return;
             Intent intent = new Intent(this, CameraActivity.class);
             intent.putExtra("filterId", filterId);
-            //intent.putExtra("color_adjustments", adj);
-            //intent.putExtra("brush_image_path", brushPath);
-            //intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
-            //if (faceStickers != null)
-            //    intent.putExtra("face_stickers", new ArrayList<>(faceStickers));
             startActivity(intent);
             hideModal();
         });
@@ -668,6 +688,26 @@ public class FilterInfoActivity extends BaseActivity {
                 requestPurchaseFilter(Long.parseLong(filterId), current, priceInt);
             });
         }
+
+        useBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            buyFilterSuccessOn.animate()
+                    .translationY(800)
+                    .setDuration(250)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            buyFilterSuccessOn.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    showModal(chooseUseModeOn);
+                }
+            }, 300);
+        });
     }
 
     // ✅ [추가] 서버에 구매/사용 요청
@@ -856,6 +896,8 @@ public class FilterInfoActivity extends BaseActivity {
             public void onResponse(Call<List<ReviewResponse>> call, Response<List<ReviewResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
 
+                    Log.e("리뷰리스트", "필터인포액티비티 | 리뷰 5개 미리보기 성공");
+
                     //String key = (filterId != null && !filterId.isEmpty()) ? filterId : (nick + "_" + title);
                     //List<ReviewItem> reviews = ReviewStore.getReviews(key);
                     List<ReviewResponse> reviews = response.body();
@@ -891,7 +933,7 @@ public class FilterInfoActivity extends BaseActivity {
                                 Glide.with(FilterInfoActivity.this).load(reviews.get(i).imageUrl).into(ivs[i]);
                     }
                 } else {
-                    Log.e("ReviewList", "필터인포액티비티 | 리뷰 조회 실패: " + response.code());
+                    Log.e("리뷰리스트", "필터인포액티비티 | 리뷰 조회 실패: " + response.code());
                     if (reviewCount != null) reviewCount.setText("리뷰 (" + 0 + ")");
                     if (noReviewTxt != null) noReviewTxt.setVisibility(View.VISIBLE);
                 }
@@ -899,11 +941,31 @@ public class FilterInfoActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<List<ReviewResponse>> call, Throwable t) {
-                Log.e("ReviewList", "통신 오류", t);
+                Log.e("리뷰리스트", "통신 오류", t);
                 if (reviewCount != null) reviewCount.setText("리뷰 (" + 0 + ")");
                 if (noReviewTxt != null) noReviewTxt.setVisibility(View.VISIBLE);
             }
         });
+    }
+
+    private void setBookmarkSize(float dp1, float dp2, float dp3) {
+        int px1 = (int) dp(dp1);
+        int px2 = (int) dp(dp2);
+
+        ViewGroup.LayoutParams lp = bookmark.getLayoutParams();
+        lp.width = px1;
+        lp.height = px2;
+        bookmark.setLayoutParams(lp);
+
+        bookmark.requestLayout();
+
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) bookmark.getLayoutParams();
+        params.rightMargin = (int) dp(dp3);
+        bookmark.setLayoutParams(params);
+    }
+
+    private float dp(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     @Override
@@ -914,8 +976,7 @@ public class FilterInfoActivity extends BaseActivity {
 
 
         if (filterId != null && !filterId.isEmpty()) {
-            loadFilterInfo(Long.parseLong(filterId));
-            loadReviews(Long.parseLong(filterId)); // 최신 리뷰 목록 및 리뷰 수 갱신
+            loadReviews(Long.parseLong(filterId));
         }
 
         /*String key = (filterId != null && !filterId.isEmpty()) ? filterId : (nick + "_" + title);

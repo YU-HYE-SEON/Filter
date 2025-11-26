@@ -208,7 +208,7 @@ public class ShapeOverlayView extends View {
                 resId = R.drawable.icon_circle_no;
                 break;
             case HEART:
-                resId = R.drawable.icon_heart_yes;
+                resId = R.drawable.icon_heart_no;
                 break;
             case NONE:
             default:

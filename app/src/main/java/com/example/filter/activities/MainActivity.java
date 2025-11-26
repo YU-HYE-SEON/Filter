@@ -315,7 +315,7 @@ public class MainActivity extends BaseActivity {
                     filterAdapter.updateItem(position, newItem);
 
                     String msg = newState ? "북마크 저장됨" : "북마크 해제됨";
-                    // Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show(); (선택 사항)
+                    Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
 
                 } else {
                     Log.e("Bookmark", "실패: " + response.code());

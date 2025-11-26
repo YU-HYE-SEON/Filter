@@ -17,15 +17,10 @@ import com.example.filter.adapters.ReviewInfoAdapter;
 import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.ReviewApi;
-import com.example.filter.apis.UserApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.ClickUtils;
-import com.example.filter.items.ReviewItem;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;

@@ -144,8 +144,6 @@ public class LassoOverlayView extends View {
         if (forceDim && imageBounds != null) {
             int id = canvas.saveLayer(0, 0, getWidth(), getHeight(), null);
 
-            //canvas.drawRect(imageBounds, dimPaint);
-
             if (!inverseDim) {
                 canvas.drawRect(imageBounds, dimPaint);
 
@@ -156,7 +154,7 @@ public class LassoOverlayView extends View {
                         canvas.drawPath(fill, clearPaint);
                     }
                 }
-            }else{
+            } else {
                 if (!shapes.isEmpty()) {
                     for (Path s : shapes) {
                         Path fill = new Path(s);

@@ -37,6 +37,7 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
     public void setOnItemClickListener(OnItemClickListener l) {
         this.listener = l;
     }
+
     public void setOnBookmarkClickListener(OnBookmarkClickListener l) {
         this.bookmarkListener = l;
     }
@@ -102,7 +103,9 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         int newPrice = 0;
         try {
             newPrice = Integer.parseInt(newPriceStr);
-        } catch (NumberFormatException e) { return; }
+        } catch (NumberFormatException e) {
+            return;
+        }
 
         for (int i = 0; i < items.size(); i++) {
             FilterListItem item = items.get(i);
@@ -170,7 +173,7 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         holder.filterTitle.setText(item.filterTitle);
 
         // 가격 표시
-        if(item.type.equals(PriceDisplayEnum.NONE)) {
+        if (item.type.equals(PriceDisplayEnum.NONE)) {
             holder.price.setText(" ");
         } else if (item.type.equals(PriceDisplayEnum.PURCHASED)) {
             holder.price.setText("구매 완료");
@@ -192,16 +195,19 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
 
         // (i_filter.xml에 bookmark 아이콘 id가 'bookmark'라고 가정)
         if (item.bookmark) {
-            holder.bookmark.setImageResource(R.drawable.icon_bookmark_no_blue);
+            holder.bookmark.setImageResource(R.drawable.icon_bookmark_yes_lime);
+            setBookmarkSize(holder.bookmark,30f,36f,12f);
         } else {
-            holder.bookmark.setImageResource(R.drawable.icon_bookmark_no_gray); // 배경이 있으면 white/gray 적절히 선택
+            holder.bookmark.setImageResource(R.drawable.icon_bookmark_no_gray);
+            setBookmarkSize(holder.bookmark,30f,30f,15f);
         }
 
         // 제목 길이 처리 로직 (기존 유지)
         if (item.filterTitle != null) {
             holder.filterTitle.post(() -> {
                 int currentPosition = holder.getAdapterPosition();
-                if (currentPosition == RecyclerView.NO_POSITION || currentPosition >= items.size()) return;
+                if (currentPosition == RecyclerView.NO_POSITION || currentPosition >= items.size())
+                    return;
 
                 // 텍스트 길이 체크 로직 (뷰가 재활용되므로 안전장치 필요)
                 // ... (기존 로직 유지하되 item 참조만 주의)
@@ -214,6 +220,26 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
                 }
             });
         }
+    }
+
+    private void setBookmarkSize(ImageView bookmark, float dp1, float dp2, float dp3) {
+        int px1 = (int) dp(dp1, bookmark.getContext());
+        int px2 = (int) dp(dp2, bookmark.getContext());
+
+        ViewGroup.LayoutParams lp = bookmark.getLayoutParams();
+        lp.width = px1;
+        lp.height = px2;
+        bookmark.setLayoutParams(lp);
+
+        bookmark.requestLayout();
+
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) bookmark.getLayoutParams();
+        params.rightMargin = (int) dp(dp3, bookmark.getContext());
+        bookmark.setLayoutParams(params);
+    }
+
+    private float dp(float dp, Context context) {
+        return Math.round(dp * context.getResources().getDisplayMetrics().density);
     }
 
     public void setMaxItems(int maxItems) {

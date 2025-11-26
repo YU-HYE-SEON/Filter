@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
-import com.example.filter.items.ReviewItem;
 
 import java.util.ArrayList;
 import java.util.List;

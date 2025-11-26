@@ -103,6 +103,17 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
+                <ImageView
+                    android:id="@+id/bookmarkImg"
+                    android:layout_width="125dp"
+                    android:layout_height="157dp"
+                    android:background="@drawable/img_bookmark"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="@+id/img"
+                    app:layout_constraintEnd_toEndOf="@+id/img"
+                    app:layout_constraintStart_toStartOf="@+id/img"
+                    app:layout_constraintTop_toTopOf="@+id/img" />
+
                 <ImageButton
                     android:id="@+id/originalBtn"
                     android:layout_width="40dp"
@@ -248,6 +259,16 @@
                     android:src="@drawable/icon_bookmark_no_blue"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="@id/tagBox" />
+
+                <!--<ImageView
+                    android:id="@+id/bookmark2"
+                    android:layout_width="30dp"
+                    android:layout_marginEnd="-3dp"
+                    android:layout_height="36dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_bookmark_yes_blue"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/tagBox" />-->
 
                 <TextView
                     android:id="@+id/filterTitle"
