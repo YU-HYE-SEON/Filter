@@ -51,7 +51,7 @@ import retrofit2.Response;
 public class MainActivity extends BaseActivity {
     private ConstraintLayout mainActivity;
     private ImageView logo;
-    private ImageButton searchBtn, random, hot, newest;
+    private ImageButton searchBtn, recommend, random, hot, newest;
     private ImageButton home, filter, archive, myPage;
     private FrameLayout searchFrame, archiveFrame, mypageFrame;
 
@@ -95,6 +95,7 @@ public class MainActivity extends BaseActivity {
         mainActivity = findViewById(R.id.mainActivity);
         logo = findViewById(R.id.logo);
         searchBtn = findViewById(R.id.searchBtn);
+        recommend = findViewById(R.id.recommend);
         random = findViewById(R.id.random);
         hot = findViewById(R.id.hot);
         newest = findViewById(R.id.newest);
@@ -206,22 +207,27 @@ public class MainActivity extends BaseActivity {
             public void onClick(View view) {
                 int id = view.getId();
                 switch (id) {
+                    case R.id.recommend:
+                        setFilterButtons(true, false, false, false);
+                        loadRecommendFilters();
+                        break;
                     case R.id.random:
-                        setFilterButtons(true, false, false);
+                        setFilterButtons(false, true, false, false);
                         loadRandomFilters(); // 랜덤 목록 불러오기
                         break;
                     case R.id.hot:
-                        setFilterButtons(false, true, false);
+                        setFilterButtons(false, false, true, false);
                         loadHotFilters(); // 인기순 목록 불러오기
                         break;
                     case R.id.newest:
-                        setFilterButtons(false, false, true);
+                        setFilterButtons(false, false, false, true);
                         loadRecentFilters(); // 서버에서 최신 필터 목록 가져오기
                         break;
                 }
             }
         };
 
+        recommend.setOnClickListener(listener);
         random.setOnClickListener(listener);
         hot.setOnClickListener(listener);
         newest.setOnClickListener(listener);
@@ -281,7 +287,8 @@ public class MainActivity extends BaseActivity {
     }
 
     // 버튼 UI 상태 변경 헬퍼
-    private void setFilterButtons(boolean r, boolean h, boolean n) {
+    private void setFilterButtons(boolean re, boolean r, boolean h, boolean n) {
+        recommend.setBackgroundResource(re ? R.drawable.btn_recommend_contents_yes : R.drawable.btn_recommend_contents_no);
         random.setBackgroundResource(r ? R.drawable.btn_random_contents_yes : R.drawable.btn_random_contents_no);
         hot.setBackgroundResource(h ? R.drawable.btn_hot_contents_yes : R.drawable.btn_hot_contents_no);
         newest.setBackgroundResource(n ? R.drawable.btn_newest_contents_yes : R.drawable.btn_newest_contents_no);
@@ -457,6 +464,50 @@ public class MainActivity extends BaseActivity {
         });
     }
 
+
+    private void loadRecommendFilters() {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+
+        // API 인터페이스에 정의된 getRandomFilters 호출
+        api.getHomeRecommendations(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+            @Override
+            public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<FilterListResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
+
+                    // 1. DTO -> UI Item 변환
+                    for (FilterListResponse dto : serverList) {
+                        FilterListItem item = FilterListItem.convertFromDto(dto);
+                        uiList.add(item);
+                    }
+
+                    // 2. 어댑터 데이터 교체
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
+                    }
+
+                    // 3. 화면 갱신 (리스트가 비었는지 확인 등)
+                    updateRecyclerVisibility();
+
+                    // (선택) 랜덤임을 알리기 위한 토스트 or 로그
+                    Log.d("MainActivity", "랜덤 필터 로드 완료: " + uiList.size() + "개");
+
+                } else {
+                    Log.e("MainActivity", "랜덤 목록 조회 실패: " + response.code());
+                    Toast.makeText(MainActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
+                Log.e("MainActivity", "통신 오류", t);
+                Toast.makeText(MainActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
     private void updateRecyclerVisibility() {
         if (filterAdapter.getItemCount() == 0) {
             recyclerView.setVisibility(View.INVISIBLE);
@@ -539,6 +590,12 @@ public class MainActivity extends BaseActivity {
 
     private int dp(int v) {
         return Math.round(getResources().getDisplayMetrics().density * v);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadRecommendFilters();
     }
 
     @Override

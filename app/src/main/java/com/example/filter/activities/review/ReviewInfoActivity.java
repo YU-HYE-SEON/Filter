@@ -46,7 +46,7 @@ public class ReviewInfoActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_review_info);
         backBtn = findViewById(R.id.backBtn);
-//        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView = findViewById(R.id.recyclerView);
         use = findViewById(R.id.use);
 
         LinearLayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
@@ -59,7 +59,7 @@ public class ReviewInfoActivity extends BaseActivity {
         loadReviews(filterId);
 
         reviewId = getIntent().getLongExtra("reviewId", -1);
-        loadReviews(reviewId);
+        //loadReviews(reviewId);
 
         adapter.setOnItemDeleteListener((reviewId, position) -> {
             deleteReview(reviewId, position);
