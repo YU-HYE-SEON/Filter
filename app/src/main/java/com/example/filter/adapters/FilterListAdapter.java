@@ -95,18 +95,6 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         }
     }
 
-
-    /// 북마크된 아이템은 아카이브의 북마크에 추가 ///
-    public void updateBookmark(int position, FilterListItem newItem) {
-        if (newItem.bookmark) {
-            if (position >= 0 && position < items.size()) {
-                items.set(position, newItem);
-                notifyItemChanged(position);
-            }
-        }
-    }
-
-
     // ✅ [수정됨] FilterListItem 생성자에 맞춰 수정
     public void updatePriceItem(String id, String newPriceStr) {
         if (id == null) return;

@@ -64,14 +64,17 @@ public class ArchiveFragment extends Fragment {
                     case R.id.bookmark:
                         setArchiveButtons(true, false, false, false);
                         recyclerView.setAdapter(adapter1);
+                        loadBookmark();
                         break;
                     case R.id.buy:
                         setArchiveButtons(false, true, false, false);
                         recyclerView.setAdapter(adapter2);
+                        //loadBuy();
                         break;
                     case R.id.create:
                         setArchiveButtons(false, false, true, false);
                         recyclerView.setAdapter(adapter3);
+                        //loadCreate();
                         break;
                     case R.id.review:
                         setArchiveButtons(false, false, false, true);
@@ -156,6 +159,11 @@ public class ArchiveFragment extends Fragment {
         });
     }
 
+    private void loadBuy() {
+    }
+
+    private void loadCreate() {
+    }
 
     private void setArchiveButtons(boolean bm, boolean b, boolean c, boolean r) {
         bookmark.setBackgroundResource(bm ? R.drawable.btn_bookmark_yes : R.drawable.btn_bookmark_no);
