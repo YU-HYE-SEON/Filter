@@ -34,8 +34,7 @@ public interface ReviewApi {
     Call<ReviewResponse> getReviewById(@Path("reviewId") Long reviewId);
 
     // ✔️ 리뷰 목록 조회 (페이징)
-    // URL 예시: /api/v1/filters/1/reviews?page=0&size=20
-    @GET("/api/v1/filters/{filterId}/reviews")
+    @GET("/api/v1/review-lists/{filterId}")
     Call<PageResponse<ReviewResponse>> getReviewsByFilter(
             @Path("filterId") Long filterId,
             @Query("page") int page,
@@ -44,7 +43,7 @@ public interface ReviewApi {
 
     // ✔️ 리뷰 미리보기 (최신 5개 조회)
     // 서버 Controller 경로 확인 필요 (예: /api/v1/filters/{filterId}/reviews/preview)
-    @GET("/api/v1/filters/{filterId}/reviews/preview")
+    @GET("/api/v1/review-lists/{filterId}/preview")
     Call<List<ReviewResponse>> getReviewPreview(@Path("filterId") Long filterId);
 
     // ✔️ 리뷰 삭제

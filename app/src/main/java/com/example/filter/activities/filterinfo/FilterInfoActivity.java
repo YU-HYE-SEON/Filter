@@ -113,17 +113,7 @@ public class FilterInfoActivity extends BaseActivity {
             if (photoUri != null) {
                 Intent intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
                 intent.setData(photoUri);
-                // 필요한 데이터 전달
-                //intent.putExtra("color_adjustments", adj);
-                //intent.putExtra("brush_image_path", brushPath);
-                //intent.putExtra("stickerImageNoFacePath", stickerImageNoFacePath);
-                //if (faceStickers != null) {
-                //    intent.putExtra("face_stickers", new ArrayList<>(this.faceStickers));
-                //}
                 intent.putExtra("filterId", filterId);
-                //intent.putExtra("filterImage", imgUrl);
-                //intent.putExtra("filterTitle", title);
-                //intent.putExtra("nickname", nick);
 
                 startActivity(intent);
             } else {
@@ -443,10 +433,6 @@ public class FilterInfoActivity extends BaseActivity {
         deleteORreportBtn.setOnClickListener(v -> {
             if (isMine) {
                 requestDeleteFilter(Long.parseLong(filterId));
-                //Intent resultIntent = new Intent();
-                //resultIntent.putExtra("deleted_filter_id", filterId);
-                //setResult(RESULT_OK, resultIntent);
-                //finish();
             } else {
                 Toast.makeText(this, "신고 기능 준비중", Toast.LENGTH_SHORT).show();
             }
@@ -462,10 +448,6 @@ public class FilterInfoActivity extends BaseActivity {
 
         moreBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            //Intent intent2 = new Intent(FilterInfoActivity.this, ReviewActivity.class);
-            //intent2.putExtra("filterId", filterId);
-            //intent2.putExtra("review_response", reviewResponse);
-            //startActivityForResult(intent2, 1001);
             moveToReview(reviewResponse);
         });
     }

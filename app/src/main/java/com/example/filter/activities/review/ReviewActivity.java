@@ -33,7 +33,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ReviewActivity extends BaseActivity {
-    private ReviewResponse reviewResponse;
     private ImageButton backBtn;
     private String nick, imgUrl,title;
     ImageView img;
@@ -41,25 +40,11 @@ public class ReviewActivity extends BaseActivity {
     private RecyclerView recyclerView;
     private TextView textView;
     private ReviewAdapter adapter;
-    //private List<ReviewItem> reviewList = new ArrayList<>();
     private String filterId;
     private Long filterIdLong;
     private int currentPage = 0;
     private boolean isLastPage = false;
     private boolean isLoading = false;
-    //private String filterId, filterImage, filterTitle, nickname, reviewImg, reviewNick, reviewSnsId;
-    /*private final ActivityResultLauncher<Intent> detailLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    String deletedUrl = result.getData().getStringExtra("deleted_review_url");
-                    if (deletedUrl != null) {
-                        String key = (filterId != null && !filterId.isEmpty()) ? filterId : nickname + "_" + filterTitle;
-                        ReviewStore.removeReview(key, deletedUrl);
-                        adapter.removeItem(deletedUrl);
-                        updateRecyclerVisibility();
-                    }
-                }
-            });*/
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -85,50 +70,14 @@ public class ReviewActivity extends BaseActivity {
         recyclerView.setAdapter(adapter);
         recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(10), dp(10)));
 
-        /*filterId = getIntent().getStringExtra("filterId");
-        filterImage = getIntent().getStringExtra("filterImage");
-        filterTitle = getIntent().getStringExtra("filterTitle");
-        nickname = getIntent().getStringExtra("nickname");
-
-        reviewImg = getIntent().getStringExtra("reviewImg");
-        reviewNick = getIntent().getStringExtra("reviewNick");
-        reviewSnsId = getIntent().getStringExtra("reviewSnsId");
-
-        String key = null;
-        if (filterId != null && !filterId.isEmpty()) {
-            key = filterId;
-        } else {
-            key = nickname + "_" + filterTitle;
-        }
-        if (filterImage != null && !filterImage.isEmpty()) {
-            Glide.with(this).load(filterImage).fitCenter().into(img);
-        }
-        if (filterTitle != null && !filterTitle.isEmpty()) {
-            title.setText(filterTitle);
-        }
-        if (nickname != null && !nickname.isEmpty()) {
-            filterNickName.setText(nickname);
-        }
-
-        reviewList = ReviewStore.getReviews(key);
-        if (reviewImg != null && !reviewImg.isEmpty()) {
-            ReviewItem newItem = new ReviewItem(reviewImg, reviewNick, reviewSnsId);
-            ReviewStore.addReview(key, newItem);
-        }*/
-
+        // 상단에 띄우는 필터 기본 정보를 받아오기
         filterId = getIntent().getStringExtra("filterId");
         if (filterId != null) {
             loadFilterInfo(Long.parseLong(filterId));
         }
 
+        // 리뷰 목록 불러오기
         filterIdLong = filterId != null ? Long.parseLong(filterId) : null;
-
-        reviewResponse = (ReviewResponse) getIntent().getSerializableExtra("review_response");
-
-        if (reviewResponse != null) {
-            adapter.addItem(reviewResponse);
-        }
-
         loadReviews(filterIdLong);
 
         updateRecyclerVisibility();
@@ -140,6 +89,7 @@ public class ReviewActivity extends BaseActivity {
         });
     }
 
+    /** 필터 상세 정보 불러오기 (리뷰 목록 페이지의 헤더를 위해서)*/
     private void loadFilterInfo(long id) {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
         api.getFilter(id).enqueue(new Callback<FilterResponse>() {
@@ -160,6 +110,7 @@ public class ReviewActivity extends BaseActivity {
         });
     }
 
+    /** 리뷰 목록 페이지 헤더의 '필터 정보' 내용 채우기*/
     private void setFilterData(FilterResponse data) {
         this.title = data.name;
         this.nick = data.creator;
@@ -171,6 +122,7 @@ public class ReviewActivity extends BaseActivity {
 
     }
 
+    /** 리뷰 목록 불러오기*/
     private void loadReviews(long filterId) {
         if (isLoading || isLastPage) return;
         isLoading = true;
@@ -190,10 +142,11 @@ public class ReviewActivity extends BaseActivity {
                     }
 
                     isLastPage = pageData.last;
-
                 } else {
                     Log.e("ReviewList", "리뷰액티비티 | 목록 조회 실패: " + response.code());
                 }
+                // 업데이트 반영 후, 가시성 갱신
+                updateRecyclerVisibility();
             }
 
             @Override
