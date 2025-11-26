@@ -95,6 +95,18 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         }
     }
 
+
+    /// 북마크된 아이템은 아카이브의 북마크에 추가 ///
+    public void updateBookmark(int position, FilterListItem newItem) {
+        if (newItem.bookmark) {
+            if (position >= 0 && position < items.size()) {
+                items.set(position, newItem);
+                notifyItemChanged(position);
+            }
+        }
+    }
+
+
     // ✅ [수정됨] FilterListItem 생성자에 맞춰 수정
     public void updatePriceItem(String id, String newPriceStr) {
         if (id == null) return;
@@ -196,10 +208,10 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         // (i_filter.xml에 bookmark 아이콘 id가 'bookmark'라고 가정)
         if (item.bookmark) {
             holder.bookmark.setImageResource(R.drawable.icon_bookmark_yes_lime);
-            setBookmarkSize(holder.bookmark,30f,36f,12f);
+            setBookmarkSize(holder.bookmark, 30f, 36f, 12f);
         } else {
             holder.bookmark.setImageResource(R.drawable.icon_bookmark_no_gray);
-            setBookmarkSize(holder.bookmark,30f,30f,15f);
+            setBookmarkSize(holder.bookmark, 30f, 30f, 15f);
         }
 
         // 제목 길이 처리 로직 (기존 유지)
