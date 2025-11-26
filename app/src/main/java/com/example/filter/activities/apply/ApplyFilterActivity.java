@@ -97,6 +97,11 @@ public class ApplyFilterActivity extends BaseActivity {
     public static FaceBoxOverlayView faceBox;
     private Bitmap originalImageBitmap;
 
+    // 서버로부터 받아온 sns 아이디 저장
+    private String instagramId = "";
+    private String xId = "";
+
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -249,75 +254,60 @@ public class ApplyFilterActivity extends BaseActivity {
         });
     }
 
+    /** 서버로부터 소셜 아이디 정보 받아오기 */
     private void loadSocialAndCreateReview(String imagePath, long filterId) {
         UserApi userApi = AppRetrofitClient.getInstance(this).create(UserApi.class);
 
+        // 소셜 아이디 불러오기
         userApi.getSocialIds().enqueue(new Callback<Map<String, String>>() {
             @Override
             public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
-                if (!response.isSuccessful() || response.body() == null) {
-                    requestCreateReview(imagePath, filterId, "NONE");
-                    return;
-                }
-
                 Map<String, String> ids = response.body();
-                String instagramId = ids.get("instagramId");
-                String xId = ids.get("xId");
-
-                String socialType;
-
-                if (instagramId != null && !instagramId.isEmpty()) {
-                    socialType = "INSTAGRAM";
-                } else if (xId != null && !xId.isEmpty()) {
-                    socialType = "X";
-                } else {
-                    socialType = "NONE";
-                }
-
-                Log.e("리뷰등록", "소셜 타입: " + socialType);
-
-                requestCreateReview(imagePath, filterId, socialType);
+                
+                // todo: 값이 있는지 여부에 따라서 버튼 activation 결정
+                
+                instagramId = ids.get("instagramId");
+                xId = ids.get("xId");
             }
 
             @Override
             public void onFailure(Call<Map<String, String>> call, Throwable t) {
-                requestCreateReview(imagePath, filterId, "NONE");
+                Log.e("Review", "통신 오류", t);
+                Toast.makeText(ApplyFilterActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void requestCreateReview(String imagePath, long filterId, String socialType) {
+    private void requestCreateReview(String imagePath, long filterId, SocialType socialType) {
         File file = new File(imagePath);
         if (!file.exists()) {
             Toast.makeText(this, "이미지 파일이 없습니다.", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Request 데이터 구성
         RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-        MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
+        MultipartBody.Part multipartFile = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
         RequestBody filterIdBody = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(filterId));
-        RequestBody socialTypeBody = RequestBody.create(MediaType.parse("text/plain"), socialType);
+        RequestBody socialTypeBody = RequestBody.create(MediaType.parse("text/plain"), socialType.toString());
 
+        // Retrofit API 인터페이스 생성
         ReviewApi api = AppRetrofitClient.getInstance(this).create(ReviewApi.class);
 
-        api.createReview(body, filterIdBody, socialTypeBody).enqueue(new Callback<ReviewResponse>() {
+        // 리뷰생성 API 호출
+        api.createReview(multipartFile, filterIdBody, socialTypeBody).enqueue(new Callback<ReviewResponse>() {
             @Override
             public void onResponse(Call<ReviewResponse> call, Response<ReviewResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Log.d("리뷰등록", "등록 성공");
-
-                    ReviewResponse reviewResponse = response.body();
-
-                    //String key = String.valueOf(filterId);
-                    //ReviewStore.addReview(key, new ReviewItem(reviewResponse.imageUrl, reviewResponse.reviewerNickname, reviewResponse.socialValue, reviewResponse.id));
-
+                    Log.d("Review", "등록 성공");
                     Toast.makeText(ApplyFilterActivity.this, "리뷰가 등록되었습니다.", Toast.LENGTH_SHORT).show();
 
-                    moveToReview(reviewResponse);
+                    ReviewResponse reviewResponse = response.body();
+                    moveToReview(reviewResponse); // Activity 전환
                 } else {
                     try {
                         String errorBody = response.errorBody() != null ? response.errorBody().string() : "Error";
-                        Log.e("리뷰등록", "등록 실패: " + response.code() + ", " + errorBody);
+                        Log.e("Review", "등록 실패: " + response.code() + ", " + errorBody);
                         Toast.makeText(ApplyFilterActivity.this, "등록 실패", Toast.LENGTH_SHORT).show();
                     } catch (IOException e) {
                         e.printStackTrace();

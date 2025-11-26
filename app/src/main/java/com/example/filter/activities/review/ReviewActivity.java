@@ -148,14 +148,14 @@ public class ReviewActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     setFilterData(response.body());
                 } else {
-                    Log.e("FilterInfo", "리뷰액티비티 | 상세 조회 실패: " + response.code());
+                    Log.e("Review", "리뷰액티비티 | 상세 조회 실패: " + response.code());
                     Toast.makeText(ReviewActivity.this, "정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<FilterResponse> call, Throwable t) {
-                Log.e("FilterInfo", "통신 오류", t);
+                Log.e("Review", "통신 오류", t);
             }
         });
     }
