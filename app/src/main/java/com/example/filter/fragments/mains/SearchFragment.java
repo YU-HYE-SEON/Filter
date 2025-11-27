@@ -4,29 +4,36 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
-import com.example.filter.adapters.SearchKeywordAdapter;
+import com.example.filter.activities.review.ReviewActivity;
+import com.example.filter.adapters.FilterListAdapter;
+import com.example.filter.adapters.ReviewAdapter;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
 import com.example.filter.api_datas.response_dto.FilterSortType;
 import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.api_datas.response_dto.SearchType;
 import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.etc.GridSpaceItemDecoration;
+import com.example.filter.items.FilterListItem;
+import com.example.filter.items.PriceDisplayEnum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +48,8 @@ public class SearchFragment extends Fragment {
     private static final String ARG_KEYWORD = "search_keyword";
     private String keyword;
     private TextView txt;
+    private List<FilterListResponse> searchResults = new ArrayList<>();
+    private FilterListAdapter adapter;
 
     public static SearchFragment newInstance(String keyword) {
         SearchFragment fragment = new SearchFragment();
@@ -77,6 +86,18 @@ public class SearchFragment extends Fragment {
 
         setupChooseOrder();
 
+        StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+        recyclerView.setLayoutManager(sglm);
+
+        adapter = new FilterListAdapter();
+        recyclerView.setAdapter(adapter);
+        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(10), dp(10)));
+
+        if (keyword != null && !keyword.isEmpty()) {
+            searchByNaturalLanguage(keyword);
+        }
+
         Fragment parent = getParentFragment();
         if (parent instanceof SearchMainFragment) {
             ((SearchMainFragment) parent).resetSearchButton();
@@ -91,36 +112,109 @@ public class SearchFragment extends Fragment {
         }*/
     }
 
-    private List<FilterListResponse> searchResults = new ArrayList<>();
-    private SearchKeywordAdapter resultAdapter;
     private void searchByNaturalLanguage(String query) {
         FilterApi api = AppRetrofitClient.getInstance(requireContext()).create(FilterApi.class);
         // 👈 자연어 모드FilterSortType.ACCURACY,// 👈 정확도순 (AI 랭킹 유지)0 / page20 / size
-        api.searchFilters(query, SearchType.NL, FilterSortType.ACCURACY, 0, 20 ).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.searchFilters(query, SearchType.NL, currentSort, 0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    Log.e("검색", "검색 조회 성공 | 정렬: " + currentSort.name());
+
                     List<FilterListResponse> results = response.body().content;
 
-                    if (results.isEmpty()) {
-                        textView.setVisibility(View.VISIBLE);
-                        recyclerView.setVisibility(View.GONE);
-
-                        searchResults.clear();
-                        //searchResults.addAll(response.body().getContent());
-                        resultAdapter.notifyDataSetChanged();
-                    } else {
+                    if (!results.isEmpty()) {
                         textView.setVisibility(View.GONE);
                         recyclerView.setVisibility(View.VISIBLE);
+
+                        List<FilterListItem> itemsToShow = convertResponseToFilterListItems(results);
+                        adapter.setItems(itemsToShow);
+
+                        searchResults.clear();
+                        searchResults.addAll(results);
+                    } else {
+                        adapter.clear();
+                        showEmptyResult();
                     }
+                } else {
+                    Log.e("검색", "검색 조회 실패: " + response.code());
+                    Toast.makeText(requireContext(), "정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+
+                    adapter.clear();
+                    showEmptyResult();
                 }
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
-                // 에러 처리
+                showEmptyResult();
+
+                adapter.clear();
+                showEmptyResult();
+                Log.e("검색", "통신 오류", t);
             }
         });
+    }
+
+
+    private List<FilterListItem> convertResponseToFilterListItems(List<FilterListResponse> responses) {
+        List<FilterListItem> items = new ArrayList<>();
+
+        for (FilterListResponse res : responses) {
+            PriceDisplayEnum type = PriceDisplayEnum.fromString(res.priceDisplayType);
+
+            FilterListItem item = new FilterListItem(
+                    res.id,
+                    res.name,
+                    res.thumbnailUrl,
+                    res.creator,
+                    res.pricePoint,
+                    res.useCount,
+                    type,
+                    res.bookmark
+            );
+            items.add(item);
+        }
+        return items;
+    }
+
+    private void showEmptyResult() {
+        textView.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.GONE);
+    }
+
+    private FilterSortType currentSort = FilterSortType.ACCURACY;
+
+    private void setOrder(TextView select, ImageView select2) {
+        int gray = Color.parseColor("#90989F");
+        recommend.setTextColor(gray);
+        sales.setTextColor(gray);
+        price.setTextColor(gray);
+        save.setTextColor(gray);
+        review.setTextColor(gray);
+        select.setTextColor(Color.BLACK);
+        txt.setText(select.getText().toString());
+
+        recommendCheck.setVisibility(View.INVISIBLE);
+        salesCheck.setVisibility(View.INVISIBLE);
+        priceCheck.setVisibility(View.INVISIBLE);
+        saveCheck.setVisibility(View.INVISIBLE);
+        reviewCheck.setVisibility(View.INVISIBLE);
+        select2.setVisibility(View.VISIBLE);
+
+        FilterSortType newSort;
+        if (select == price) newSort = FilterSortType.LOW_PRICE;
+        else if (select == save) newSort = FilterSortType.POPULARITY;
+        else if (select == review) newSort = FilterSortType.REVIEW_COUNT;
+        else if (select == sales) newSort = FilterSortType.LATEST;
+        else newSort = FilterSortType.ACCURACY;
+
+        if (currentSort != newSort) {
+            currentSort = newSort; // 새로운 정렬 타입 설정
+            searchByNaturalLanguage(keyword); // 정렬 변경 후 검색 재실행
+        }
+
+        //searchByNaturalLanguage(keyword);
     }
 
 
@@ -218,22 +312,8 @@ public class SearchFragment extends Fragment {
                 .start();
     }
 
-    private void setOrder(TextView select, ImageView select2) {
-        int gray = Color.parseColor("#90989F");
-        recommend.setTextColor(gray);
-        sales.setTextColor(gray);
-        price.setTextColor(gray);
-        save.setTextColor(gray);
-        review.setTextColor(gray);
-        select.setTextColor(Color.BLACK);
-        txt.setText(select.getText().toString());
-
-        recommendCheck.setVisibility(View.INVISIBLE);
-        salesCheck.setVisibility(View.INVISIBLE);
-        priceCheck.setVisibility(View.INVISIBLE);
-        saveCheck.setVisibility(View.INVISIBLE);
-        reviewCheck.setVisibility(View.INVISIBLE);
-        select2.setVisibility(View.VISIBLE);
+    private int dp(int v) {
+        return Math.round(getResources().getDisplayMetrics().density * v);
     }
 
     @Override
