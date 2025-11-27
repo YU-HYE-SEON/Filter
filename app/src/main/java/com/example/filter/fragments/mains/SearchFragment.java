@@ -123,6 +123,8 @@ public class SearchFragment extends Fragment {
 
                     List<FilterListResponse> results = response.body().content;
 
+                    Log.d("검색", "리스폰스 바디 콘텐트 | "+response.body().content);
+
                     if (!results.isEmpty()) {
                         textView.setVisibility(View.GONE);
                         recyclerView.setVisibility(View.VISIBLE);
