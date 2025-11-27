@@ -111,6 +111,7 @@ public class AIStickerViewFragment extends Fragment {
             Fragment current = getChildFragmentManager().findFragmentById(R.id.aiStickerView);
             if (current instanceof AIStickerSuccessFragment) {
                 AIStickerSuccessFragment f = (AIStickerSuccessFragment) current;
+                f.setOnSaveListener(() -> checkBtn.performClick());
 
                 Bitmap bmp = f.getCurrentBitmap();
                 if (bmp != null) {
@@ -150,6 +151,9 @@ public class AIStickerViewFragment extends Fragment {
         Fragment current = getChildFragmentManager().findFragmentById(R.id.aiStickerView);
         if (current instanceof AIStickerSuccessFragment) {
             checkBtn.setVisibility(View.VISIBLE);
+
+            AIStickerSuccessFragment f = (AIStickerSuccessFragment) current;
+            f.setOnSaveListener(() -> checkBtn.performClick());
         } else {
             checkBtn.setVisibility(View.INVISIBLE);
         }

@@ -57,10 +57,10 @@
             app:layout_constraintTop_toTopOf="@+id/aiResultFG" />
 
         <ImageButton
-            android:id="@+id/retryBtn"
+            android:id="@+id/saveBtn"
             android:layout_width="200dp"
             android:layout_height="65dp"
-            android:background="@drawable/btn_retry_ai_sticker"
+            android:background="@drawable/btn_ai_sticker_result"
             android:clickable="true"
             android:focusable="true"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -70,13 +70,40 @@
             app:layout_constraintVertical_bias="0.1" />
 
         <TextView
+            android:id="@+id/saveTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_semibold"
+            android:text="저장하기"
+            android:textAlignment="center"
+            android:textColor="#007BFF"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/saveBtn"
+            app:layout_constraintEnd_toEndOf="@+id/saveBtn"
+            app:layout_constraintStart_toStartOf="@+id/saveBtn"
+            app:layout_constraintTop_toTopOf="@+id/saveBtn" />
+
+        <ImageButton
+            android:id="@+id/retryBtn"
+            android:layout_width="200dp"
+            android:layout_height="65dp"
+            android:background="@drawable/btn_ai_sticker_result_2"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/saveBtn"
+            app:layout_constraintVertical_bias="0.1" />
+
+        <TextView
             android:id="@+id/retryTxt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_semibold"
             android:text="다시 만들기"
             android:textAlignment="center"
-            android:textColor="#007BFF"
+            android:textColor="@color/white"
             android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="@+id/retryBtn"
             app:layout_constraintEnd_toEndOf="@+id/retryBtn"

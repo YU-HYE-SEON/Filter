@@ -34,7 +34,7 @@ import retrofit2.Response;
 
 public class ReviewActivity extends BaseActivity {
     private ImageButton backBtn;
-    private String nick, imgUrl,title;
+    private String nick, imgUrl, title;
     ImageView img;
     TextView filterTitle, filterNickName;
     private RecyclerView recyclerView;
@@ -82,15 +82,20 @@ public class ReviewActivity extends BaseActivity {
 
         updateRecyclerVisibility();
 
-        adapter.setOnItemClickListener((v, item) -> {
+        adapter.setOnItemClickListener((v, item, position) -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             // 리뷰 상세 정보 페이지로 이동
             Intent intent = new Intent(this, ReviewInfoActivity.class);
+            intent.putExtra("filterId", filterId);
+            intent.putExtra("reviewId", item.id);
+            intent.putExtra("position", position);
             startActivity(intent);
         });
     }
 
-    /** 필터 상세 정보 불러오기 (리뷰 목록 페이지의 헤더를 위해서)*/
+    /**
+     * 필터 상세 정보 불러오기 (리뷰 목록 페이지의 헤더를 위해서)
+     */
     private void loadFilterInfo(long id) {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
         api.getFilter(id).enqueue(new Callback<FilterResponse>() {
@@ -111,7 +116,9 @@ public class ReviewActivity extends BaseActivity {
         });
     }
 
-    /** 리뷰 목록 페이지 헤더의 '필터 정보' 내용 채우기*/
+    /**
+     * 리뷰 목록 페이지 헤더의 '필터 정보' 내용 채우기
+     */
     private void setFilterData(FilterResponse data) {
         this.title = data.name;
         this.nick = data.creator;
@@ -123,7 +130,9 @@ public class ReviewActivity extends BaseActivity {
 
     }
 
-    /** 리뷰 목록 불러오기*/
+    /**
+     * 리뷰 목록 불러오기
+     */
     private void loadReviews(long filterId) {
         if (isLoading || isLastPage) return;
         isLoading = true;
@@ -170,5 +179,18 @@ public class ReviewActivity extends BaseActivity {
 
     private int dp(int v) {
         return Math.round(getResources().getDisplayMetrics().density * v);
+    }
+
+    private void refreshReviews() {
+        currentPage = 0;
+        isLastPage = false;
+        adapter.clearItems();
+        loadReviews(filterIdLong);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshReviews();
     }
 }

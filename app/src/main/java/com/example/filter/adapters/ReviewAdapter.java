@@ -18,7 +18,7 @@ import java.util.List;
 public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
     public interface OnItemClickListener {
         //void onItemClick(View v, ReviewItem item);
-        void onItemClick(View v, ReviewResponse item);
+        void onItemClick(View v, ReviewResponse item, int position);
     }
 
     private OnItemClickListener listener;
@@ -37,8 +37,13 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
     }
 
     public void addItems(List<ReviewResponse> list) {
-        items.addAll(list);
+        items.addAll(0, list);
         notifyItemRangeInserted(0, list.size());
+    }
+
+    public void clearItems() {
+        items.clear();
+        notifyDataSetChanged();
     }
 
     /*public void setItems(List<ReviewItem> list) {
@@ -79,7 +84,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
                 .into(holder.image);
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onItemClick(v, item);
+            if (listener != null) listener.onItemClick(v, item, position);
         });
     }
 

@@ -20,13 +20,26 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
+import com.example.filter.adapters.SearchKeywordAdapter;
+import com.example.filter.api_datas.response_dto.FilterListResponse;
+import com.example.filter.api_datas.response_dto.FilterSortType;
+import com.example.filter.api_datas.response_dto.PageResponse;
+import com.example.filter.api_datas.response_dto.SearchType;
+import com.example.filter.apis.FilterApi;
+import com.example.filter.apis.client.AppRetrofitClient;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SearchFragment extends Fragment {
     private RecyclerView recyclerView;
     private ConstraintLayout textView, dropdown;
     private static final String ARG_KEYWORD = "search_keyword";
     private String keyword;
-    private ImageButton random, hot, newest;
     private TextView txt;
 
     public static SearchFragment newInstance(String keyword) {
@@ -50,45 +63,10 @@ public class SearchFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_search, container, false);
 
-        random = view.findViewById(R.id.random);
-        hot = view.findViewById(R.id.hot);
-        newest = view.findViewById(R.id.newest);
         txt = view.findViewById(R.id.txt);
         dropdown = view.findViewById(R.id.dropdown);
         recyclerView = view.findViewById(R.id.recyclerView);
         textView = view.findViewById(R.id.textView);
-
-        View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                int id = view.getId();
-                switch (id) {
-                    case R.id.random:
-                        random.setBackgroundResource(R.drawable.btn_random_contents_yes);
-                        hot.setBackgroundResource(R.drawable.btn_hot_contents_no);
-                        newest.setBackgroundResource(R.drawable.btn_newest_contents_no);
-                        break;
-                    case R.id.hot:
-                        hot.setBackgroundResource(R.drawable.btn_hot_contents_yes);
-                        random.setBackgroundResource(R.drawable.btn_random_contents_no);
-                        newest.setBackgroundResource(R.drawable.btn_newest_contents_no);
-                        break;
-                    case R.id.newest:
-                        newest.setBackgroundResource(R.drawable.btn_newest_contents_yes);
-                        random.setBackgroundResource(R.drawable.btn_random_contents_no);
-                        hot.setBackgroundResource(R.drawable.btn_hot_contents_no);
-                        break;
-                    default:
-                        random.setBackgroundResource(R.drawable.btn_random_contents_no);
-                        hot.setBackgroundResource(R.drawable.btn_hot_contents_no);
-                        newest.setBackgroundResource(R.drawable.btn_newest_contents_no);
-                }
-            }
-        };
-
-        random.setOnClickListener(listener);
-        hot.setOnClickListener(listener);
-        newest.setOnClickListener(listener);
 
         return view;
     }
@@ -104,14 +82,47 @@ public class SearchFragment extends Fragment {
             ((SearchMainFragment) parent).resetSearchButton();
         }
 
-        if (keyword == null || keyword.isEmpty()) {
+        /*if (keyword == null || keyword.isEmpty()) {
             textView.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
             textView.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
-        }
+        }*/
     }
+
+    private List<FilterListResponse> searchResults = new ArrayList<>();
+    private SearchKeywordAdapter resultAdapter;
+    private void searchByNaturalLanguage(String query) {
+        FilterApi api = AppRetrofitClient.getInstance(requireContext()).create(FilterApi.class);
+        // 👈 자연어 모드FilterSortType.ACCURACY,// 👈 정확도순 (AI 랭킹 유지)0 / page20 / size
+        api.searchFilters(query, SearchType.NL, FilterSortType.ACCURACY, 0, 20 ).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+            @Override
+            public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<FilterListResponse> results = response.body().content;
+
+                    if (results.isEmpty()) {
+                        textView.setVisibility(View.VISIBLE);
+                        recyclerView.setVisibility(View.GONE);
+
+                        searchResults.clear();
+                        //searchResults.addAll(response.body().getContent());
+                        resultAdapter.notifyDataSetChanged();
+                    } else {
+                        textView.setVisibility(View.GONE);
+                        recyclerView.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
+                // 에러 처리
+            }
+        });
+    }
+
 
     private View chooseOrderOn, dimBackground;
     private ConstraintLayout chooseOrder;

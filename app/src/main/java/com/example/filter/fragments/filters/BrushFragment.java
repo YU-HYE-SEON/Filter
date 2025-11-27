@@ -1899,20 +1899,17 @@ public class BrushFragment extends Fragment {
     private void showBrushToStickerDialog() {
         new BrushToStickerDialog(requireContext(), new BrushToStickerDialog.BrushToStickerDialogListener() {
             @Override
-            public void onYes() {
+            public void onAdd() {
                 brushToSticker();
             }
 
             @Override
-            public void onNo() {
+            public void onCancel() {
                 lassoOverlay.clearAll();
                 lassoOverlay.setDrawingEnabled(true);
             }
         }
-        ).withMessage("선택한 영역을 내 스티커에 추가하시겠습니까?")
-                .withButton1Text("예")
-                .withButton2Text("아니오")
-                .show();
+        ).show();
     }
 
     private void brushToSticker() {

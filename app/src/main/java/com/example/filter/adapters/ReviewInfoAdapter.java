@@ -1,8 +1,11 @@
 package com.example.filter.adapters;
 
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -11,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
+import com.example.filter.activities.filter.RegisterActivity;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 
 import java.util.ArrayList;
@@ -60,6 +64,8 @@ public class ReviewInfoAdapter extends RecyclerView.Adapter<ReviewInfoAdapter.VH
         holder.snsId.setText(item.socialValue);
 
         holder.deleteBtn.setVisibility(item.isMine ? View.VISIBLE : View.GONE);
+
+        Log.d("리뷰내것인가", "Review ID: " + item.id + ", isMine: " + item.isMine);
 
         holder.deleteBtn.setOnClickListener(v -> {
             if (listener != null) listener.onDelete(item.id, position);

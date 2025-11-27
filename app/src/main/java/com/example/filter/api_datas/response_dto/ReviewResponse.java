@@ -5,7 +5,7 @@ import java.io.Serializable;
 
 public class ReviewResponse implements Serializable {
 
-    @SerializedName("isMine")
+    @SerializedName("mine")
     public boolean isMine;
 
     @SerializedName("id")

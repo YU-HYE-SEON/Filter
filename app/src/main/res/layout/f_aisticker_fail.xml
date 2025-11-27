@@ -63,7 +63,7 @@
             android:id="@+id/retryBtn"
             android:layout_width="200dp"
             android:layout_height="65dp"
-            android:background="@drawable/btn_retry_ai_sticker"
+            android:background="@drawable/btn_ai_sticker_result"
             android:clickable="true"
             android:focusable="true"
             app:layout_constraintBottom_toBottomOf="parent"
