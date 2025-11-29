@@ -126,6 +126,10 @@ public class OnBoardingAdapter extends RecyclerView.Adapter<OnBoardingAdapter.VH
     public void onBindViewHolder(@NonNull VH holder, int position) {
         OnBoardingItem item = items.get(position);
 
+        Glide.with(holder.itemView.getContext())
+                .load(item.getImageResId())
+                .into(holder.image1);
+
         if (item.isSelected()) {
             holder.image1.postDelayed(() -> addInnerBorderOverlay(holder.image1, 5), 0);
             holder.image2.setVisibility(View.VISIBLE);
@@ -143,6 +147,26 @@ public class OnBoardingAdapter extends RecyclerView.Adapter<OnBoardingAdapter.VH
                 listener.onSelectionChanged(count);
             }
         });
+
+
+
+        /*if (item.isSelected()) {
+            holder.image1.postDelayed(() -> addInnerBorderOverlay(holder.image1, 5), 0);
+            holder.image2.setVisibility(View.VISIBLE);
+        } else {
+            holder.image1.postDelayed(() -> removeInnerBorderOverlay(holder.image1), 0);
+            holder.image2.setVisibility(View.INVISIBLE);
+        }
+
+        holder.image1.setOnClickListener(v -> {
+            item.setSelected(!item.isSelected());
+            notifyItemChanged(position);
+
+            if (listener != null) {
+                int count = getSelectedCount();
+                listener.onSelectionChanged(count);
+            }
+        });*/
     }
 
     @Override

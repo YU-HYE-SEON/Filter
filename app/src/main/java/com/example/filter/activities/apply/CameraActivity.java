@@ -24,6 +24,9 @@ import androidx.core.content.ContextCompat;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
+import com.example.filter.api_datas.response_dto.FilterResponse;
+import com.example.filter.apis.FilterApi;
+import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.api_datas.FaceStickerData;
@@ -33,6 +36,10 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CameraActivity extends BaseActivity {
     private static final int CAMERA_PERMISSION_CODE = 10;
@@ -46,10 +53,11 @@ public class CameraActivity extends BaseActivity {
     private AppCompatButton ratioBtn, photoBtn;
     private FrameLayout cameraContainer,camera, overlay;
     //private ExecutorService cameraExecutor;
-    private FilterDtoCreateRequest.ColorAdjustments adj;
-    private String brushPath;
-    private String stickerImageNoFacePath;
-    private ArrayList<FaceStickerData> faceStickers;
+    //private FilterDtoCreateRequest.ColorAdjustments adj;
+    //private String brushPath;
+    //private String stickerImageNoFacePath;
+    //private ArrayList<FaceStickerData> faceStickers;
+    private String filterId;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -74,15 +82,21 @@ public class CameraActivity extends BaseActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
         }
 
-        adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
-        brushPath = getIntent().getStringExtra("brush_image_path");
-        stickerImageNoFacePath = getIntent().getStringExtra("stickerImageNoFacePath");
-        faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
+        //adj = (FilterDtoCreateRequest.ColorAdjustments) getIntent().getSerializableExtra("color_adjustments");
+        //brushPath = getIntent().getStringExtra("brush_image_path");
+        //stickerImageNoFacePath = getIntent().getStringExtra("stickerImageNoFacePath");
+        //faceStickers = (ArrayList<FaceStickerData>) getIntent().getSerializableExtra("face_stickers");
 
         //if (adj != null) applyAdjustments(adj);
-        if (brushPath != null) applyBrushStickerImage(overlay, brushPath);
-        if (stickerImageNoFacePath != null) {
-            applyBrushStickerImage(overlay, stickerImageNoFacePath);
+        //if (brushPath != null) applyBrushStickerImage(overlay, brushPath);
+        //if (stickerImageNoFacePath != null) {
+        //  applyBrushStickerImage(overlay, stickerImageNoFacePath);
+        //}
+
+
+        filterId = getIntent().getStringExtra("filterId");
+        if (filterId != null) {
+            loadFilterData(Long.parseLong(filterId));
         }
 
         backBtn.setOnClickListener(v -> {
@@ -135,7 +149,31 @@ public class CameraActivity extends BaseActivity {
         overlay.addView(imageView);
     }
 
+    private void loadFilterData(long id) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
+        api.getFilter(id).enqueue(new Callback<FilterResponse>() {
+            @Override
+            public void onResponse(Call<FilterResponse> call, Response<FilterResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    FilterResponse data = response.body();
 
+                    if (data.stickerImageNoFaceUrl != null) {
+                        applyBrushStickerImage(overlay, data.stickerImageNoFaceUrl);
+                    }
+
+                } else {
+                    Log.e("카메라", "필터 정보 조회 실패: " + response.code());
+                    Toast.makeText(CameraActivity.this, "필터 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FilterResponse> call, Throwable t) {
+                Log.e("카메라", "통신 오류", t);
+                Toast.makeText(CameraActivity.this, "필터 정보를 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     private void startCamera() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);

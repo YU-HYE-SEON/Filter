@@ -52,9 +52,19 @@ public class OnBoardingActivity extends BaseActivity {
 
         //10개만 추가
         List<OnBoardingItem> itemList = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        /*for (int i = 0; i < 10; i++) {
             itemList.add(new OnBoardingItem());
-        }
+        }*/
+        itemList.add(new OnBoardingItem(R.drawable.onboarding1));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding2));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding3));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding4));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding5));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding1));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding2));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding3));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding4));
+        itemList.add(new OnBoardingItem(R.drawable.onboarding5));
 
         /*for (int resId : imageIds) {
             itemList.add(new OnBoardingItem(resId));

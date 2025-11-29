@@ -74,7 +74,6 @@ public class ApplyFilterActivity extends BaseActivity {
 
     private ImageButton backBtn;
     private FrameLayout photoContainer, brushOverlay, stickerOverlay;
-    private View photoMask;
     private ConstraintLayout bottomArea;
     private AppCompatButton toGalleryBtn, toRegisterReviewBtn;
     private GLSurfaceView glSurfaceView;
@@ -104,9 +103,8 @@ public class ApplyFilterActivity extends BaseActivity {
         setContentView(R.layout.a_apply_photo);
         backBtn = findViewById(R.id.backBtn);
         photoContainer = findViewById(R.id.photoContainer);
-        brushOverlay = findViewById(R.id.brushOverlay);
+        //brushOverlay = findViewById(R.id.brushOverlay);
         stickerOverlay = findViewById(R.id.stickerOverlay);
-        photoMask = findViewById(R.id.photoMask);
         bottomArea = findViewById(R.id.bottomArea);
         toGalleryBtn = findViewById(R.id.toGalleryBtn);
         toRegisterReviewBtn = findViewById(R.id.toRegisterReviewBtn);
@@ -126,12 +124,6 @@ public class ApplyFilterActivity extends BaseActivity {
 
         photoContainer.addView(glSurfaceView, 0);
 
-        photoMask.bringToFront();
-
-        photoContainer.post(() -> {
-            photoMask.post(() -> updatePhotoMask(photoMask));
-        });
-
         renderer.setOnBitmapCaptureListener(baseBitmap -> {
             try {
                 Bitmap finalBitmap = baseBitmap.copy(Bitmap.Config.ARGB_8888, true);
@@ -148,7 +140,7 @@ public class ApplyFilterActivity extends BaseActivity {
                         Bitmap.Config.ARGB_8888
                 );
                 Canvas overlayCanvas = new Canvas(overlayBitmap);
-                brushOverlay.draw(overlayCanvas);
+                //brushOverlay.draw(overlayCanvas);
                 stickerOverlay.draw(overlayCanvas);
 
                 Rect src = new Rect(vX, vY, vX + vW, vY + vH);
@@ -167,6 +159,9 @@ public class ApplyFilterActivity extends BaseActivity {
 
         filterId = getIntent().getStringExtra("filterId");
 
+        if (filterId != null) {
+            loadFilterData(Long.parseLong(filterId));
+        }
         Uri imageUri = getIntent().getData();
         if (imageUri != null) {
             try {
@@ -184,9 +179,6 @@ public class ApplyFilterActivity extends BaseActivity {
                     });
                 }
 
-                if (filterId != null) {
-                    loadFilterData(Long.parseLong(filterId));
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -388,42 +380,6 @@ public class ApplyFilterActivity extends BaseActivity {
             dimBackground.setVisibility(View.GONE);
             isReviewPopVisible = false;
         }
-    }
-
-    private void updatePhotoMask(View mask) {
-        int x = renderer.getViewportX();
-        int y = renderer.getViewportY();
-        int w = renderer.getViewportWidth();
-        int h = renderer.getViewportHeight();
-
-        mask.setBackground(new Drawable() {
-            @Override
-            public void draw(Canvas canvas) {
-                Paint p = new Paint();
-                p.setColor(Color.WHITE);
-                p.setStyle(Paint.Style.FILL);
-
-                canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), p);
-
-                p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-                canvas.drawRect(x, y, x + w, y + h, p);
-            }
-
-            @Override
-            public void setAlpha(int alpha) {
-            }
-
-            @Override
-            public void setColorFilter(@Nullable ColorFilter colorFilter) {
-            }
-
-            @Override
-            public int getOpacity() {
-                return PixelFormat.TRANSLUCENT;
-            }
-        });
-
-        mask.setLayerType(View.LAYER_TYPE_HARDWARE, null);
     }
 
     private void applyAdjustments(FilterDtoCreateRequest.ColorAdjustments a) {
