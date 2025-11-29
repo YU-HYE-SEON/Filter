@@ -597,16 +597,6 @@ public class FilterActivity extends BaseActivity {
         // 화면 표시용으로는 로딩이 빠른 'Preview S3 URL'을 사용 (Glide가 캐싱함)
         intent.putExtra("display_image_path", s3PreviewUrl);
 
-        if (appliedCropRectN != null) {
-            intent.putExtra("cropRectN_l", appliedCropRectN.left);
-            intent.putExtra("cropRectN_t", appliedCropRectN.top);
-            intent.putExtra("cropRectN_r", appliedCropRectN.right);
-            intent.putExtra("cropRectN_b", appliedCropRectN.bottom);
-        }
-        intent.putExtra("accumRotationDeg", accumRotationDeg);
-        intent.putExtra("accumFlipH", accumFlipH);
-        intent.putExtra("accumFlipV", accumFlipV);
-
         startActivity(intent);
         finish();
     }
@@ -659,47 +649,25 @@ public class FilterActivity extends BaseActivity {
                 });
     }
 
-    // ---------------------------------------------------------------
-    // ✅ [추가] 필터/스티커 없이 '회전/반전/크롭'만 적용된 원본 비트맵 생성
-    // ---------------------------------------------------------------
+    /// 회전 크롭 줌 모두 적용된 이미지가 오리지널이미지가 되도록 하는 메서드 ///
     private Bitmap createGeometryOnlyBitmap() {
-        // 1. 회전/반전이 적용된 비트맵 사용 (transformedBitmap이 최신 회전 상태임)
         Bitmap source = transformedBitmap != null ? transformedBitmap : originalBitmap;
+        if (source == null) return null;
 
-        if (source == null)
-            return null;
-
-        // 2. 크롭 정보 가져오기 (적용된 크롭이 없으면 현재 크롭 모드의 영역 사용)
-        RectF cropRectN = appliedCropRectN;
-        if (cropRectN == null && lastCropRectN != null) {
-            cropRectN = lastCropRectN;
+        if (appliedCropRectN != null) {
+            Rect cropPx = new Rect(
+                    (int) (appliedCropRectN.left * source.getWidth()),
+                    (int) (appliedCropRectN.top * source.getHeight()),
+                    (int) (appliedCropRectN.right * source.getWidth()),
+                    (int) (appliedCropRectN.bottom * source.getHeight())
+            );
+            return Bitmap.createBitmap(source, cropPx.left, cropPx.top,
+                    cropPx.width(), cropPx.height());
         }
 
-        // 3. 크롭이 없으면 회전된 상태 그대로 반환
-        if (cropRectN == null) {
-            return source;
-        }
-
-        // 4. 정규화 좌표(0.0 ~ 1.0)를 픽셀 좌표로 변환하여 자르기
-        int width = source.getWidth();
-        int height = source.getHeight();
-
-        int left = (int) (cropRectN.left * width);
-        int top = (int) (cropRectN.top * height);
-        int right = (int) (cropRectN.right * width);
-        int bottom = (int) (cropRectN.bottom * height);
-
-        // 범위 안전 장치
-        left = Math.max(0, left);
-        top = Math.max(0, top);
-        int cropW = Math.min(right - left, width - left);
-        int cropH = Math.min(bottom - top, height - top);
-
-        if (cropW <= 0 || cropH <= 0)
-            return source;
-
-        return Bitmap.createBitmap(source, left, top, cropW, cropH);
+        return source.copy(source.getConfig(), true);
     }
+
 
     /// 사진 이미지 가져오기 ///
     private void loadImageFromUri(Uri photoUri) {
@@ -1355,37 +1323,6 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
-    /*
-     * public void resetColorState() {
-     * isPreviewingOriginalColors = false;
-     * savedFilterValues.clear();
-     *
-     * if (renderer != null) {
-     * renderer.resetAllFilter();
-     * photoPreview.requestRender();
-     * }
-     *
-     * colorHistory.clear();
-     * colorCursor = -1;
-     * colorEdited = false;
-     *
-     * baselineFilterValues.clear();
-     * for (String k : FILTER_KEYS) {
-     * baselineFilterValues.put(k, getCurrentValue(k));
-     * }
-     *
-     * if (undoColor != null) {
-     * undoColor.setEnabled(false);
-     * undoColor.setAlpha(0.4f);
-     * }
-     * if (redoColor != null) {
-     * redoColor.setEnabled(false);
-     * redoColor.setAlpha(0.4f);
-     * }
-     * refreshOriginalColorButton();
-     * }
-     */
-
     /// geometry ///
     private float[] mapPointN(float x, float y, int rotDeg, boolean flipH, boolean flipV) {
         if (flipH)
@@ -2038,14 +1975,6 @@ public class FilterActivity extends BaseActivity {
             backBtn.setClickable(enabled);
             backBtn.setAlpha(enabled ? 1f : 0.3f);
         }
-
-        /*
-         * if (saveBtn != null) {
-         * saveBtn.setEnabled(enabled);
-         * saveBtn.setClickable(enabled);
-         * saveBtn.setAlpha(enabled ? 1f : 0.3f);
-         * }
-         */
     }
 
     public void requestUpdateBackGate() {
@@ -2104,8 +2033,6 @@ public class FilterActivity extends BaseActivity {
         }
 
         if (cur instanceof ColorsFragment) {
-            // resetColorState();
-
             fm.beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
                     .replace(R.id.bottomArea2, new ToolsFragment())
@@ -2152,5 +2079,4 @@ public class FilterActivity extends BaseActivity {
     public GLSurfaceView getPhotoPreview() {
         return photoPreview;
     }
-
 }

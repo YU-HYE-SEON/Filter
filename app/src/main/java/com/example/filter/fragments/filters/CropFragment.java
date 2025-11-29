@@ -218,8 +218,6 @@ public class CropFragment extends Fragment {
                     activity.commitTransformations();
                     activity.setCropEdited(true);
 
-                    activity.appliedCropRectN = new RectF(lN, tN, rN, bN);
-
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
                             .setCustomAnimations(R.anim.slide_up, 0)

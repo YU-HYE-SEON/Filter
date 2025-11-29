@@ -101,11 +101,6 @@ public class FilterInfoActivity extends BaseActivity {
     private ArrayList<FaceStickerData> faceStickers;
     private String filterId, nick, originalPath, imgUrl, title, tagsStr, price, brushPath, stickerImageNoFacePath;
 
-    // 편집 정보 (로컬 이미지 복원용)
-    private float cropN_l = -1f, cropN_t = -1f, cropN_r = -1f, cropN_b = -1f;
-    private int accumRotationDeg = 0;
-    private boolean accumFlipH = false, accumFlipV = false;
-
     // 갤러리 런처
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() == RESULT_OK && result.getData() != null) {
@@ -280,14 +275,6 @@ public class FilterInfoActivity extends BaseActivity {
         title = intent.getStringExtra("filterTitle");
         price = intent.getStringExtra("price");
         if (price == null) price = "0";
-
-        cropN_l = intent.getFloatExtra("cropRectN_l", -1f);
-        cropN_t = intent.getFloatExtra("cropRectN_t", -1f);
-        cropN_r = intent.getFloatExtra("cropRectN_r", -1f);
-        cropN_b = intent.getFloatExtra("cropRectN_b", -1f);
-        accumRotationDeg = intent.getIntExtra("accumRotationDeg", 0);
-        accumFlipH = intent.getBooleanExtra("accumFlipH", false);
-        accumFlipV = intent.getBooleanExtra("accumFlipV", false);
 
         adj = (FilterDtoCreateRequest.ColorAdjustments) intent.getSerializableExtra("color_adjustments");
         brushPath = intent.getStringExtra("brush_image_path");
