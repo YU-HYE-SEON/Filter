@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/dialog">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/message1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/txt1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_bold"
+                android:text="리뷰를 "
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/txt2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:elevation="4dp"
+                android:fontFamily="@font/pretendard_bold"
+                android:text="삭제"
+                android:textAlignment="center"
+                android:textColor="#007AFF"
+                android:textSize="20sp"
+                app:layout_constraintStart_toEndOf="@+id/txt1"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="11dp"
+                android:background="@drawable/dialog_sticker_highlight_blue"
+                android:translationY="6dp"
+                app:layout_constraintBottom_toBottomOf="@+id/txt2"
+                app:layout_constraintEnd_toEndOf="@+id/txt2"
+                app:layout_constraintStart_toStartOf="@+id/txt2"
+                app:layout_constraintTop_toTopOf="@+id/txt2" />
+
+            <TextView
+                android:id="@+id/txt3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_bold"
+                android:text="하시겠습니까?"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                app:layout_constraintStart_toEndOf="@+id/txt2"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/message2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fontFamily="@font/pretendard_medium"
+            android:text="삭제된 리뷰는 복구가 불가능합니다."
+            android:textAlignment="center"
+            android:textColor="#90989F"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/message1" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/btns"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="36dp"
+            android:layout_marginBottom="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/message2">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/cancelBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/dialog_sticker_btn_change"
+                android:fontFamily="@font/pretendard_semibold"
+                android:text="취소"
+                android:textAlignment="center"
+                android:textColor="#007AFF"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/deleteBtn"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/deleteBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/dialog_sticker_btn_keep"
+                android:fontFamily="@font/pretendard_semibold"
+                android:text="삭제하기"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/cancelBtn"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>

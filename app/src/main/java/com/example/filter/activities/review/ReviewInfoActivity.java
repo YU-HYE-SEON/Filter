@@ -36,6 +36,7 @@ import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.dialogs.ReviewDeleteDialog;
 import com.example.filter.etc.ClickUtils;
 
 import java.util.List;
@@ -96,7 +97,7 @@ public class ReviewInfoActivity extends BaseActivity {
         //loadReviews(reviewId);
 
         adapter.setOnItemDeleteListener((reviewId, position) -> {
-            deleteReview(reviewId, position);
+            confirmDeleteReview(reviewId, position);
         });
 
         use.post(() -> {
@@ -169,5 +170,18 @@ public class ReviewInfoActivity extends BaseActivity {
                 Toast.makeText(ReviewInfoActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void confirmDeleteReview(long reviewId, int position) {
+        new ReviewDeleteDialog(this, new ReviewDeleteDialog.ReviewDeleteDialogListener() {
+            @Override
+            public void onCancel() {
+            }
+
+            @Override
+            public void onDelete() {
+                deleteReview(reviewId, position);
+            }
+        }).show();
     }
 }

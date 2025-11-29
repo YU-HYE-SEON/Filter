@@ -8,22 +8,21 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
 import com.example.filter.R;
 
-public class StickerDeleteDialog extends Dialog {
-    public interface StickerDeleteDialogListener {
+public class ReviewDeleteDialog extends Dialog {
+    public interface ReviewDeleteDialogListener {
         void onCancel();
 
         void onDelete();
     }
 
-    private StickerDeleteDialogListener listener;
+    private ReviewDeleteDialogListener listener;
 
-    public StickerDeleteDialog(@NonNull Context context, StickerDeleteDialogListener listener) {
+    public ReviewDeleteDialog(@NonNull Context context, ReviewDeleteDialogListener listener) {
         super(context);
         this.listener = listener;
     }
@@ -31,10 +30,10 @@ public class StickerDeleteDialog extends Dialog {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dialog_my_sticker_delete);
+        setContentView(R.layout.dialog_review_delete);
 
-        setCancelable(false);
-        setCanceledOnTouchOutside(false);
+        setCancelable(true);
+        setCanceledOnTouchOutside(true);
 
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();

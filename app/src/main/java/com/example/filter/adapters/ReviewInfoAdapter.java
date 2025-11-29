@@ -16,9 +16,19 @@ import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.filter.RegisterActivity;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
+import com.example.filter.apis.StickerApi;
+import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.dialogs.ReviewDeleteDialog;
+import com.example.filter.dialogs.StickerDeleteDialog;
+import com.example.filter.etc.Controller;
+import com.example.filter.items.StickerItem;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ReviewInfoAdapter extends RecyclerView.Adapter<ReviewInfoAdapter.VH> {
     public interface OnDeleteClickListener {

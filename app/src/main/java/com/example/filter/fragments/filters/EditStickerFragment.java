@@ -671,7 +671,7 @@ public class EditStickerFragment extends Fragment {
 
         new StickerDeleteDialog(requireContext(), new StickerDeleteDialog.StickerDeleteDialogListener() {
             @Override
-            public void onKeep() {
+            public void onCancel() {
             }
 
             @Override
@@ -704,10 +704,7 @@ public class EditStickerFragment extends Fragment {
                     }
                 });
             }
-        }).withMessage("내 스티커에서 정말로 삭제하시겠습니까?")
-                .withButton1Text("예")
-                .withButton2Text("아니오")
-                .show();
+        }).show();
     }
 
     private void confirmDeleteFaceSticker(Integer gid) {
