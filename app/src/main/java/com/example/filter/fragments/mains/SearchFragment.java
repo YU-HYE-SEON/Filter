@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -22,9 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
-import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.adapters.FilterListAdapter;
-import com.example.filter.adapters.ReviewAdapter;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
 import com.example.filter.api_datas.response_dto.FilterSortType;
 import com.example.filter.api_datas.response_dto.PageResponse;
@@ -83,6 +82,18 @@ public class SearchFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (ischooseOrderVisible) {
+                    hideChooseOrder();
+                } else {
+                    setEnabled(false);
+                    requireActivity().onBackPressed();
+                }
+            }
+        });
 
         setupChooseOrder();
 
@@ -228,7 +239,7 @@ public class SearchFragment extends Fragment {
 
     private void setupChooseOrder() {
         FrameLayout rootView = requireActivity().findViewById(R.id.chooseOrderOff);
-        chooseOrderOn = getLayoutInflater().inflate(R.layout.f_choose_order, null);
+        chooseOrderOn = getLayoutInflater().inflate(R.layout.m_choose_order, null);
         chooseOrder = chooseOrderOn.findViewById(R.id.chooseOrder);
         recommend = chooseOrderOn.findViewById(R.id.recommend);
         sales = chooseOrderOn.findViewById(R.id.sales);

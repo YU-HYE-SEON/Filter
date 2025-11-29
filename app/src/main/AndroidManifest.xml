@@ -145,6 +145,11 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
+        <activity
+            android:name=".activities.mypage.EditNickNameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Base.Theme.Filter" />
     </application>
 
 </manifest>

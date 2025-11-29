@@ -202,6 +202,7 @@ public class SearchMainFragment extends Fragment {
             searchTxt.setText("");
             searchTxt.requestFocus();
             showKeyboard(searchTxt);
+            goBackToMainSearch();
         });
     }
 
@@ -243,7 +244,7 @@ public class SearchMainFragment extends Fragment {
         if (searchFrame != null) {
             searchFrame.setVisibility(View.GONE);
         }
-        hideKeypadAndClearFocus();
+        //hideKeypadAndClearFocus();
     }
 
     private boolean isPoint(MotionEvent ev) {

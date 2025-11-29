@@ -26,7 +26,6 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
@@ -196,7 +195,7 @@ public class ApplyFilterActivity extends BaseActivity {
 
     private void setupReviewPop() {
         FrameLayout rootView = findViewById(R.id.reviewPopOff);
-        reviewPopOn = getLayoutInflater().inflate(R.layout.f_review_pop, null);
+        reviewPopOn = getLayoutInflater().inflate(R.layout.m_review_pop, null);
         reviewPop = reviewPopOn.findViewById(R.id.reviewPop);
         iconSnsNone = reviewPopOn.findViewById(R.id.iconSnsNone);
         iconSnsInsta = reviewPopOn.findViewById(R.id.iconSnsInsta);

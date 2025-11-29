@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/chooseDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/border_choose_order"
+        android:clickable="true"
+        android:elevation="8dp"
+        android:focusable="true"
+        android:padding="20dp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/oneWeek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fontFamily="@font/pretendard_semibold"
+            android:gravity="start"
+            android:text="최근 일주일 / 0000.00.00 - 0000.00.00"
+            android:textAlignment="textStart"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toTopOf="@+id/a"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/oneWeekCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_check_blue"
+            app:layout_constraintBottom_toBottomOf="@+id/oneWeek"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/oneWeek" />
+
+        <View
+            android:id="@+id/a"
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:layout_marginVertical="16dp"
+            android:background="#3390989F"
+            app:layout_constraintBottom_toTopOf="@+id/oneMonth"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/oneWeek" />
+
+        <TextView
+            android:id="@+id/oneMonth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_semibold"
+            android:gravity="start"
+            android:text="최근 한 달 / 0000.00.00 - 0000.00.00"
+            android:textAlignment="textStart"
+            android:textColor="#90989F"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toTopOf="@+id/b"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/a" />
+
+        <ImageView
+            android:id="@+id/oneMonthCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_check_blue"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/oneMonth"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/oneMonth" />
+
+        <View
+            android:id="@+id/b"
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:layout_marginVertical="16dp"
+            android:background="#3390989F"
+            app:layout_constraintBottom_toTopOf="@+id/oneYear"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/oneMonth" />
+
+
+        <TextView
+            android:id="@+id/oneYear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_semibold"
+            android:gravity="start"
+            android:text="최근 일 년 / 0000.00.00 - 0000.00.00"
+            android:textAlignment="textStart"
+            android:textColor="#90989F"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/b" />
+
+        <ImageView
+            android:id="@+id/oneYearCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_check_blue"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/oneYear"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/oneYear" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

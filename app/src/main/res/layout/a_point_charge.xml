@@ -127,15 +127,13 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
 
-
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@id/a"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/txt2">
+                    app:layout_constraintTop_toTopOf="parent">
 
                     <ImageButton
                         android:id="@+id/p100"

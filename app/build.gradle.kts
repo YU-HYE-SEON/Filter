@@ -37,6 +37,7 @@ dependencies {
     implementation ("androidx.camera:camera-camera2:$camerax_version")
     implementation ("androidx.camera:camera-lifecycle:$camerax_version")
     implementation ("androidx.camera:camera-view:$camerax_version")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("androidx.palette:palette:1.0.0")
     implementation("com.github.skydoves:colorpickerview:2.3.0")

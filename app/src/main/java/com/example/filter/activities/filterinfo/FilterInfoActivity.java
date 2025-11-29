@@ -11,7 +11,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,7 +34,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.palette.graphics.Palette;
 
@@ -578,19 +576,19 @@ public class FilterInfoActivity extends BaseActivity {
     private void setupModal() {
         FrameLayout rootView = findViewById(R.id.modalOff);
 
-        chooseUseModeOn = getLayoutInflater().inflate(R.layout.f_choose_use_mode, null);
+        chooseUseModeOn = getLayoutInflater().inflate(R.layout.m_choose_use_mode, null);
         chooseUseMode = chooseUseModeOn.findViewById(R.id.chooseUseMode);
         galleryModeBtn = chooseUseModeOn.findViewById(R.id.galleryModeBtn);
         cameraModeBtn = chooseUseModeOn.findViewById(R.id.cameraModeBtn);
         alertTxt = chooseUseModeOn.findViewById(R.id.alertTxt);
 
-        buyFilterOn = getLayoutInflater().inflate(R.layout.f_buy_filter, null);
+        buyFilterOn = getLayoutInflater().inflate(R.layout.m_buy_filter, null);
         buyFilter = buyFilterOn.findViewById(R.id.buyFilter);
         point = buyFilterOn.findViewById(R.id.point);
         currentPoint1 = buyFilterOn.findViewById(R.id.currentPoint1);
         buyBtn = buyFilterOn.findViewById(R.id.buyBtn);
 
-        buyFilterSuccessOn = getLayoutInflater().inflate(R.layout.f_buy_filter_success, null);
+        buyFilterSuccessOn = getLayoutInflater().inflate(R.layout.m_buy_filter_success, null);
         buyFilterSuccess = buyFilterSuccessOn.findViewById(R.id.buyFilterSuccess);
         currentPoint2 = buyFilterSuccessOn.findViewById(R.id.currentPoint2);
         useBtn = buyFilterSuccessOn.findViewById(R.id.useBtn);

@@ -38,14 +38,18 @@
 
             <TextView
                 android:id="@+id/nickname"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
+                android:layout_marginHorizontal="10dp"
                 android:fontFamily="@font/pretendard_bold"
                 android:text="닉네임"
                 android:textColor="@color/black"
                 android:textSize="22sp"
+                android:maxLines="1"
+                android:ellipsize="none"
+                android:singleLine="true"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/nickEditBtn"
                 app:layout_constraintStart_toEndOf="@id/icon"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -194,8 +198,8 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:visibility="gone"
-            android:paddingHorizontal="20dp">
+            android:paddingHorizontal="20dp"
+            android:visibility="gone">
 
             <TextView
                 android:layout_width="wrap_content"

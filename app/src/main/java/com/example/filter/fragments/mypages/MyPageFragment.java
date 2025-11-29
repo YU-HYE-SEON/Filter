@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,8 +19,10 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.activities.mypage.EditNickNameActivity;
 import com.example.filter.activities.mypage.PointChargeActivity;
 import com.example.filter.activities.mypage.PointHistoryActivity;
+import com.example.filter.activities.mypage.SalesManageActivity;
 import com.example.filter.api_datas.response_dto.UserMypageResponse;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.repositories.MyPageApi;
@@ -35,6 +38,8 @@ public class MyPageFragment extends Fragment {
     private AppCompatButton nickEditBtn, logoutBtn, pointChargeBtn, salesManageBtn;
     private ConstraintLayout pointBox, ask, appInfo, withdraw, snsId;
     private SwitchCompat pushToggle;
+    private static final float DEFAULT_TEXT_SIZE_SP = 22f;
+    private static final float MIN_TEXT_SIZE_SP = 12f;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -62,10 +67,16 @@ public class MyPageFragment extends Fragment {
         ClickUtils.clickDim(nickEditBtn);
         ClickUtils.clickDim(logoutBtn);
         ClickUtils.clickDim(pointChargeBtn);
+        ClickUtils.clickDim(salesManageBtn);
 
         // 필요한 경우 다른 버튼에도 클릭 효과 적용
-        // ClickUtils.clickDim(salesManageBtn);
         // ClickUtils.clickDim(ask);
+
+        nickEditBtn.setOnClickListener(v->{
+            Intent intent = new Intent(requireContext(), EditNickNameActivity.class);
+            startActivity(intent);
+            requireActivity().overridePendingTransition(0, 0);
+        });
 
         pointBox.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), PointHistoryActivity.class);
@@ -79,12 +90,25 @@ public class MyPageFragment extends Fragment {
             requireActivity().overridePendingTransition(0, 0);
         });
 
+        salesManageBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), SalesManageActivity.class);
+            startActivity(intent);
+            requireActivity().overridePendingTransition(0, 0);
+        });
+
         return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        nickname.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                adjustNicknameSize();
+            }
+        });
 
         // 1. 푸시 알림 설정 로드 (로컬 SharedPreferences)
         SharedPreferences sp = requireContext().getSharedPreferences("mypage", 0);
@@ -163,5 +187,31 @@ public class MyPageFragment extends Fragment {
         if (currentPoint != null) {
             currentPoint.setText(String.format("%,dP", current));
         }
+    }
+
+    private void adjustNicknameSize() {
+        nickname.post(() -> {
+            if (nickname.getWidth() == 0) return;
+
+            float currentSize = nickname.getTextSize() / getResources().getDisplayMetrics().scaledDensity;
+            int availableWidth = nickname.getWidth();
+            float textWidth = nickname.getPaint().measureText(nickname.getText().toString());
+
+            while (textWidth > availableWidth && currentSize > MIN_TEXT_SIZE_SP) {
+                currentSize -= 2;
+                nickname.setTextSize(currentSize);
+                textWidth = nickname.getPaint().measureText(nickname.getText().toString());
+            }
+
+            while (textWidth < availableWidth - dp(10) && currentSize < DEFAULT_TEXT_SIZE_SP) {
+                currentSize += 2;
+                nickname.setTextSize(currentSize);
+                textWidth = nickname.getPaint().measureText(nickname.getText().toString());
+            }
+        });
+    }
+
+    private int dp(int v) {
+        return Math.round(getResources().getDisplayMetrics().density * v);
     }
 }
