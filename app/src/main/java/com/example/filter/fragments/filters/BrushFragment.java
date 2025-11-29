@@ -314,6 +314,7 @@ public class BrushFragment extends Fragment {
                         lassoOverlay.setLassoVisible(true);
                         lassoOverlay.clearAll();
                         lassoOverlay.setDrawingEnabled(true);
+                        brushDraw.setDrawingEnabled(false);
                     }
                     lassoOverlay.setLassoListener(() -> {
                         lassoOverlay.setDrawingEnabled(false);
@@ -325,6 +326,7 @@ public class BrushFragment extends Fragment {
                     lassoOverlay.setLassoListener(null);
                     lassoOverlay.setDrawingEnabled(false);
                     lassoOverlay.setLassoVisible(false);
+                    brushDraw.setDrawingEnabled(true);
 
                     pen.setEnabled(true);
                     glow.setEnabled(true);
