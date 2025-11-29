@@ -175,7 +175,7 @@ public class FilterActivity extends BaseActivity {
 
         if (photoPreview != null) {
             photoPreview.setEGLContextClientVersion(2);
-            renderer = new FGLRenderer(this, photoPreview);
+            renderer = new FGLRenderer(this, photoPreview, true);
             photoPreview.setRenderer(renderer);
             photoPreview.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         } else {

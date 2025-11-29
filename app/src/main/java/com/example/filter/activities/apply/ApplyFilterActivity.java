@@ -7,13 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -30,6 +24,10 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
@@ -73,7 +71,7 @@ public class ApplyFilterActivity extends BaseActivity {
     }
 
     private ImageButton backBtn;
-    private FrameLayout photoContainer, brushOverlay, stickerOverlay;
+    private FrameLayout photoContainer, stickerOverlay;
     private ConstraintLayout bottomArea;
     private AppCompatButton toGalleryBtn, toRegisterReviewBtn;
     private GLSurfaceView glSurfaceView;
@@ -87,7 +85,7 @@ public class ApplyFilterActivity extends BaseActivity {
     private TextView snsId;
     private AppCompatButton reviewBtn;
     private boolean isReviewPopVisible = false;
-    private String filterId, imgUrl, title, nick;
+    private String filterId;
     public static FaceBoxOverlayView faceBox;
     private Bitmap originalImageBitmap;
 
@@ -103,12 +101,19 @@ public class ApplyFilterActivity extends BaseActivity {
         setContentView(R.layout.a_apply_photo);
         backBtn = findViewById(R.id.backBtn);
         photoContainer = findViewById(R.id.photoContainer);
-        //brushOverlay = findViewById(R.id.brushOverlay);
         stickerOverlay = findViewById(R.id.stickerOverlay);
         bottomArea = findViewById(R.id.bottomArea);
         toGalleryBtn = findViewById(R.id.toGalleryBtn);
         toRegisterReviewBtn = findViewById(R.id.toRegisterReviewBtn);
         reviewPopOff = findViewById(R.id.reviewPopOff);
+
+        //시스템 바 인셋 설정
+        final View root = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), nav.bottom);
+            return insets;
+        });
 
         loadSocial();
         setupReviewPop();
@@ -118,7 +123,7 @@ public class ApplyFilterActivity extends BaseActivity {
         glSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         glSurfaceView.getHolder().setFormat(android.graphics.PixelFormat.TRANSLUCENT);
         glSurfaceView.setPreserveEGLContextOnPause(true);
-        renderer = new FGLRenderer(this, glSurfaceView);
+        renderer = new FGLRenderer(this, glSurfaceView, false);
         glSurfaceView.setRenderer(renderer);
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
@@ -140,7 +145,6 @@ public class ApplyFilterActivity extends BaseActivity {
                         Bitmap.Config.ARGB_8888
                 );
                 Canvas overlayCanvas = new Canvas(overlayBitmap);
-                //brushOverlay.draw(overlayCanvas);
                 stickerOverlay.draw(overlayCanvas);
 
                 Rect src = new Rect(vX, vY, vX + vW, vY + vH);
@@ -519,9 +523,6 @@ public class ApplyFilterActivity extends BaseActivity {
                     for (int i = 0; i < faces.size(); i++) {
                         Face face = faces.get(i);
                         rects.add(face.getBoundingBox());
-                        //Log.d("얼굴인식", "========================= photoPreview 속 Face [" + (i + 1) + "] =========================");
-                        //getFaceLandmarks(face);
-                        //getFaceContours(face);
                     }
 
                     if (faceBox != null) {
@@ -547,15 +548,7 @@ public class ApplyFilterActivity extends BaseActivity {
                                 StickerMeta meta = new StickerMeta(d.relX, d.relY, d.relW, d.relH, d.rot);
                                 List<float[]> placements = StickerMeta.recalculate(faces, original, stickerOverlay, meta, this);
                                 for (float[] p : placements) {
-                                    /*View dummyFrame = LayoutInflater.from(this).inflate(R.layout.v_sticker_edit, stickerOverlay, false);
-                                    ImageView dummyImage = dummyFrame.findViewById(R.id.stickerImage);
-                                    if (d.stickerBitmap != null) {
-                                        dummyImage.setImageBitmap(d.stickerBitmap);
-                                    } else {
-                                        dummyImage.setImageBitmap(BitmapFactory.decodeFile(d.stickerPath));
-                                    }*/
                                     StickerMeta.cloneSticker(stickerOverlay, d.stickerPath, this, p);
-                                    //stickerOverlay.removeView(dummyFrame);
                                 }
                             }
                         }

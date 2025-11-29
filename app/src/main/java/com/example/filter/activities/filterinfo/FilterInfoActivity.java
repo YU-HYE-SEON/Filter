@@ -131,11 +131,10 @@ public class FilterInfoActivity extends BaseActivity {
         initViews();
 
         // 2. 시스템 바 인셋 설정
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        final int btnBoxBottom = btnBox.getPaddingBottom();
-        ViewCompat.setOnApplyWindowInsetsListener(btnBox, (v, insets) -> {
+        final View root = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), btnBoxBottom + nav.bottom);
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), nav.bottom);
             return insets;
         });
 
@@ -390,11 +389,11 @@ public class FilterInfoActivity extends BaseActivity {
             selectModeBtn.setOnClickListener(v -> {
                 if (ClickUtils.isFastClick(v, 400)) return;
                 if (isModalVisible) return;
-                if (isMine || isFree || isBuy) {
+                //if (isMine || isFree || isBuy) {
                     showModal(chooseUseModeOn);
-                } else {
-                    showModal(buyFilterOn);
-                }
+                //} else {
+                //    showModal(buyFilterOn);
+                //}
             });
         }
 

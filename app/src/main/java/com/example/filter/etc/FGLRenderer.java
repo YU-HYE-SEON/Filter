@@ -2,7 +2,6 @@ package com.example.filter.etc;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
@@ -58,9 +57,12 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             1.0f, 0.0f      //오른쪽 아래 → 오른쪽 위
     };
 
-    public FGLRenderer(Context context, GLSurfaceView glSurfaceView) {
+    private boolean isFilterActivity = true;    //FilterActivity면 사진 영역 밖을 검정색으로, ApplyFilterActivity면 사진 영역 밖을 흰색으로 설정하기 위한 변수
+
+    public FGLRenderer(Context context, GLSurfaceView glSurfaceView, boolean isFilterActivity) {
         this.context = context;
         this.glSurfaceView = glSurfaceView;
+        this.isFilterActivity = isFilterActivity;
 
         ByteBuffer bb = ByteBuffer.allocateDirect(vertices.length * 4);
         bb.order(ByteOrder.nativeOrder());
@@ -77,7 +79,11 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        if (isFilterActivity) {
+            GLES20.glClearColor(0f, 0f, 0f, 1f);
+        } else {
+            GLES20.glClearColor(1f, 1f, 1f, 1f);
+        }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         String vertexShaderCode = loadShaderCodeFromRawResource(R.raw.filter_vertex_shader);
@@ -118,7 +124,11 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 unused) {
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        if (isFilterActivity) {
+            GLES20.glClearColor(0f, 0f, 0f, 1f);
+        } else {
+            GLES20.glClearColor(1f, 1f, 1f, 1f);
+        }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         if (bitmap == null || program == 0) {
@@ -195,9 +205,12 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
                     GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, offFbo);
                     GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
-                    //GLES20.glViewport(0, 0, w, h);
 
-                    GLES20.glClearColor(0f, 0f, 0f, 1f);
+                    if (isFilterActivity) {
+                        GLES20.glClearColor(0f, 0f, 0f, 1f);
+                    } else {
+                        GLES20.glClearColor(1f, 1f, 1f, 1f);
+                    }
                     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
                     GLES20.glUseProgram(program);
@@ -235,25 +248,6 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
                     GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
-                    /*int[] rgba = new int[w * h];
-                    int[] argb = new int[w * h];
-                    IntBuffer ib = IntBuffer.wrap(rgba);
-                    ib.position(0);
-                    GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, ib);
-
-                    for (int i = 0; i < h; i++) {
-                        for (int j = 0; j < w; j++) {
-                            int idx = i * w + j;
-                            int p = rgba[idx];
-                            int r = (p) & 0xff;
-                            int g = (p >> 8) & 0xff;
-                            int b = (p >> 16) & 0xff;
-                            int a = (p >> 24) & 0xff;
-                            int flip = (h - i - 1) * w + j;
-                            argb[flip] = (a << 24) | (r << 16) | (g << 8) | b;
-                        }
-                    }
-                    captured = Bitmap.createBitmap(argb, w, h, Bitmap.Config.ARGB_8888);*/
                     int rw = viewportWidth;
                     int rh = viewportHeight;
                     int rx = viewportX;
@@ -286,7 +280,6 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
                     captureUnfilteredNext = false;
                 } else {
-                    //captured = createBitmapFromGLSurface(0, 0, w, h);
                     captured = createBitmapFromGLSurface(viewportX, viewportY, viewportWidth, viewportHeight);
                 }
 
