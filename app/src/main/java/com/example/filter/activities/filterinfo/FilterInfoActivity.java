@@ -388,7 +388,7 @@ public class FilterInfoActivity extends BaseActivity {
                 if (ClickUtils.isFastClick(v, 400)) return;
                 if (isModalVisible) return;
                 //if (isMine || isFree || isBuy) {
-                    showModal(chooseUseModeOn);
+                showModal(chooseUseModeOn);
                 //} else {
                 //    showModal(buyFilterOn);
                 //}
@@ -749,44 +749,19 @@ public class FilterInfoActivity extends BaseActivity {
         originalBtn.setOnTouchListener((v, ev) -> {
             switch (ev.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
-                    /*if (originalPath != null) {
-                        v.setPressed(true);
-                        originalBtn.setAlpha(0.4f);
-                        loadOriginalImage(originalPath);
-                    }*/
                     if (preloadedOriginalImage != null) {
                         v.setPressed(true);
-
-                        Log.d("원본보기", "원본버튼 누름 : " + v.isPressed());
-
                         originalBtn.setAlpha(0.4f);
                         img.setImageBitmap(preloadedOriginalImage);
                     }
-
-                    if (preloadedOriginalImage == null)
-                        Log.d("원본보기", "원본버튼 눌렀지만 안 됨 " + v.isPressed());
-
                     return true;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    /*if (imgUrl != null) {
-                        v.setPressed(false);
-                        originalBtn.setAlpha(1f);
-                        Glide.with(FilterInfoActivity.this).load(imgUrl).dontAnimate().fitCenter().into(img);
-                    }*/
-
                     if (preloadedEditedImage != null) {
                         v.setPressed(false);
-
-                        Log.d("원본보기", "원본버튼 뗌 : " + v.isPressed());
-
                         originalBtn.setAlpha(1f);
                         img.setImageBitmap(preloadedEditedImage);
                     }
-
-                    if (preloadedEditedImage == null)
-                        Log.d("원본보기", "원본버튼 뗐지만 안 됨 " + v.isPressed());
-
                     return true;
             }
             return true;
@@ -822,19 +797,6 @@ public class FilterInfoActivity extends BaseActivity {
         });
     }
 
-    /*private void loadOriginalImage(String path) {
-        Glide.with(this).asBitmap().load(path).dontAnimate().fitCenter().into(new CustomTarget<Bitmap>() {
-            @Override
-            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                img.setImageBitmap(resource);
-            }
-
-            @Override
-            public void onLoadCleared(@Nullable Drawable placeholder) {
-            }
-        });
-    }*/
-
     private void sendTagToSearch(String keyword) {
         Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
         intent.putExtra("search_keyword", keyword);
@@ -864,8 +826,6 @@ public class FilterInfoActivity extends BaseActivity {
 
                     Log.e("리뷰리스트", "필터인포액티비티 | 리뷰 5개 미리보기 성공");
 
-                    //String key = (filterId != null && !filterId.isEmpty()) ? filterId : (nick + "_" + title);
-                    //List<ReviewItem> reviews = ReviewStore.getReviews(key);
                     List<ReviewResponse> reviews = response.body();
                     int size = reviews.size();
                     if (reviewCount != null) reviewCount.setText("리뷰 (" + size + ")");
@@ -940,41 +900,9 @@ public class FilterInfoActivity extends BaseActivity {
 
         if (dimBackground != null && dimBackground.getVisibility() == View.VISIBLE) hideModal();
 
-
         if (filterId != null && !filterId.isEmpty()) {
             loadReviews(Long.parseLong(filterId));
         }
-
-        /*String key = (filterId != null && !filterId.isEmpty()) ? filterId : (nick + "_" + title);
-        List<ReviewItem> reviews = ReviewStore.getReviews(key);
-        int size = reviews.size();
-        if (reviewCount != null) reviewCount.setText("리뷰 (" + size + ")");
-
-        if (noReviewTxt != null) noReviewTxt.setVisibility(size == 0 ? View.VISIBLE : View.GONE);
-        if (reviewBox1 != null)
-            reviewBox1.setVisibility(size > 0 && size <= 4 ? View.VISIBLE : View.GONE);
-        if (reviewBox2 != null) reviewBox2.setVisibility(size > 4 ? View.VISIBLE : View.GONE);
-
-        if (size > 0 && size <= 4) {
-            if (rb1Img1 != null) {
-                rb1Img1.setVisibility(View.INVISIBLE);
-                if (size >= 1) {
-                    rb1Img1.setVisibility(View.VISIBLE);
-                    Glide.with(this).load(reviews.get(0).imageUrl).into(rb1Img1);
-                }
-            }
-            if (rb1Img2 != null) {
-                rb1Img2.setVisibility(View.INVISIBLE);
-                if (size >= 2) {
-                    rb1Img2.setVisibility(View.VISIBLE);
-                    Glide.with(this).load(reviews.get(1).imageUrl).into(rb1Img2);
-                }
-            }
-        } else if (size > 4) {
-            ImageView[] ivs = {rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5};
-            for (int i = 0; i < 5; i++)
-                if (ivs[i] != null) Glide.with(this).load(reviews.get(i).imageUrl).into(ivs[i]);
-        }*/
     }
 
     @Override
