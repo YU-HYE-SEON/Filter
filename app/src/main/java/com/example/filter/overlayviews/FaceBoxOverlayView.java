@@ -34,7 +34,7 @@ public class FaceBoxOverlayView extends View {
     private void init() {
         boxPaint.setStyle(Paint.Style.STROKE);
         boxPaint.setStrokeWidth(4f);
-        boxPaint.setColor(Color.TRANSPARENT);
+        boxPaint.setColor(Color.CYAN);
     }
 
     public void setFaceBox(Rect faceBox, int srcW, int srcH) {
@@ -62,6 +62,12 @@ public class FaceBoxOverlayView extends View {
         invalidate();
     }
 
+    boolean cameraMode = false;
+
+    public void CameraMode(boolean isCamera) {
+        cameraMode = isCamera;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -69,9 +75,14 @@ public class FaceBoxOverlayView extends View {
 
         float viewW = getWidth();
         float viewH = getHeight();
+
         float scaleX = viewW / (float) imageW;
         float scaleY = viewH / (float) imageH;
         float scale = Math.min(scaleX, scaleY);
+
+        //if (cameraMode) {
+        //    scale = Math.max(scaleX, scaleY);
+        //}
 
         float offsetX = (viewW - imageW * scale) / 2f;
         float offsetY = (viewH - imageH * scale) / 2f;

@@ -11,7 +11,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/topArea"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="60dp"
         android:background="@android:color/transparent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -21,8 +21,8 @@
             android:id="@+id/backBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="16dp"
             android:src="@drawable/btn_back_black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -30,10 +30,10 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/transitionBtn"
-            android:layout_width="55dp"
-            android:layout_height="55dp"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:layout_marginEnd="18dp"
-            android:visibility="gone"
+            android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -49,21 +49,22 @@
         android:clipToPadding="true"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="f"
+        app:layout_constraintDimensionRatio="1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/topArea"
-        app:layout_constraintVertical_bias="0.3">
+        app:layout_constraintVertical_bias="0.2">
 
         <!-- 카메라 화면 -->
-        <FrameLayout
+        <androidx.camera.view.PreviewView
             android:id="@+id/camera"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/darker_gray"
-            android:scaleType="fitCenter" />
+            app:implementationMode="compatible"
+            app:scaleType="fillCenter" />
 
-        <!-- 오버레이 -->
+        <!-- 브러쉬+얼굴x스티커 오버레이 -->
         <FrameLayout
             android:id="@+id/overlay"
             android:layout_width="match_parent"
@@ -84,8 +85,8 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/flashBtn"
-            android:layout_width="55dp"
-            android:layout_height="55dp"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:layout_marginVertical="5dp"
             android:background="@color/white"
             android:visibility="gone"
@@ -95,8 +96,8 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/timerBtn"
-            android:layout_width="55dp"
-            android:layout_height="55dp"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:layout_marginVertical="5dp"
             android:background="@color/white"
             android:visibility="gone"
@@ -106,8 +107,8 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/ratioBtn"
-            android:layout_width="55dp"
-            android:layout_height="55dp"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:layout_marginVertical="5dp"
             android:background="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -121,7 +122,7 @@
         android:id="@+id/photoBtn"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:layout_marginBottom="100dp"
+        android:layout_marginBottom="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
