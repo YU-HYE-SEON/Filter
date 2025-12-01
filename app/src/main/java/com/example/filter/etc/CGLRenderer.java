@@ -23,6 +23,7 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
     private final Context context;
     private GLSurfaceView glSurfaceView;
     private volatile Bitmap bitmap;
+    private int viewportX, viewportY, viewportWidth, viewportHeight;
     private int textureId = 0;
     private int program;
     private int positionHandle, texCoordHandle;
@@ -165,8 +166,11 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height) {
-        float imageRatio = imageAspectRatio;
-        float viewRatio = (float) width / height;
+        float viewAspectRatio = (float) width / height;
+        int viewportX = 0;
+        int viewportY = 0;
+        int viewportWidth = width;
+        int viewportHeight = height;
 
         float targetRatio;
 
@@ -177,26 +181,47 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
             case 2:
                 targetRatio = 3f / 4f;
                 break;
-            case 0:
+            case 3:
                 targetRatio = 9f / 16f;
                 break;
             default:
-                targetRatio = viewRatio;
+                targetRatio = viewAspectRatio;
         }
 
-        int vpW = width, vpH = height, vpX = 0, vpY = 0;
-
-        if (targetRatio > imageRatio) {
-            vpW = width;
-            vpH = (int) (width / imageRatio);
-            vpY = (height - vpH) / 2;
+        if (targetRatio > imageAspectRatio) {
+            viewportWidth = width;
+            viewportHeight = (int) (width / imageAspectRatio);
+            viewportY = (height - viewportHeight) / 2;
+            viewportX = 0;
         } else {
-            vpH = height;
-            vpW = (int) (height * imageRatio);
-            vpX = (width - vpW) / 2;
+            viewportHeight = height;
+            viewportWidth = (int) (height * imageAspectRatio);
+            viewportX = (width - viewportWidth) / 2;
+            viewportY = 0;
         }
 
-        GLES20.glViewport(vpX, vpY, vpW, vpH);
+        this.viewportX = viewportX;
+        this.viewportY = viewportY;
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
+
+        GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
+    }
+
+    public int getViewportWidth() {
+        return viewportWidth;
+    }
+
+    public int getViewportHeight() {
+        return viewportHeight;
+    }
+
+    public int getViewportX() {
+        return viewportX;
+    }
+
+    public int getViewportY() {
+        return viewportY;
     }
 
     public void setCropRatioMode(int mode) {

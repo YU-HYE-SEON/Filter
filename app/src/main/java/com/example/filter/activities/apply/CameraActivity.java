@@ -10,6 +10,8 @@ import android.graphics.YuvImage;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -39,9 +41,16 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,9 +68,7 @@ public class CameraActivity extends BaseActivity {
     private PreviewView camera;
     private FrameLayout cameraContainer, overlay;
     private ImageButton backBtn;
-    private AppCompatButton transitionBtn, flashBtn, timerBtn, ratioBtn, photoBtn;
-    private int transitionClickCount = 0;
-    private int ratioClickCount = 0;
+    private AppCompatButton transitionBtn, flashBtn, timerBtn, ratioBtn, r1Btn, r2Btn, r3Btn, photoBtn;
     private String filterId;
     private GLSurfaceView glSurfaceView;
     private CGLRenderer renderer;
@@ -79,6 +86,9 @@ public class CameraActivity extends BaseActivity {
         flashBtn = findViewById(R.id.flashBtn);
         timerBtn = findViewById(R.id.timerBtn);
         ratioBtn = findViewById(R.id.ratioBtn);
+        r1Btn = findViewById(R.id.r1Btn);
+        r2Btn = findViewById(R.id.r2Btn);
+        r3Btn = findViewById(R.id.r3Btn);
         photoBtn = findViewById(R.id.photoBtn);
 
         cameraExecutor = Executors.newSingleThreadExecutor();
@@ -92,11 +102,10 @@ public class CameraActivity extends BaseActivity {
         cameraContainer.addView(glSurfaceView);
         overlay.bringToFront();
 
-        transitionClickCount = 0;
-        setTransitionMode(0);
+        faceBox = new FaceBoxOverlayView(this);
+        cameraContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        ratioClickCount = 1;
-        updateRatioMode(1);
+        setTransitionMode();
 
         filterId = getIntent().getStringExtra("filterId");
         if (filterId != null) {
@@ -109,16 +118,16 @@ public class CameraActivity extends BaseActivity {
         });
 
         transitionBtn.setOnClickListener(v -> {
-            Log.d("카메라전환", "카메라 전환 버튼 누름");
-            transitionClickCount++;
-            int mode = transitionClickCount % 2;
-            setTransitionMode(mode);
+            setTransitionMode();
         });
 
         ratioBtn.setOnClickListener(v -> {
-            ratioClickCount++;
-            int mode = ratioClickCount % 3;
-            updateRatioMode(mode);
+            r1Btn.setVisibility(View.VISIBLE);
+            r2Btn.setVisibility(View.VISIBLE);
+            r3Btn.setVisibility(View.VISIBLE);
+            //ratioClickCount++;
+            //int mode = ratioClickCount % 3;
+            updateRatioMode();
         });
 
         /// 중첩 클릭되면 안 됨 ///
@@ -209,6 +218,45 @@ public class CameraActivity extends BaseActivity {
         });
     }
 
+    private void detectFaces(Bitmap bitmap) {
+        InputImage inputImage = InputImage.fromBitmap(bitmap, 0);
+
+        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                .build();
+
+        FaceDetector detector = FaceDetection.getClient(options);
+
+        detector.process(inputImage)
+                .addOnSuccessListener(faces -> {
+                    List<Rect> rects = new ArrayList<>();
+                    for (Face f : faces) rects.add(f.getBoundingBox());
+
+                    final int vW = renderer.getViewportWidth();
+                    final int vH = renderer.getViewportHeight();
+                    final int vX = renderer.getViewportX();
+                    final int vY = renderer.getViewportY();
+
+                    runOnUiThread(() -> {
+                        if (!rects.isEmpty()) {
+                            faceBox.setVisibility(View.VISIBLE);
+                            faceBox.setFaceBoxes(rects, bitmap.getWidth(), bitmap.getHeight(), vW, vH, vX, vY);
+                        } else {
+                            faceBox.clearBoxes();
+                            faceBox.setVisibility(View.GONE);
+                        }
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    runOnUiThread(() -> {
+                        faceBox.clearBoxes();
+                        faceBox.setVisibility(View.GONE);
+                    });
+                });
+    }
+
     private void startCamera() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
@@ -226,8 +274,9 @@ public class CameraActivity extends BaseActivity {
                     int rotation = image.getImageInfo().getRotationDegrees();
                     bitmap = rotateBitmap(bitmap, rotation);
 
-                    renderer.setBitmap(bitmap);
+                    detectFaces(bitmap);
 
+                    renderer.setBitmap(bitmap);
                     glSurfaceView.requestRender();
                     image.close();
                 });
@@ -241,43 +290,63 @@ public class CameraActivity extends BaseActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private void setTransitionMode(int mode) {
-        switch (mode) {
-            case 1:
-                cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
-                break;
-            case 0:
-                cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-                break;
+    private void setTransitionMode() {
+        if (cameraSelector.equals(CameraSelector.DEFAULT_BACK_CAMERA)) {
+            cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+        } else {
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
         }
 
         startCamera();
     }
 
-    private void updateRatioMode(int mode) {
+    private void updateRatioMode() {
         ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) cameraContainer.getLayoutParams();
 
-        switch (mode) {
-            case 1:
-                params.dimensionRatio = "1:1";
-                params.verticalBias = 0.2f;
-                break;
+        r1Btn.setOnClickListener(v -> {
+            params.dimensionRatio = "1:1";
+            params.verticalBias = 0.2f;
 
-            case 2:
-                params.dimensionRatio = "3:4";
-                params.verticalBias = 0.25f;
-                break;
+            ratioBtn.setText(r1Btn.getText());
 
-            case 0:
-                params.dimensionRatio = "9:16";
-                params.verticalBias = 0.25f;
-                break;
-        }
+            r1Btn.setVisibility(View.GONE);
+            r2Btn.setVisibility(View.GONE);
+            r3Btn.setVisibility(View.GONE);
 
-        cameraContainer.setLayoutParams(params);
-        cameraContainer.requestLayout();
+            cameraContainer.setLayoutParams(params);
+            cameraContainer.requestLayout();
+            renderer.setCropRatioMode(1);
+        });
 
-        renderer.setCropRatioMode(mode);
+        r2Btn.setOnClickListener(v -> {
+            params.dimensionRatio = "3:4";
+            params.verticalBias = 0.25f;
+
+            ratioBtn.setText(r2Btn.getText());
+
+            r1Btn.setVisibility(View.GONE);
+            r2Btn.setVisibility(View.GONE);
+            r3Btn.setVisibility(View.GONE);
+
+            cameraContainer.setLayoutParams(params);
+            cameraContainer.requestLayout();
+            renderer.setCropRatioMode(2);
+        });
+
+        r3Btn.setOnClickListener(v -> {
+            params.dimensionRatio = "9:16";
+            params.verticalBias = 0.25f;
+
+            ratioBtn.setText(r3Btn.getText());
+
+            r1Btn.setVisibility(View.GONE);
+            r2Btn.setVisibility(View.GONE);
+            r3Btn.setVisibility(View.GONE);
+
+            cameraContainer.setLayoutParams(params);
+            cameraContainer.requestLayout();
+            renderer.setCropRatioMode(3);
+        });
     }
 
     public static Bitmap convertImageToBitmap(ImageProxy image) {
