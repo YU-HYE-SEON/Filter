@@ -64,6 +64,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+@androidx.camera.core.ExperimentalGetImage
 public class ApplyFilterActivity extends BaseActivity {
     public interface FaceDetectionCallback {
         void onFacesDetected(List<Face> faces, Bitmap originalBitmap);

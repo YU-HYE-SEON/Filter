@@ -32,6 +32,7 @@ import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
+import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.response_dto.FilterResponse;
 import com.example.filter.apis.FilterApi;
@@ -39,6 +40,7 @@ import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.CGLRenderer;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.FGLRenderer;
+import com.example.filter.etc.StickerMeta;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.common.InputImage;
@@ -66,13 +68,15 @@ public class CameraActivity extends BaseActivity {
     private CameraSelector cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
     private ExecutorService cameraExecutor;
     private PreviewView camera;
-    private FrameLayout cameraContainer, overlay;
+    private FrameLayout cameraContainer, overlay, stickerOverlay;
     private ImageButton backBtn;
     private AppCompatButton transitionBtn, flashBtn, timerBtn, ratioBtn, r1Btn, r2Btn, r3Btn, photoBtn;
     private String filterId;
     private GLSurfaceView glSurfaceView;
     private CGLRenderer renderer;
     private FaceBoxOverlayView faceBox;
+    private ArrayList<FaceStickerData> faceStickers;
+    private List<View> currentStickerViews = new ArrayList<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -83,6 +87,7 @@ public class CameraActivity extends BaseActivity {
         cameraContainer = findViewById(R.id.cameraContainer);
         camera = findViewById(R.id.camera);
         overlay = findViewById(R.id.overlay);
+        stickerOverlay = findViewById(R.id.stickerOverlay);
         flashBtn = findViewById(R.id.flashBtn);
         timerBtn = findViewById(R.id.timerBtn);
         ratioBtn = findViewById(R.id.ratioBtn);
@@ -100,7 +105,11 @@ public class CameraActivity extends BaseActivity {
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
         cameraContainer.addView(glSurfaceView);
-        overlay.bringToFront();
+        //overlay.bringToFront();
+        stickerOverlay = new FrameLayout(this);
+        stickerOverlay.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        cameraContainer.addView(stickerOverlay);
+        stickerOverlay.bringToFront();
 
         faceBox = new FaceBoxOverlayView(this);
         cameraContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -190,6 +199,29 @@ public class CameraActivity extends BaseActivity {
         return adj;
     }
 
+    private ArrayList<FaceStickerData> mapFaceStickers
+            (List<FilterResponse.FaceStickerResponse> responses) {
+        ArrayList<FaceStickerData> dataList = new ArrayList<>();
+        if (responses == null) return dataList;
+
+        for (FilterResponse.FaceStickerResponse resp : responses) {
+            FaceStickerData data = new FaceStickerData();
+            data.stickerDbId = resp.stickerId;
+            data.relX = (float) resp.relX;
+            data.relY = (float) resp.relY;
+            data.relW = (float) resp.relW;
+            data.relH = (float) resp.relH;
+            data.rot = (float) resp.rot;
+            data.stickerPath = resp.stickerImageUrl;
+
+            Log.e("Register123", "카메라 | 얼굴스티커 | " + data);
+            Log.e("Register123", "카메라 | 얼굴스티커 | " + resp);
+
+            dataList.add(data);
+        }
+        return dataList;
+    }
+
     private void loadFilterData(long id) {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
         api.getFilter(id).enqueue(new Callback<FilterResponse>() {
@@ -202,6 +234,11 @@ public class CameraActivity extends BaseActivity {
 
                     if (data.stickerImageNoFaceUrl != null) {
                         applyBrushStickerImage(overlay, data.stickerImageNoFaceUrl);
+                    }
+
+                    ArrayList<FaceStickerData> stickers = mapFaceStickers(data.stickers);
+                    if (!stickers.isEmpty()) {
+                        CameraActivity.this.faceStickers = stickers;
                     }
 
                 } else {
@@ -247,12 +284,74 @@ public class CameraActivity extends BaseActivity {
                             faceBox.clearBoxes();
                             faceBox.setVisibility(View.GONE);
                         }
+
+                        if (!faces.isEmpty() && faceStickers != null && !faceStickers.isEmpty()) {
+                            Bitmap original = bitmap;
+                            if (original == null) return;
+
+                            List<float[]> allPlacements = new ArrayList<>();
+
+                            for (FaceStickerData d : faceStickers) {
+                                StickerMeta meta = new StickerMeta(d.relX, d.relY, d.relW, d.relH, d.rot);
+                                List<float[]> placements = StickerMeta.recalculate(faces, original, stickerOverlay, meta, CameraActivity.this);
+                                allPlacements.addAll(placements);
+                            }
+                            // 2. 현재 뷰와 필요한 뷰의 개수 비교 및 관리
+                            int requiredViews = allPlacements.size();
+                            int currentViews = currentStickerViews.size();
+
+                            // A. 불필요한 뷰 제거
+                            if (currentViews > requiredViews) {
+                                for (int i = currentViews - 1; i >= requiredViews; i--) {
+                                    View viewToRemove = currentStickerViews.remove(i);
+                                    stickerOverlay.removeView(viewToRemove);
+                                }
+                            }
+                            // B. 부족한 뷰 추가
+                            else if (currentViews < requiredViews) {
+                                for (int i = currentViews; i < requiredViews; i++) {
+                                    FaceStickerData d = faceStickers.get(i % faceStickers.size());
+
+                                    View newSticker = StickerMeta.cloneStickerForCamera(stickerOverlay, d.stickerPath, CameraActivity.this);
+                                    currentStickerViews.add(newSticker);
+                                }
+                            }
+
+                            // 3. 모든 뷰의 위치 및 크기 업데이트
+                            for (int i = 0; i < requiredViews; i++) {
+                                View stickerView = currentStickerViews.get(i);
+                                float[] p = allPlacements.get(i); // p = [X, Y, W, H, R]
+
+                                // 크기 업데이트
+                                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) stickerView.getLayoutParams();
+                                lp.width = Math.round(p[2]);
+                                lp.height = Math.round(p[3]);
+                                stickerView.setLayoutParams(lp);
+
+                                // 위치 및 회전 업데이트
+                                stickerView.setX(p[0]);
+                                stickerView.setY(p[1]);
+                                stickerView.setRotation(p[4]);
+                            }
+                        } else {
+                            // 얼굴이 감지되지 않거나 스티커가 없으면 모든 뷰 제거 (이때만 지움)
+                            for (View view : currentStickerViews) {
+                                stickerOverlay.removeView(view);
+                            }
+                            currentStickerViews.clear();
+                        }
                     });
                 })
                 .addOnFailureListener(e -> {
                     runOnUiThread(() -> {
                         faceBox.clearBoxes();
                         faceBox.setVisibility(View.GONE);
+
+                        // 얼굴 감지 실패 시 모든 뷰 제거
+                        for (View view : currentStickerViews) {
+                            stickerOverlay.removeView(view);
+                        }
+                        currentStickerViews.clear();
                     });
                 });
     }
@@ -388,6 +487,10 @@ public class CameraActivity extends BaseActivity {
         Matrix matrix = new Matrix();
         matrix.postRotate(rotationDegrees);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    public CGLRenderer getRenderer() {
+        return renderer;
     }
 
     @Override

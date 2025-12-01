@@ -72,6 +72,14 @@
             android:background="@android:color/transparent"
             android:scaleType="fitCenter" />
 
+        <!-- 얼굴o스티커 오버레이 -->
+        <FrameLayout
+            android:id="@+id/stickerOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter" />
+
     </FrameLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout

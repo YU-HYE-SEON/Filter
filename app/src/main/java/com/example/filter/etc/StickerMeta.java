@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.apply.ApplyFilterActivity;
+import com.example.filter.activities.apply.CameraActivity;
 import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.fragments.filters.FaceStickerFragment;
 import com.google.mlkit.vision.face.Face;
@@ -101,9 +102,10 @@ public class StickerMeta {
         return new StickerMeta(relX, relY, relW, relH, rot);
     }
 
+    @androidx.camera.core.ExperimentalGetImage
     public static List<float[]> recalculate(List<Face> faces, Bitmap bitmap, FrameLayout stickerOverlay, StickerMeta metaData, Context context) {
         Activity activity = null;
-        FGLRenderer renderer = null;
+        Object renderer = null;
         Resources resources = null;
 
         if (context instanceof Activity) {
@@ -118,17 +120,35 @@ public class StickerMeta {
             ApplyFilterActivity applyActivity = (ApplyFilterActivity) activity;
             renderer = applyActivity.getRenderer();
             resources = applyActivity.getResources();
+        } else if (activity instanceof CameraActivity) {
+            CameraActivity cameraActivity = (CameraActivity) activity;
+            renderer = cameraActivity.getRenderer();
+            resources = cameraActivity.getResources();
         }
 
         if (renderer == null || resources == null) return new ArrayList<>();
 
         List<float[]> resultList = new ArrayList<>();
 
+        int vpX, vpY, vpW, vpH;
+
+        if (renderer instanceof FGLRenderer) {
+            FGLRenderer fglRenderer = (FGLRenderer) renderer;
+            vpX = fglRenderer.getViewportX();
+            vpY = fglRenderer.getViewportY();
+            vpW = fglRenderer.getViewportWidth();
+            vpH = fglRenderer.getViewportHeight();
+        } else if (renderer instanceof CGLRenderer) {
+            CGLRenderer cglRenderer = (CGLRenderer) renderer;
+            vpX = cglRenderer.getViewportX();
+            vpY = cglRenderer.getViewportY();
+            vpW = cglRenderer.getViewportWidth();
+            vpH = cglRenderer.getViewportHeight();
+        } else {
+            return new ArrayList<>();
+        }
+
         if (stickerOverlay != null) {
-            int vpX = renderer.getViewportX();
-            int vpY = renderer.getViewportY();
-            int vpW = renderer.getViewportWidth();
-            int vpH = renderer.getViewportHeight();
             int bmpW = bitmap.getWidth();
             int bmpH = bitmap.getHeight();
 
@@ -164,7 +184,6 @@ public class StickerMeta {
                 }
 
                 float eulerZ = face.getHeadEulerAngleZ();
-                //float eulerY = face.getHeadEulerAngleY();
                 float eulerX = face.getHeadEulerAngleX();
 
                 float stickerCenterX = faceCenterX + (metaData.relX * faceW);
@@ -176,17 +195,12 @@ public class StickerMeta {
                 float rotatedX = (float) (dx * Math.cos(radiansZ) - dy * Math.sin(radiansZ));
                 float rotatedY = (float) (dx * Math.sin(radiansZ) + dy * Math.cos(radiansZ));
 
-                //float radiansY = (float) Math.toRadians(eulerY);
-                //float depthShiftRatio = 0.35f;
-                //float yawShiftX = (float) (Math.sin(radiansY) * faceW * depthShiftRatio);
-                //float yawShiftY = (float) (Math.abs(Math.sin(radiansY)) * faceH * 0.1f);
-
                 float radiansX = (float) Math.toRadians(eulerX);
                 float pitchShiftRatio = 0.25f;
                 float pitchShiftY = (float) (Math.sin(radiansX) * faceH * pitchShiftRatio);
 
-                stickerCenterX = (faceCenterX + rotatedX) /*+ yawShiftX*/;
-                stickerCenterY = (faceCenterY + rotatedY) /*- yawShiftY*/ + pitchShiftY;
+                stickerCenterX = (faceCenterX + rotatedX);
+                stickerCenterY = (faceCenterY + rotatedY) + pitchShiftY;
 
                 float stickerW = metaData.relW * faceW;
                 float stickerH = metaData.relH * faceH;
@@ -239,10 +253,26 @@ public class StickerMeta {
 
         stickerOverlay.addView(cloneSticker);
 
-        //cloneSticker.setTag(R.id.tag_sticker_clone, Boolean.TRUE);
-        //cloneSticker.setTag(R.id.tag_brush_layer, Boolean.FALSE);
-        //cloneSticker.setTag(R.id.tag_sticker_url, stickerUrl);
-
         return cloneSticker;
+    }
+
+    public static View cloneStickerForCamera(FrameLayout stickerOverlay, String stickerUrl, Context context) {
+        if (stickerUrl == null || context == null) return null;
+
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View cloneSticker = inflater.inflate(R.layout.v_sticker_edit, (ViewGroup) stickerOverlay, false);
+        ImageView stickerImage = cloneSticker.findViewById(R.id.stickerImage);
+        Glide.with(context).load(stickerUrl).into(stickerImage);
+
+        // 위치, 크기, 회전 관련 로직을 제거
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(1, 1); // 최소 크기 설정 (어차피 바로 업데이트될 것)
+        cloneSticker.setLayoutParams(lp);
+
+        Controller.setControllersVisible(cloneSticker, false);
+        Controller.setStickerActive(cloneSticker, true);
+
+        stickerOverlay.addView(cloneSticker);
+
+        return cloneSticker; // 생성된 뷰 객체를 반환
     }
 }

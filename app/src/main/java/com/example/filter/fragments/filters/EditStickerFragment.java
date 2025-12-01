@@ -211,6 +211,7 @@ public class EditStickerFragment extends Fragment {
         pendingServerId = serverId;
     }
 
+    @androidx.camera.core.ExperimentalGetImage
     public void applyPendingMeta() {
         if (pendingMeta != null) {
             FilterActivity activity = (FilterActivity) requireActivity();

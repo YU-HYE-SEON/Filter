@@ -70,7 +70,7 @@
             android:gravity="center"
             android:paddingHorizontal="20dp"
             android:paddingVertical="8dp"
-            android:text="표시안함"
+            android:text="선택 안 함"
             android:textAlignment="center"
             android:textColor="#90989F"
             android:textSize="16sp"
