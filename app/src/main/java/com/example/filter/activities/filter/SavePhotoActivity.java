@@ -45,6 +45,7 @@ public class SavePhotoActivity extends BaseActivity {
     private String displayImagePath; // 화면 표시용 이미지 경로
     private static final int PERMISSION_REQUEST_CODE = 100;
     private Bitmap imageToSave;
+    private boolean isSavedToGallery = false;       //사진 중복 저장 안 되게
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -169,6 +170,7 @@ public class SavePhotoActivity extends BaseActivity {
 
     private void checkAndSaveImage() {
         if (imageToSave == null) return;
+        if (isSavedToGallery) return;
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
@@ -192,6 +194,8 @@ public class SavePhotoActivity extends BaseActivity {
 
         /// 사진 저장 메서드 호출
         ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
+
+        isSavedToGallery = true;
     }
 
     @Override
@@ -199,7 +203,8 @@ public class SavePhotoActivity extends BaseActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
+                //ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
+                checkAndSaveImage();
             } else {
                 Toast.makeText(this, "갤러리 저장 권한이 거부되어 이미지를 저장할 수 없습니다.", Toast.LENGTH_LONG).show();
             }

@@ -30,6 +30,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
+import androidx.camera.core.ExperimentalGetImage;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.graphics.Insets;
@@ -45,6 +46,7 @@ import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
 import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.apply.CameraActivity;
+import com.example.filter.activities.apply.Pre_ApplyFilterActivity;
 import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.api_datas.FaceStickerData; // ✅ 하나만 유지
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
@@ -65,6 +67,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+@ExperimentalGetImage
 public class FilterInfoActivity extends BaseActivity {
     private ReviewResponse reviewResponse;
     // UI 요소
@@ -99,16 +102,36 @@ public class FilterInfoActivity extends BaseActivity {
     private ArrayList<FaceStickerData> faceStickers;
     private String filterId, nick, originalPath, imgUrl, title, tagsStr, price, brushPath, stickerImageNoFacePath;
 
+    private ActivityResultLauncher<Intent> preApplyLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    boolean bought = result.getData().getBooleanExtra("filter_bought", false);
+                    if (bought) {
+                        isBuy = true;
+                        updateButtonState();
+                    }
+                }
+            });
+
     // 갤러리 런처
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() == RESULT_OK && result.getData() != null) {
             Uri photoUri = result.getData().getData();
             if (photoUri != null) {
-                Intent intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
-                intent.setData(photoUri);
-                intent.putExtra("filterId", filterId);
 
-                startActivity(intent);
+                Intent intent;
+                if (!isBuy && !isMine) {
+                    intent = new Intent(FilterInfoActivity.this, Pre_ApplyFilterActivity.class);
+                    intent.setData(photoUri);
+                    intent.putExtra("filterId", filterId);
+                    preApplyLauncher.launch(intent);
+                } else {
+                    intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
+                    intent.setData(photoUri);
+                    intent.putExtra("filterId", filterId);
+                    startActivity(intent);
+                }
+
             } else {
                 Toast.makeText(this, "사진 선택 실패: URI 없음", Toast.LENGTH_SHORT).show();
             }
@@ -903,6 +926,8 @@ public class FilterInfoActivity extends BaseActivity {
         if (filterId != null && !filterId.isEmpty()) {
             loadReviews(Long.parseLong(filterId));
         }
+
+        updateButtonState();
     }
 
     @Override

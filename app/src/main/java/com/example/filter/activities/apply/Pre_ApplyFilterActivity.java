@@ -3,16 +3,17 @@ package com.example.filter.activities.apply;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +24,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -32,11 +32,12 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.activities.review.ReviewActivity;
+import com.example.filter.api_datas.FaceStickerData;
+import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.response_dto.FilterResponse;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.FilterApi;
@@ -46,8 +47,6 @@ import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
 import com.example.filter.etc.FGLRenderer;
-import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
-import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.etc.ImageUtils;
 import com.example.filter.etc.StickerMeta;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
@@ -57,6 +56,7 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,56 +71,44 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @androidx.camera.core.ExperimentalGetImage
-public class ApplyFilterActivity extends BaseActivity {
+public class Pre_ApplyFilterActivity extends BaseActivity {
     public interface FaceDetectionCallback {
         void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
     }
 
     private ImageButton backBtn;
+    private AppCompatButton saveBtn;
     private FrameLayout photoContainer, stickerOverlay;
     private ConstraintLayout bottomArea;
-    private AppCompatButton toGalleryBtn, toRegisterReviewBtn;
     private GLSurfaceView glSurfaceView;
     private FGLRenderer renderer;
     private ArrayList<FaceStickerData> faceStickers;
     private Bitmap finalBitmapWithStickers = null;
-    private FrameLayout reviewPopOff;
-    private View reviewPopOn, dimBackground;
-    private ConstraintLayout reviewPop;
-    private ImageView iconSnsNone, iconSnsInsta, iconSnsTwitter;
-    private TextView snsId;
-    private AppCompatButton reviewBtn;
-    private boolean isReviewPopVisible = false;
+    private FrameLayout modalOff;
+    private View buyFilterOn, buyFilterSuccessOn, dimBackground;
+    private ConstraintLayout buyFilter, buyFilterSuccess;
+    private ImageButton buyBtn, useBtn, closeBtn;
+    private boolean isModalVisible = false, isBuy = false;
+    private TextView filterTitle, point, currentPoint1, currentPoint2, useBtnTxt, closeBtnTxt;
+    private String title, price;
     private String filterId;
     public static FaceBoxOverlayView faceBox;
     private Bitmap originalImageBitmap;
-
-    // 서버로부터 받아온 sns 아이디 저장
-    private String instagramId = "";
-    private String xId = "";
-    private SocialType type = SocialType.NONE;
     private ConstraintLayout topArea;
     private boolean isToastVisible = false;
     private boolean isFaceStickerActive = false;
 
-    private boolean isBrushStickerReady = false;    //얼굴x스티커+브러쉬그림 잘 그려졌는지 확인
-    private boolean isFaceStickerReady = false;     //얼굴o스티커 잘 부착됐는지 확인
-    private boolean isStickerApplied = false;       //위에 두 스티커 모두 잘 나오는지 최종 확인 → 모두 잘 나온 후에 사진 저장
-
-    private boolean isSavedToGallery = false;       //사진 중복 저장 안 되게
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.a_apply_photo);
+        setContentView(R.layout.a_pre_apply_photo);
         topArea = findViewById(R.id.topArea);
         backBtn = findViewById(R.id.backBtn);
+        saveBtn = findViewById(R.id.saveBtn);
         photoContainer = findViewById(R.id.photoContainer);
         stickerOverlay = findViewById(R.id.stickerOverlay);
         bottomArea = findViewById(R.id.bottomArea);
-        toGalleryBtn = findViewById(R.id.toGalleryBtn);
-        toRegisterReviewBtn = findViewById(R.id.toRegisterReviewBtn);
-        reviewPopOff = findViewById(R.id.reviewPopOff);
+        modalOff = findViewById(R.id.modalOff);
 
         //시스템 바 인셋 설정
         final View root = findViewById(android.R.id.content);
@@ -130,15 +118,12 @@ public class ApplyFilterActivity extends BaseActivity {
             return insets;
         });
 
-        loadSocial();
-        setupReviewPop();
-
         glSurfaceView = new GLSurfaceView(this);
         glSurfaceView.setEGLContextClientVersion(2);
         glSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         glSurfaceView.getHolder().setFormat(android.graphics.PixelFormat.TRANSLUCENT);
         glSurfaceView.setPreserveEGLContextOnPause(true);
-        renderer = new FGLRenderer(this, glSurfaceView, false);
+        renderer = new FGLRenderer(this, glSurfaceView, true);
         glSurfaceView.setRenderer(renderer);
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
@@ -154,26 +139,25 @@ public class ApplyFilterActivity extends BaseActivity {
                 int vW = renderer.getViewportWidth();
                 int vH = renderer.getViewportHeight();
 
+                //FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(vW, vH);
+                //params.leftMargin = vX;
+                //params.topMargin = vY;
+                //stickerOverlay.setLayoutParams(params);
+
                 Bitmap overlayBitmap = Bitmap.createBitmap(
-                        vW, vH,
+                        photoContainer.getWidth(),
+                        photoContainer.getHeight(),
                         Bitmap.Config.ARGB_8888
                 );
                 Canvas overlayCanvas = new Canvas(overlayBitmap);
                 stickerOverlay.draw(overlayCanvas);
 
-                //Rect src = new Rect(vX, vY, vX + vW, vY + vH);
-                //Rect dst = new Rect(0, 0, finalBitmap.getWidth(), finalBitmap.getHeight());
-                canvas.drawBitmap(overlayBitmap, 0, 0, null);
+                Rect src = new Rect(vX, vY, vX + vW, vY + vH);
+                Rect dst = new Rect(0, 0, finalBitmap.getWidth(), finalBitmap.getHeight());
+                canvas.drawBitmap(overlayBitmap, src, dst, null);
                 overlayBitmap.recycle();
 
                 finalBitmapWithStickers = finalBitmap;
-
-                //사진 저장 메서드 호출
-                //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
-                if (isStickerApplied && !isSavedToGallery) {
-                    ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
-                    isSavedToGallery = true;
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -181,48 +165,26 @@ public class ApplyFilterActivity extends BaseActivity {
 
         filterId = getIntent().getStringExtra("filterId");
 
-        String finalImagePath = getIntent().getStringExtra("final_image_path");
-        boolean isFromPreApply = finalImagePath != null;
-
-        if (!isFromPreApply && filterId != null) {
+        if (filterId != null) {
             loadFilterData(Long.parseLong(filterId));
         }
-
-        Bitmap imageToDisplay = null;
         Uri imageUri = getIntent().getData();
-
-        if (isFromPreApply) {
-            imageToDisplay = BitmapFactory.decodeFile(finalImagePath);
-
-            if (imageToDisplay != null) {
-                finalBitmapWithStickers = imageToDisplay;
-
-                //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
-                if (isStickerApplied && !isSavedToGallery) {
-                    ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
-                    isSavedToGallery = true;
-                }
-            }
-        }
-
         if (imageUri != null) {
             try {
                 Bitmap bmp = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
                 if (bmp != null) {
                     this.originalImageBitmap = bmp;
 
-                    if (imageToDisplay == null) {
-                        imageToDisplay = bmp;
-                    }
-
-                    /*renderer.setBitmap(bmp);
+                    renderer.setBitmap(bmp);
                     glSurfaceView.requestRender();
 
                     faceBox = new FaceBoxOverlayView(this);
                     photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
                     detectFaces(this.originalImageBitmap, (faces, originalBitmap) -> {
-                        if (faces.isEmpty()) return;
-                    });*/
+                        if (faces.isEmpty()) {
+                            return;
+                        }
+                    });
                 }
 
             } catch (Exception e) {
@@ -230,207 +192,184 @@ public class ApplyFilterActivity extends BaseActivity {
             }
         }
 
-        if (imageToDisplay != null) {
-            renderer.setBitmap(imageToDisplay);
-            glSurfaceView.requestRender();
-
-            faceBox = new FaceBoxOverlayView(this);
-            photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-            Bitmap faceDetectTarget = (this.originalImageBitmap != null) ? this.originalImageBitmap : imageToDisplay;
-            detectFaces(faceDetectTarget, (faces, originalBitmap) -> {
-                if (faces.isEmpty()) {
-                    return;
-                }
-            });
-        }
-
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
+
+        saveBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            if (isModalVisible) return;
+            if (!isBuy) {
+                showModal(buyFilterOn);
+            } else {
+                // 액티비티 이동
+                renderer.captureBitmap();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        moveToApplyActivity();
+                    }
+                }, 200);
+            }
+        });
+        setupModal();
     }
 
-    private void setupReviewPop() {
-        FrameLayout rootView = findViewById(R.id.reviewPopOff);
-        reviewPopOn = getLayoutInflater().inflate(R.layout.m_review_pop, null);
-        reviewPop = reviewPopOn.findViewById(R.id.reviewPop);
-        iconSnsNone = reviewPopOn.findViewById(R.id.iconSnsNone);
-        iconSnsInsta = reviewPopOn.findViewById(R.id.iconSnsInsta);
-        iconSnsTwitter = reviewPopOn.findViewById(R.id.iconSnsTwitter);
-        snsId = reviewPopOn.findViewById(R.id.snsId);
-        reviewBtn = reviewPopOn.findViewById(R.id.reviewBtn);
+    private void setupModal() {
+        FrameLayout rootView = findViewById(R.id.modalOff);
+        buyFilterOn = getLayoutInflater().inflate(R.layout.m_buy_filter, null);
+        buyFilter = buyFilterOn.findViewById(R.id.buyFilter);
+        filterTitle = buyFilterOn.findViewById(R.id.filterTitle);
+        point = buyFilterOn.findViewById(R.id.point);
+        currentPoint1 = buyFilterOn.findViewById(R.id.currentPoint1);
+        buyBtn = buyFilterOn.findViewById(R.id.buyBtn);
+
+        buyFilterSuccessOn = getLayoutInflater().inflate(R.layout.m_buy_filter_success, null);
+        buyFilterSuccess = buyFilterSuccessOn.findViewById(R.id.buyFilterSuccess);
+        currentPoint2 = buyFilterSuccessOn.findViewById(R.id.currentPoint2);
+        useBtn = buyFilterSuccessOn.findViewById(R.id.useBtn);
+        useBtnTxt = buyFilterSuccessOn.findViewById(R.id.useBtnTxt);
+        closeBtn = buyFilterSuccessOn.findViewById(R.id.closeBtn);
+        closeBtnTxt = buyFilterSuccessOn.findViewById(R.id.closeBtnTxt);
 
         dimBackground = new View(this);
-        dimBackground.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-        ));
+        dimBackground.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         dimBackground.setBackgroundColor(Color.parseColor("#B3000000"));
         dimBackground.setVisibility(View.GONE);
 
         rootView.addView(dimBackground);
-        rootView.addView(reviewPopOn);
-        reviewPopOn.setVisibility(View.GONE);
-        reviewPopOn.setTranslationY(800);
+        rootView.addView(buyFilterOn);
+        rootView.addView(buyFilterSuccessOn);
 
-        dimBackground.setOnClickListener(v -> hideReviewPop());
+        buyFilterOn.setVisibility(View.GONE);
+        buyFilterOn.setTranslationY(800);
+        buyFilterSuccessOn.setVisibility(View.GONE);
+        buyFilterSuccessOn.setTranslationY(800);
 
-        toRegisterReviewBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            if (isReviewPopVisible) return;
-            showReviewPop();
-        });
+        dimBackground.setOnClickListener(v -> hideModal());
 
+        if (buyBtn != null) {
+            buyBtn.setOnClickListener(v -> {
+                if (ClickUtils.isFastClick(v, 400)) return;
 
-        if (instagramId.isEmpty() || instagramId == null) {
-            iconSnsInsta.setEnabled(false);
-            iconSnsInsta.setVisibility(View.GONE);
-        } else {
-            iconSnsInsta.setOnClickListener(v -> {
-                type = SocialType.INSTAGRAM;
-                snsId.setText(instagramId);
-                Log.d("sns선택", "선택됨");
+                // 1. 로컬 포인트 체크 (사전 검증)
+                SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
+                int current = sp.getInt("current_point", 0);
+                int priceInt = 0;
+                try {
+                    priceInt = Integer.parseInt(price);
+                } catch (Exception e) {
+                }
+
+                if (current < priceInt) {
+                    Toast.makeText(this, "포인트가 부족합니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // ✅ [수정] 2. 서버 구매 API 호출
+                requestPurchaseFilter(Long.parseLong(filterId), current, priceInt);
             });
         }
 
-        if (xId.isEmpty() || xId == null) {
-            iconSnsTwitter.setEnabled(false);
-            iconSnsTwitter.setVisibility(View.GONE);
-        } else {
-            iconSnsTwitter.setOnClickListener(v -> {
-                type = SocialType.X;
-                snsId.setText(xId);
-                Log.d("sns선택", "선택됨");
-            });
-        }
+        useBtnTxt.setText("저장하기");
+        closeBtnTxt.setText("닫기");
 
-        iconSnsNone.setOnClickListener(v -> {
-            type = SocialType.NONE;
-            snsId.setText("선택 안 함");
-            Log.d("sns선택", "선택됨");
+        if (useBtn != null) useBtn.setOnClickListener(v -> {
+            hideModal();
+            // 액티비티 이동
+            renderer.captureBitmap();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    moveToApplyActivity();
+                }
+            }, 200);
         });
 
-        /// 중첩 클릭되면 안 됨 ///
-        reviewBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            ClickUtils.disableTemporarily(v, 800);
-
-            if (finalBitmapWithStickers == null) return;
-
-            String savedPath = ImageUtils.saveBitmapToCache(ApplyFilterActivity.this, finalBitmapWithStickers);
-
-            requestCreateReview(savedPath, Long.parseLong(filterId), type);
-        });
+        if (closeBtn != null) closeBtn.setOnClickListener(v -> hideModal());
     }
 
-    /**
-     * 서버로부터 소셜 아이디 정보 받아오기
-     */
-    private void loadSocial() {
-        UserApi userApi = AppRetrofitClient.getInstance(this).create(UserApi.class);
+    private void moveToApplyActivity() {
+        Intent intent = new Intent(Pre_ApplyFilterActivity.this, ApplyFilterActivity.class);
+        intent.putExtra("filterId", filterId);
 
-        // 소셜 아이디 불러오기
-        userApi.getSocialIds().enqueue(new Callback<Map<String, String>>() {
-            @Override
-            public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
-                Map<String, String> ids = response.body();
-
-                instagramId = ids.get("instagramId");
-                xId = ids.get("xId");
-
-                // todo: 값이 있는지 여부에 따라서 버튼 activation 결정
+        if (finalBitmapWithStickers != null) {
+            String tempImagePath = ImageUtils.saveBitmapToCache(Pre_ApplyFilterActivity.this, finalBitmapWithStickers);
+            if (tempImagePath != null) {
+                intent.putExtra("final_image_path", tempImagePath);
             }
-
-            @Override
-            public void onFailure(Call<Map<String, String>> call, Throwable t) {
-                Log.e("Review", "통신 오류", t);
-                Toast.makeText(ApplyFilterActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void requestCreateReview(String imagePath, long filterId, SocialType socialType) {
-        File file = new File(imagePath);
-        if (!file.exists()) {
-            Toast.makeText(this, "이미지 파일이 없습니다.", Toast.LENGTH_SHORT).show();
-            return;
         }
 
-        // Request 데이터 구성
-        RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-        MultipartBody.Part multipartFile = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
-        RequestBody filterIdBody = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(filterId));
-        RequestBody socialTypeBody = RequestBody.create(MediaType.parse("text/plain"), socialType.toString());
+        startActivity(intent);
+        finish();
+    }
 
-        // Retrofit API 인터페이스 생성
-        ReviewApi api = AppRetrofitClient.getInstance(this).create(ReviewApi.class);
+    // ✅ [추가] 서버에 구매/사용 요청
+    private void requestPurchaseFilter(long id, int currentPoint, int priceInt) {
+        FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        // 리뷰생성 API 호출
-        api.createReview(multipartFile, filterIdBody, socialTypeBody).enqueue(new Callback<ReviewResponse>() {
+        api.useFilter(id).enqueue(new Callback<Void>() {
             @Override
-            public void onResponse(Call<ReviewResponse> call, Response<ReviewResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Log.d("Review", "등록 성공");
-                    Toast.makeText(ApplyFilterActivity.this, "리뷰가 등록되었습니다.", Toast.LENGTH_SHORT).show();
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    // 1. 성공 시 로컬 포인트 차감 및 저장
+                    int newCurrent = currentPoint - priceInt;
+                    SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
+                    sp.edit().putInt("current_point", newCurrent).apply();
 
-                    ReviewResponse reviewResponse = response.body();
-                    moveToReview(reviewResponse); // Activity 전환
+                    isBuy = true;
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("filter_bought", true);
+                    setResult(RESULT_OK, resultIntent);
+
+                    // 3. 모달 전환 애니메이션 (구매 -> 성공)
+                    buyFilterOn.setVisibility(View.GONE);
+                    if (currentPoint2 != null) currentPoint2.setText(newCurrent + "P");
+                    showModal(buyFilterSuccessOn);
+
+                    Log.d("필터체험", "구매 성공");
                 } else {
-                    try {
-                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "Error";
-                        Log.e("Review", "등록 실패: " + response.code() + ", " + errorBody);
-                        Toast.makeText(ApplyFilterActivity.this, "등록 실패", Toast.LENGTH_SHORT).show();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    // 실패 시 (이미 구매했거나, 포인트 부족 등 서버 에러)
+                    Log.e("필터체험", "구매 실패: " + response.code());
+                    Toast.makeText(Pre_ApplyFilterActivity.this, "구매에 실패했습니다.", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<ReviewResponse> call, Throwable t) {
-                Log.e("리뷰등록", "통신 오류", t);
-                Toast.makeText(ApplyFilterActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e("필터체험", "통신 오류", t);
+                Toast.makeText(Pre_ApplyFilterActivity.this, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void moveToReview(ReviewResponse response) {
-        setResult(RESULT_OK);
-
-        Intent intent = new Intent(ApplyFilterActivity.this, ReviewActivity.class);
-        intent.putExtra("filterId", filterId);
-        intent.putExtra("review_response", response);
-        startActivity(intent);
-        hideReviewPop();
-        finish();
-    }
-
-    private void showReviewPop() {
-        isReviewPopVisible = true;
+    private void showModal(View view) {
+        isModalVisible = true;
         dimBackground.setVisibility(View.VISIBLE);
-        reviewPopOn.setVisibility(View.VISIBLE);
-        reviewPopOn.animate()
-                .translationY(0)
-                .setDuration(300)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .setListener(null)
-                .start();
+        view.setVisibility(View.VISIBLE);
+        view.animate().translationY(0).setDuration(300).setInterpolator(new AccelerateDecelerateInterpolator()).start();
     }
 
-    private void hideReviewPop() {
-        reviewPopOn.animate()
-                .translationY(800)
-                .setDuration(250)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        reviewPopOn.setVisibility(View.GONE);
+    private void hideModal() {
+        View tempTarget = null;
+        if (buyFilterOn.getVisibility() == View.VISIBLE) tempTarget = buyFilterOn;
+        else if (buyFilterSuccessOn.getVisibility() == View.VISIBLE)
+            tempTarget = buyFilterSuccessOn;
+
+        if (tempTarget != null) {
+            final View target = tempTarget;
+            target.animate().translationY(800).setDuration(250).setInterpolator(new AccelerateDecelerateInterpolator())
+                    .withEndAction(() -> {
+                        target.setVisibility(View.GONE);
                         dimBackground.setVisibility(View.GONE);
-                        isReviewPopVisible = false;
-                    }
-                })
-                .start();
+                        isModalVisible = false;
+                    })
+                    .start();
+        } else {
+            dimBackground.setVisibility(View.GONE);
+            isModalVisible = false;
+        }
     }
 
     @Override
@@ -439,7 +378,7 @@ public class ApplyFilterActivity extends BaseActivity {
 
         if (dimBackground != null && dimBackground.getVisibility() == View.VISIBLE) {
             dimBackground.setVisibility(View.GONE);
-            isReviewPopVisible = false;
+            isModalVisible = false;
         }
     }
 
@@ -478,26 +417,8 @@ public class ApplyFilterActivity extends BaseActivity {
 
         imageView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
-        //Glide.with(this).load(path).into(imageView);
-        //overlay.addView(imageView);
-
-
-        Glide.with(this).load(path).into(new CustomTarget<Drawable>() {
-            @Override
-            public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                imageView.setImageDrawable(resource);
-                overlay.addView(imageView);
-
-                isBrushStickerReady = true; // ✅ 플래그 설정
-                checkAndFinalizeStickers(); // ✅ 최종 완료 확인
-            }
-
-            @Override
-            public void onLoadCleared(@Nullable Drawable placeholder) {
-                isBrushStickerReady = true; // ✅ 실패해도 대기하지 않도록 플래그 설정
-                checkAndFinalizeStickers(); // ✅ 최종 완료 확인
-            }
-        });
+        Glide.with(this).load(path).into(imageView);
+        overlay.addView(imageView);
     }
 
     private FilterDtoCreateRequest.ColorAdjustments mapColorAdjustments
@@ -543,19 +464,7 @@ public class ApplyFilterActivity extends BaseActivity {
         return dataList;
     }
 
-    private void checkAndFinalizeStickers() {
-        if (isBrushStickerReady && isFaceStickerReady) {
-            if (!isStickerApplied) {
-                isStickerApplied = true;
-                renderer.captureBitmap();
-            }
-        }
-    }
-
     private void loadFilterData(long id) {
-        String finalImagePath = getIntent().getStringExtra("final_image_path");
-        if (finalImagePath != null) return;
-
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
         api.getFilter(id).enqueue(new Callback<FilterResponse>() {
             @Override
@@ -583,48 +492,44 @@ public class ApplyFilterActivity extends BaseActivity {
 
                             applyBrushStickerImage(stickerOverlay, data.stickerImageNoFaceUrl);
                         }, 150);
-                    } else {
-                        isBrushStickerReady = true;
+
                     }
 
                     ArrayList<FaceStickerData> stickers = mapFaceStickers(data.stickers);
                     if (!stickers.isEmpty() && originalImageBitmap != null) {
-                        ApplyFilterActivity.this.faceStickers = stickers;
+                        Pre_ApplyFilterActivity.this.faceStickers = stickers;
 
                         isFaceStickerActive = true;
 
                         detectFaces(originalImageBitmap, null);
-                    } else {
-                        isFaceStickerReady = true;
-                        isFaceStickerActive = false;
                     }
 
-                    checkAndFinalizeStickers();
+                    title = data.name;
+                    price = String.valueOf(data.price);
+
+                    if (filterTitle != null) filterTitle.setText(title);
+                    if (point != null) point.setText(price + "P");
+
+                    SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
+                    if (currentPoint1 != null)
+                        currentPoint1.setText(sp.getInt("current_point", 0) + "P");
 
                 } else {
-                    Log.e("ApplyFilter", "필터 정보 조회 실패: " + response.code());
-                    Toast.makeText(ApplyFilterActivity.this, "필터 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
-
-                    isBrushStickerReady = true;
-                    isFaceStickerReady = true;
-                    checkAndFinalizeStickers();
+                    Log.e("필터체험", "필터 정보 조회 실패: " + response.code());
+                    Toast.makeText(Pre_ApplyFilterActivity.this, "필터 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<FilterResponse> call, Throwable t) {
-                Log.e("ApplyFilter", "통신 오류", t);
-                Toast.makeText(ApplyFilterActivity.this, "필터 정보를 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show();
-
-                isBrushStickerReady = true;
-                isFaceStickerReady = true;
-                checkAndFinalizeStickers();
+                Log.e("필터체험", "통신 오류", t);
+                Toast.makeText(Pre_ApplyFilterActivity.this, "필터 정보를 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     /// 얼굴인식스티커 적용하기 ///
-    private void detectFaces(Bitmap bitmap, ApplyFilterActivity.FaceDetectionCallback callback) {
+    private void detectFaces(Bitmap bitmap, Pre_ApplyFilterActivity.FaceDetectionCallback callback) {
         if (!isFaceStickerActive) return;
 
         if (bitmap == null) {
@@ -701,9 +606,6 @@ public class ApplyFilterActivity extends BaseActivity {
                                 }
                             }
                         }
-
-                        isFaceStickerReady = true;
-                        checkAndFinalizeStickers();
                     });
 
                     if (callback != null) {
@@ -714,15 +616,10 @@ public class ApplyFilterActivity extends BaseActivity {
                 })
                 .addOnFailureListener(e -> {
                     showToast("얼굴을 감지하지 못했습니다");
-
                     if (faceBox != null) {
                         faceBox.clearBoxes();
                         faceBox.setVisibility(View.GONE);
                     }
-
-                    isFaceStickerReady = true;
-                    checkAndFinalizeStickers();
-
                     if (callback != null) {
                         callback.onFacesDetected(new ArrayList<>(), bitmap);
                     }

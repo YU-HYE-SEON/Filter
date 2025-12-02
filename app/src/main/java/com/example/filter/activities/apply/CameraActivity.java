@@ -7,6 +7,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.graphics.drawable.GradientDrawable;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -39,6 +41,7 @@ import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.CGLRenderer;
 import com.example.filter.etc.ClickUtils;
+import com.example.filter.etc.Controller;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.etc.StickerMeta;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
@@ -77,11 +80,17 @@ public class CameraActivity extends BaseActivity {
     private FaceBoxOverlayView faceBox;
     private ArrayList<FaceStickerData> faceStickers;
     private List<View> currentStickerViews = new ArrayList<>();
+    private ConstraintLayout topArea;
+    private boolean isToastVisible = false;
+    private boolean isFaceStickerActive = false;
+    private boolean isFaceCurrentlyDetected = false;
+    private boolean isInitialToastDone = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_camera);
+        topArea = findViewById(R.id.topArea);
         backBtn = findViewById(R.id.backBtn);
         transitionBtn = findViewById(R.id.transitionBtn);
         cameraContainer = findViewById(R.id.cameraContainer);
@@ -105,7 +114,6 @@ public class CameraActivity extends BaseActivity {
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
         cameraContainer.addView(glSurfaceView);
-        //overlay.bringToFront();
         stickerOverlay = new FrameLayout(this);
         stickerOverlay.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         cameraContainer.addView(stickerOverlay);
@@ -134,8 +142,6 @@ public class CameraActivity extends BaseActivity {
             r1Btn.setVisibility(View.VISIBLE);
             r2Btn.setVisibility(View.VISIBLE);
             r3Btn.setVisibility(View.VISIBLE);
-            //ratioClickCount++;
-            //int mode = ratioClickCount % 3;
             updateRatioMode();
         });
 
@@ -168,14 +174,20 @@ public class CameraActivity extends BaseActivity {
 
     private void applyBrushStickerImage(FrameLayout overlay, String path) {
         ImageView imageView = new ImageView(this);
-        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        imageView.setAdjustViewBounds(true);
-        imageView.setImageBitmap(BitmapFactory.decodeFile(path));
+
+        //스티커그림 비율 원본으로 유지 안 하고 적용할 사진 크기에 맞춤
+        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+        imageView.setAdjustViewBounds(false);
+
+        //스티커그림 비율 원본으로 유지
+        //imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        //imageView.setAdjustViewBounds(true);
+
         imageView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        overlay.addView(imageView);
 
         Glide.with(this).load(path).into(imageView);
-        //overlay.setZ(20f);
+        overlay.addView(imageView);
+        overlay.setZ(20f);
         overlay.invalidate();
     }
 
@@ -239,6 +251,8 @@ public class CameraActivity extends BaseActivity {
                     ArrayList<FaceStickerData> stickers = mapFaceStickers(data.stickers);
                     if (!stickers.isEmpty()) {
                         CameraActivity.this.faceStickers = stickers;
+
+                        isFaceStickerActive = true;
                     }
 
                 } else {
@@ -256,6 +270,8 @@ public class CameraActivity extends BaseActivity {
     }
 
     private void detectFaces(Bitmap bitmap) {
+        if (!isFaceStickerActive) return;
+
         InputImage inputImage = InputImage.fromBitmap(bitmap, 0);
 
         FaceDetectorOptions options = new FaceDetectorOptions.Builder()
@@ -269,6 +285,7 @@ public class CameraActivity extends BaseActivity {
         detector.process(inputImage)
                 .addOnSuccessListener(faces -> {
                     List<Rect> rects = new ArrayList<>();
+                    boolean facesFound = !faces.isEmpty();
                     for (Face f : faces) rects.add(f.getBoundingBox());
 
                     final int vW = renderer.getViewportWidth();
@@ -277,6 +294,25 @@ public class CameraActivity extends BaseActivity {
                     final int vY = renderer.getViewportY();
 
                     runOnUiThread(() -> {
+                        if (!isInitialToastDone) {
+                            if (facesFound) {
+                                isFaceCurrentlyDetected = true;
+                                showToast("얼굴 인식 성공");
+                            } else {
+                                isFaceCurrentlyDetected = false;
+                                showToast("얼굴을 감지하지 못했습니다");
+                            }
+                            isInitialToastDone = true;
+                        } else {
+                            if (facesFound && !isFaceCurrentlyDetected) {
+                                isFaceCurrentlyDetected = true;
+                                showToast("얼굴 인식 성공");
+                            } else if (!facesFound && isFaceCurrentlyDetected) {
+                                isFaceCurrentlyDetected = false;
+                                showToast("얼굴을 감지하지 못했습니다");
+                            }
+                        }
+
                         if (!rects.isEmpty()) {
                             faceBox.setVisibility(View.VISIBLE);
                             faceBox.setFaceBoxes(rects, bitmap.getWidth(), bitmap.getHeight(), vW, vH, vX, vY);
@@ -288,6 +324,17 @@ public class CameraActivity extends BaseActivity {
                         if (!faces.isEmpty() && faceStickers != null && !faceStickers.isEmpty()) {
                             Bitmap original = bitmap;
                             if (original == null) return;
+
+
+                            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) stickerOverlay.getLayoutParams();
+                            if (params.width != vW || params.height != vH || params.leftMargin != vX || params.topMargin != vY) {
+                                params.width = vW;
+                                params.height = vH;
+                                params.leftMargin = vX;
+                                params.topMargin = vY;
+                                stickerOverlay.setLayoutParams(params);
+                            }
+
 
                             List<float[]> allPlacements = new ArrayList<>();
 
@@ -344,6 +391,16 @@ public class CameraActivity extends BaseActivity {
                 })
                 .addOnFailureListener(e -> {
                     runOnUiThread(() -> {
+                        if (!isInitialToastDone) {
+                            isFaceCurrentlyDetected = false;
+                            showToast("얼굴을 감지하지 못했습니다");
+                            isInitialToastDone = true;
+                        }
+                        else if (isFaceCurrentlyDetected) {
+                            isFaceCurrentlyDetected = false;
+                            showToast("얼굴을 감지하지 못했습니다");
+                        }
+
                         faceBox.clearBoxes();
                         faceBox.setVisibility(View.GONE);
 
@@ -491,6 +548,49 @@ public class CameraActivity extends BaseActivity {
 
     public CGLRenderer getRenderer() {
         return renderer;
+    }
+
+    public void showToast(String message) {
+        isToastVisible = true;
+
+        View old = topArea.findViewWithTag("inline_banner");
+        if (old != null) topArea.removeView(old);
+
+        TextView tv = new TextView(this);
+        tv.setTag("inline_banner");
+        tv.setText(message);
+        tv.setTextColor(0XFFFFFFFF);
+        tv.setTextSize(16);
+        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        tv.setPadding(Controller.dp(14, getResources()), Controller.dp(10, getResources()), Controller.dp(14, getResources()), Controller.dp(10, getResources()));
+        tv.setElevation(Controller.dp(4, getResources()));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xCC222222);
+        bg.setCornerRadius(Controller.dp(16, getResources()));
+        tv.setBackground(bg);
+
+        ConstraintLayout.LayoutParams lp =
+                new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                        ConstraintLayout.LayoutParams.WRAP_CONTENT);
+        lp.startToStart = topArea.getId();
+        lp.endToEnd = topArea.getId();
+        lp.topToTop = topArea.getId();
+        lp.bottomToBottom = topArea.getId();
+        tv.setLayoutParams(lp);
+
+        tv.setAlpha(0f);
+        topArea.addView(tv);
+        tv.animate().alpha(1f).setDuration(150).start();
+
+        tv.postDelayed(() -> tv.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction(() -> {
+                    if (tv.getParent() == topArea) topArea.removeView(tv);
+                    isToastVisible = false;
+                })
+                .start(), 2000);
     }
 
     @Override

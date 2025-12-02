@@ -104,6 +104,11 @@
             android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
         <activity
+            android:name=".activities.apply.Pre_ApplyFilterActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Base.Theme.Filter" />
+        <activity
             android:name=".activities.apply.ApplyFilterActivity"
             android:exported="false"
             android:screenOrientation="portrait"

@@ -57,12 +57,12 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
             1.0f, 0.0f      //오른쪽 아래 → 오른쪽 위
     };
 
-    private boolean isFilterActivity = true;    //FilterActivity면 사진 영역 밖을 검정색으로, ApplyFilterActivity면 사진 영역 밖을 흰색으로 설정하기 위한 변수
+    private boolean isBlackBG = true;    //FilterActivity면 사진 영역 밖을 검정색으로, ApplyFilterActivity면 사진 영역 밖을 흰색으로 설정하기 위한 변수
 
-    public FGLRenderer(Context context, GLSurfaceView glSurfaceView, boolean isFilterActivity) {
+    public FGLRenderer(Context context, GLSurfaceView glSurfaceView, boolean isBlackBG) {
         this.context = context;
         this.glSurfaceView = glSurfaceView;
-        this.isFilterActivity = isFilterActivity;
+        this.isBlackBG = isBlackBG;
 
         ByteBuffer bb = ByteBuffer.allocateDirect(vertices.length * 4);
         bb.order(ByteOrder.nativeOrder());
@@ -79,7 +79,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
-        if (isFilterActivity) {
+        if (isBlackBG) {
             GLES20.glClearColor(0f, 0f, 0f, 1f);
         } else {
             GLES20.glClearColor(1f, 1f, 1f, 1f);
@@ -124,7 +124,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 unused) {
-        if (isFilterActivity) {
+        if (isBlackBG) {
             GLES20.glClearColor(0f, 0f, 0f, 1f);
         } else {
             GLES20.glClearColor(1f, 1f, 1f, 1f);
@@ -206,7 +206,7 @@ public class FGLRenderer implements GLSurfaceView.Renderer {
                     GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, offFbo);
                     GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
 
-                    if (isFilterActivity) {
+                    if (isBlackBG) {
                         GLES20.glClearColor(0f, 0f, 0f, 1f);
                     } else {
                         GLES20.glClearColor(1f, 1f, 1f, 1f);

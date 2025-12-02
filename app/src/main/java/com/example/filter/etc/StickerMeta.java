@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.apply.CameraActivity;
+import com.example.filter.activities.apply.Pre_ApplyFilterActivity;
 import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.fragments.filters.FaceStickerFragment;
 import com.google.mlkit.vision.face.Face;
@@ -120,6 +121,10 @@ public class StickerMeta {
             ApplyFilterActivity applyActivity = (ApplyFilterActivity) activity;
             renderer = applyActivity.getRenderer();
             resources = applyActivity.getResources();
+        } else if (activity instanceof Pre_ApplyFilterActivity) {
+            Pre_ApplyFilterActivity pre_applyActivity = (Pre_ApplyFilterActivity) activity;
+            renderer = pre_applyActivity.getRenderer();
+            resources = pre_applyActivity.getResources();
         } else if (activity instanceof CameraActivity) {
             CameraActivity cameraActivity = (CameraActivity) activity;
             renderer = cameraActivity.getRenderer();
@@ -153,8 +158,17 @@ public class StickerMeta {
             int bmpH = bitmap.getHeight();
 
             float scale = Math.min((float) vpW / bmpW, (float) vpH / bmpH);
-            float offsetX = vpX + (vpW - bmpW * scale) / 2f;
-            float offsetY = vpY + (vpH - bmpH * scale) / 2f;
+
+            float offsetX = 0;
+            float offsetY = 0;
+
+            if (activity instanceof FilterActivity) {
+                offsetX = vpX + (vpW - bmpW * scale) / 2f;
+                offsetY = vpY + (vpH - bmpH * scale) / 2f;
+            } else {
+                offsetX = /*vpX +*/ (vpW - bmpW * scale) / 2f;
+                offsetY = /*vpY +*/ (vpH - bmpH * scale) / 2f;
+            }
 
             for (Face face : faces) {
                 Rect faceBox = face.getBoundingBox();
