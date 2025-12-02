@@ -98,7 +98,7 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/border_edit"
                 android:fontFamily="@font/pretendard_regular"
-                android:hint="코코아 (최대 15자)"
+                android:hint="필터 이름을 입력해주세요"
                 android:inputType="text"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="15dp"
@@ -134,7 +134,7 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/border_edit"
                 android:fontFamily="@font/pretendard_regular"
-                android:hint="#코코아 #겨울"
+                android:hint="공백으로 태그를 구분합니다"
                 android:inputType="text"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="15dp"
@@ -148,7 +148,16 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:fontFamily="@font/pretendard_regular"
-                android:text="태그는 띄어쓰기로 구분해 주세요.\n각 10자 이하로 5개까지 가능하며,\n한글, 영문, 숫자, 밑줄(_)만 입력 가능해요."
+                android:text="태그는 띄어쓰기로 구분해 주세요"
+                android:textColor="#FF5C8A"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/alertTxt22"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_regular"
+                android:text="각 10자 이하로 5개까지 가능하며,\n한글, 영문, 숫자, 밑줄(_)만 입력 가능해요."
                 android:textColor="#8090989F"
                 android:textSize="12sp" />
 

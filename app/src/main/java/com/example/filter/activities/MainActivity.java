@@ -346,7 +346,7 @@ public class MainActivity extends BaseActivity {
     private void loadRecentFilters() {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        api.getRecentFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getRecentFilters(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -387,7 +387,7 @@ public class MainActivity extends BaseActivity {
     private void loadHotFilters() {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        api.getHotFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getHotFilters(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -429,7 +429,7 @@ public class MainActivity extends BaseActivity {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
         // API 인터페이스에 정의된 getRandomFilters 호출
-        api.getRandomFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getRandomFilters(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -472,7 +472,7 @@ public class MainActivity extends BaseActivity {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
         // API 인터페이스에 정의된 getRandomFilters 호출
-        api.getHomeRecommendations(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getHomeRecommendations(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {

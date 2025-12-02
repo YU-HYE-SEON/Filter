@@ -64,7 +64,7 @@ public class RegisterActivity extends BaseActivity {
     private ScrollView scrollView;
     private LinearLayout priceBox;
     private EditText titleEditText, tagEditText, priceEditText;
-    private TextView alertTxt1, alertTxt2, alertTxt3, tagTxt, saleTxt;
+    private TextView alertTxt1, alertTxt2, alertTxt22, alertTxt3, tagTxt, saleTxt;
     private ImageButton free, pay, backBtn;
     private AppCompatButton registerBtn;
 
@@ -108,6 +108,7 @@ public class RegisterActivity extends BaseActivity {
         priceBox = findViewById(R.id.priceBox);
         alertTxt1 = findViewById(R.id.alertTxt1);
         alertTxt2 = findViewById(R.id.alertTxt2);
+        alertTxt22 = findViewById(R.id.alertTxt22);
         alertTxt3 = findViewById(R.id.alertTxt3);
         tagTxt = findViewById(R.id.tagTxt);
         saleTxt = findViewById(R.id.saleTxt);
@@ -347,11 +348,11 @@ public class RegisterActivity extends BaseActivity {
                 String[] tags = str.isEmpty() ? new String[]{} : str.split(" ");
 
                 if (tags.length > 5) {
-                    alertTxt2.setText("태그는 최대 5개까지 입력가능합니다.\n\n");
-                    alertTxt2.setTextColor(Color.parseColor("#FF5C8A"));
+                    alertTxt22.setVisibility(View.INVISIBLE);
+                    alertTxt2.setText("태그는 최대 5개까지 입력가능합니다.");
                 } else {
-                    alertTxt2.setText("태그는 띄어쓰기로 구분해 주세요.\n각 10자 이하로 5개까지 가능하며,\n한글, 영문, 숫자, 밑줄(_)만 입력 가능해요.");
-                    alertTxt2.setTextColor(Color.parseColor("#8090989F"));
+                    alertTxt22.setVisibility(View.VISIBLE);
+                    alertTxt2.setText("태그는 띄어쓰기로 구분해 주세요.");
                 }
 
                 if (tagEditText.hasFocus()) {
@@ -781,7 +782,7 @@ public class RegisterActivity extends BaseActivity {
     private void validateTitle() {
         String t = titleEditText.getText().toString().trim();
         if (t.isEmpty()) {
-            alertTxt1.setText("필터 이름을 입력해주세요.");
+            alertTxt1.setText("필터 이름을 입력해주세요");
             alertTxt1.setTextColor(Color.parseColor("#FF5C8A"));
             alertTxt1.setVisibility(View.VISIBLE);
         } else if (t.length() > 15) {

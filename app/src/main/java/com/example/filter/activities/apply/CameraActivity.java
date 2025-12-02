@@ -165,7 +165,6 @@ public class CameraActivity extends BaseActivity {
             ClickUtils.disableTemporarily(v, 800);
 
             takePhoto();
-            //moveToNextActivity(capturedBitmap);
         });
     }
 

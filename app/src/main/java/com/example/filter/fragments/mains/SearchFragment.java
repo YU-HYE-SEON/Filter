@@ -126,7 +126,7 @@ public class SearchFragment extends Fragment {
     private void searchByNaturalLanguage(String query) {
         FilterApi api = AppRetrofitClient.getInstance(requireContext()).create(FilterApi.class);
         // 👈 자연어 모드FilterSortType.ACCURACY,// 👈 정확도순 (AI 랭킹 유지)0 / page20 / size
-        api.searchFilters(query, SearchType.NL, currentSort, 0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.searchFilters(query, SearchType.NL, currentSort, 0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {

@@ -539,7 +539,10 @@ public class ApplyFilterActivity extends BaseActivity {
         if (isBrushStickerReady && isFaceStickerReady) {
             if (!isStickerApplied) {
                 isStickerApplied = true;
-                renderer.captureBitmap();
+
+                glSurfaceView.postDelayed(() -> {
+                    renderer.captureBitmap();
+                }, 200);
             }
         }
     }
@@ -694,8 +697,10 @@ public class ApplyFilterActivity extends BaseActivity {
                             }
                         }
 
-                        isFaceStickerReady = true;
-                        checkAndFinalizeStickers();
+                        stickerOverlay.postDelayed(() -> {
+                            isFaceStickerReady = true;
+                            checkAndFinalizeStickers();
+                        }, 100);
                     });
 
                     if (callback != null) {

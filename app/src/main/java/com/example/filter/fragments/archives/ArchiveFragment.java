@@ -127,7 +127,7 @@ public class ArchiveFragment extends Fragment {
 
     private void loadBookmark() {
         ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
-        api.getBookmarks(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getBookmarks(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
 
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
@@ -161,7 +161,7 @@ public class ArchiveFragment extends Fragment {
 
     private void loadBuy() {
         ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
-        api.getUsage(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getUsage(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
 
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
@@ -194,7 +194,7 @@ public class ArchiveFragment extends Fragment {
 
     private void loadCreate() {
         ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
-        api.getMyFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getMyFilters(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
 
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
