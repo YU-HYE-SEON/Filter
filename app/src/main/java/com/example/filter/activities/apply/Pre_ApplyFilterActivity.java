@@ -101,6 +101,12 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().setFlags(
+                android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                android.view.WindowManager.LayoutParams.FLAG_SECURE
+        );
+
         setContentView(R.layout.a_pre_apply_photo);
         topArea = findViewById(R.id.topArea);
         backBtn = findViewById(R.id.backBtn);

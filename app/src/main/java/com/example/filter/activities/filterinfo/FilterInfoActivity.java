@@ -468,7 +468,6 @@ public class FilterInfoActivity extends BaseActivity {
         startActivity(intent);
     }
 
-
     private void requestDeleteFilter(long id) {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
@@ -650,6 +649,8 @@ public class FilterInfoActivity extends BaseActivity {
             if (ClickUtils.isFastClick(v, 400)) return;
             Intent intent = new Intent(this, CameraActivity.class);
             intent.putExtra("filterId", filterId);
+            intent.putExtra("isBuy", isBuy);
+            intent.putExtra("isMine", isMine);
             startActivity(intent);
             hideModal();
         });
@@ -790,7 +791,6 @@ public class FilterInfoActivity extends BaseActivity {
             return true;
         });
     }
-
 
     /// originalBtn 누를 때 전체적인 화면 하얗게 튀는 걸 방지하기 위해 두 이미지 미리 업로드해두기 ///
     private void preloadImage() {

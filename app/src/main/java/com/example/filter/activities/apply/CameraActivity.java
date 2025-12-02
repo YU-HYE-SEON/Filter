@@ -3,6 +3,7 @@ package com.example.filter.activities.apply;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
@@ -21,7 +22,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
-import androidx.camera.core.AspectRatio;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
@@ -42,7 +42,7 @@ import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.CGLRenderer;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
-import com.example.filter.etc.FGLRenderer;
+import com.example.filter.etc.ImageUtils;
 import com.example.filter.etc.StickerMeta;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -66,7 +66,6 @@ import retrofit2.Response;
 
 @androidx.camera.core.ExperimentalGetImage
 public class CameraActivity extends BaseActivity {
-    private static final int CAMERA_PERMISSION_CODE = 10;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private CameraSelector cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
     private ExecutorService cameraExecutor;
@@ -86,9 +85,17 @@ public class CameraActivity extends BaseActivity {
     private boolean isFaceCurrentlyDetected = false;
     private boolean isInitialToastDone = false;
 
+    private Bitmap capturedBitmap = null;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //getWindow().setFlags(
+        //        android.view.WindowManager.LayoutParams.FLAG_SECURE,
+        //        android.view.WindowManager.LayoutParams.FLAG_SECURE
+        //);
+
         setContentView(R.layout.a_camera);
         topArea = findViewById(R.id.topArea);
         backBtn = findViewById(R.id.backBtn);
@@ -150,9 +157,31 @@ public class CameraActivity extends BaseActivity {
             if (ClickUtils.isFastClick(v, 400)) return;
             ClickUtils.disableTemporarily(v, 800);
 
-            Intent intent = new Intent(CameraActivity.this, ApplyFilterActivity.class);
-            startActivity(intent);
+            moveToNextActivity(capturedBitmap);
         });
+    }
+
+    private void moveToNextActivity(Bitmap bitmap) {
+        if (bitmap == null) return;
+
+        String path = ImageUtils.saveBitmapToCache(CameraActivity.this, bitmap);
+
+        if (path == null) return;
+
+        boolean isBuy = getIntent().getBooleanExtra("isBuy", false);
+        boolean isMine = getIntent().getBooleanExtra("isMine", false);
+        Intent intent;
+
+        if (!isBuy && !isMine) {
+            intent = new Intent(CameraActivity.this, Pre_ApplyFilterActivity.class);
+        } else {
+            intent = new Intent(CameraActivity.this, ApplyFilterActivity.class);
+        }
+
+        intent.putExtra("final_image_path", path);
+        intent.putExtra("filterId", filterId);
+        startActivity(intent);
+        finish();
     }
 
     private void applyAdjustments(FilterDtoCreateRequest.ColorAdjustments a) {
@@ -395,8 +424,7 @@ public class CameraActivity extends BaseActivity {
                             isFaceCurrentlyDetected = false;
                             showToast("얼굴을 감지하지 못했습니다");
                             isInitialToastDone = true;
-                        }
-                        else if (isFaceCurrentlyDetected) {
+                        } else if (isFaceCurrentlyDetected) {
                             isFaceCurrentlyDetected = false;
                             showToast("얼굴을 감지하지 못했습니다");
                         }
@@ -429,6 +457,12 @@ public class CameraActivity extends BaseActivity {
                     Bitmap bitmap = convertImageToBitmap(image);
                     int rotation = image.getImageInfo().getRotationDegrees();
                     bitmap = rotateBitmap(bitmap, rotation);
+
+                    if (cameraSelector.equals(CameraSelector.DEFAULT_FRONT_CAMERA)) {
+                        Matrix matrix = new Matrix();
+                        matrix.preScale(-1f, 1f);
+                        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                    }
 
                     detectFaces(bitmap);
 
