@@ -209,14 +209,16 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
                 targetRatio = viewAspectRatio;
         }
 
-        if (targetRatio > imageAspectRatio) {
+        float finalAspect = Math.min(imageAspectRatio, targetRatio);
+
+        if (viewAspectRatio > finalAspect) {
             viewportWidth = width;
-            viewportHeight = (int) (width / imageAspectRatio);
-            viewportY = (height - viewportHeight) / 2;
+            viewportHeight = (int) (width / finalAspect);
             viewportX = 0;
+            viewportY = (height - viewportHeight) / 2;
         } else {
             viewportHeight = height;
-            viewportWidth = (int) (height * imageAspectRatio);
+            viewportWidth = (int) (height * finalAspect);
             viewportX = (width - viewportWidth) / 2;
             viewportY = 0;
         }
@@ -245,7 +247,7 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
         return viewportY;
     }
 
-    public void setCropRatioMode(int mode) {
+    public void setRatioMode(int mode) {
         this.ratioMode = mode;
     }
 

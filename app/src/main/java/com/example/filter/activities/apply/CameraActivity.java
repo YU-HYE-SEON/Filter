@@ -91,6 +91,9 @@ public class CameraActivity extends BaseActivity {
 
     private ImageCapture imageCapture;
     private Bitmap capturedBitmap = null;
+    private long lastDetectTime = 0;
+    private FaceDetector detector;
+    private boolean isRatioBtnClick = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -136,6 +139,14 @@ public class CameraActivity extends BaseActivity {
         faceBox = new FaceBoxOverlayView(this);
         cameraContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                .build();
+
+        detector = FaceDetection.getClient(options);
+
         setTransitionMode();
 
         filterId = getIntent().getStringExtra("filterId");
@@ -153,10 +164,14 @@ public class CameraActivity extends BaseActivity {
         });
 
         ratioBtn.setOnClickListener(v -> {
-            r1Btn.setVisibility(View.VISIBLE);
-            r2Btn.setVisibility(View.VISIBLE);
-            r3Btn.setVisibility(View.VISIBLE);
-            updateRatioMode();
+            if (!isRatioBtnClick) {
+                toggleRatioButtons(true);
+                updateRatioMode();
+                isRatioBtnClick = true;
+            } else {
+                toggleRatioButtons(false);
+                isRatioBtnClick = false;
+            }
         });
 
         /// 중첩 클릭되면 안 됨 ///
@@ -306,14 +321,6 @@ public class CameraActivity extends BaseActivity {
 
         InputImage inputImage = InputImage.fromBitmap(bitmap, 0);
 
-        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
-                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
-                .build();
-
-        FaceDetector detector = FaceDetection.getClient(options);
-
         detector.process(inputImage)
                 .addOnSuccessListener(faces -> {
                     List<Rect> rects = new ArrayList<>();
@@ -362,8 +369,8 @@ public class CameraActivity extends BaseActivity {
                             if (params.width != vW || params.height != vH || params.leftMargin != vX || params.topMargin != vY) {
                                 params.width = vW;
                                 params.height = vH;
-                                params.leftMargin = vX;
-                                params.topMargin = vY;
+                                //params.leftMargin = vX;
+                                //params.topMargin = vY;
                                 stickerOverlay.setLayoutParams(params);
                             }
 
@@ -459,6 +466,13 @@ public class CameraActivity extends BaseActivity {
                 ImageAnalysis imageAnalysis = new ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
 
                 imageAnalysis.setAnalyzer(cameraExecutor, image -> {
+                    long now = System.currentTimeMillis();
+                    if (now - lastDetectTime < 60) {  // 60ms = 16FPS 정도
+                        image.close();
+                        return;
+                    }
+                    lastDetectTime = now;
+
                     Bitmap bitmap = convertImageToBitmap(image);
                     int rotation = image.getImageInfo().getRotationDegrees();
                     bitmap = rotateBitmap(bitmap, rotation);
@@ -551,13 +565,12 @@ public class CameraActivity extends BaseActivity {
 
             ratioBtn.setText(r1Btn.getText());
 
-            r1Btn.setVisibility(View.GONE);
-            r2Btn.setVisibility(View.GONE);
-            r3Btn.setVisibility(View.GONE);
+            toggleRatioButtons(false);
+            isRatioBtnClick = false;
 
             cameraContainer.setLayoutParams(params);
             cameraContainer.requestLayout();
-            renderer.setCropRatioMode(1);
+            renderer.setRatioMode(1);
         });
 
         r2Btn.setOnClickListener(v -> {
@@ -566,13 +579,12 @@ public class CameraActivity extends BaseActivity {
 
             ratioBtn.setText(r2Btn.getText());
 
-            r1Btn.setVisibility(View.GONE);
-            r2Btn.setVisibility(View.GONE);
-            r3Btn.setVisibility(View.GONE);
+            toggleRatioButtons(false);
+            isRatioBtnClick = false;
 
             cameraContainer.setLayoutParams(params);
             cameraContainer.requestLayout();
-            renderer.setCropRatioMode(2);
+            renderer.setRatioMode(2);
         });
 
         r3Btn.setOnClickListener(v -> {
@@ -581,14 +593,20 @@ public class CameraActivity extends BaseActivity {
 
             ratioBtn.setText(r3Btn.getText());
 
-            r1Btn.setVisibility(View.GONE);
-            r2Btn.setVisibility(View.GONE);
-            r3Btn.setVisibility(View.GONE);
+            toggleRatioButtons(false);
+            isRatioBtnClick = false;
 
             cameraContainer.setLayoutParams(params);
             cameraContainer.requestLayout();
-            renderer.setCropRatioMode(3);
+            renderer.setRatioMode(3);
         });
+    }
+
+    private void toggleRatioButtons(boolean show) {
+        int visibility = show ? View.VISIBLE : View.GONE;
+        r1Btn.setVisibility(visibility);
+        r2Btn.setVisibility(visibility);
+        r3Btn.setVisibility(visibility);
     }
 
     public static Bitmap convertImageToBitmap(ImageProxy image) {

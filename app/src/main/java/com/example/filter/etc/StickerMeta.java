@@ -162,7 +162,7 @@ public class StickerMeta {
             float offsetX = 0;
             float offsetY = 0;
 
-            if (activity instanceof FilterActivity) {
+            if (activity instanceof FilterActivity || activity instanceof CameraActivity) {
                 offsetX = vpX + (vpW - bmpW * scale) / 2f;
                 offsetY = vpY + (vpH - bmpH * scale) / 2f;
             } else {
