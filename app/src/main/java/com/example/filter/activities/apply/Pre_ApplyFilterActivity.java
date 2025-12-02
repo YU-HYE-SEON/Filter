@@ -171,17 +171,35 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
         filterId = getIntent().getStringExtra("filterId");
 
+        String finalImagePath = getIntent().getStringExtra("final_image_path");
+        boolean isGetPath = finalImagePath != null;
+
+        Bitmap imageToDisplay = null;
+        Uri imageUri = getIntent().getData();
+
         if (filterId != null) {
             loadFilterData(Long.parseLong(filterId));
         }
-        Uri imageUri = getIntent().getData();
+
+        if (isGetPath) {
+            imageToDisplay = BitmapFactory.decodeFile(finalImagePath);
+
+            if (imageToDisplay != null) {
+                finalBitmapWithStickers = imageToDisplay;
+            }
+        }
+
         if (imageUri != null) {
             try {
                 Bitmap bmp = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
                 if (bmp != null) {
                     this.originalImageBitmap = bmp;
 
-                    renderer.setBitmap(bmp);
+                    if (imageToDisplay == null) {
+                        imageToDisplay = bmp;
+                    }
+
+                    /*renderer.setBitmap(bmp);
                     glSurfaceView.requestRender();
 
                     faceBox = new FaceBoxOverlayView(this);
@@ -190,12 +208,27 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                         if (faces.isEmpty()) {
                             return;
                         }
-                    });
+                    });*/
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        if (imageToDisplay != null) {
+            renderer.setBitmap(imageToDisplay);
+            glSurfaceView.requestRender();
+
+            faceBox = new FaceBoxOverlayView(this);
+            photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+            Bitmap faceDetectTarget = (this.originalImageBitmap != null) ? this.originalImageBitmap : imageToDisplay;
+            detectFaces(faceDetectTarget, (faces, originalBitmap) -> {
+                if (faces.isEmpty()) {
+                    return;
+                }
+            });
         }
 
         backBtn.setOnClickListener(v -> {
@@ -219,6 +252,7 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                 }, 200);
             }
         });
+
         setupModal();
     }
 
@@ -413,11 +447,6 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
     private void applyBrushStickerImage(FrameLayout overlay, String path) {
         ImageView imageView = new ImageView(this);
 
-        //스티커그림 비율 원본으로 유지 안 하고 적용할 사진 크기에 맞춤
-        //imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-        //imageView.setAdjustViewBounds(false);
-
-        //스티커그림 비율 원본으로 유지
         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         imageView.setAdjustViewBounds(true);
 
@@ -478,36 +507,39 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     FilterResponse data = response.body();
 
-                    applyAdjustments(mapColorAdjustments(data.colorAdjustments));
+                    boolean fromCamera = getIntent().getBooleanExtra("from_camera", false);
+                    if (!fromCamera) {
+                        applyAdjustments(mapColorAdjustments(data.colorAdjustments));
 
-                    if (data.stickerImageNoFaceUrl != null) {
-                        //applyBrushStickerImage(stickerOverlay, data.stickerImageNoFaceUrl);
+                        if (data.stickerImageNoFaceUrl != null) {
+                            //applyBrushStickerImage(stickerOverlay, data.stickerImageNoFaceUrl);
 
-                        glSurfaceView.postDelayed(() -> {
-                            final int vW = renderer.getViewportWidth();
-                            final int vH = renderer.getViewportHeight();
-                            final int vX = renderer.getViewportX();
-                            final int vY = renderer.getViewportY();
+                            glSurfaceView.postDelayed(() -> {
+                                final int vW = renderer.getViewportWidth();
+                                final int vH = renderer.getViewportHeight();
+                                final int vX = renderer.getViewportX();
+                                final int vY = renderer.getViewportY();
 
-                            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) stickerOverlay.getLayoutParams();
-                            params.width = vW;
-                            params.height = vH;
-                            params.leftMargin = vX;
-                            params.topMargin = vY;
-                            stickerOverlay.setLayoutParams(params);
+                                FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) stickerOverlay.getLayoutParams();
+                                params.width = vW;
+                                params.height = vH;
+                                params.leftMargin = vX;
+                                params.topMargin = vY;
+                                stickerOverlay.setLayoutParams(params);
 
-                            applyBrushStickerImage(stickerOverlay, data.stickerImageNoFaceUrl);
-                        }, 150);
+                                applyBrushStickerImage(stickerOverlay, data.stickerImageNoFaceUrl);
+                            }, 150);
 
-                    }
+                        }
 
-                    ArrayList<FaceStickerData> stickers = mapFaceStickers(data.stickers);
-                    if (!stickers.isEmpty() && originalImageBitmap != null) {
-                        Pre_ApplyFilterActivity.this.faceStickers = stickers;
+                        ArrayList<FaceStickerData> stickers = mapFaceStickers(data.stickers);
+                        if (!stickers.isEmpty() && originalImageBitmap != null) {
+                            Pre_ApplyFilterActivity.this.faceStickers = stickers;
 
-                        isFaceStickerActive = true;
+                            isFaceStickerActive = true;
 
-                        detectFaces(originalImageBitmap, null);
+                            detectFaces(originalImageBitmap, null);
+                        }
                     }
 
                     title = data.name;
@@ -519,7 +551,6 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                     SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
                     if (currentPoint1 != null)
                         currentPoint1.setText(sp.getInt("current_point", 0) + "P");
-
                 } else {
                     Log.e("필터체험", "필터 정보 조회 실패: " + response.code());
                     Toast.makeText(Pre_ApplyFilterActivity.this, "필터 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();

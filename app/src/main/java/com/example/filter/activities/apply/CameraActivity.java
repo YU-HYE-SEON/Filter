@@ -20,10 +20,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -53,6 +56,7 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +89,7 @@ public class CameraActivity extends BaseActivity {
     private boolean isFaceCurrentlyDetected = false;
     private boolean isInitialToastDone = false;
 
+    private ImageCapture imageCapture;
     private Bitmap capturedBitmap = null;
 
     @Override
@@ -116,6 +121,8 @@ public class CameraActivity extends BaseActivity {
 
         glSurfaceView = new GLSurfaceView(this);
         glSurfaceView.setEGLContextClientVersion(2);
+        glSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        glSurfaceView.getHolder().setFormat(android.graphics.PixelFormat.TRANSLUCENT);
         renderer = new CGLRenderer(this, glSurfaceView);
         glSurfaceView.setRenderer(renderer);
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
@@ -157,16 +164,17 @@ public class CameraActivity extends BaseActivity {
             if (ClickUtils.isFastClick(v, 400)) return;
             ClickUtils.disableTemporarily(v, 800);
 
-            moveToNextActivity(capturedBitmap);
+            takePhoto();
+            //moveToNextActivity(capturedBitmap);
         });
     }
 
     private void moveToNextActivity(Bitmap bitmap) {
-        if (bitmap == null) return;
+        //if (bitmap == null) return;
 
         String path = ImageUtils.saveBitmapToCache(CameraActivity.this, bitmap);
 
-        if (path == null) return;
+        //if (path == null) return;
 
         boolean isBuy = getIntent().getBooleanExtra("isBuy", false);
         boolean isMine = getIntent().getBooleanExtra("isMine", false);
@@ -178,6 +186,7 @@ public class CameraActivity extends BaseActivity {
             intent = new Intent(CameraActivity.this, ApplyFilterActivity.class);
         }
 
+        intent.putExtra("from_camera", true);
         intent.putExtra("final_image_path", path);
         intent.putExtra("filterId", filterId);
         startActivity(intent);
@@ -204,13 +213,8 @@ public class CameraActivity extends BaseActivity {
     private void applyBrushStickerImage(FrameLayout overlay, String path) {
         ImageView imageView = new ImageView(this);
 
-        //스티커그림 비율 원본으로 유지 안 하고 적용할 사진 크기에 맞춤
-        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-        imageView.setAdjustViewBounds(false);
-
-        //스티커그림 비율 원본으로 유지
-        //imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        //imageView.setAdjustViewBounds(true);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageView.setAdjustViewBounds(true);
 
         imageView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
@@ -451,6 +455,8 @@ public class CameraActivity extends BaseActivity {
                 Preview preview = builder.build();
                 preview.setSurfaceProvider(camera.getSurfaceProvider());
 
+                imageCapture = new ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).setTargetRotation(getWindowManager().getDefaultDisplay().getRotation()).build();
+
                 ImageAnalysis imageAnalysis = new ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
 
                 imageAnalysis.setAnalyzer(cameraExecutor, image -> {
@@ -472,12 +478,59 @@ public class CameraActivity extends BaseActivity {
                 });
 
                 cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalysis);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void takePhoto() {
+        if (renderer == null || glSurfaceView == null) {
+            return;
+        }
+
+        renderer.captureFinalBitmap(new CGLRenderer.BitmapCaptureListener() {
+            @Override
+            public void onBitmapCaptured(Bitmap baseBitmap) {
+                runOnUiThread(() -> {
+                    if (baseBitmap == null) {
+                        return;
+                    }
+
+                    Bitmap finalBitmap = baseBitmap.copy(Bitmap.Config.ARGB_8888, true);
+                    Canvas canvas = new Canvas(finalBitmap);
+
+                    int vX = renderer.getViewportX();
+                    int vY = renderer.getViewportY();
+                    int vW = renderer.getViewportWidth();
+                    int vH = renderer.getViewportHeight();
+
+                    Bitmap screenSizedOverlay = Bitmap.createBitmap(cameraContainer.getWidth(), cameraContainer.getHeight(), Bitmap.Config.ARGB_8888);
+                    Canvas screenCanvas = new Canvas(screenSizedOverlay);
+
+                    overlay.draw(screenCanvas);
+                    stickerOverlay.draw(screenCanvas);
+
+                    Bitmap mergedOverlayBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
+                    Canvas mergedCanvas = new Canvas(mergedOverlayBitmap);
+
+                    Rect srcRect = new Rect(vX, vY, vX + vW, vY + vH);
+                    Rect dstRect = new Rect(0, 0, vW, vH);
+
+                    mergedCanvas.drawBitmap(screenSizedOverlay, srcRect, dstRect, null);
+
+                    screenSizedOverlay.recycle();
+
+                    canvas.drawBitmap(mergedOverlayBitmap, 0, 0, null);
+                    mergedOverlayBitmap.recycle();
+
+                    capturedBitmap = finalBitmap;
+                    moveToNextActivity(capturedBitmap);
+                });
+            }
+        });
     }
 
     private void setTransitionMode() {

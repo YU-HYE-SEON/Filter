@@ -2,6 +2,7 @@ package com.example.filter.etc;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
@@ -21,6 +22,13 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class CGLRenderer implements GLSurfaceView.Renderer {
+    public interface BitmapCaptureListener {
+        void onBitmapCaptured(Bitmap bitmap);
+    }
+
+    private BitmapCaptureListener captureListener;
+    private boolean capturePending = false;
+
     private final Context context;
     private GLSurfaceView glSurfaceView;
     private volatile Bitmap bitmap;
@@ -115,6 +123,10 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         if (bitmap == null || program == 0) {
+            if (capturePending && captureListener != null) {
+                captureListener.onBitmapCaptured(null);
+                capturePending = false;
+            }
             return;
         }
 
@@ -162,6 +174,14 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
 
             GLES20.glDisableVertexAttribArray(positionHandle);
             GLES20.glDisableVertexAttribArray(texCoordHandle);
+        }
+
+        if (capturePending) {
+            capturePending = false;
+            if (captureListener != null) {
+                Bitmap capturedBitmap = readPixels(viewportX, viewportY, viewportWidth, viewportHeight);
+                captureListener.onBitmapCaptured(capturedBitmap);
+            }
         }
     }
 
@@ -227,14 +247,6 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
 
     public void setCropRatioMode(int mode) {
         this.ratioMode = mode;
-
-        glSurfaceView.queueEvent(() -> {
-            int w = glSurfaceView.getWidth();
-            int h = glSurfaceView.getHeight();
-            onSurfaceChanged(null, w, h); // 강제 호출
-        });
-
-        if (glSurfaceView != null) glSurfaceView.requestRender();
     }
 
     public void setBitmap(Bitmap bitmap) {
@@ -257,6 +269,31 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
 
                 glSurfaceView.requestRender();
             }
+        }
+    }
+
+    private Bitmap readPixels(int x, int y, int w, int h) {
+        if (w <= 0 || h <= 0) return null;
+
+        ByteBuffer buf = ByteBuffer.allocateDirect(w * h * 4);
+        buf.order(ByteOrder.nativeOrder());
+
+        GLES20.glReadPixels(x, y, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
+        buf.rewind();
+
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        bmp.copyPixelsFromBuffer(buf);
+
+        Matrix matrix = new Matrix();
+        matrix.preScale(1.0f, -1.0f);
+        return Bitmap.createBitmap(bmp, 0, 0, w, h, matrix, true);
+    }
+
+    public void captureFinalBitmap(BitmapCaptureListener listener) {
+        this.captureListener = listener;
+        this.capturePending = true;
+        if (glSurfaceView != null) {
+            glSurfaceView.requestRender();
         }
     }
 
@@ -345,4 +382,6 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
+
+
 }

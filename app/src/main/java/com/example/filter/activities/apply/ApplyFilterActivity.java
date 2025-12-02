@@ -181,24 +181,25 @@ public class ApplyFilterActivity extends BaseActivity {
 
         filterId = getIntent().getStringExtra("filterId");
 
+        boolean fromCamera = getIntent().getBooleanExtra("from_camera", false);
         String finalImagePath = getIntent().getStringExtra("final_image_path");
-        boolean isFromPreApply = finalImagePath != null;
-
-        if (!isFromPreApply && filterId != null) {
-            loadFilterData(Long.parseLong(filterId));
-        }
+        boolean isGetPath = finalImagePath != null;
 
         Bitmap imageToDisplay = null;
         Uri imageUri = getIntent().getData();
 
-        if (isFromPreApply) {
+        if (!fromCamera && !isGetPath && filterId != null) {
+            loadFilterData(Long.parseLong(filterId));
+        }
+
+        if (isGetPath) {
             imageToDisplay = BitmapFactory.decodeFile(finalImagePath);
 
             if (imageToDisplay != null) {
                 finalBitmapWithStickers = imageToDisplay;
 
                 //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
-                if (isStickerApplied && !isSavedToGallery) {
+                if (!isSavedToGallery) {
                     ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
                 }
@@ -468,19 +469,10 @@ public class ApplyFilterActivity extends BaseActivity {
     private void applyBrushStickerImage(FrameLayout overlay, String path) {
         ImageView imageView = new ImageView(this);
 
-        //스티커그림 비율 원본으로 유지 안 하고 적용할 사진 크기에 맞춤
-        //imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-        //imageView.setAdjustViewBounds(false);
-
-        //스티커그림 비율 원본으로 유지
         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         imageView.setAdjustViewBounds(true);
 
         imageView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-
-        //Glide.with(this).load(path).into(imageView);
-        //overlay.addView(imageView);
-
 
         Glide.with(this).load(path).into(new CustomTarget<Drawable>() {
             @Override
@@ -488,14 +480,14 @@ public class ApplyFilterActivity extends BaseActivity {
                 imageView.setImageDrawable(resource);
                 overlay.addView(imageView);
 
-                isBrushStickerReady = true; // ✅ 플래그 설정
-                checkAndFinalizeStickers(); // ✅ 최종 완료 확인
+                isBrushStickerReady = true;
+                checkAndFinalizeStickers();
             }
 
             @Override
             public void onLoadCleared(@Nullable Drawable placeholder) {
-                isBrushStickerReady = true; // ✅ 실패해도 대기하지 않도록 플래그 설정
-                checkAndFinalizeStickers(); // ✅ 최종 완료 확인
+                isBrushStickerReady = true;
+                checkAndFinalizeStickers();
             }
         });
     }

@@ -50,8 +50,8 @@ public class ReviewInfoActivity extends BaseActivity {
     private RecyclerView recyclerView;
     private ReviewInfoAdapter adapter;
     //private List<ReviewItem> reviewList = new ArrayList<>();
-    private ConstraintLayout use;
-    private AppCompatButton useBtn;
+    /*private ConstraintLayout use;
+    private AppCompatButton useBtn;*/
     private Long reviewId;
     private String filterId;
     private Long filterIdLong;
@@ -81,8 +81,8 @@ public class ReviewInfoActivity extends BaseActivity {
         setContentView(R.layout.a_review_info);
         backBtn = findViewById(R.id.backBtn);
         recyclerView = findViewById(R.id.recyclerView);
-        use = findViewById(R.id.use);
-        useBtn = findViewById(R.id.useBtn);
+        /*use = findViewById(R.id.use);
+        useBtn = findViewById(R.id.useBtn);*/
 
         LinearLayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(lm);
@@ -100,10 +100,10 @@ public class ReviewInfoActivity extends BaseActivity {
             confirmDeleteReview(reviewId, position);
         });
 
-        use.post(() -> {
+        /*use.post(() -> {
             int useHeight = use.getHeight();
             recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(), recyclerView.getPaddingRight(), useHeight);
-        });
+        });*/
 
         /*ClickUtils.clickDim(useBtn);
         useBtn.setOnClickListener(v -> {
