@@ -99,10 +99,10 @@ public class CameraActivity extends BaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //getWindow().setFlags(
-        //        android.view.WindowManager.LayoutParams.FLAG_SECURE,
-        //        android.view.WindowManager.LayoutParams.FLAG_SECURE
-        //);
+        getWindow().setFlags(
+                android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                android.view.WindowManager.LayoutParams.FLAG_SECURE
+        );
 
         setContentView(R.layout.a_camera);
         topArea = findViewById(R.id.topArea);
@@ -549,8 +549,10 @@ public class CameraActivity extends BaseActivity {
     private void setTransitionMode() {
         if (cameraSelector.equals(CameraSelector.DEFAULT_BACK_CAMERA)) {
             cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+            transitionBtn.setText("전면");
         } else {
             cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+            transitionBtn.setText("후면");
         }
 
         startCamera();

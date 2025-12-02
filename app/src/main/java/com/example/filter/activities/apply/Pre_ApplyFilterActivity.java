@@ -24,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -34,6 +35,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
+import com.example.filter.activities.filter.FilterActivity;
+import com.example.filter.activities.filter.LoadActivity;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.api_datas.FaceStickerData;
@@ -44,6 +47,8 @@ import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.UserApi;
 import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.dialogs.FilterEixtDialog;
+import com.example.filter.dialogs.Pre_ApplyEixtDialog;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
 import com.example.filter.etc.FGLRenderer;
@@ -233,7 +238,15 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            finish();
+            //finish();
+            showExitConfirmDialog();
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showExitConfirmDialog();
+            }
         });
 
         saveBtn.setOnClickListener(v -> {
@@ -709,5 +722,21 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                     isToastVisible = false;
                 })
                 .start(), 2000);
+    }
+
+    private void showExitConfirmDialog() {
+        new Pre_ApplyEixtDialog(this, new Pre_ApplyEixtDialog.Pre_ApplyEixtDialogListener() {
+            @Override
+            public void onKeep() {
+            }
+
+            @Override
+            public void onExit() {
+                Intent intent = new Intent(Pre_ApplyFilterActivity.this, FilterInfoActivity.class);
+                intent.putExtra("filterId", filterId);
+                startActivity(intent);
+                finish();
+            }
+        }).show();
     }
 }
