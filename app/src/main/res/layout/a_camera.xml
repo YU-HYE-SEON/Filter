@@ -31,13 +31,10 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/transitionBtn"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_marginEnd="18dp"
-            android:gravity="center"
-            android:text="후면"
-            android:textAlignment="center"
-            android:textSize="10sp"
+            android:background="@drawable/btn_camera_transition"
             android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -91,57 +88,29 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="18dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.4">
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/flashBtn"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_marginVertical="5dp"
-            android:background="@color/white"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/timerBtn"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/timerBtn"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_marginVertical="5dp"
-            android:background="@color/white"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/ratioBtn"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/flashBtn" />
+        android:layout_marginTop="20dp"
+        app:layout_constraintStart_toStartOf="@+id/cameraContainer"
+        app:layout_constraintTop_toTopOf="@+id/cameraContainer"
+        app:layout_goneMarginStart="20dp">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/ratioBtn"
             android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_height="30dp"
             android:layout_marginVertical="5dp"
             android:layout_marginEnd="9dp"
-            android:background="@color/white"
-            android:gravity="center"
-            android:text="1:1"
-            android:textAlignment="center"
+            android:background="@drawable/btn_camera_r1_blue"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/r1Btn"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/timerBtn" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/r1Btn"
-            android:layout_width="55dp"
+            android:layout_width="45dp"
             android:layout_height="30dp"
             android:layout_marginHorizontal="9dp"
-            android:background="@color/white"
-            android:gravity="center"
-            android:text="1:1"
-            android:textAlignment="center"
+            android:background="@drawable/btn_camera_r1_blue"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/ratioBtn"
             app:layout_constraintEnd_toStartOf="@+id/r2Btn"
@@ -150,13 +119,10 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/r2Btn"
-            android:layout_width="55dp"
+            android:layout_width="45dp"
             android:layout_height="30dp"
             android:layout_marginHorizontal="9dp"
-            android:background="@color/white"
-            android:gravity="center"
-            android:text="3:4"
-            android:textAlignment="center"
+            android:background="@drawable/btn_camera_r2_white"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/ratioBtn"
             app:layout_constraintEnd_toStartOf="@+id/r3Btn"
@@ -165,13 +131,10 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/r3Btn"
-            android:layout_width="55dp"
+            android:layout_width="45dp"
             android:layout_height="30dp"
             android:layout_marginHorizontal="9dp"
-            android:background="@color/white"
-            android:gravity="center"
-            android:text="9:16"
-            android:textAlignment="center"
+            android:background="@drawable/btn_camera_r3_white"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/ratioBtn"
             app:layout_constraintEnd_toEndOf="parent"
@@ -186,6 +149,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginBottom="30dp"
+        android:background="@drawable/btn_camera_photo"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

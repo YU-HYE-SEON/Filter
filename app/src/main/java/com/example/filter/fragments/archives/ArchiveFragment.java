@@ -1,6 +1,9 @@
 package com.example.filter.fragments.archives;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +13,8 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -18,6 +23,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
 import com.example.filter.activities.MainActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.FilterListAdapter;
 import com.example.filter.api_datas.response_dto.CashTransactionListResponse;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
@@ -45,49 +51,22 @@ public class ArchiveFragment extends Fragment {
     private FilterListAdapter adapter3; //제작용
     private FilterListAdapter adapter4; //리뷰용
 
+    private FilterListAdapter currentAdapter;
+    private ActivityResultLauncher<Intent> detailActivityLauncher;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_archive, container, false);
 
-        bookmark = view.findViewById(R.id.bookmark);
-        buy = view.findViewById(R.id.buy);
-        create = view.findViewById(R.id.create);
-        review = view.findViewById(R.id.review);
-        recyclerView = view.findViewById(R.id.recyclerView);
+        initViews(view);
+        setupRecyclerView();
+        setupAdapters();
+        setupButtons();
+        setupLauncher();
 
-        View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                int id = view.getId();
-                switch (id) {
-                    case R.id.bookmark:
-                        setArchiveButtons(true, false, false, false);
-                        recyclerView.setAdapter(adapter1);
-                        loadBookmark();
-                        break;
-                    case R.id.buy:
-                        setArchiveButtons(false, true, false, false);
-                        recyclerView.setAdapter(adapter2);
-                        loadBuy();
-                        break;
-                    case R.id.create:
-                        setArchiveButtons(false, false, true, false);
-                        recyclerView.setAdapter(adapter3);
-                        loadCreate();
-                        break;
-                    case R.id.review:
-                        setArchiveButtons(false, false, false, true);
-                        recyclerView.setAdapter(adapter4);
-                        break;
-                }
-            }
-        };
-
-        bookmark.setOnClickListener(listener);
-        buy.setOnClickListener(listener);
-        create.setOnClickListener(listener);
-        review.setOnClickListener(listener);
+        recyclerView.setAdapter(adapter1);
+        loadBookmark();
 
         return view;
     }
@@ -95,21 +74,6 @@ public class ArchiveFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
-        recyclerView.setLayoutManager(sglm);
-
-        adapter1 = new FilterListAdapter();
-        adapter2 = new FilterListAdapter();
-        adapter3 = new FilterListAdapter();
-        adapter4 = new FilterListAdapter();
-
-        recyclerView.setAdapter(adapter1);
-
-        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
-
-        MainActivity activity = (MainActivity) requireActivity();
 
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
@@ -124,6 +88,97 @@ public class ArchiveFragment extends Fragment {
         });
     }
 
+    private void initViews(View view) {
+        bookmark = view.findViewById(R.id.bookmark);
+        buy = view.findViewById(R.id.buy);
+        create = view.findViewById(R.id.create);
+        review = view.findViewById(R.id.review);
+        recyclerView = view.findViewById(R.id.recyclerView);
+    }
+
+    private void setupRecyclerView() {
+        StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+
+        recyclerView.setLayoutManager(sglm);
+        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
+    }
+
+    private void setupAdapters() {
+        adapter1 = new FilterListAdapter();
+        adapter2= new FilterListAdapter();
+        adapter3 = new FilterListAdapter();
+        adapter4 = new FilterListAdapter();
+
+        FilterListAdapter.OnItemClickListener listener = (v, item) -> {
+            Intent intent = new Intent(requireActivity(), FilterInfoActivity.class);
+            intent.putExtra("filterId", item.id);
+            intent.putExtra("nickname", item.nickname);
+            intent.putExtra("imgUrl", item.thumbmailUrl);
+            intent.putExtra("filterTitle", item.filterTitle);
+            intent.putExtra("price", item.price);
+            detailActivityLauncher.launch(intent);
+        };
+
+        adapter1.setOnItemClickListener(listener);
+        adapter2.setOnItemClickListener(listener);
+        adapter3.setOnItemClickListener(listener);
+        adapter4.setOnItemClickListener(listener);
+
+        currentAdapter = adapter1;
+    }
+
+    private void setupButtons() {
+        View.OnClickListener clickListener = v -> {
+            if (v.getId() == R.id.bookmark) {
+                switchAdapter(adapter1);
+                setArchiveButtons(true, false, false, false);
+                loadBookmark();
+            } else if (v.getId() == R.id.buy) {
+                switchAdapter(adapter2);
+                setArchiveButtons(false, true, false, false);
+                loadBuy();
+            } else if (v.getId() == R.id.create) {
+                switchAdapter(adapter3);
+                setArchiveButtons(false, false, true, false);
+                loadCreate();
+            } else if (v.getId() == R.id.review) {
+                switchAdapter(adapter4);
+                setArchiveButtons(false, false, false, true);
+            }
+        };
+
+        bookmark.setOnClickListener(clickListener);
+        buy.setOnClickListener(clickListener);
+        create.setOnClickListener(clickListener);
+        review.setOnClickListener(clickListener);
+    }
+
+    private void switchAdapter(FilterListAdapter adapter) {
+        currentAdapter = adapter;
+        recyclerView.setAdapter(adapter);
+
+        adapter.notifyDataSetChanged();
+
+        RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
+        if (lm instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) lm).invalidateSpanAssignments();
+        }
+    }
+
+    private void setupLauncher() {
+        detailActivityLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        String deletedId = result.getData().getStringExtra("deleted_filter_id");
+                        if (deletedId != null && currentAdapter != null) {
+                            currentAdapter.removeItem(deletedId);
+                        }
+                    }
+                }
+        );
+    }
 
     private void loadBookmark() {
         ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
@@ -142,6 +197,10 @@ public class ArchiveFragment extends Fragment {
 
                     if (adapter1 != null) {
                         adapter1.setItems(uiList);
+
+                       if (currentAdapter == adapter1) {
+                           adapter1.notifyDataSetChanged();
+                       }
                     }
 
                 } else {
@@ -176,6 +235,10 @@ public class ArchiveFragment extends Fragment {
 
                     if (adapter2 != null) {
                         adapter2.setItems(uiList);
+
+                        if (currentAdapter == adapter2) {
+                            adapter2.notifyDataSetChanged();
+                        }
                     }
 
                 } else {
@@ -209,6 +272,10 @@ public class ArchiveFragment extends Fragment {
 
                     if (adapter3 != null) {
                         adapter3.setItems(uiList);
+
+                        if (currentAdapter == adapter3) {
+                            adapter3.notifyDataSetChanged();
+                        }
                     }
 
                 } else {
@@ -239,10 +306,6 @@ public class ArchiveFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
-        if (recyclerView.getAdapter() == adapter1) {
-            loadBookmark();
-        }
     }
 
     @Override

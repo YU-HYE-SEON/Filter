@@ -79,7 +79,7 @@ public class CameraActivity extends BaseActivity {
     private PreviewView camera;
     private FrameLayout cameraContainer, overlay, stickerOverlay;
     private ImageButton backBtn;
-    private AppCompatButton transitionBtn, flashBtn, timerBtn, ratioBtn, r1Btn, r2Btn, r3Btn, photoBtn;
+    private AppCompatButton transitionBtn, ratioBtn, r1Btn, r2Btn, r3Btn, photoBtn;
     private String filterId;
     private GLSurfaceView glSurfaceView;
     private CGLRenderer renderer;
@@ -115,8 +115,6 @@ public class CameraActivity extends BaseActivity {
         camera = findViewById(R.id.camera);
         overlay = findViewById(R.id.overlay);
         stickerOverlay = findViewById(R.id.stickerOverlay);
-        flashBtn = findViewById(R.id.flashBtn);
-        timerBtn = findViewById(R.id.timerBtn);
         ratioBtn = findViewById(R.id.ratioBtn);
         r1Btn = findViewById(R.id.r1Btn);
         r2Btn = findViewById(R.id.r2Btn);
@@ -575,10 +573,10 @@ public class CameraActivity extends BaseActivity {
     private void setTransitionMode() {
         if (cameraSelector.equals(CameraSelector.DEFAULT_BACK_CAMERA)) {
             cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
-            transitionBtn.setText("전면");
+            //transitionBtn.setText("전면");
         } else {
             cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-            transitionBtn.setText("후면");
+            //transitionBtn.setText("후면");
         }
 
         startCamera();
@@ -591,10 +589,15 @@ public class CameraActivity extends BaseActivity {
             params.dimensionRatio = "1:1";
             params.verticalBias = 0.2f;
 
-            ratioBtn.setText(r1Btn.getText());
+            //ratioBtn.setText(r1Btn.getText());
 
             toggleRatioButtons(false);
             isRatioBtnClick = false;
+
+            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r1_blue);
+            r1Btn.setBackgroundResource(R.drawable.btn_camera_r1_blue);
+            r2Btn.setBackgroundResource(R.drawable.btn_camera_r2_white);
+            r3Btn.setBackgroundResource(R.drawable.btn_camera_r3_white);
 
             cameraContainer.setLayoutParams(params);
             cameraContainer.requestLayout();
@@ -605,10 +608,15 @@ public class CameraActivity extends BaseActivity {
             params.dimensionRatio = "3:4";
             params.verticalBias = 0.25f;
 
-            ratioBtn.setText(r2Btn.getText());
+            //ratioBtn.setText(r2Btn.getText());
 
             toggleRatioButtons(false);
             isRatioBtnClick = false;
+
+            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r2_blue);
+            r1Btn.setBackgroundResource(R.drawable.btn_camera_r1_white);
+            r2Btn.setBackgroundResource(R.drawable.btn_camera_r2_blue);
+            r3Btn.setBackgroundResource(R.drawable.btn_camera_r3_white);
 
             cameraContainer.setLayoutParams(params);
             cameraContainer.requestLayout();
@@ -619,10 +627,15 @@ public class CameraActivity extends BaseActivity {
             params.dimensionRatio = "9:16";
             params.verticalBias = 0.25f;
 
-            ratioBtn.setText(r3Btn.getText());
+            //ratioBtn.setText(r3Btn.getText());
 
             toggleRatioButtons(false);
             isRatioBtnClick = false;
+
+            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r3_blue);
+            r1Btn.setBackgroundResource(R.drawable.btn_camera_r1_white);
+            r2Btn.setBackgroundResource(R.drawable.btn_camera_r2_white);
+            r3Btn.setBackgroundResource(R.drawable.btn_camera_r3_blue);
 
             cameraContainer.setLayoutParams(params);
             cameraContainer.requestLayout();
