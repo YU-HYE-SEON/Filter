@@ -23,7 +23,7 @@
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
             android:cropToPadding="true"
-            android:scaleType="fitCenter" />
+            android:scaleType="centerCrop" />
 
     </androidx.cardview.widget.CardView>
 
@@ -38,15 +38,20 @@
 
         <TextView
             android:id="@id/title"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
+            android:ellipsize="end"
             android:fontFamily="@font/pretendard_semibold"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:layout_marginEnd="16dp"
             android:text="Title"
             android:textAlignment="textStart"
             android:textColor="@color/black"
             android:textSize="18sp"
             app:layout_constraintBottom_toTopOf="@+id/pointTxt"
+            app:layout_constraintEnd_toStartOf="@+id/date"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

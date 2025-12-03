@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -23,12 +24,20 @@ import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.adapters.FilterListAdapter;
 import com.example.filter.adapters.ReviewInfoAdapter;
+import com.example.filter.adapters.SalesListAdapter;
+import com.example.filter.api_datas.request_dto.SalesPeriod;
+import com.example.filter.api_datas.request_dto.SalesSortType;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
 import com.example.filter.api_datas.response_dto.FilterSortType;
 import com.example.filter.api_datas.response_dto.PageResponse;
+import com.example.filter.api_datas.response_dto.ReviewResponse;
+import com.example.filter.api_datas.response_dto.SalesListResponse;
+import com.example.filter.api_datas.response_dto.SalesTotalResponse;
 import com.example.filter.apis.ArchiveApi;
+import com.example.filter.apis.SalesApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.items.FilterListItem;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +52,7 @@ public class SalesManageActivity extends BaseActivity {
     private ConstraintLayout dateDropdown, dropdown;
     private RecyclerView recyclerView;
     private FrameLayout modalOff;
-    private FilterListAdapter adapter;
+    private SalesListAdapter adapter;
     private View chooseDateOn, chooseSalesOrderOn, dimBackground;
     private ConstraintLayout chooseDate, chooseSalesOrder;
     private TextView dateTxt, oneWeek, oneMonth, oneYear;
@@ -51,6 +60,11 @@ public class SalesManageActivity extends BaseActivity {
     private TextView txt, register, sales, salesPoint, title;
     private ImageView registerCheck, salesCheck, salesPointCheck, titleCheck;
     private boolean ischooseOrderVisible = false;
+
+    private SalesSortType currentSort = SalesSortType.RECENT;
+    private SalesPeriod currentPeriod = SalesPeriod.WEEK;
+    private int nextPage = 0;
+    private boolean isLoading = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,13 +83,24 @@ public class SalesManageActivity extends BaseActivity {
 
         LinearLayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(lm);
-        adapter = new FilterListAdapter();
+        adapter = new SalesListAdapter();
         recyclerView.setAdapter(adapter);
 
         backBtn.setOnClickListener(v -> {
             finish();
         });
 
+        loadSalesList(SalesSortType.RECENT, 0);
+        loadTotal(SalesPeriod.WEEK);
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (!recyclerView.canScrollVertically(1)) {
+                    loadSalesList(currentSort, nextPage);
+                }
+            }
+        });
 
         // 모달 열려있을 때 뒤로가기 누르면 모달 닫기
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -92,6 +117,70 @@ public class SalesManageActivity extends BaseActivity {
 
         setupChooseOrder();
         setDateRangeTexts();
+    }
+
+    private void loadSalesList(SalesSortType sort, int page) {
+        if (isLoading) return;
+        isLoading = true;
+
+        SalesApi api = AppRetrofitClient.getInstance(this).create(SalesApi.class);
+        api.getSalesList(sort, page, 20).enqueue(new Callback<PageResponse<SalesListResponse>>() {
+            @Override
+            public void onResponse(Call<PageResponse<SalesListResponse>> call, Response<PageResponse<SalesListResponse>> response) {
+                isLoading = false;
+                if (response.isSuccessful() && response.body() != null) {
+
+                    PageResponse<SalesListResponse> result = response.body();
+                    List<SalesListResponse> list = result.getContent();
+
+                    if (list != null && !list.isEmpty()) {
+                        adapter.addItemList(list);
+                        nextPage++;
+                    }
+
+                    updateRecyclerVisibility();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PageResponse<SalesListResponse>> call, Throwable t) {
+                isLoading = false;
+                Toast.makeText(SalesManageActivity.this, "불러오기 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadTotal(SalesPeriod period) {
+        SalesApi api = AppRetrofitClient.getInstance(this).create(SalesApi.class);
+        api.getTotalSales(period).enqueue(new Callback<SalesTotalResponse>() {
+            @Override
+            public void onResponse(Call<SalesTotalResponse> call, Response<SalesTotalResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    SalesTotalResponse result = response.body();
+
+                    String formattedAmount = String.format("%,d 원", result.getSettlementAmount());
+                    cash.setText(formattedAmount);
+
+                    String formattedQty = result.getTotalSales() + " 개";
+                    quantity.setText(formattedQty);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SalesTotalResponse> call, Throwable t) {
+                Toast.makeText(SalesManageActivity.this, "불러오기 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateRecyclerVisibility() {
+        if (adapter.getItemCount() == 0) {
+            recyclerView.setVisibility(View.INVISIBLE);
+            textView.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            textView.setVisibility(View.INVISIBLE);
+        }
     }
 
     private void setupChooseOrder() {
@@ -200,8 +289,8 @@ public class SalesManageActivity extends BaseActivity {
     private void showChooseOrder(View view) {
         ischooseOrderVisible = true;
         dimBackground.setVisibility(View.VISIBLE);
-        view/*chooseSalesOrderOn*/.setVisibility(View.VISIBLE);
-        view/*chooseSalesOrderOn*/.animate()
+        view.setVisibility(View.VISIBLE);
+        view.animate()
                 .translationY(0)
                 .setDuration(300)
                 .setInterpolator(new AccelerateDecelerateInterpolator())
@@ -255,6 +344,13 @@ public class SalesManageActivity extends BaseActivity {
         oneMonthCheck.setVisibility(View.INVISIBLE);
         oneYearCheck.setVisibility(View.INVISIBLE);
         select2.setVisibility(View.VISIBLE);
+
+        if (select == oneWeek) currentPeriod = SalesPeriod.WEEK;
+        else if (select == oneMonth) currentPeriod = SalesPeriod.MONTH;
+        else if (select == oneYear) currentPeriod = SalesPeriod.YEAR;
+
+
+        loadTotal(currentPeriod);
     }
 
     private void setOrder(TextView select, ImageView select2) {
@@ -271,6 +367,15 @@ public class SalesManageActivity extends BaseActivity {
         salesPointCheck.setVisibility(View.INVISIBLE);
         titleCheck.setVisibility(View.INVISIBLE);
         select2.setVisibility(View.VISIBLE);
+
+        if (select == register) currentSort = SalesSortType.RECENT;
+        else if (select == sales) currentSort = SalesSortType.COUNT;
+        else if (select == salesPoint) currentSort = SalesSortType.AMOUNT;
+        else if (select == title) currentSort = SalesSortType.NAME;
+
+        adapter.clear();
+        nextPage = 0;
+        loadSalesList(currentSort, nextPage);
     }
 
     // 모달 날짜 표시

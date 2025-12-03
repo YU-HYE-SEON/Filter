@@ -43,6 +43,12 @@ public class PointHistoryAdapter extends RecyclerView.Adapter<PointHistoryAdapte
         }
 
         holder.date.setText(item.date);
+
+        if (position == 0) {
+            holder.borderLine.setVisibility(View.GONE);
+        } else {
+            holder.borderLine.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -52,6 +58,7 @@ public class PointHistoryAdapter extends RecyclerView.Adapter<PointHistoryAdapte
 
     public static class VH extends RecyclerView.ViewHolder {
         TextView point1, point2, txt, date;
+        View borderLine;
 
         public VH(View itemView) {
             super(itemView);
@@ -59,6 +66,7 @@ public class PointHistoryAdapter extends RecyclerView.Adapter<PointHistoryAdapte
             point2 = itemView.findViewById(R.id.point2);
             txt = itemView.findViewById(R.id.txt);
             date = itemView.findViewById(R.id.date);
+            borderLine = itemView.findViewById(R.id.borderLine);
         }
     }
 }

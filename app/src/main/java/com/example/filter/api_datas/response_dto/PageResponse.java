@@ -6,6 +6,10 @@ public class PageResponse<T> {
     // response json에서 content라는 이름의 리스트로 담겨옴
     public List<T> content;
 
+    public List<T> getContent() {
+        return content;
+    }
+
     // 페이징 메타데이터
     public int totalPages;
     public long totalElements;
