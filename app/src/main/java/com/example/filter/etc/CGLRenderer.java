@@ -179,11 +179,30 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
         if (capturePending) {
             capturePending = false;
             if (captureListener != null) {
-                Bitmap capturedBitmap = readPixels(viewportX, viewportY, viewportWidth, viewportHeight);
+                int cropW, cropH, cropX, cropY;
+                if (ratioMode == 1) {
+                    int size = Math.min(viewportWidth, viewportHeight);
+                    cropW = size;
+                    cropH = size;
+
+                    cropX = viewportX + (viewportWidth - size) / 2;
+                    cropY = viewportY + (viewportHeight - size) / 2;
+                }else {
+                    cropW = viewportWidth;
+                    cropH = viewportHeight;
+                    cropX = viewportX;
+                    cropY = viewportY;
+                }
+                Bitmap capturedBitmap = readPixels(cropX, cropY, cropW, cropH);
+                //Bitmap capturedBitmap = readPixels(viewportX, viewportY, viewportWidth, viewportHeight);
                 captureListener.onBitmapCaptured(capturedBitmap);
+
+                isCapturing = false;
             }
         }
     }
+
+    private boolean isCapturing = false;
 
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height) {
@@ -196,10 +215,10 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
         float targetRatio;
 
         switch (ratioMode) {
-            //case 1:
-            //    targetRatio = 1f;
-            //    break;
             case 1:
+                //targetRatio = 1f;
+                targetRatio = 3f / 4f;
+                break;
             case 2:
                 targetRatio = 3f / 4f;
                 break;
@@ -297,6 +316,8 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
     }
 
     public void captureFinalBitmap(BitmapCaptureListener listener) {
+        isCapturing = true;
+
         this.captureListener = listener;
         this.capturePending = true;
         if (glSurfaceView != null) {
@@ -389,6 +410,4 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
 
         if (glSurfaceView != null) glSurfaceView.requestRender();
     }
-
-
 }

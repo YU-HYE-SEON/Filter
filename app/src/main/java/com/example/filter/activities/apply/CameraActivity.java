@@ -541,8 +541,22 @@ public class CameraActivity extends BaseActivity {
                     Bitmap mergedOverlayBitmap = Bitmap.createBitmap(vW, vH, Bitmap.Config.ARGB_8888);
                     Canvas mergedCanvas = new Canvas(mergedOverlayBitmap);
 
-                    Rect srcRect = new Rect(vX, vY, vX + vW, vY + vH);
-                    Rect dstRect = new Rect(0, 0, vW, vH);
+                    int cropW, cropH, cropX, cropY;
+                    if (renderer.getRatioMode() == 1) {
+                        int size = Math.min(vW, vH);
+                        cropW = size;
+                        cropH = size;
+                        cropX = vX + (vW - size) / 2;
+                        cropY = vY + (vH - size) / 2;
+                    } else {
+                        cropW = vW;
+                        cropH = vH;
+                        cropX = vX;
+                        cropY = vY;
+                    }
+
+                    Rect srcRect = new Rect(cropX, cropY, cropX + cropW, cropY + cropH);
+                    Rect dstRect = new Rect(0, 0, cropW, cropH);
 
                     mergedCanvas.drawBitmap(screenSizedOverlay, srcRect, dstRect, null);
 
