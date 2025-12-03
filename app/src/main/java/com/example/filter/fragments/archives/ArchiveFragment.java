@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -22,19 +23,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
-import com.example.filter.activities.MainActivity;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.FilterListAdapter;
-import com.example.filter.api_datas.response_dto.CashTransactionListResponse;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
-import com.example.filter.api_datas.response_dto.FilterTransactionListResponse;
 import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.apis.ArchiveApi;
-import com.example.filter.apis.PointApi;
+import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.items.FilterListItem;
-import com.example.filter.items.PointHistoryItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,12 +44,8 @@ import retrofit2.Response;
 public class ArchiveFragment extends Fragment {
     private ImageButton bookmark, buy, create, review;
     private RecyclerView recyclerView;
-    private FilterListAdapter adapter1; //뷱마크용
-    private FilterListAdapter adapter2; //구매용
-    private FilterListAdapter adapter3; //제작용
-    private FilterListAdapter adapter4; //리뷰용
-
-    private FilterListAdapter currentAdapter;
+    private TextView textView;
+    private FilterListAdapter filterAdapter;
     private ActivityResultLauncher<Intent> detailActivityLauncher;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -59,125 +53,139 @@ public class ArchiveFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_archive, container, false);
 
-        initViews(view);
-        setupRecyclerView();
-        setupAdapters();
-        setupButtons();
-        setupLauncher();
-
-        recyclerView.setAdapter(adapter1);
-        loadBookmark();
-
-        return view;
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                if (getChildFragmentManager().getBackStackEntryCount() > 0) {
-                    getChildFragmentManager().popBackStack();
-                } else {
-                    setEnabled(false);
-                    requireActivity().onBackPressed();
-                }
-            }
-        });
-    }
-
-    private void initViews(View view) {
         bookmark = view.findViewById(R.id.bookmark);
         buy = view.findViewById(R.id.buy);
         create = view.findViewById(R.id.create);
         review = view.findViewById(R.id.review);
         recyclerView = view.findViewById(R.id.recyclerView);
-    }
+        textView = view.findViewById(R.id.textView);
 
-    private void setupRecyclerView() {
-        StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
-
-        recyclerView.setLayoutManager(sglm);
-        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
-    }
-
-    private void setupAdapters() {
-        adapter1 = new FilterListAdapter();
-        adapter2= new FilterListAdapter();
-        adapter3 = new FilterListAdapter();
-        adapter4 = new FilterListAdapter();
-
-        FilterListAdapter.OnItemClickListener listener = (v, item) -> {
-            Intent intent = new Intent(requireActivity(), FilterInfoActivity.class);
-            intent.putExtra("filterId", item.id);
-            intent.putExtra("nickname", item.nickname);
-            intent.putExtra("imgUrl", item.thumbmailUrl);
-            intent.putExtra("filterTitle", item.filterTitle);
-            intent.putExtra("price", item.price);
-            detailActivityLauncher.launch(intent);
-        };
-
-        adapter1.setOnItemClickListener(listener);
-        adapter2.setOnItemClickListener(listener);
-        adapter3.setOnItemClickListener(listener);
-        adapter4.setOnItemClickListener(listener);
-
-        currentAdapter = adapter1;
-    }
-
-    private void setupButtons() {
-        View.OnClickListener clickListener = v -> {
-            if (v.getId() == R.id.bookmark) {
-                switchAdapter(adapter1);
-                setArchiveButtons(true, false, false, false);
-                loadBookmark();
-            } else if (v.getId() == R.id.buy) {
-                switchAdapter(adapter2);
-                setArchiveButtons(false, true, false, false);
-                loadBuy();
-            } else if (v.getId() == R.id.create) {
-                switchAdapter(adapter3);
-                setArchiveButtons(false, false, true, false);
-                loadCreate();
-            } else if (v.getId() == R.id.review) {
-                switchAdapter(adapter4);
-                setArchiveButtons(false, false, false, true);
-            }
-        };
-
-        bookmark.setOnClickListener(clickListener);
-        buy.setOnClickListener(clickListener);
-        create.setOnClickListener(clickListener);
-        review.setOnClickListener(clickListener);
-    }
-
-    private void switchAdapter(FilterListAdapter adapter) {
-        currentAdapter = adapter;
-        recyclerView.setAdapter(adapter);
-
-        adapter.notifyDataSetChanged();
-
-        RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
-        if (lm instanceof StaggeredGridLayoutManager) {
-            ((StaggeredGridLayoutManager) lm).invalidateSpanAssignments();
-        }
-    }
-
-    private void setupLauncher() {
         detailActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         String deletedId = result.getData().getStringExtra("deleted_filter_id");
-                        if (deletedId != null && currentAdapter != null) {
-                            currentAdapter.removeItem(deletedId);
+                        if (deletedId != null && filterAdapter != null) {
+                            filterAdapter.removeItem(deletedId);
                         }
                     }
                 }
         );
+
+        StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+        recyclerView.setLayoutManager(sglm);
+
+        filterAdapter = new FilterListAdapter();
+        recyclerView.setAdapter(filterAdapter);
+        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
+
+        setArchiveButtons(true, false, false, false);
+        loadBookmark();
+
+        filterAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                updateRecyclerVisibility();
+            }
+
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                updateRecyclerVisibility();
+            }
+
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                updateRecyclerVisibility();
+            }
+        });
+
+        updateRecyclerVisibility();
+
+        filterAdapter.setOnItemClickListener((v, item) -> {
+            Intent intent = new Intent(requireActivity(), FilterInfoActivity.class);
+
+            intent.putExtra("filterId", String.valueOf(item.id));
+            intent.putExtra("nickname", item.nickname);
+            intent.putExtra("imgUrl", item.thumbmailUrl);
+            intent.putExtra("filterTitle", item.filterTitle);
+            intent.putExtra("price", String.valueOf(item.price));
+
+            detailActivityLauncher.launch(intent);
+        });
+
+        filterAdapter.setOnBookmarkClickListener((v, item, position) -> {
+            if (ClickUtils.isFastClick(v, 500)) return;
+            requestToggleBookmark(item.id, position, item);
+        });
+
+        View.OnClickListener listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int id = view.getId();
+                switch (id) {
+                    case R.id.bookmark:
+                        setArchiveButtons(true, false, false, false);
+                        loadBookmark();
+                        break;
+                    case R.id.buy:
+                        setArchiveButtons(false, true, false, false);
+                        loadBuy();
+                        break;
+                    case R.id.create:
+                        setArchiveButtons(false, false, true, false);
+                        loadCreate();
+                        break;
+                    case R.id.review:
+                        setArchiveButtons(false, false, false, true);
+                        break;
+                }
+            }
+        };
+
+        bookmark.setOnClickListener(listener);
+        buy.setOnClickListener(listener);
+        create.setOnClickListener(listener);
+        review.setOnClickListener(listener);
+
+        return view;
+    }
+
+    private void requestToggleBookmark(long filterId, int position, FilterListItem oldItem) {
+        FilterApi api = AppRetrofitClient.getInstance(requireActivity()).create(FilterApi.class);
+
+        api.toggleBookmark(filterId).enqueue(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean newState = response.body();
+
+                    FilterListItem newItem = new FilterListItem(
+                            oldItem.id,
+                            oldItem.filterTitle,
+                            oldItem.thumbmailUrl,
+                            oldItem.nickname,
+                            oldItem.price,
+                            oldItem.useCount,
+                            oldItem.type,
+                            newState
+                    );
+
+                    filterAdapter.updateItem(position, newItem);
+
+                    String msg = newState ? "북마크 저장됨" : "북마크 해제됨";
+                    Toast.makeText(requireActivity(), msg, Toast.LENGTH_SHORT).show();
+
+                } else {
+                    Log.e("Bookmark", "실패: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Log.e("Bookmark", "통신 오류", t);
+            }
+        });
     }
 
     private void loadBookmark() {
@@ -195,13 +203,11 @@ public class ArchiveFragment extends Fragment {
                         uiList.add(item);
                     }
 
-                    if (adapter1 != null) {
-                        adapter1.setItems(uiList);
-
-                       if (currentAdapter == adapter1) {
-                           adapter1.notifyDataSetChanged();
-                       }
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
                     }
+
+                    updateRecyclerVisibility();
 
                 } else {
                     Log.e("아카이브", "목록 조회 실패: " + response.code());
@@ -233,13 +239,11 @@ public class ArchiveFragment extends Fragment {
                         uiList.add(item);
                     }
 
-                    if (adapter2 != null) {
-                        adapter2.setItems(uiList);
-
-                        if (currentAdapter == adapter2) {
-                            adapter2.notifyDataSetChanged();
-                        }
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
                     }
+
+                    updateRecyclerVisibility();
 
                 } else {
                     Log.e("아카이브", "목록 조회 실패: " + response.code());
@@ -270,13 +274,11 @@ public class ArchiveFragment extends Fragment {
                         uiList.add(item);
                     }
 
-                    if (adapter3 != null) {
-                        adapter3.setItems(uiList);
-
-                        if (currentAdapter == adapter3) {
-                            adapter3.notifyDataSetChanged();
-                        }
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
                     }
+
+                    updateRecyclerVisibility();
 
                 } else {
                     Log.e("아카이브", "목록 조회 실패: " + response.code());
@@ -297,6 +299,16 @@ public class ArchiveFragment extends Fragment {
         buy.setBackgroundResource(b ? R.drawable.btn_buy_yes : R.drawable.btn_buy_no);
         create.setBackgroundResource(c ? R.drawable.btn_create_yes : R.drawable.btn_create_no);
         review.setBackgroundResource(r ? R.drawable.btn_review_yes : R.drawable.btn_review_no);
+    }
+
+    private void updateRecyclerVisibility() {
+        if (filterAdapter.getItemCount() == 0) {
+            recyclerView.setVisibility(View.INVISIBLE);
+            textView.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            textView.setVisibility(View.INVISIBLE);
+        }
     }
 
     private int dp(int v) {
