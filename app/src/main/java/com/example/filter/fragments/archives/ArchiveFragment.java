@@ -26,6 +26,7 @@ import com.example.filter.R;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.FilterListAdapter;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
+import com.example.filter.api_datas.response_dto.MyReviewResponse;
 import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.apis.ArchiveApi;
 import com.example.filter.apis.FilterApi;
@@ -138,6 +139,7 @@ public class ArchiveFragment extends Fragment {
                         break;
                     case R.id.review:
                         setArchiveButtons(false, false, false, true);
+                        //loadReview();
                         break;
                 }
             }
@@ -293,6 +295,41 @@ public class ArchiveFragment extends Fragment {
             }
         });
     }
+
+    /*private void loadReview() {
+        ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
+        api.getMyReviews(0, 200).enqueue(new Callback<PageResponse<MyReviewResponse>>() {
+
+            @Override
+            public void onResponse(Call<PageResponse<MyReviewResponse>> call, Response<PageResponse<MyReviewResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<MyReviewResponse> serverList = response.body().content;
+                    List<FilterListItem> uiList = new ArrayList<>();
+
+                    for (FilterListResponse dto : serverList) {
+                        FilterListItem item = FilterListItem.convertFromDto(dto);
+                        uiList.add(item);
+                    }
+
+                    if (filterAdapter != null) {
+                        filterAdapter.setItems(uiList);
+                    }
+
+                    updateRecyclerVisibility();
+
+                } else {
+                    Log.e("아카이브", "목록 조회 실패: " + response.code());
+                    Toast.makeText(requireActivity(), "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PageResponse<MyReviewResponse>> call, Throwable t) {
+                Log.e("아카이브", "통신 오류", t);
+                Toast.makeText(requireActivity(), "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }*/
 
     private void setArchiveButtons(boolean bm, boolean b, boolean c, boolean r) {
         bookmark.setBackgroundResource(bm ? R.drawable.btn_bookmark_yes : R.drawable.btn_bookmark_no);

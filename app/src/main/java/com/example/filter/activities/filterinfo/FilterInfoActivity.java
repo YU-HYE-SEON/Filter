@@ -285,6 +285,8 @@ public class FilterInfoActivity extends BaseActivity {
         updateUI();
         updateButtonState();
 
+        updateBookmarkUI(this.isBookmarked);
+
         preloadImage();
         setupOriginalButton();
     }
@@ -434,6 +436,7 @@ public class FilterInfoActivity extends BaseActivity {
         if (bookmark != null) {
             bookmark.setOnClickListener(v -> {
                 if (ClickUtils.isFastClick(v, 400)) return;
+
                 // API 호출
                 requestToggleBookmark(Long.parseLong(filterId));
             });
@@ -450,13 +453,9 @@ public class FilterInfoActivity extends BaseActivity {
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            //Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
-            //mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            //startActivity(mainIntent);
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("updated_bookmark_id", filterId);
-            resultIntent.putExtra("updated_bookmark_state", isBookmarked);
-            setResult(RESULT_OK, resultIntent);
+            Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
+            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(mainIntent);
             finish();
         });
 
@@ -530,8 +529,11 @@ public class FilterInfoActivity extends BaseActivity {
                     // UI 업데이트
                     updateBookmarkUI(newState);
 
+                    if (newState) {
+                        showBookmarkImg();
+                    }
+
                     Log.d("북마크", "필터인포 | 북마크 | newState : " + newState);
-                    Log.d("북마크", "필터인포 | 북마크 | isBookmarked : " + isBookmarked);
 
                     // (선택) 토스트 메시지
                     String msg = newState ? "북마크에 저장되었습니다." : "북마크가 해제되었습니다.";
@@ -558,7 +560,7 @@ public class FilterInfoActivity extends BaseActivity {
             // 북마크 된 상태 아이콘 (리소스 이름 확인 필요!)
             bookmark.setImageResource(R.drawable.icon_bookmark_yes_blue);
             setBookmarkSize(30f, 36f, -3f);
-            showBookmarkImg();
+            //showBookmarkImg();
         } else {
             // 북마크 해제된 상태 아이콘
             bookmark.setImageResource(R.drawable.icon_bookmark_no_blue);
@@ -947,13 +949,9 @@ public class FilterInfoActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        //Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
-        //mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        //startActivity(mainIntent);
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra("updated_bookmark_id", filterId);
-        resultIntent.putExtra("updated_bookmark_state", isBookmarked);
-        setResult(RESULT_OK, resultIntent);
+        Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
+        mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(mainIntent);
         finish();
     }
 
