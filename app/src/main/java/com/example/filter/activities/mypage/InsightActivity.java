@@ -26,6 +26,7 @@ import com.example.filter.api_datas.response_dto.SalesGraphResponse;
 import com.example.filter.api_datas.response_dto.SalesListResponse;
 import com.example.filter.apis.SalesApi;
 import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.etc.BestMarkerView;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -33,6 +34,8 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.model.GradientColor;
 
 import java.util.ArrayList;
@@ -56,6 +59,9 @@ public class InsightActivity extends BaseActivity {
     private boolean ischooseOrderVisible = false;
     private SalesPeriod currentPeriod = SalesPeriod.WEEK;
     private BarChart barChart;
+
+    private List<Long> currentSalesData = new ArrayList<>();
+    private List<String> currentLabels = new ArrayList<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -117,6 +123,8 @@ public class InsightActivity extends BaseActivity {
 
         setupChooseOrder();
         setDateRangeTexts();
+
+        //DrawChart();
     }
 
     private void loadDetail(Long filterId, SalesPeriod period) {
@@ -131,7 +139,23 @@ public class InsightActivity extends BaseActivity {
                     totalPoint.setText(String.format("%,d P", result.getTotalSalesPoints()));
                     quantity.setText(String.format("%d 개", result.getTotalSalesCount()));
 
-                    Log.d("InsightGraph","response received");
+                    Map<String, Long> graphData = result.getSalesGraphData();
+                    currentLabels.clear();
+                    currentSalesData.clear();
+
+                    if (graphData != null) {
+                        List<String> sortedKeys = new ArrayList<>(graphData.keySet());
+                        java.util.Collections.sort(sortedKeys);
+
+                        for (String key : sortedKeys) {
+                            currentLabels.add(formatLabel(key, period));
+                            currentSalesData.add(graphData.get(key));
+                        }
+                    }
+
+                    DrawChart();
+
+                    Log.d("InsightGraph", "response received");
                 }
             }
 
@@ -140,6 +164,101 @@ public class InsightActivity extends BaseActivity {
                 Toast.makeText(InsightActivity.this, "데이터 불러오기 실패", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void DrawChart(){
+        ArrayList<BarEntry> entry_chart = new ArrayList<>();
+
+        float maxValue = -1;
+        int maxIndex = -1;
+
+        for (int i = 0; i < currentSalesData.size(); i++) {
+            float v = currentSalesData.get(i).floatValue();
+            entry_chart.add(new BarEntry(i, v));
+            if (v > maxValue) {
+                maxValue = v;
+                maxIndex = i;
+            }
+        }
+
+        BarDataSet barDataSet = new BarDataSet(entry_chart, "bardataset");
+        barDataSet.setColor(Color.BLUE);
+        barDataSet.setDrawValues(false);
+
+        BarData barData = new BarData();
+        barData.addDataSet(barDataSet);
+        barData.setBarWidth(0.5f);
+
+        YAxis leftAxis = barChart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGranularity(5f);
+        leftAxis.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value % 10 == 0) {
+                    return String.valueOf((int) value);
+                }
+                return "";
+            }
+        });
+        leftAxis.enableGridDashedLine(10f, 10f, 0f);
+        leftAxis.setGridColor(Color.parseColor("#4D90989F"));
+        leftAxis.setGridLineWidth(1);
+        //leftAxis.setDrawZeroLine(true);
+        //leftAxis.setZeroLineColor(Color.parseColor("#4D90989F"));
+
+        barChart.getAxisLeft().setAxisMaxValue(30);
+        barChart.getAxisLeft().setDrawAxisLine(false);
+        barChart.getAxisRight().setEnabled(false);
+
+        XAxis xAxis = barChart.getXAxis();
+        xAxis.setDrawGridLines(false);
+        xAxis.setDrawLabels(true);
+        xAxis.setDrawAxisLine(false);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+
+        if (!currentLabels.isEmpty()) {
+            xAxis.setValueFormatter(new IndexAxisValueFormatter(currentLabels));
+        }
+
+        barChart.setData(barData);
+
+        BestMarkerView markerView = new BestMarkerView(this, R.layout.best_sales_marker);
+        markerView.setChartView(barChart);
+        barChart.setMarker(markerView);
+
+        Highlight highlight = new Highlight(maxIndex, maxValue, 0);
+        barChart.highlightValue(highlight);
+
+        barChart.getLegend().setEnabled(false);
+        barChart.getDescription().setEnabled(false);
+        barChart.setTouchEnabled(true);
+        barChart.setDragEnabled(true);
+        barChart.setScaleEnabled(false);
+        barChart.setScaleXEnabled(true);
+        barChart.setScaleYEnabled(false);
+        barChart.setPinchZoom(false);
+
+        int dataCount = currentLabels.size();
+        int maxVisibleEntries =8;
+
+        if (dataCount <= maxVisibleEntries) {
+            barChart.setScaleXEnabled(false);
+        } else {
+            barChart.setScaleXEnabled(true);
+        }
+
+        barChart.setVisibleXRangeMaximum(Math.min(dataCount, maxVisibleEntries));
+        barChart.setVisibleXRangeMinimum(maxVisibleEntries);
+
+        if (dataCount > maxVisibleEntries) {
+            barChart.moveViewToX(dataCount - maxVisibleEntries);
+        } else {
+            barChart.moveViewToX(0);
+        }
+
+        barChart.invalidate();
     }
 
     private void setupChooseOrder() {
@@ -280,5 +399,39 @@ public class InsightActivity extends BaseActivity {
         oneWeek.setText("최근 일주일 / " + weekAgoStr + " - " + todayStr);
         oneMonth.setText("최근 한 달 / " + monthAgoStr + " - " + todayStr);
         oneYear.setText("최근 일 년 / " + yearAgoStr + " - " + todayStr);
+    }
+
+    private String formatLabel(String date, SalesPeriod period) {
+        try {
+            if (period == SalesPeriod.WEEK || period == SalesPeriod.MONTH) {
+                java.text.SimpleDateFormat input = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                java.util.Date d = input.parse(date);
+                return new java.text.SimpleDateFormat("MM/dd").format(d);
+
+            } else {
+                java.text.SimpleDateFormat input =
+                        date.length() > 7 ? new java.text.SimpleDateFormat("yyyy-MM-dd")
+                                : new java.text.SimpleDateFormat("yyyy-MM");
+
+                java.util.Date d = input.parse(date);
+
+                java.text.SimpleDateFormat yearFmt = new java.text.SimpleDateFormat("yyyy");
+                java.text.SimpleDateFormat monthFmt = new java.text.SimpleDateFormat("MM월");
+                java.text.SimpleDateFormat shortYearFmt = new java.text.SimpleDateFormat("yy");
+
+                int dataYear = Integer.parseInt(yearFmt.format(d));
+                int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+
+                if (dataYear < currentYear) {
+                    return shortYearFmt.format(d) + "/" + monthFmt.format(d);
+                } else {
+                    return monthFmt.format(d);
+                }
+            }
+
+        } catch (Exception e) {
+            Log.e("formatLabel", "parse error: " + date);
+            return date.replace("-", "/");
+        }
     }
 }
