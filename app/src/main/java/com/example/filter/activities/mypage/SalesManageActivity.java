@@ -2,6 +2,8 @@ package com.example.filter.activities.mypage;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,9 +24,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
+import com.example.filter.activities.MainActivity;
+import com.example.filter.activities.filter.FilterActivity;
+import com.example.filter.activities.filter.SavePhotoActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.FilterListAdapter;
 import com.example.filter.adapters.ReviewInfoAdapter;
 import com.example.filter.adapters.SalesListAdapter;
+import com.example.filter.api_datas.FaceStickerData;
+import com.example.filter.api_datas.FilterCreationData;
+import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.request_dto.SalesPeriod;
 import com.example.filter.api_datas.request_dto.SalesSortType;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
@@ -100,6 +109,12 @@ public class SalesManageActivity extends BaseActivity {
                     loadSalesList(currentSort, nextPage);
                 }
             }
+        });
+
+        adapter.setOnItemClickListener((v, item) -> {
+            Intent intent = new Intent(SalesManageActivity.this, InsightActivity.class);
+            intent.putExtra("sales_data", item);
+            startActivity(intent);
         });
 
         // 모달 열려있을 때 뒤로가기 누르면 모달 닫기

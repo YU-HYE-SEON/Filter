@@ -594,8 +594,8 @@ public class CameraActivity extends BaseActivity {
             toggleRatioButtons(false);
             isRatioBtnClick = false;
 
-            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r1_blue);
-            r1Btn.setBackgroundResource(R.drawable.btn_camera_r1_blue);
+            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r1_lime);
+            r1Btn.setBackgroundResource(R.drawable.btn_camera_r1_lime);
             r2Btn.setBackgroundResource(R.drawable.btn_camera_r2_white);
             r3Btn.setBackgroundResource(R.drawable.btn_camera_r3_white);
 
@@ -613,9 +613,9 @@ public class CameraActivity extends BaseActivity {
             toggleRatioButtons(false);
             isRatioBtnClick = false;
 
-            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r2_blue);
+            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r2_lime);
             r1Btn.setBackgroundResource(R.drawable.btn_camera_r1_white);
-            r2Btn.setBackgroundResource(R.drawable.btn_camera_r2_blue);
+            r2Btn.setBackgroundResource(R.drawable.btn_camera_r2_lime);
             r3Btn.setBackgroundResource(R.drawable.btn_camera_r3_white);
 
             cameraContainer.setLayoutParams(params);
@@ -632,10 +632,10 @@ public class CameraActivity extends BaseActivity {
             toggleRatioButtons(false);
             isRatioBtnClick = false;
 
-            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r3_blue);
+            ratioBtn.setBackgroundResource(R.drawable.btn_camera_r3_lime);
             r1Btn.setBackgroundResource(R.drawable.btn_camera_r1_white);
             r2Btn.setBackgroundResource(R.drawable.btn_camera_r2_white);
-            r3Btn.setBackgroundResource(R.drawable.btn_camera_r3_blue);
+            r3Btn.setBackgroundResource(R.drawable.btn_camera_r3_lime);
 
             cameraContainer.setLayoutParams(params);
             cameraContainer.requestLayout();

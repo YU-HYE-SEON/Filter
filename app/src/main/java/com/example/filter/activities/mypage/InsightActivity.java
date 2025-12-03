@@ -3,7 +3,9 @@ package com.example.filter.activities.mypage;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.graphics.Color;
+import android.graphics.RectF;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
@@ -16,13 +18,26 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.api_datas.request_dto.SalesPeriod;
-import com.example.filter.api_datas.response_dto.SalesTotalResponse;
+import com.example.filter.api_datas.response_dto.SalesGraphResponse;
+import com.example.filter.api_datas.response_dto.SalesListResponse;
 import com.example.filter.apis.SalesApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.model.GradientColor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -30,6 +45,7 @@ import retrofit2.Response;
 
 public class InsightActivity extends BaseActivity {
     private ImageButton backBtn;
+    private ImageView image;
     private TextView title, date, point, sales, bookmark, totalPoint, quantity;
     private ConstraintLayout dateDropdown;
     private FrameLayout modalOff;
@@ -46,6 +62,7 @@ public class InsightActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_insight);
         backBtn = findViewById(R.id.backBtn);
+        image = findViewById(R.id.image);
         title = findViewById(R.id.title);
         date = findViewById(R.id.date);
         point = findViewById(R.id.point);
@@ -62,7 +79,28 @@ public class InsightActivity extends BaseActivity {
             finish();
         });
 
-        loadTotal(SalesPeriod.WEEK);
+        SalesListResponse data = (SalesListResponse) getIntent().getSerializableExtra("sales_data");
+
+        if (data != null) {
+            if (data.getFilterImageUrl() != null) {
+                Glide.with(image)
+                        .load(data.getFilterImageUrl())
+                        .centerCrop()
+                        .into(image);
+            }
+
+            title.setText(data.getFilterName());
+
+            String rawDate = data.getFilterCreatedAt();
+            String formattedDate = rawDate.substring(0, 10).replace("-", ".") + " 등록";
+            date.setText(formattedDate);
+
+            point.setText(data.getPrice() + "P");
+            sales.setText(String.valueOf(data.getSalesCount()));
+            bookmark.setText(String.valueOf(data.getSaveCount()));
+
+            loadDetail(data.getFilterId(), currentPeriod);
+        }
 
         // 모달 열려있을 때 뒤로가기 누르면 모달 닫기
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -81,8 +119,27 @@ public class InsightActivity extends BaseActivity {
         setDateRangeTexts();
     }
 
-    private void loadTotal(SalesPeriod period) {
+    private void loadDetail(Long filterId, SalesPeriod period) {
+        SalesApi api = AppRetrofitClient.getInstance(this).create(SalesApi.class);
 
+        api.getFilterSalesDetail(filterId, period).enqueue(new Callback<SalesGraphResponse>() {
+            @Override
+            public void onResponse(Call<SalesGraphResponse> call, Response<SalesGraphResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    SalesGraphResponse result = response.body();
+
+                    totalPoint.setText(String.format("%,d P", result.getTotalSalesPoints()));
+                    quantity.setText(String.format("%d 개", result.getTotalSalesCount()));
+
+                    Log.d("InsightGraph","response received");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SalesGraphResponse> call, Throwable t) {
+                Toast.makeText(InsightActivity.this, "데이터 불러오기 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setupChooseOrder() {
@@ -191,7 +248,10 @@ public class InsightActivity extends BaseActivity {
         else if (select == oneMonth) currentPeriod = SalesPeriod.MONTH;
         else if (select == oneYear) currentPeriod = SalesPeriod.YEAR;
 
-        loadTotal(currentPeriod);
+        SalesListResponse data = (SalesListResponse) getIntent().getSerializableExtra("sales_data");
+        if (data != null) {
+            loadDetail(data.getFilterId(), currentPeriod);
+        }
     }
 
     // 모달 날짜 표시
