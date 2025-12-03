@@ -34,6 +34,7 @@ import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.items.FilterListItem;
+import com.example.filter.items.PriceDisplayEnum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,7 +140,7 @@ public class ArchiveFragment extends Fragment {
                         break;
                     case R.id.review:
                         setArchiveButtons(false, false, false, true);
-                        //loadReview();
+                        loadReview();
                         break;
                 }
             }
@@ -191,6 +192,8 @@ public class ArchiveFragment extends Fragment {
     }
 
     private void loadBookmark() {
+        filterAdapter.setReviewMode(false);
+
         ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
         api.getBookmarks(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
 
@@ -227,6 +230,8 @@ public class ArchiveFragment extends Fragment {
     }
 
     private void loadBuy() {
+        filterAdapter.setReviewMode(false);
+
         ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
         api.getUsage(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
 
@@ -262,6 +267,8 @@ public class ArchiveFragment extends Fragment {
     }
 
     private void loadCreate() {
+        filterAdapter.setReviewMode(false);
+
         ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
         api.getMyFilters(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
 
@@ -296,7 +303,9 @@ public class ArchiveFragment extends Fragment {
         });
     }
 
-    /*private void loadReview() {
+    private void loadReview() {
+        filterAdapter.setReviewMode(true);
+
         ArchiveApi api = AppRetrofitClient.getInstance(requireActivity()).create(ArchiveApi.class);
         api.getMyReviews(0, 200).enqueue(new Callback<PageResponse<MyReviewResponse>>() {
 
@@ -306,8 +315,20 @@ public class ArchiveFragment extends Fragment {
                     List<MyReviewResponse> serverList = response.body().content;
                     List<FilterListItem> uiList = new ArrayList<>();
 
-                    for (FilterListResponse dto : serverList) {
-                        FilterListItem item = FilterListItem.convertFromDto(dto);
+                    for (MyReviewResponse dto : serverList) {
+                        PriceDisplayEnum displayType = PriceDisplayEnum.fromString(dto.priceDisplayType);
+
+                        FilterListItem item = new FilterListItem(
+                                dto.filterId,
+                                dto.filterName,
+                                dto.imageUrl,
+                                null,
+                                dto.pricePoint,
+                                null,
+                                displayType,
+                                false
+                        );
+
                         uiList.add(item);
                     }
 
@@ -329,7 +350,7 @@ public class ArchiveFragment extends Fragment {
                 Toast.makeText(requireActivity(), "서버 연결 실패", Toast.LENGTH_SHORT).show();
             }
         });
-    }*/
+    }
 
     private void setArchiveButtons(boolean bm, boolean b, boolean c, boolean r) {
         bookmark.setBackgroundResource(bm ? R.drawable.btn_bookmark_yes : R.drawable.btn_bookmark_no);

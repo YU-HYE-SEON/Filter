@@ -27,8 +27,8 @@ public class MyReviewResponse implements Serializable {
     public String createdAt;    // "2025-11-22T..." 형식의 문자열로 받음
 
     // my에 필요한 정보 추가
-    private Long filterId;
-    private String filterName;
-    private String priceDisplayType; // 가격 표시 유형: NONE, PURCHASED, NUMBER
-    private int pricePoint; // 필터 가격
+    public Long filterId;
+    public String filterName;
+    public String priceDisplayType; // 가격 표시 유형: NONE, PURCHASED, NUMBER
+    public int pricePoint; // 필터 가격
 }

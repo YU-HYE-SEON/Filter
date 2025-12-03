@@ -260,16 +260,6 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="@id/tagBox" />
 
-                <!--<ImageView
-                    android:id="@+id/bookmark2"
-                    android:layout_width="30dp"
-                    android:layout_marginEnd="-3dp"
-                    android:layout_height="36dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_bookmark_yes_blue"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="@id/tagBox" />-->
-
                 <TextView
                     android:id="@+id/filterTitle"
                     android:layout_width="wrap_content"

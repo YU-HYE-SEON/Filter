@@ -38,17 +38,6 @@
         app:layout_constraintEnd_toEndOf="@+id/imageBox"
         app:layout_constraintTop_toTopOf="@+id/imageBox" />
 
-    <!--<ImageView
-        android:id="@+id/bookmark2"
-        android:layout_width="30dp"
-        android:layout_height="36dp"
-        android:layout_marginTop="-6dp"
-        android:layout_marginEnd="12dp"
-        android:elevation="4dp"
-        android:src="@drawable/icon_bookmark_yes_lime"
-        app:layout_constraintEnd_toEndOf="@+id/imageBox"
-        app:layout_constraintTop_toTopOf="@+id/imageBox" />-->
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/filterInfo"
         android:layout_width="0dp"

@@ -44,6 +44,12 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
 
     private final List<FilterListItem> items = new ArrayList<>();
     private int maxItems = Integer.MAX_VALUE;
+    private boolean reviewMode = false;
+
+    public void setReviewMode(boolean reviewMode) {
+        this.reviewMode = reviewMode;
+        notifyDataSetChanged();
+    }
 
     public FilterListAdapter() {
     }
@@ -91,7 +97,7 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
     public void updateItem(int position, FilterListItem newItem) {
         if (position >= 0 && position < items.size()) {
             items.set(position, newItem);
-            notifyItemChanged(position); // 깜빡임 없이 해당 줄만 갱신
+            //notifyItemChanged(position); // 깜빡임 없이 해당 줄만 갱신
         }
     }
 
@@ -222,6 +228,16 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
                     holder.filterTitle.setEllipsize(null);
                 }
             });
+        }
+
+        if (reviewMode) {
+            holder.nickname.setVisibility(View.GONE);
+            holder.count.setVisibility(View.GONE);
+            holder.bookmark.setVisibility(View.GONE);
+        } else {
+            holder.nickname.setVisibility(View.VISIBLE);
+            holder.count.setVisibility(View.VISIBLE);
+            holder.bookmark.setVisibility(View.VISIBLE);
         }
     }
 

@@ -197,11 +197,11 @@ public class MainActivity extends BaseActivity {
 
         // 로고 클릭 (맨 위로)
         logo.setOnClickListener(v -> {
-            recyclerView.post(() -> {
+            recyclerView.smoothScrollToPosition(0);
+            recyclerView.postDelayed(() -> {
                 sglm.invalidateSpanAssignments();
-                recyclerView.smoothScrollToPosition(0);
-                recyclerView.postDelayed(() -> sglm.scrollToPositionWithOffset(0, 0), 800);
-            });
+                sglm.scrollToPositionWithOffset(0, 0);
+            }, 200);
         });
 
         // 6. 정렬 버튼 리스너
