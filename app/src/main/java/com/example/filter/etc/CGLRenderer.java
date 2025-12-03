@@ -196,9 +196,10 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
         float targetRatio;
 
         switch (ratioMode) {
+            //case 1:
+            //    targetRatio = 1f;
+            //    break;
             case 1:
-                targetRatio = 1f;
-                break;
             case 2:
                 targetRatio = 3f / 4f;
                 break;

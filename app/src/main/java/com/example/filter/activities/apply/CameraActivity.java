@@ -1,6 +1,7 @@
 package com.example.filter.activities.apply;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -32,6 +33,7 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
@@ -70,6 +72,7 @@ import retrofit2.Response;
 
 @androidx.camera.core.ExperimentalGetImage
 public class CameraActivity extends BaseActivity {
+    private final int CAMERA_PERMISSION_REQUEST = 1001;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private CameraSelector cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
     private ExecutorService cameraExecutor;
@@ -119,6 +122,15 @@ public class CameraActivity extends BaseActivity {
         r2Btn = findViewById(R.id.r2Btn);
         r3Btn = findViewById(R.id.r3Btn);
         photoBtn = findViewById(R.id.photoBtn);
+
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.CAMERA},
+                    CAMERA_PERMISSION_REQUEST);
+        } else {
+            startCamera();   // 권한이 이미 있으면 바로 시작
+        }
 
         cameraExecutor = Executors.newSingleThreadExecutor();
 
@@ -697,6 +709,22 @@ public class CameraActivity extends BaseActivity {
                     isToastVisible = false;
                 })
                 .start(), 2000);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == CAMERA_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startCamera();   // 허용 → 카메라 시작
+            } else {
+                Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        }
     }
 
     @Override
