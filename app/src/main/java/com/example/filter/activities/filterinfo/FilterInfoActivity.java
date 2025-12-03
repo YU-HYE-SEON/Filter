@@ -11,6 +11,8 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,6 +20,8 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -55,7 +59,6 @@ import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
-import com.example.filter.dialogs.PointChangeDialog; // ✅ Import 추가
 import com.example.filter.etc.ClickUtils;
 import com.google.gson.Gson;
 
@@ -72,7 +75,7 @@ public class FilterInfoActivity extends BaseActivity {
     private ReviewResponse reviewResponse;
     // UI 요소
     private ImageButton backBtn, originalBtn;
-    private ImageView shareBtn;
+    private ImageView shareBtn, existFaceSticker;
     private TextView nickname, deleteORreportBtn, filterTitle, moreBtn, noReviewTxt;
     private TextView tag1, tag2, tag3, tag4, tag5;
     private TextView saveCount, useCount, reviewCount;
@@ -84,10 +87,12 @@ public class FilterInfoActivity extends BaseActivity {
 
     // 모달(팝업) 관련 UI
     private FrameLayout modalOff;
-    private View chooseUseModeOn, buyFilterOn, buyFilterSuccessOn, dimBackground;
-    private ConstraintLayout chooseUseMode, buyFilter, buyFilterSuccess;
+    private View changePointModeOn, chooseUseModeOn, buyFilterOn, buyFilterSuccessOn, dimBackground;
+    private ConstraintLayout changePointMode, chooseUseMode, buyFilter, buyFilterSuccess;
     private ImageButton galleryModeBtn, cameraModeBtn, buyBtn, useBtn, closeBtn;
-    private TextView alertTxt, point, currentPoint1, currentPoint2;
+    private TextView message, price1, txt3, alertTxt, point, currentPoint1, currentPoint2;
+    private EditText price2;
+    private AppCompatButton pointChangebtn;
     private boolean isModalVisible = false;
 
     // 상태 변수
@@ -95,6 +100,8 @@ public class FilterInfoActivity extends BaseActivity {
     private boolean isBuy = false; // 현재 사용자가 구매했는지 여부
     private boolean isMine = false; // 내가 만든 필터인지 여부
     private boolean isBookmarked = false;
+
+    private boolean isFaceStickerExist = false;
 
     // 데이터 변수
     private FilterResponse filterData; // 서버 응답 객체
@@ -162,6 +169,8 @@ public class FilterInfoActivity extends BaseActivity {
         // 3. 데이터 수신 및 처리
         FilterResponse responseObj = (FilterResponse) getIntent().getSerializableExtra("filter_response");
 
+        isFaceStickerExist = getIntent().getBooleanExtra("isFaceStickerExist", false);
+
         //1. 수신 먼저 하고
         //2. 수신 실패하면 intent
 
@@ -189,6 +198,7 @@ public class FilterInfoActivity extends BaseActivity {
     private void initViews() {
         backBtn = findViewById(R.id.backBtn);
         shareBtn = findViewById(R.id.shareBtn);
+        existFaceSticker = findViewById(R.id.existFaceSticker);
         originalBtn = findViewById(R.id.originalBtn);
         nickname = findViewById(R.id.nickname);
         deleteORreportBtn = findViewById(R.id.deleteORreportBtn);
@@ -254,6 +264,16 @@ public class FilterInfoActivity extends BaseActivity {
         this.originalPath = data.originalImageUrl;
         this.price = (data.price != null) ? String.valueOf(data.price) : "0";
         this.stickerImageNoFacePath = data.stickerImageNoFaceUrl;
+
+        if (isFaceStickerExist) {
+            existFaceSticker.setVisibility(View.VISIBLE);
+        } else {
+            if (data.stickers == null || data.stickers.isEmpty()) {
+                existFaceSticker.setVisibility(View.GONE);
+            } else {
+                existFaceSticker.setVisibility(View.VISIBLE);
+            }
+        }
 
         this.isMine = Boolean.TRUE.equals(data.isMine);
         this.isBuy = Boolean.TRUE.equals(data.isUsed);
@@ -395,7 +415,10 @@ public class FilterInfoActivity extends BaseActivity {
         if (changeORbuyBtn != null) {
             changeORbuyBtn.setOnClickListener(v -> {
                 if (isMine) {
-                    showPointChangePopUp();
+                    //showPointChangePopUp();
+                    price1.setText(price + "P");
+                    price2.setText(price);
+                    showModal(changePointModeOn);
                 } else {
                     if (ClickUtils.isFastClick(v, 400)) return;
                     if (isModalVisible) return;
@@ -501,7 +524,7 @@ public class FilterInfoActivity extends BaseActivity {
         });
     }
 
-    private void showPointChangePopUp() {
+    /*private void showPointChangePopUp() {
         int currentPrice = 0;
         try {
             currentPrice = Integer.parseInt(price);
@@ -512,7 +535,7 @@ public class FilterInfoActivity extends BaseActivity {
         new PointChangeDialog(this, title, currentPrice, (oldPrice, newPrice) -> {
             requestUpdatePrice(Long.parseLong(filterId), newPrice);
         }).show();
-    }
+    }*/
 
     // ✅ 2. 북마크 서버 API 호출 (토글 요청)
     private void requestToggleBookmark(long id) {
@@ -610,9 +633,45 @@ public class FilterInfoActivity extends BaseActivity {
         });
     }
 
+    private void updateChangeRate(int oldPrice, int newPrice, TextView txt) {
+        if (oldPrice == newPrice) {
+            txt.setText("가격 변동 없음");
+        } else if (newPrice == 0) {
+            if (oldPrice > 0) {
+                txt.setText("가격을 무료로 전환했습니다.");
+            } else {
+                txt.setText("가격 변동 없음");
+            }
+        } else if (oldPrice == 0) {
+            if (newPrice > 0) {
+                txt.setText("가격을 새로 설정했습니다.");
+            } else {
+                txt.setText("가격 변동 없음");
+            }
+        } else {
+            float change = (float) (newPrice - oldPrice);
+            float rate = (change / oldPrice) * 100;
+            int rateAbs = Math.round(Math.abs(rate));
+
+            if (change > 0) {
+                txt.setText("가격을 " + rateAbs + "% 올렸습니다.");
+            } else {
+                txt.setText("가격을 " + rateAbs + "% 낮췄습니다.");
+            }
+        }
+    }
+
     // ✅ 모달 설정
     private void setupModal() {
         FrameLayout rootView = findViewById(R.id.modalOff);
+
+        changePointModeOn = getLayoutInflater().inflate(R.layout.m_point_change, null);
+        changePointMode = changePointModeOn.findViewById(R.id.changePointMode);
+        message = changePointModeOn.findViewById(R.id.message);
+        price1 = changePointModeOn.findViewById(R.id.price1);
+        price2 = changePointModeOn.findViewById(R.id.price2);
+        txt3 = changePointModeOn.findViewById(R.id.txt3);
+        pointChangebtn = changePointModeOn.findViewById(R.id.pointChangebtn);
 
         chooseUseModeOn = getLayoutInflater().inflate(R.layout.m_choose_use_mode, null);
         chooseUseMode = chooseUseModeOn.findViewById(R.id.chooseUseMode);
@@ -638,10 +697,13 @@ public class FilterInfoActivity extends BaseActivity {
         dimBackground.setVisibility(View.GONE);
 
         rootView.addView(dimBackground);
+        rootView.addView(changePointModeOn);
         rootView.addView(chooseUseModeOn);
         rootView.addView(buyFilterOn);
         rootView.addView(buyFilterSuccessOn);
 
+        changePointModeOn.setVisibility(View.GONE);
+        changePointModeOn.setTranslationY(800);
         chooseUseModeOn.setVisibility(View.GONE);
         chooseUseModeOn.setTranslationY(800);
         buyFilterOn.setVisibility(View.GONE);
@@ -651,6 +713,87 @@ public class FilterInfoActivity extends BaseActivity {
 
         dimBackground.setOnClickListener(v -> hideModal());
         if (closeBtn != null) closeBtn.setOnClickListener(v -> hideModal());
+
+        message.setText(this.title);
+        price1.setText(this.price + "P");
+
+        ViewCompat.setOnApplyWindowInsetsListener(modalOff, (v, insets) -> {
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            v.setPadding(0, 0, 0, ime.bottom - nav.bottom);
+            return insets;
+        });
+
+        price2.addTextChangedListener(new TextWatcher() {
+            private boolean selfChange = false;
+
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (selfChange) return;
+
+                String newPriceStr = s.toString().trim();
+                int newPrice = 0;
+
+                if (newPriceStr.length() > 1 && newPriceStr.startsWith("0")) {
+                    String newText = newPriceStr.replaceFirst("^0+(?=\\d)", "");
+                    if (newText.isEmpty()) newText = "0";
+                    selfChange = true;
+                    s.replace(0, s.length(), newText);
+                    price2.setSelection(newText.length());
+                    selfChange = false;
+                    newPriceStr = newText;
+                }
+
+                if (newPriceStr.isEmpty()) {
+                    txt3.setText("가격을 입력해주세요.");
+                    pointChangebtn.setEnabled(false);
+                    pointChangebtn.setBackgroundResource(R.drawable.btn_change_point_no);
+                    pointChangebtn.setTextColor(Color.parseColor("#90989F"));
+                    return;
+                } else {
+                    try {
+                        newPrice = Integer.parseInt(newPriceStr);
+
+                        if (newPrice < 0 || newPrice > 300 || (newPrice > 0 && newPrice % 10 != 0)) {
+                            txt3.setText("0~300P까지 10P단위로만 입력 가능합니다");
+                            pointChangebtn.setEnabled(false);
+                            pointChangebtn.setBackgroundResource(R.drawable.btn_change_point_no);
+                            pointChangebtn.setTextColor(Color.parseColor("#90989F"));
+                            return;
+                        } else {
+                            pointChangebtn.setEnabled(true);
+                            pointChangebtn.setBackgroundResource(R.drawable.btn_change_point_yes);
+                            pointChangebtn.setTextColor(Color.WHITE);
+
+                            updateChangeRate(Integer.parseInt(price), newPrice, txt3);
+                        }
+                    } catch (Exception e) {
+                        txt3.setText("0~300P까지 10P단위로만 입력 가능합니다");
+                        pointChangebtn.setEnabled(false);
+                        pointChangebtn.setAlpha(0.4f);
+                    }
+                }
+            }
+        });
+
+        pointChangebtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            String newPriceStr = price2.getText().toString().trim();
+            int newPrice = Integer.parseInt(newPriceStr);
+            requestUpdatePrice(Long.parseLong(filterId), newPrice);
+            hideModal();
+        });
+
 
         // 갤러리/카메라 선택
         galleryModeBtn.setOnClickListener(v -> {
@@ -762,7 +905,13 @@ public class FilterInfoActivity extends BaseActivity {
     }
 
     private void hideModal() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null && getCurrentFocus() != null) {
+            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+
         View tempTarget = null;
+        if (changePointModeOn.getVisibility() == View.VISIBLE) tempTarget = changePointModeOn;
         if (chooseUseModeOn.getVisibility() == View.VISIBLE) tempTarget = chooseUseModeOn;
         else if (buyFilterOn.getVisibility() == View.VISIBLE) tempTarget = buyFilterOn;
         else if (buyFilterSuccessOn.getVisibility() == View.VISIBLE)

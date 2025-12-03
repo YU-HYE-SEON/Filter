@@ -577,6 +577,14 @@ public class RegisterActivity extends BaseActivity {
         // ★ 서버 응답 객체를 통째로 넘김
         intent.putExtra("filter_response", response);
 
+        /// ⭐얼굴 인식 스티커 사용 여부 강제로 보여지게 하기⭐ ///
+        boolean isFaceStickerExist = false;
+        if (filterData.stickers != null && !filterData.stickers.isEmpty()) {
+            isFaceStickerExist = true;
+        }
+        Log.d("isFaceStickerExist", "레지스터 isFaceStickerExist | " + isFaceStickerExist);
+        intent.putExtra("isFaceStickerExist", isFaceStickerExist);
+
         startActivity(intent);
         finish(); // 등록 화면 종료
     }

@@ -6,9 +6,9 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/topArea"
-        android:background="@drawable/border_info_top_area"
         android:layout_width="match_parent"
         android:layout_height="120dp"
+        android:background="@drawable/border_info_top_area"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -136,6 +136,18 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
 
+                <!--<ImageView
+                    android:id="@+id/existFaceSticker"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/icon_face_sticker_exist"
+                    android:visibility="visible"
+                    app:layout_constraintDimensionRatio="101:25"
+                    app:layout_constraintEnd_toStartOf="@id/tagBox"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />-->
+
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/tagBox"
                     android:layout_width="0dp"
@@ -144,6 +156,13 @@
                     app:layout_constraintEnd_toStartOf="@id/bookmark"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:id="@+id/existFaceSticker"
+                        android:layout_width="137dp"
+                        android:layout_height="34dp"
+                        android:background="@drawable/icon_face_sticker_exist"
+                        android:visibility="visible" />
 
                     <TextView
                         android:id="@+id/tag1"
@@ -239,7 +258,7 @@
                         android:id="@+id/tagFlow"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        app:constraint_referenced_ids="tag1,tag2,tag3,tag4,tag5"
+                        app:constraint_referenced_ids="existFaceSticker,tag1,tag2,tag3,tag4,tag5"
                         app:flow_horizontalBias="0"
                         app:flow_horizontalGap="12dp"
                         app:flow_horizontalStyle="packed"

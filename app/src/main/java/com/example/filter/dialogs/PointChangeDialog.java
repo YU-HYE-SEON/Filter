@@ -1,3 +1,4 @@
+/*
 package com.example.filter.dialogs;
 
 import android.app.Dialog;
@@ -16,7 +17,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.example.filter.R;
-import com.example.filter.etc.ClickUtils;
 
 public class PointChangeDialog extends Dialog {
     public interface PointChangeDialogListener {
@@ -37,7 +37,7 @@ public class PointChangeDialog extends Dialog {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dialog_point_change);
+        setContentView(R.layout.m_point_change);
 
         setCancelable(true);
         setCanceledOnTouchOutside(true);
@@ -175,4 +175,4 @@ public class PointChangeDialog extends Dialog {
             }
         }
     }
-}
+}*/
