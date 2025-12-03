@@ -1,5 +1,6 @@
 package com.example.filter.adapters;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -78,6 +79,14 @@ public class SalesListAdapter extends RecyclerView.Adapter<SalesListAdapter.VH> 
         } else {
             holder.borderLine.setVisibility(View.VISIBLE);
         }
+
+        if (item.isDeleted()) {
+            holder.deleteTxt.setVisibility(View.VISIBLE);
+        } else {
+            holder.deleteTxt.setVisibility(View.INVISIBLE);
+        }
+
+        Log.d("SalesListdeleted", "deleted? " + item.isDeleted());
     }
 
 
@@ -88,7 +97,7 @@ public class SalesListAdapter extends RecyclerView.Adapter<SalesListAdapter.VH> 
 
     public class VH extends RecyclerView.ViewHolder {
         ImageView image;
-        TextView title, date, point, sales, bookmark;
+        TextView title, date, deleteTxt, point, sales, bookmark;
         View borderLine;
 
         public VH(@NonNull View itemView) {
@@ -97,6 +106,7 @@ public class SalesListAdapter extends RecyclerView.Adapter<SalesListAdapter.VH> 
             image = itemView.findViewById(R.id.image);
             title = itemView.findViewById(R.id.title);
             date = itemView.findViewById(R.id.date);
+            deleteTxt = itemView.findViewById(R.id.deleteTxt);
             point = itemView.findViewById(R.id.point);
             sales = itemView.findViewById(R.id.sales);
             bookmark = itemView.findViewById(R.id.bookmark);

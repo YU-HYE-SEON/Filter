@@ -37,26 +37,25 @@
         app:layout_constraintTop_toTopOf="@+id/a">
 
         <TextView
-            android:id="@id/title"
+            android:id="@+id/title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
+            android:layout_marginEnd="16dp"
             android:ellipsize="end"
             android:fontFamily="@font/pretendard_semibold"
             android:maxLines="1"
             android:singleLine="true"
-            android:layout_marginEnd="16dp"
             android:text="Title"
             android:textAlignment="textStart"
             android:textColor="@color/black"
             android:textSize="18sp"
-            app:layout_constraintBottom_toTopOf="@+id/pointTxt"
+            app:layout_constraintBottom_toTopOf="@+id/deleteTxt"
             app:layout_constraintEnd_toStartOf="@+id/date"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@id/date"
+            android:id="@+id/date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_regular"
@@ -69,6 +68,20 @@
             app:layout_constraintTop_toTopOf="@+id/title" />
 
         <TextView
+            android:id="@+id/deleteTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_medium"
+            android:text="삭제된 필터입니다."
+            android:textAlignment="textStart"
+            android:textColor="#FF5C8A"
+            android:textSize="10sp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/pointTxt"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/title" />
+
+        <TextView
             android:id="@+id/pointTxt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -79,10 +92,10 @@
             android:textSize="14sp"
             app:layout_constraintBottom_toTopOf="@+id/salesTxt"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/title" />
+            app:layout_constraintTop_toBottomOf="@+id/deleteTxt" />
 
         <TextView
-            android:id="@id/point"
+            android:id="@+id/point"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_medium"
@@ -108,7 +121,7 @@
             app:layout_constraintTop_toBottomOf="@+id/pointTxt" />
 
         <TextView
-            android:id="@id/sales"
+            android:id="@+id/sales"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_medium"
@@ -134,7 +147,7 @@
             app:layout_constraintTop_toBottomOf="@+id/salesTxt" />
 
         <TextView
-            android:id="@id/bookmark"
+            android:id="@+id/bookmark"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/pretendard_medium"
