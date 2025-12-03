@@ -181,6 +181,9 @@ public class FilterInfoActivity extends BaseActivity {
         setupListeners();
 
         tagClick();
+
+
+        Log.d("북마크", "필터인포 | 북마크 | isBookmarked : " + isBookmarked);
     }
 
     private void initViews() {
@@ -447,9 +450,13 @@ public class FilterInfoActivity extends BaseActivity {
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
-            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(mainIntent);
+            //Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
+            //mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            //startActivity(mainIntent);
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("updated_bookmark_id", filterId);
+            resultIntent.putExtra("updated_bookmark_state", isBookmarked);
+            setResult(RESULT_OK, resultIntent);
             finish();
         });
 
@@ -516,10 +523,15 @@ public class FilterInfoActivity extends BaseActivity {
             @Override
             public void onResponse(Call<Boolean> call, Response<Boolean> response) {
                 if (response.isSuccessful() && response.body() != null) {
+
+                    /// ⭐아무래도 여기서 false는 안 받고 true만 받고 있는 것 같음⭐ ///
                     boolean newState = response.body(); // 서버가 준 현재 상태 (true/false)
 
                     // UI 업데이트
                     updateBookmarkUI(newState);
+
+                    Log.d("북마크", "필터인포 | 북마크 | newState : " + newState);
+                    Log.d("북마크", "필터인포 | 북마크 | isBookmarked : " + isBookmarked);
 
                     // (선택) 토스트 메시지
                     String msg = newState ? "북마크에 저장되었습니다." : "북마크가 해제되었습니다.";
@@ -539,6 +551,8 @@ public class FilterInfoActivity extends BaseActivity {
     // ✅ 3. 북마크 UI 업데이트 (아이콘 변경)
     private void updateBookmarkUI(boolean active) {
         this.isBookmarked = active; // 상태 변수 업데이트
+
+        Log.d("북마크", "필터인포 | 북마크 | isBookmarked : " + isBookmarked);
 
         if (active) {
             // 북마크 된 상태 아이콘 (리소스 이름 확인 필요!)
@@ -933,9 +947,13 @@ public class FilterInfoActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
-        mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(mainIntent);
+        //Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
+        //mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        //startActivity(mainIntent);
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("updated_bookmark_id", filterId);
+        resultIntent.putExtra("updated_bookmark_state", isBookmarked);
+        setResult(RESULT_OK, resultIntent);
         finish();
     }
 

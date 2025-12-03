@@ -602,8 +602,9 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        if (mypageFrame.getVisibility() == View.VISIBLE) {
+        if (archiveFrame.getVisibility() == View.VISIBLE || mypageFrame.getVisibility() == View.VISIBLE) {
             getSupportFragmentManager().popBackStack(null, getSupportFragmentManager().POP_BACK_STACK_INCLUSIVE);
+            archiveFrame.setVisibility(View.GONE);
             mypageFrame.setVisibility(View.GONE);
             searchFrame.setVisibility(View.GONE);
             mainActivity.setVisibility(View.VISIBLE);

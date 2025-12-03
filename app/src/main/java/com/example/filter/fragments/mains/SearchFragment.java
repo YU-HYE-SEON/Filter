@@ -1,7 +1,10 @@
 package com.example.filter.fragments.mains;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +18,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -23,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.FilterListAdapter;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
 import com.example.filter.api_datas.response_dto.FilterSortType;
@@ -30,6 +36,7 @@ import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.api_datas.response_dto.SearchType;
 import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.GridSpaceItemDecoration;
 import com.example.filter.items.FilterListItem;
 import com.example.filter.items.PriceDisplayEnum;
@@ -49,6 +56,7 @@ public class SearchFragment extends Fragment {
     private TextView txt;
     private List<FilterListResponse> searchResults = new ArrayList<>();
     private FilterListAdapter adapter;
+    private ActivityResultLauncher<Intent> detailActivityLauncher;
 
     public static SearchFragment newInstance(String keyword) {
         SearchFragment fragment = new SearchFragment();
@@ -76,12 +84,25 @@ public class SearchFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerView);
         textView = view.findViewById(R.id.textView);
 
-        return view;
-    }
+        detailActivityLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        String deletedId = result.getData().getStringExtra("deleted_filter_id");
+                        if (deletedId != null && adapter != null) {
+                            adapter.removeItem(deletedId);
+                        }
+                    }
+                }
+        );
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+        recyclerView.setLayoutManager(sglm);
+
+        adapter = new FilterListAdapter();
+        recyclerView.setAdapter(adapter);
+        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(10), dp(10)));
 
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
@@ -97,13 +118,41 @@ public class SearchFragment extends Fragment {
 
         setupChooseOrder();
 
-        StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
-        recyclerView.setLayoutManager(sglm);
+        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                updateRecyclerVisibility();
+            }
 
-        adapter = new FilterListAdapter();
-        recyclerView.setAdapter(adapter);
-        recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(10), dp(10)));
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                updateRecyclerVisibility();
+            }
+
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                updateRecyclerVisibility();
+            }
+        });
+
+        updateRecyclerVisibility();
+
+        adapter.setOnItemClickListener((v, item) -> {
+            Intent intent = new Intent(requireActivity(), FilterInfoActivity.class);
+
+            intent.putExtra("filterId", String.valueOf(item.id));
+            intent.putExtra("nickname", item.nickname);
+            intent.putExtra("imgUrl", item.thumbmailUrl);
+            intent.putExtra("filterTitle", item.filterTitle);
+            intent.putExtra("price", String.valueOf(item.price));
+
+            detailActivityLauncher.launch(intent);
+        });
+
+        adapter.setOnBookmarkClickListener((v, item, position) -> {
+            if (ClickUtils.isFastClick(v, 500)) return;
+            requestToggleBookmark(item.id, position, item);
+        });
 
         if (keyword != null && !keyword.isEmpty()) {
             searchByNaturalLanguage(keyword);
@@ -114,13 +163,44 @@ public class SearchFragment extends Fragment {
             ((SearchMainFragment) parent).resetSearchButton();
         }
 
-        /*if (keyword == null || keyword.isEmpty()) {
-            textView.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
-        } else {
-            textView.setVisibility(View.GONE);
-            recyclerView.setVisibility(View.VISIBLE);
-        }*/
+        return view;
+    }
+
+    private void requestToggleBookmark(long filterId, int position, FilterListItem oldItem) {
+        FilterApi api = AppRetrofitClient.getInstance(requireActivity()).create(FilterApi.class);
+
+        api.toggleBookmark(filterId).enqueue(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean newState = response.body();
+
+                    FilterListItem newItem = new FilterListItem(
+                            oldItem.id,
+                            oldItem.filterTitle,
+                            oldItem.thumbmailUrl,
+                            oldItem.nickname,
+                            oldItem.price,
+                            oldItem.useCount,
+                            oldItem.type,
+                            newState
+                    );
+
+                    adapter.updateItem(position, newItem);
+
+                    String msg = newState ? "북마크 저장됨" : "북마크 해제됨";
+                    Toast.makeText(requireActivity(), msg, Toast.LENGTH_SHORT).show();
+
+                } else {
+                    Log.e("Bookmark", "실패: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Log.e("Bookmark", "통신 오류", t);
+            }
+        });
     }
 
     private void searchByNaturalLanguage(String query) {
@@ -134,11 +214,12 @@ public class SearchFragment extends Fragment {
 
                     List<FilterListResponse> results = response.body().content;
 
-                    Log.d("검색", "리스폰스 바디 콘텐트 | "+response.body().content);
+                    Log.d("검색", "리스폰스 바디 콘텐트 | " + response.body().content);
 
                     if (!results.isEmpty()) {
-                        textView.setVisibility(View.GONE);
-                        recyclerView.setVisibility(View.VISIBLE);
+                        updateRecyclerVisibility();
+                        //textView.setVisibility(View.GONE);
+                        //recyclerView.setVisibility(View.VISIBLE);
 
                         List<FilterListItem> itemsToShow = convertResponseToFilterListItems(results);
                         adapter.setItems(itemsToShow);
@@ -146,25 +227,29 @@ public class SearchFragment extends Fragment {
                         searchResults.clear();
                         searchResults.addAll(results);
                     } else {
-                        adapter.clear();
-                        showEmptyResult();
+                        updateRecyclerVisibility();
+                        //adapter.clear();
+                        //showEmptyResult();
                     }
                 } else {
                     Log.e("검색", "검색 조회 실패: " + response.code());
                     Toast.makeText(requireContext(), "정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
 
-                    adapter.clear();
-                    showEmptyResult();
+                    updateRecyclerVisibility();
+                    //adapter.clear();
+                    //showEmptyResult();
                 }
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
-                showEmptyResult();
+                //showEmptyResult();
 
-                adapter.clear();
-                showEmptyResult();
+                //adapter.clear();
+                //showEmptyResult();
                 Log.e("검색", "통신 오류", t);
+
+                updateRecyclerVisibility();
             }
         });
     }
@@ -189,11 +274,6 @@ public class SearchFragment extends Fragment {
             items.add(item);
         }
         return items;
-    }
-
-    private void showEmptyResult() {
-        textView.setVisibility(View.VISIBLE);
-        recyclerView.setVisibility(View.GONE);
     }
 
     private FilterSortType currentSort = FilterSortType.ACCURACY;
@@ -229,7 +309,6 @@ public class SearchFragment extends Fragment {
 
         //searchByNaturalLanguage(keyword);
     }
-
 
     private View chooseOrderOn, dimBackground;
     private ConstraintLayout chooseOrder;
@@ -323,6 +402,16 @@ public class SearchFragment extends Fragment {
                     }
                 })
                 .start();
+    }
+
+    private void updateRecyclerVisibility() {
+        if (adapter.getItemCount() == 0) {
+            recyclerView.setVisibility(View.INVISIBLE);
+            textView.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            textView.setVisibility(View.INVISIBLE);
+        }
     }
 
     private int dp(int v) {
