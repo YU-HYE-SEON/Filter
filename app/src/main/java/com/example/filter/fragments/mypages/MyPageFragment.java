@@ -23,6 +23,7 @@ import com.example.filter.activities.mypage.EditNickNameActivity;
 import com.example.filter.activities.mypage.PointChargeActivity;
 import com.example.filter.activities.mypage.PointHistoryActivity;
 import com.example.filter.activities.mypage.SalesManageActivity;
+import com.example.filter.activities.start.StartActivity;
 import com.example.filter.api_datas.response_dto.UserMypageResponse;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.repositories.MyPageApi;
@@ -72,7 +73,13 @@ public class MyPageFragment extends Fragment {
         // 필요한 경우 다른 버튼에도 클릭 효과 적용
         // ClickUtils.clickDim(ask);
 
-        nickEditBtn.setOnClickListener(v->{
+        logoutBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), StartActivity.class);
+            startActivity(intent);
+            requireActivity().finish();
+        });
+
+        nickEditBtn.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), EditNickNameActivity.class);
             startActivity(intent);
             requireActivity().overridePendingTransition(0, 0);

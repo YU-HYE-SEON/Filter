@@ -224,12 +224,12 @@ public class InsightActivity extends BaseActivity {
 
         barChart.setData(barData);
 
-        BestMarkerView markerView = new BestMarkerView(this, R.layout.best_sales_marker);
-        markerView.setChartView(barChart);
-        barChart.setMarker(markerView);
+        //BestMarkerView markerView = new BestMarkerView(this, R.layout.best_sales_marker);
+        //markerView.setChartView(barChart);
+        //barChart.setMarker(markerView);
 
-        Highlight highlight = new Highlight(maxIndex, maxValue, 0);
-        barChart.highlightValue(highlight);
+        //Highlight highlight = new Highlight(maxIndex, maxValue, 0);
+        //barChart.highlightValue(highlight);
 
         barChart.getLegend().setEnabled(false);
         barChart.getDescription().setEnabled(false);
