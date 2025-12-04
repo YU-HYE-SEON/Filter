@@ -119,6 +119,13 @@ public class MainActivity extends BaseActivity {
                             // filterAdapter에 removeItem 메서드가 있다고 가정
                             filterAdapter.removeItem(deletedId);
                         }
+
+                        String changedFilterId = result.getData().getStringExtra("filter_id_changed");
+                        boolean isBookmarkedNewState = result.getData().getBooleanExtra("is_bookmarked_new_state", false);
+
+                        if (changedFilterId != null && filterAdapter != null) {
+                            filterAdapter.updateBookmarkState(changedFilterId, isBookmarkedNewState);
+                        }
                     }
                 });
 

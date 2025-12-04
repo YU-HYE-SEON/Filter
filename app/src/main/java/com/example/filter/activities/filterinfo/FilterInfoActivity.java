@@ -476,9 +476,9 @@ public class FilterInfoActivity extends BaseActivity {
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
-            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(mainIntent);
+            //Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
+            //mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            //startActivity(mainIntent);
             finish();
         });
 
@@ -551,6 +551,14 @@ public class FilterInfoActivity extends BaseActivity {
 
                     // UI 업데이트
                     updateBookmarkUI(newState);
+
+
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("filter_id_changed", filterId); // 변경된 필터 ID
+                    resultIntent.putExtra("is_bookmarked_new_state", newState); // 새로운 북마크 상태
+                    setResult(RESULT_OK, resultIntent);
+
+
 
                     if (newState) {
                         showBookmarkImg();
@@ -1098,9 +1106,9 @@ public class FilterInfoActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
-        mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(mainIntent);
+        //Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
+        //mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        //startActivity(mainIntent);
         finish();
     }
 

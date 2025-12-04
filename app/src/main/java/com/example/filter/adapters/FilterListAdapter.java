@@ -97,40 +97,31 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
     public void updateItem(int position, FilterListItem newItem) {
         if (position >= 0 && position < items.size()) {
             items.set(position, newItem);
-            //notifyItemChanged(position); // 깜빡임 없이 해당 줄만 갱신
+            notifyItemChanged(position); // 깜빡임 없이 해당 줄만 갱신
         }
     }
 
-    // ✅ [수정됨] FilterListItem 생성자에 맞춰 수정
-    public void updatePriceItem(String id, String newPriceStr) {
-        if (id == null) return;
+    public void updateBookmarkState(String filterId, boolean newState) {
+        if (filterId == null) return;
         int targetIndex = -1;
 
-        int newPrice = 0;
-        try {
-            newPrice = Integer.parseInt(newPriceStr);
-        } catch (NumberFormatException e) {
-            return;
-        }
-
         for (int i = 0; i < items.size(); i++) {
-            FilterListItem item = items.get(i);
-            // ID 비교 (Long vs String)
-            if (item != null && id.equals(String.valueOf(item.id))) {
+            FilterListItem oldItem = items.get(i);
+            if (oldItem != null && filterId.equals(String.valueOf(oldItem.id))) {
                 targetIndex = i;
 
-                // ✅ FilterListItem 생성자 규격에 맞게 수정
-                FilterListItem updatedItem = new FilterListItem(
-                        item.id,
-                        item.filterTitle,
-                        item.thumbmailUrl,
-                        item.nickname,
-                        newPrice,       // 업데이트된 가격
-                        item.useCount,
-                        item.type,
-                        item.bookmark
+                FilterListItem newItem = new FilterListItem(
+                        oldItem.id,
+                        oldItem.filterTitle,
+                        oldItem.thumbmailUrl,
+                        oldItem.nickname,
+                        oldItem.price,
+                        oldItem.useCount,
+                        oldItem.type,
+                        newState
                 );
-                items.set(i, updatedItem);
+
+                items.set(i, newItem);
                 break;
             }
         }

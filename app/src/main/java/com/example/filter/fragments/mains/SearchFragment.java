@@ -92,6 +92,13 @@ public class SearchFragment extends Fragment {
                         if (deletedId != null && adapter != null) {
                             adapter.removeItem(deletedId);
                         }
+
+                        String changedFilterId = result.getData().getStringExtra("filter_id_changed");
+                        boolean isBookmarkedNewState = result.getData().getBooleanExtra("is_bookmarked_new_state", false);
+
+                        if (changedFilterId != null && adapter != null) {
+                            adapter.updateBookmarkState(changedFilterId, isBookmarkedNewState);
+                        }
                     }
                 }
         );

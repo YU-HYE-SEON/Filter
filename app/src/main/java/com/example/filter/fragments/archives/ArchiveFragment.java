@@ -70,6 +70,13 @@ public class ArchiveFragment extends Fragment {
                         if (deletedId != null && filterAdapter != null) {
                             filterAdapter.removeItem(deletedId);
                         }
+
+                        String changedFilterId = result.getData().getStringExtra("filter_id_changed");
+                        boolean isBookmarkedNewState = result.getData().getBooleanExtra("is_bookmarked_new_state", false);
+
+                        if (changedFilterId != null && filterAdapter != null) {
+                            filterAdapter.updateBookmarkState(changedFilterId, isBookmarkedNewState);
+                        }
                     }
                 }
         );

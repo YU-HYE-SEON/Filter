@@ -166,7 +166,7 @@ public class InsightActivity extends BaseActivity {
         });
     }
 
-    private void DrawChart(){
+    private void DrawChart() {
         ArrayList<BarEntry> entry_chart = new ArrayList<>();
 
         float maxValue = -1;
@@ -224,12 +224,16 @@ public class InsightActivity extends BaseActivity {
 
         barChart.setData(barData);
 
-        //BestMarkerView markerView = new BestMarkerView(this, R.layout.best_sales_marker);
-        //markerView.setChartView(barChart);
-        //barChart.setMarker(markerView);
+        BestMarkerView markerView = new BestMarkerView(this, R.layout.best_sales_marker);
+        markerView.setChartView(barChart);
+        barChart.setMarker(markerView);
 
-        //Highlight highlight = new Highlight(maxIndex, maxValue, 0);
-        //barChart.highlightValue(highlight);
+        if (maxIndex != -1 && maxValue > 0) {
+            Highlight highlight = new Highlight(maxIndex, maxValue, 0);
+            barChart.highlightValue(highlight);
+        } else {
+            barChart.highlightValue(null);
+        }
 
         barChart.getLegend().setEnabled(false);
         barChart.getDescription().setEnabled(false);
@@ -239,9 +243,11 @@ public class InsightActivity extends BaseActivity {
         barChart.setScaleXEnabled(true);
         barChart.setScaleYEnabled(false);
         barChart.setPinchZoom(false);
+        barChart.setHighlightPerTapEnabled(false);
+        barChart.setHighlightPerDragEnabled(false);
 
         int dataCount = currentLabels.size();
-        int maxVisibleEntries =8;
+        int maxVisibleEntries = 8;
 
         if (dataCount <= maxVisibleEntries) {
             barChart.setScaleXEnabled(false);
