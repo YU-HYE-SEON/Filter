@@ -284,16 +284,16 @@ public class ApplyFilterActivity extends BaseActivity {
         });
 
 
-        if (instagramId.isEmpty() || instagramId == null) {
-            iconSnsInsta.setEnabled(false);
-            iconSnsInsta.setVisibility(View.GONE);
-        } else {
+        //if (instagramId.isEmpty() || instagramId == null) {
+        //    iconSnsInsta.setEnabled(false);
+        //    iconSnsInsta.setVisibility(View.GONE);
+        //} else {
             iconSnsInsta.setOnClickListener(v -> {
                 type = SocialType.INSTAGRAM;
                 snsId.setText(instagramId);
                 Log.d("sns선택", "선택됨");
             });
-        }
+        //}
 
         if (xId.isEmpty() || xId == null) {
             iconSnsTwitter.setEnabled(false);

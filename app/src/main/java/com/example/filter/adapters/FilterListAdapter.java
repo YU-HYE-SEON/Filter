@@ -105,11 +105,13 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         if (filterId == null) return;
         int targetIndex = -1;
 
+        // 1. 리스트를 순회하며 해당 ID를 가진 아이템을 찾고, 상태를 변경한 새 객체로 교체
         for (int i = 0; i < items.size(); i++) {
             FilterListItem oldItem = items.get(i);
             if (oldItem != null && filterId.equals(String.valueOf(oldItem.id))) {
                 targetIndex = i;
 
+                // FilterListItem은 생성자를 통해 새 객체를 만들어야 합니다.
                 FilterListItem newItem = new FilterListItem(
                         oldItem.id,
                         oldItem.filterTitle,
@@ -118,10 +120,50 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
                         oldItem.price,
                         oldItem.useCount,
                         oldItem.type,
-                        newState
+                        newState // ★ 변경된 북마크 상태
                 );
 
-                items.set(i, newItem);
+                items.set(i, newItem); // 리스트의 아이템을 새 객체로 교체
+                break;
+            }
+        }
+
+        // 2. 해당 아이템의 뷰만 갱신
+        if (targetIndex != -1) {
+            notifyItemChanged(targetIndex);
+        }
+    }
+
+    // ✅ [수정됨] FilterListItem 생성자에 맞춰 수정
+    public void updatePriceItem(String id, String newPriceStr) {
+        if (id == null) return;
+        int targetIndex = -1;
+
+        int newPrice = 0;
+        try {
+            newPrice = Integer.parseInt(newPriceStr);
+        } catch (NumberFormatException e) {
+            return;
+        }
+
+        for (int i = 0; i < items.size(); i++) {
+            FilterListItem item = items.get(i);
+            // ID 비교 (Long vs String)
+            if (item != null && id.equals(String.valueOf(item.id))) {
+                targetIndex = i;
+
+                // ✅ FilterListItem 생성자 규격에 맞게 수정
+                FilterListItem updatedItem = new FilterListItem(
+                        item.id,
+                        item.filterTitle,
+                        item.thumbmailUrl,
+                        item.nickname,
+                        newPrice,       // 업데이트된 가격
+                        item.useCount,
+                        item.type,
+                        item.bookmark
+                );
+                items.set(i, updatedItem);
                 break;
             }
         }
