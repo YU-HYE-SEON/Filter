@@ -80,6 +80,27 @@ public class ReviewInfoAdapter extends RecyclerView.Adapter<ReviewInfoAdapter.VH
         holder.deleteBtn.setOnClickListener(v -> {
             if (listener != null) listener.onDelete(item.id, position);
         });
+
+
+        String socialType = item.socialType;
+        switch (socialType) {
+            case "INSTAGRAM":
+                holder.snsIcon.setImageResource(R.drawable.btn_review_sns_insta);
+                break;
+            case "X":
+                holder.snsIcon.setImageResource(R.drawable.btn_review_sns_twitter);
+                break;
+            case "NONE":
+            default:
+                holder.snsIcon.setImageResource(R.drawable.btn_review_sns_none);
+                break;
+        }
+
+        if (item.socialValue == null || item.socialValue.isEmpty() || item.socialType.equals("NONE")) {
+            holder.snsId.setText("선택 안 함");
+        } else {
+            holder.snsId.setText(item.socialValue);
+        }
     }
 
 
