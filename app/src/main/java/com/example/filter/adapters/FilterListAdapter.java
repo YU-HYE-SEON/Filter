@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH> {
-
     public interface OnItemClickListener {
         void onClick(View v, FilterListItem item);
     }
@@ -58,33 +57,6 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
     public void clear() {
         this.items.clear();
         notifyDataSetChanged();
-    }
-
-    /// 어댑터에 이미 존재하는 필터인지 판단 ///
-    public boolean containsId(String id) {
-        if (id == null) return false;
-        for (FilterListItem item : items) {
-            // FilterListItem의 id는 Long이므로 String으로 변환해 비교
-            if (item != null && id.equals(String.valueOf(item.id))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// 새로운 필터 추가 ///
-    public void addItem(FilterListItem item) {
-        items.add(item); // ✅ 수정 코드 (맨 뒤에 추가 -> 정순 유지)
-
-        // 갱신 알림 (전체 갱신보다는 효율적으로)
-        notifyItemInserted(items.size() - 1);
-
-        // (MaxItems 로직이 필요하다면 유지하되, 뒤에 추가하는 로직에 맞게 조정 필요)
-        /* if (items.size() > maxItems) {
-            items.remove(0); // 개수 초과 시 맨 앞(오래된 것?) 삭제? -> 상황에 따라 다름
-            notifyItemRemoved(0);
-        }
-        */
     }
 
     // 리스트 전체를 받아서 갱신하는 메서드 (서버에서 받아온 순서 보장)
@@ -129,45 +101,6 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         }
 
         // 2. 해당 아이템의 뷰만 갱신
-        if (targetIndex != -1) {
-            notifyItemChanged(targetIndex);
-        }
-    }
-
-    // ✅ [수정됨] FilterListItem 생성자에 맞춰 수정
-    public void updatePriceItem(String id, String newPriceStr) {
-        if (id == null) return;
-        int targetIndex = -1;
-
-        int newPrice = 0;
-        try {
-            newPrice = Integer.parseInt(newPriceStr);
-        } catch (NumberFormatException e) {
-            return;
-        }
-
-        for (int i = 0; i < items.size(); i++) {
-            FilterListItem item = items.get(i);
-            // ID 비교 (Long vs String)
-            if (item != null && id.equals(String.valueOf(item.id))) {
-                targetIndex = i;
-
-                // ✅ FilterListItem 생성자 규격에 맞게 수정
-                FilterListItem updatedItem = new FilterListItem(
-                        item.id,
-                        item.filterTitle,
-                        item.thumbmailUrl,
-                        item.nickname,
-                        newPrice,       // 업데이트된 가격
-                        item.useCount,
-                        item.type,
-                        item.bookmark
-                );
-                items.set(i, updatedItem);
-                break;
-            }
-        }
-
         if (targetIndex != -1) {
             notifyItemChanged(targetIndex);
         }
@@ -292,10 +225,6 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
 
     private float dp(float dp, Context context) {
         return Math.round(dp * context.getResources().getDisplayMetrics().density);
-    }
-
-    public void setMaxItems(int maxItems) {
-        this.maxItems = maxItems;
     }
 
     @Override

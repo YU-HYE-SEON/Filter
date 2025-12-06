@@ -1,11 +1,9 @@
 package com.example.filter.adapters;
 
-import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -14,21 +12,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
-import com.example.filter.activities.filter.RegisterActivity;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
-import com.example.filter.apis.StickerApi;
-import com.example.filter.apis.client.AppRetrofitClient;
-import com.example.filter.dialogs.ReviewDeleteDialog;
-import com.example.filter.dialogs.StickerDeleteDialog;
-import com.example.filter.etc.Controller;
-import com.example.filter.items.StickerItem;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class ReviewInfoAdapter extends RecyclerView.Adapter<ReviewInfoAdapter.VH> {
     public interface OnDeleteClickListener {
@@ -53,6 +40,10 @@ public class ReviewInfoAdapter extends RecyclerView.Adapter<ReviewInfoAdapter.VH
         if (position < 0 || position >= items.size()) return;
         items.remove(position);
         notifyItemRemoved(position);
+    }
+
+    public List<ReviewResponse> getItems() {
+        return items;
     }
 
     @NonNull
@@ -80,7 +71,6 @@ public class ReviewInfoAdapter extends RecyclerView.Adapter<ReviewInfoAdapter.VH
         holder.deleteBtn.setOnClickListener(v -> {
             if (listener != null) listener.onDelete(item.id, position);
         });
-
 
         String socialType = item.socialType;
         switch (socialType) {

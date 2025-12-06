@@ -17,7 +17,6 @@ import java.util.List;
 
 public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
     public interface OnItemClickListener {
-        //void onItemClick(View v, ReviewItem item);
         void onItemClick(View v, ReviewResponse item, int position);
     }
 
@@ -27,14 +26,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
         listener = l;
     }
 
-    //private final List<ReviewItem> items = new ArrayList<>();
-
     private final List<ReviewResponse> items = new ArrayList<>();
-
-    public void addItem(ReviewResponse item) {
-        items.add(0, item);
-        notifyItemInserted(0);
-    }
 
     public void addItems(List<ReviewResponse> list) {
         items.addAll(0, list);
@@ -46,26 +38,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
         notifyDataSetChanged();
     }
 
-    /*public void setItems(List<ReviewItem> list) {
-        items.clear();
-        items.addAll(list);
-        notifyDataSetChanged();
-    }*/
-
-    /*public void removeItem(String imageUrl) {
-        int index = -1;
-        for (int i = 0; i < items.size(); i++) {
-            if (items.get(i).imageUrl.equals(imageUrl)) {
-                index = i;
-                break;
-            }
-        }
-        if (index != -1) {
-            items.remove(index);
-            notifyItemRemoved(index);
-        }
-    }*/
-
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -75,7 +47,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
-        //ReviewItem item = items.get(position);
         ReviewResponse item = items.get(position);
 
         Glide.with(holder.itemView.getContext())

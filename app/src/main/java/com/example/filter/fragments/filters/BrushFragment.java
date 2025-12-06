@@ -163,6 +163,7 @@ public class BrushFragment extends Fragment {
     }
 
     private final ArrayList<EraseOp> sessionEraseOps = new ArrayList<>();
+    //private final ArrayList<FilterActivity.EraseOp> sessionEraseOps = new ArrayList<>();
 
     /*/// undoSticker, redoSticker, originalSticker 작업 ///*/
     private final Map<ImageView, PendingErase> activeErases = new HashMap<>();
@@ -466,6 +467,8 @@ public class BrushFragment extends Fragment {
                                 return;
                             }
 
+                            //FilterActivity act = (FilterActivity) requireActivity();
+                            //ArrayList<FilterActivity.EraseOp> ops = new ArrayList<>();
                             ArrayList<EraseOp> ops = new ArrayList<>();
 
                             for (PendingErase pe : activeErases.values()) {
@@ -477,12 +480,14 @@ public class BrushFragment extends Fragment {
                                     continue;
                                 }
 
+                                //FilterActivity.EraseOp eo = new FilterActivity.EraseOp();
                                 EraseOp eo = new EraseOp();
                                 eo.view = pe.view;
                                 eo.pathOnBitmap = new Path(pe.path);
                                 eo.strokeWidthPx = pe.width;
 
                                 for (Patch pa : pe.patches) {
+                                    //FilterActivity.ErasePatch ep = new FilterActivity.ErasePatch();
                                     ErasePatch ep = new ErasePatch();
                                     ep.rect = new Rect(pa.rect);
                                     ep.before = pa.before;
@@ -1380,12 +1385,14 @@ public class BrushFragment extends Fragment {
 
     private void rollbackSessionErases() {
         if (sessionEraseOps.isEmpty()) return;
+        //for (FilterActivity.EraseOp eo : sessionEraseOps) {
         for (EraseOp eo : sessionEraseOps) {
             if (!(eo.view.getDrawable() instanceof BitmapDrawable)) continue;
             Bitmap bmp = ((BitmapDrawable) eo.view.getDrawable()).getBitmap();
             if (bmp == null || bmp.isRecycled()) continue;
 
             Canvas c = new Canvas(bmp);
+            //for (FilterActivity.ErasePatch ep : eo.patches) {
             for (ErasePatch ep : eo.patches) {
                 if (ep.before == null || ep.before.isRecycled()) continue;
                 c.drawBitmap(ep.before, ep.rect.left, ep.rect.top, null);

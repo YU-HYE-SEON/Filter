@@ -17,7 +17,7 @@ import java.io.OutputStream;
 public class ImageUtils {
     public static void saveBitmapToGallery(Context context, Bitmap bitmap) {
         ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, "my_filtered_image_" + System.currentTimeMillis() + ".png");
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, "Feel'em" + System.currentTimeMillis() + ".png");
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
         values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Feel'em");
 

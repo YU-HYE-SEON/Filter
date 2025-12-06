@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Filter;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -38,7 +37,6 @@ import com.example.filter.fragments.archives.ArchiveFragment;
 import com.example.filter.fragments.mains.SearchMainFragment;
 import com.example.filter.fragments.mypages.MyPageFragment;
 import com.example.filter.items.FilterListItem;
-import com.example.filter.items.PriceDisplayEnum;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +47,10 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends BaseActivity {
+    private enum Type {RECOMMEND, RANDOM, HOT, NEWEST}
+
+    private Type currentType = Type.RECOMMEND;
+
     private ConstraintLayout mainActivity;
     private ImageView logo;
     private ImageButton searchBtn, recommend, random, hot, newest;
@@ -218,18 +220,22 @@ public class MainActivity extends BaseActivity {
                 int id = view.getId();
                 switch (id) {
                     case R.id.recommend:
+                        currentType = Type.RECOMMEND;
                         setFilterButtons(true, false, false, false);
                         loadRecommendFilters();
                         break;
                     case R.id.random:
+                        currentType = Type.RANDOM;
                         setFilterButtons(false, true, false, false);
                         loadRandomFilters(); // 랜덤 목록 불러오기
                         break;
                     case R.id.hot:
+                        currentType = Type.HOT;
                         setFilterButtons(false, false, true, false);
                         loadHotFilters(); // 인기순 목록 불러오기
                         break;
                     case R.id.newest:
+                        currentType = Type.NEWEST;
                         setFilterButtons(false, false, false, true);
                         loadRecentFilters(); // 서버에서 최신 필터 목록 가져오기
                         break;
@@ -605,6 +611,19 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        // 랜덤은 랜덤탭 눌렀을 때만 목록 업데이트되도록 제외
+        switch (currentType) {
+            case RECOMMEND:
+                loadRecommendFilters();
+                break;
+            case HOT:
+                loadHotFilters();
+                break;
+            case NEWEST:
+                loadRecentFilters();
+                break;
+        }
     }
 
     @Override

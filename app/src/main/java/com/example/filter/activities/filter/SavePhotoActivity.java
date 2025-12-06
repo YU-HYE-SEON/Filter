@@ -1,6 +1,8 @@
 package com.example.filter.activities.filter;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -8,9 +10,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,6 +30,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.filter.R;
@@ -35,7 +43,12 @@ import com.example.filter.etc.ImageUtils;
 import java.io.File;
 
 public class SavePhotoActivity extends BaseActivity {
+    private boolean animationDone = false;
+    private boolean saveDone = false;
+    private FrameLayout loadingContainer, loadingFinishContainer;
+    private LottieAnimationView loadingAnim, loadingFinishAnim;
     private ImageButton backBtn;
+    private TextView saveSuccessTxt;
     private ImageView photo;
     private ConstraintLayout bottomArea;
     private AppCompatButton toGalleryBtn, toRegisterBtn;
@@ -48,15 +61,42 @@ public class SavePhotoActivity extends BaseActivity {
     private boolean isSavedToGallery = false;       //사진 중복 저장 안 되게
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus){
+            loadingAnim.playAnimation();
+            loadingAnim.setRepeatCount(0);
+            loadingAnim.addAnimatorListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (!animationDone) {
+                        animationDone = true;
+                        finishLoading();
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_save_photo);
 
         backBtn = findViewById(R.id.backBtn);
+        saveSuccessTxt = findViewById(R.id.saveSuccessTxt);
         photo = findViewById(R.id.photo);
         bottomArea = findViewById(R.id.bottomArea);
         toGalleryBtn = findViewById(R.id.toGalleryBtn);
         toRegisterBtn = findViewById(R.id.toRegisterBtn);
+
+        loadingContainer = findViewById(R.id.loadingContainer);
+        loadingAnim = findViewById(R.id.loadingAnim);
+        loadingFinishContainer = findViewById(R.id.loadingFinishContainer);
+        loadingFinishAnim = findViewById(R.id.loadingFinishAnim);
+        loadingFinishContainer.setVisibility(View.GONE);
+        loadingFinishAnim.setVisibility(View.GONE);
+        loadingContainer.setVisibility(View.VISIBLE);
 
         // 시스템 바 인셋 처리 (기존 코드 유지)
         ViewCompat.setOnApplyWindowInsetsListener(bottomArea, (v, insets) -> {
@@ -82,17 +122,18 @@ public class SavePhotoActivity extends BaseActivity {
             displayImagePath = filterData.editedImageUrl;
         }
 
-        boolean allow = getIntent().getBooleanExtra("allowRegister", true);
-
         // ---------------------------------------------------------------
         // ✅ UI 설정
         // ---------------------------------------------------------------
-        if (!allow) {
-            toRegisterBtn.setEnabled(false);
-            toRegisterBtn.getBackground().setColorFilter(Color.parseColor("#759749"), PorterDuff.Mode.SRC_ATOP);
-            toRegisterBtn.setTextColor(Color.parseColor("#00499A"));
-            toRegisterBtn.setClickable(false);
-        }
+        toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#00499A"), PorterDuff.Mode.SRC_ATOP);
+        toGalleryBtn.setTextColor(Color.parseColor("#989898"));
+        toGalleryBtn.setEnabled(false);
+        toGalleryBtn.setClickable(false);
+
+        toRegisterBtn.getBackground().setColorFilter(Color.parseColor("#759749"), PorterDuff.Mode.SRC_ATOP);
+        toRegisterBtn.setTextColor(Color.parseColor("#00499A"));
+        toRegisterBtn.setEnabled(false);
+        toRegisterBtn.setClickable(false);
 
         // 이미지 표시
         if (displayImagePath != null) {
@@ -105,12 +146,12 @@ public class SavePhotoActivity extends BaseActivity {
                     photo.setImageBitmap(bitmap);
 
                     imageToSave = bitmap;
+
                     checkAndSaveImage();
                 }
             } else if (displayImagePath.startsWith("http")) {
                 // 만약 S3 URL이라면 Glide 사용 (build.gradle에 Glide가 있어야 함)
                 //com.bumptech.glide.Glide.with(this).load(displayImagePath).into(photo);
-
 
                 /// 갤러리에 Feel'em앨범으로 사진 저장
                 com.bumptech.glide.Glide.with(this).asBitmap().load(displayImagePath).into(new CustomTarget<Bitmap>() {
@@ -119,6 +160,7 @@ public class SavePhotoActivity extends BaseActivity {
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         photo.setImageBitmap(resource);
                         imageToSave = resource;
+
                         checkAndSaveImage();
                     }
 
@@ -140,14 +182,26 @@ public class SavePhotoActivity extends BaseActivity {
             finish();
         });
 
+        ClickUtils.clickDim(toRegisterBtn);
         ClickUtils.clickDim(toGalleryBtn);
+
         toGalleryBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            // 단순히 종료하면 Archive(갤러리/보관함)로 간 것으로 간주
-            finish();
+
+            Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(collection);
+            intent.setType("image/*");
+            intent.putExtra("android.intent.extra.LOCAL_ONLY", true);
+
+            try {
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "갤러리를 열 수 없습니다.", Toast.LENGTH_SHORT).show();
+            }
         });
 
-        ClickUtils.clickDim(toRegisterBtn);
 
         // ★ [핵심 수정] 2. RegisterActivity로 데이터 넘기기
         toRegisterBtn.setOnClickListener(v -> {
@@ -196,6 +250,9 @@ public class SavePhotoActivity extends BaseActivity {
         ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
 
         isSavedToGallery = true;
+
+        saveDone = true;
+        finishLoading();
     }
 
     @Override
@@ -203,11 +260,49 @@ public class SavePhotoActivity extends BaseActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
                 checkAndSaveImage();
             } else {
                 Toast.makeText(this, "갤러리 저장 권한이 거부되어 이미지를 저장할 수 없습니다.", Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    private void finishLoading() {
+        if (!animationDone || !saveDone) return;
+
+        loadingFinishContainer.setVisibility(View.VISIBLE);
+        loadingFinishAnim.setVisibility(View.VISIBLE);
+        loadingAnim.pauseAnimation();
+        loadingContainer.setVisibility(View.GONE);
+        loadingFinishAnim.setScaleX(0.5f);
+        loadingFinishAnim.setScaleY(0.5f);
+        loadingFinishAnim.animate().scaleX(1.2f).scaleY(1.2f).setDuration(250).start();
+        loadingFinishAnim.playAnimation();
+        loadingFinishContainer.animate()
+                .alpha(0f)
+                .setDuration(600)
+                .withEndAction(() -> {
+                    loadingFinishContainer.setVisibility(View.GONE);
+                    loadingFinishAnim.setVisibility(View.GONE);
+                })
+                .start();
+
+        saveSuccessTxt.setText("저장 완료!");
+
+        runOnUiThread(() -> {
+            toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#007AFF"), PorterDuff.Mode.SRC_ATOP);
+            toGalleryBtn.setTextColor(Color.WHITE);
+            toGalleryBtn.setEnabled(true);
+            toGalleryBtn.setClickable(true);
+            boolean allow = getIntent().getBooleanExtra("allowRegister", true);
+            if (allow) {
+                toRegisterBtn.getBackground().setColorFilter(Color.parseColor("#C2FA7A"), PorterDuff.Mode.SRC_ATOP);
+                toRegisterBtn.setTextColor(Color.parseColor("#007AFF"));
+                toRegisterBtn.setEnabled(true);
+                toRegisterBtn.setClickable(true);
+            }
+        });
+
+        Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();
     }
 }

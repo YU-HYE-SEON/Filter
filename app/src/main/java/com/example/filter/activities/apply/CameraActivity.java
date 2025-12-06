@@ -13,6 +13,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -470,6 +471,7 @@ public class CameraActivity extends BaseActivity {
 
                 Preview preview = builder.build();
                 preview.setSurfaceProvider(camera.getSurfaceProvider());
+                preview.setTargetRotation(Surface.ROTATION_0);
 
                 imageCapture = new ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).setTargetRotation(getWindowManager().getDefaultDisplay().getRotation()).build();
 

@@ -19,14 +19,19 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
+import com.example.filter.activities.apply.Pre_ApplyFilterActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.activities.mypage.EditNickNameActivity;
 import com.example.filter.activities.mypage.PointChargeActivity;
 import com.example.filter.activities.mypage.PointHistoryActivity;
+import com.example.filter.activities.mypage.SNSidActivity;
 import com.example.filter.activities.mypage.SalesManageActivity;
 import com.example.filter.activities.start.StartActivity;
 import com.example.filter.api_datas.response_dto.UserMypageResponse;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.repositories.MyPageApi;
+import com.example.filter.dialogs.LogoutDialog;
+import com.example.filter.dialogs.Pre_ApplyEixtDialog;
 import com.example.filter.etc.ClickUtils;
 
 import retrofit2.Call;
@@ -37,7 +42,7 @@ public class MyPageFragment extends Fragment {
     private TextView nickname;
     private TextView currentPoint;
     private AppCompatButton nickEditBtn, logoutBtn, pointChargeBtn, salesManageBtn;
-    private ConstraintLayout pointBox, ask, appInfo, withdraw, snsId;
+    private ConstraintLayout pointBox, snsId, ask, appInfo, withdraw;
     private SwitchCompat pushToggle;
     private static final float DEFAULT_TEXT_SIZE_SP = 22f;
     private static final float MIN_TEXT_SIZE_SP = 12f;
@@ -59,30 +64,25 @@ public class MyPageFragment extends Fragment {
         currentPoint = view.findViewById(R.id.currentPoint);
         pointChargeBtn = view.findViewById(R.id.pointChargeBtn);
         salesManageBtn = view.findViewById(R.id.salesManageBtn);
+        pushToggle = view.findViewById(R.id.pushToggle);
+        snsId = view.findViewById(R.id.snsId);
         ask = view.findViewById(R.id.ask);
         appInfo = view.findViewById(R.id.appInfo);
         withdraw = view.findViewById(R.id.withdraw);
-        snsId = view.findViewById(R.id.snsId);
-        pushToggle = view.findViewById(R.id.pushToggle);
 
         ClickUtils.clickDim(nickEditBtn);
         ClickUtils.clickDim(logoutBtn);
         ClickUtils.clickDim(pointChargeBtn);
         ClickUtils.clickDim(salesManageBtn);
 
-        // 필요한 경우 다른 버튼에도 클릭 효과 적용
-        // ClickUtils.clickDim(ask);
-
-        logoutBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), StartActivity.class);
-            startActivity(intent);
-            requireActivity().finish();
-        });
-
         nickEditBtn.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), EditNickNameActivity.class);
             startActivity(intent);
             requireActivity().overridePendingTransition(0, 0);
+        });
+
+        logoutBtn.setOnClickListener(v -> {
+            showLogoutConfirmDialog();
         });
 
         pointBox.setOnClickListener(v -> {
@@ -99,6 +99,12 @@ public class MyPageFragment extends Fragment {
 
         salesManageBtn.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), SalesManageActivity.class);
+            startActivity(intent);
+            requireActivity().overridePendingTransition(0, 0);
+        });
+
+        snsId.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), SNSidActivity.class);
             startActivity(intent);
             requireActivity().overridePendingTransition(0, 0);
         });
@@ -220,5 +226,21 @@ public class MyPageFragment extends Fragment {
 
     private int dp(int v) {
         return Math.round(getResources().getDisplayMetrics().density * v);
+    }
+
+    private void showLogoutConfirmDialog() {
+        new LogoutDialog(requireContext(), new LogoutDialog.LogoutDialogListener() {
+            @Override
+            public void onKeep() {
+            }
+
+            @Override
+            public void onLogout() {
+                Intent intent = new Intent(requireContext(), StartActivity.class);
+                startActivity(intent);
+                requireActivity().overridePendingTransition(0, 0);
+                requireActivity().finish();
+            }
+        }).show();
     }
 }

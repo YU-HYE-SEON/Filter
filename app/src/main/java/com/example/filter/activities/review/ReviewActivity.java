@@ -87,8 +87,6 @@ public class ReviewActivity extends BaseActivity {
             // 리뷰 상세 정보 페이지로 이동
             Intent intent = new Intent(this, ReviewInfoActivity.class);
             intent.putExtra("filterId", filterId);
-            intent.putExtra("reviewId", item.id);
-            intent.putExtra("position", position);
             startActivity(intent);
         });
     }

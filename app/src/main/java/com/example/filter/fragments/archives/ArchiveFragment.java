@@ -13,7 +13,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -44,6 +43,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ArchiveFragment extends Fragment {
+    private enum Type {BOOKMARK, BUY, CREATE, REVIEW}
+
+    private Type currentType = Type.BOOKMARK;
     private ImageButton bookmark, buy, create, review;
     private RecyclerView recyclerView;
     private TextView textView;
@@ -78,8 +80,11 @@ public class ArchiveFragment extends Fragment {
                             filterAdapter.updateBookmarkState(changedFilterId, isBookmarkedNewState);
                         }
                     }
-                }
-        );
+
+                    if (currentType == Type.CREATE) {
+                        loadCreate();
+                    }
+                });
 
         StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
@@ -134,18 +139,22 @@ public class ArchiveFragment extends Fragment {
                 int id = view.getId();
                 switch (id) {
                     case R.id.bookmark:
+                        currentType = Type.BOOKMARK;
                         setArchiveButtons(true, false, false, false);
                         loadBookmark();
                         break;
                     case R.id.buy:
+                        currentType = Type.BUY;
                         setArchiveButtons(false, true, false, false);
                         loadBuy();
                         break;
                     case R.id.create:
+                        currentType = Type.CREATE;
                         setArchiveButtons(false, false, true, false);
                         loadCreate();
                         break;
                     case R.id.review:
+                        currentType = Type.REVIEW;
                         setArchiveButtons(false, false, false, true);
                         loadReview();
                         break;
@@ -182,6 +191,10 @@ public class ArchiveFragment extends Fragment {
                     );
 
                     filterAdapter.updateItem(position, newItem);
+
+                    if (currentType == Type.BOOKMARK) {
+                        loadBookmark();
+                    }
 
                     String msg = newState ? "북마크 저장됨" : "북마크 해제됨";
                     Toast.makeText(requireActivity(), msg, Toast.LENGTH_SHORT).show();
@@ -383,12 +396,17 @@ public class ArchiveFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-    }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        requireActivity().findViewById(R.id.archiveFrame).setVisibility(View.GONE);
-        requireActivity().findViewById(R.id.mainActivity).setVisibility(View.VISIBLE);
+        switch (currentType) {
+            case BOOKMARK:
+                loadBookmark();
+                break;
+            case BUY:
+                loadBuy();
+                break;
+            case REVIEW:
+                loadReview();
+                break;
+        }
     }
 }

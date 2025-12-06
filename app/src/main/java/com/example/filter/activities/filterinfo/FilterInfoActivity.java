@@ -26,6 +26,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -82,7 +83,7 @@ public class FilterInfoActivity extends BaseActivity {
     private ImageView img, bookmark, bookmarkImg;
     private LinearLayout reviewBox1, reviewBox2;
     private ImageView rb1Img1, rb1Img2, rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5;
-    private ConstraintLayout tagBox, btnBox;
+    private ConstraintLayout tagBox, btnBox, a;
     private AppCompatButton changeORbuyBtn, selectModeBtn, selectModeBtn2;
 
     // 모달(팝업) 관련 UI
@@ -166,6 +167,13 @@ public class FilterInfoActivity extends BaseActivity {
             return insets;
         });
 
+        if (a != null) {
+            int pl = a.getPaddingLeft();
+            int pt = a.getPaddingTop();
+            int pr = a.getPaddingRight();
+            a.setPadding(pl, pt, pr, (int) dp(80));
+        }
+
         // 3. 데이터 수신 및 처리
         FilterResponse responseObj = (FilterResponse) getIntent().getSerializableExtra("filter_response");
 
@@ -199,6 +207,7 @@ public class FilterInfoActivity extends BaseActivity {
         backBtn = findViewById(R.id.backBtn);
         shareBtn = findViewById(R.id.shareBtn);
         existFaceSticker = findViewById(R.id.existFaceSticker);
+        a = findViewById(R.id.a);
         originalBtn = findViewById(R.id.originalBtn);
         nickname = findViewById(R.id.nickname);
         deleteORreportBtn = findViewById(R.id.deleteORreportBtn);
@@ -476,10 +485,7 @@ public class FilterInfoActivity extends BaseActivity {
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            //Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
-            //mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            //startActivity(mainIntent);
-            finish();
+            moveToMain();
         });
 
         moreBtn.setOnClickListener(v -> {
@@ -511,7 +517,7 @@ public class FilterInfoActivity extends BaseActivity {
                     resultIntent.putExtra("deleted_filter_id", String.valueOf(id));
                     setResult(RESULT_OK, resultIntent);
 
-                    finish();
+                    moveToMain();
                 } else {
                     Toast.makeText(FilterInfoActivity.this, "삭제 실패", Toast.LENGTH_SHORT).show();
                 }
@@ -523,19 +529,6 @@ public class FilterInfoActivity extends BaseActivity {
             }
         });
     }
-
-    /*private void showPointChangePopUp() {
-        int currentPrice = 0;
-        try {
-            currentPrice = Integer.parseInt(price);
-        } catch (Exception ignored) {
-        }
-
-        // 가격 수정 다이얼로그 호출 (무료 필터 제한 없음)
-        new PointChangeDialog(this, title, currentPrice, (oldPrice, newPrice) -> {
-            requestUpdatePrice(Long.parseLong(filterId), newPrice);
-        }).show();
-    }*/
 
     // ✅ 2. 북마크 서버 API 호출 (토글 요청)
     private void requestToggleBookmark(long id) {
@@ -552,13 +545,10 @@ public class FilterInfoActivity extends BaseActivity {
                     // UI 업데이트
                     updateBookmarkUI(newState);
 
-
                     Intent resultIntent = new Intent();
                     resultIntent.putExtra("filter_id_changed", filterId); // 변경된 필터 ID
                     resultIntent.putExtra("is_bookmarked_new_state", newState); // 새로운 북마크 상태
                     setResult(RESULT_OK, resultIntent);
-
-
 
                     if (newState) {
                         showBookmarkImg();
@@ -1090,6 +1080,13 @@ public class FilterInfoActivity extends BaseActivity {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
+    private void moveToMain() {
+        Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -1106,14 +1103,6 @@ public class FilterInfoActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        //Intent mainIntent = new Intent(FilterInfoActivity.this, MainActivity.class);
-        //mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        //startActivity(mainIntent);
-        finish();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
+        moveToMain();
     }
 }

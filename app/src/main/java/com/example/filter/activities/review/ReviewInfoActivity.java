@@ -1,43 +1,26 @@
 package com.example.filter.activities.review;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.MainActivity;
-import com.example.filter.activities.apply.ApplyFilterActivity;
-import com.example.filter.activities.apply.CameraActivity;
-import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.ReviewInfoAdapter;
 import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.dialogs.ReviewDeleteDialog;
-import com.example.filter.etc.ClickUtils;
 
 import java.util.List;
 
@@ -49,29 +32,11 @@ public class ReviewInfoActivity extends BaseActivity {
     private ImageButton backBtn;
     private RecyclerView recyclerView;
     private ReviewInfoAdapter adapter;
-    //private List<ReviewItem> reviewList = new ArrayList<>();
-    /*private ConstraintLayout use;
-    private AppCompatButton useBtn;*/
-    private Long reviewId;
     private String filterId;
     private Long filterIdLong;
     private int currentPage = 0;
     private boolean isLastPage = false;
     private boolean isLoading = false;
-    private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-        if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-            Uri photoUri = result.getData().getData();
-            if (photoUri != null) {
-                Intent intent = new Intent(ReviewInfoActivity.this, ApplyFilterActivity.class);
-                intent.setData(photoUri);
-                intent.putExtra("filterId", filterId);
-
-                startActivity(intent);
-            } else {
-                Toast.makeText(this, "사진 선택 실패: URI 없음", Toast.LENGTH_SHORT).show();
-            }
-        }
-    });
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -81,8 +46,13 @@ public class ReviewInfoActivity extends BaseActivity {
         setContentView(R.layout.a_review_info);
         backBtn = findViewById(R.id.backBtn);
         recyclerView = findViewById(R.id.recyclerView);
-        /*use = findViewById(R.id.use);
-        useBtn = findViewById(R.id.useBtn);*/
+
+        final View root = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            root.setPadding(0, 0, 0, nav.bottom);
+            return insets;
+        });
 
         LinearLayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(lm);
@@ -91,24 +61,12 @@ public class ReviewInfoActivity extends BaseActivity {
 
         filterId = getIntent().getStringExtra("filterId");
         filterIdLong = filterId != null ? Long.parseLong(filterId) : null;
-        loadReviews(filterIdLong);
 
-        reviewId = getIntent().getLongExtra("reviewId", -1);
-        //loadReviews(reviewId);
+        loadReviews(filterIdLong);
 
         adapter.setOnItemDeleteListener((reviewId, position) -> {
             confirmDeleteReview(reviewId, position);
         });
-
-        /*use.post(() -> {
-            int useHeight = use.getHeight();
-            recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(), recyclerView.getPaddingRight(), useHeight);
-        });*/
-
-        /*ClickUtils.clickDim(useBtn);
-        useBtn.setOnClickListener(v -> {
-
-        });*/
 
         backBtn.setOnClickListener(v -> {
             finish();

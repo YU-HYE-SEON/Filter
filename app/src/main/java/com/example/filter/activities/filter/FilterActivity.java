@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -147,6 +148,69 @@ public class FilterActivity extends BaseActivity {
     private final HashMap<String, Integer> savedFilterValues = new HashMap<>();
     private boolean isPreviewingOriginalColors = false;
 
+    /// 브러쉬, 스티커 ///
+    /*private static class StickerOp {
+        final ArrayList<View> views = new ArrayList<>();
+        final ArrayList<Integer> positions = new ArrayList<>();
+    }
+
+    private static class StickerEdit {
+        View view;
+        float bx, by, br;
+        int bw, bh, bz;
+        float ax, ay, ar;
+        int aw, ah, az;
+    }
+
+    private static class BrushOp {
+        final ArrayList<View> views = new ArrayList<>();
+        final ArrayList<Integer> positions = new ArrayList<>();
+    }
+
+    public static class ErasePatch {
+        public Rect rect;
+        public Bitmap before;
+    }
+
+    public static class EraseOp {
+        public ImageView view;
+        public ArrayList<ErasePatch> patches = new ArrayList<>();
+        public Path pathOnBitmap;
+        public float strokeWidthPx;
+    }
+
+    private static class HistoryOp {
+        StickerOp sticker;
+        StickerEdit edit;
+        View delete;
+        int deletedPos = -1;
+        BrushOp brush;
+        ArrayList<EraseOp> erases;
+
+        boolean hasSticker() {
+            return sticker != null && !sticker.views.isEmpty();
+        }
+
+        boolean hasStickerEdit() {
+            return edit != null && edit.view != null;
+        }
+
+        boolean hasDeletion() {
+            return delete != null && deletedPos >= 0;
+        }
+
+        boolean hasBrush() {
+            return brush != null && !brush.views.isEmpty();
+        }
+
+        boolean hasErase() {
+            return erases != null && !erases.isEmpty();
+        }
+    }
+
+    private final ArrayList<HistoryOp> history = new ArrayList<>();
+    private int historyCursor = -1;*/
+
     private List<FaceStickerData> faceStickerList = new ArrayList<>();
 
     /// 필터 등록 제한 ///
@@ -234,6 +298,7 @@ public class FilterActivity extends BaseActivity {
         });
 
         setupColorButtons();
+        //setupStickerButtons();
         setupSaveButton();
         setupBackNavigation();
         setupImagePicker();
@@ -341,6 +406,36 @@ public class FilterActivity extends BaseActivity {
             return true;
         });
     }
+
+    /*@SuppressLint("ClickableViewAccessibility")
+    private void setupStickerButtons() {
+        originalSticker.setOnTouchListener((v, ev) -> {
+            if (!v.isEnabled()) return true;
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    originalSticker.setAlpha(0.4f);
+                    if (undoSticker != null) {
+                        undoSticker.setEnabled(false);
+                        undoSticker.setAlpha(0.4f);
+                    }
+                    if (redoSticker != null) {
+                        redoSticker.setEnabled(false);
+                        redoSticker.setAlpha(0.4f);
+                    }
+                    previewOriginalStickers(true);
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.setPressed(false);
+                    //originalSticker.setAlpha(1f);
+                    previewOriginalStickers(false);
+                    refreshStickerButtons();
+                    return true;
+            }
+            return true;
+        });
+    }*/
 
     /// 저장 버튼 설정 (수정됨: S3 업로드 후 이동) ///
     private void setupSaveButton() {
@@ -1403,488 +1498,379 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
-    /*
-     * private BrushOverlayView findBrushView() {
-     * if (brushOverlay == null) return null;
-     * for (int i = 0; i < brushOverlay.getChildCount(); i++) {
-     * View v = brushOverlay.getChildAt(i);
-     * if (v instanceof BrushOverlayView) return (BrushOverlayView) v;
-     * }
-     * return null;
-     * }
-     *
-     * private boolean hasAnyBrushPlaced() {
-     * FrameLayout so = findViewById(R.id.stickerOverlay);
-     * if (so == null) return false;
-     * for (int i = 0; i < so.getChildCount(); i++) {
-     * View child = so.getChildAt(i);
-     * if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
-     * return true;
-     * }
-     * return false;
-     * }
-     *
-     * private boolean bitmapHasAnyVisiblePixel(Bitmap bmp) {
-     * final int w = bmp.getWidth(), h = bmp.getHeight();
-     * int[] row = new int[w];
-     * for (int y = 0; y < h; y++) {
-     * bmp.getPixels(row, 0, w, 0, y, w, 1);
-     * for (int x = 0; x < w; x++) {
-     * if (((row[x] >>> 24) & 0xFF) != 0) return true;
-     * }
-     * }
-     * return false;
-     * }
-     *
-     * private boolean hasVisibleBrushContent() {
-     * BrushOverlayView bv = findBrushView();
-     * if (bv != null) {
-     * try {
-     * if (bv.hasEffectiveContent()) return true;
-     * } catch (Throwable ignore) {
-     * if (bv.getVisibleStrokeCount() > 0) return true;
-     * }
-     * }
-     *
-     * FrameLayout so = findViewById(R.id.stickerOverlay);
-     * if (so != null) {
-     * for (int i = 0; i < so.getChildCount(); i++) {
-     * View child = so.getChildAt(i);
-     * if (!(child instanceof ImageView)) continue;
-     * if (!Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
-     *
-     * Drawable d = ((ImageView) child).getDrawable();
-     * if (!(d instanceof BitmapDrawable)) continue;
-     *
-     * Bitmap bmp = ((BitmapDrawable) d).getBitmap();
-     * if (bmp != null && !bmp.isRecycled() && bitmapHasAnyVisiblePixel(bmp)) {
-     * return true;
-     * }
-     * }
-     * }
-     * return false;
-     * }
-     *
-     * public void recordBrushErase(List<EraseOp> ops) {
-     * if (ops == null || ops.isEmpty()) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     * HistoryOp hop = new HistoryOp();
-     * hop.erases = new ArrayList<>(ops);
-     * pushHistory(hop);
-     * }
-     *
-     * public void recordBrush(int baselineIndex) {
-     * FrameLayout overlay = findViewById(R.id.stickerOverlay);
-     * if (overlay == null) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * int childCount = overlay.getChildCount();
-     * if (baselineIndex < 0 || baselineIndex >= childCount) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * BrushOp bop = new BrushOp();
-     * for (int i = baselineIndex; i < childCount; i++) {
-     * View v = overlay.getChildAt(i);
-     * bop.views.add(v);
-     * bop.positions.add(i);
-     * }
-     * if (bop.views.isEmpty()) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * HistoryOp hop = new HistoryOp();
-     * hop.brush = bop;
-     *
-     * pushHistory(hop);
-     * }
-     *
-     * public void recordSticker(int baselineIndex) {
-     * if (stickerOverlay == null) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * int childCount = stickerOverlay.getChildCount();
-     * if (baselineIndex < 0 || baselineIndex > childCount) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * StickerOp sop = new StickerOp();
-     * for (int i = baselineIndex; i < childCount; i++) {
-     * View v = stickerOverlay.getChildAt(i);
-     * sop.views.add(v);
-     * sop.positions.add(i);
-     * }
-     * if (sop.views.isEmpty()) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * HistoryOp hop = new HistoryOp();
-     * hop.sticker = sop;
-     *
-     * pushHistory(hop);
-     * }
-     *
-     * public void recordStickerEdit(View v,
-     * float bx, float by, int bw, int bh, float br, int bz,
-     * float ax, float ay, int aw, int ah, float ar, int az) {
-     * boolean samePos = Math.abs(bx - ax) < 0.5f && Math.abs(by - ay) < 0.5f;
-     * boolean sameRot = Math.abs(br - ar) < 0.5f;
-     * boolean sameSize = (bw == aw) && (bh == ah);
-     * boolean sameZ = (bz == az);
-     * if (samePos && sameRot && sameSize && sameZ) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * if (v == null || stickerOverlay == null) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * StickerEdit se = new StickerEdit();
-     * se.view = v;
-     * se.bx = bx;
-     * se.by = by;
-     * se.bw = bw;
-     * se.bh = bh;
-     * se.br = br;
-     * se.bz = bz;
-     * se.ax = ax;
-     * se.ay = ay;
-     * se.aw = aw;
-     * se.ah = ah;
-     * se.ar = ar;
-     * se.az = az;
-     *
-     * HistoryOp hop = new HistoryOp();
-     * hop.edit = se;
-     *
-     * pushHistory(hop);
-     * }
-     *
-     * public void recordStickerDelete(View v) {
-     * if (stickerOverlay == null) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * int pos = stickerOverlay.indexOfChild(v);
-     * if (pos < 0) {
-     * refreshStickerButtons();
-     * return;
-     * }
-     *
-     * HistoryOp hop = new HistoryOp();
-     * hop.delete = v;
-     * hop.deletedPos = pos;
-     * pushHistory(hop);
-     * }
-     *
-     * private void applyStickerGeom(View v, float x, float y, int w, int h, float
-     * rot) {
-     * v.setX(x);
-     * v.setY(y);
-     * ViewGroup.LayoutParams lp = v.getLayoutParams();
-     * if (lp != null) {
-     * lp.width = w;
-     * lp.height = h;
-     * v.setLayoutParams(lp);
-     * }
-     * v.setPivotX(w / 2f);
-     * v.setPivotY(h / 2f);
-     * v.setRotation(rot);
-     * v.requestLayout();
-     * }
-     *
-     * public void recordCloneGroup(boolean isEdit, int groupId, View stickerFrame,
-     * StickerMeta prevMeta, StickerMeta nextMeta) {
-     * StickerViewModel viewModel = new
-     * ViewModelProvider(this).get(StickerViewModel.class);
-     * if (viewModel == null) return;
-     *
-     * HistoryOp hop = new HistoryOp();
-     * hop.cloneGroup = new CloneGroupOp(isEdit, groupId, stickerFrame,
-     * prevMeta.relX, prevMeta.relY, prevMeta.relW, prevMeta.relH, prevMeta.rot,
-     * nextMeta.relX, nextMeta.relY, nextMeta.relW, nextMeta.relH, nextMeta.rot
-     * );
-     *
-     * pushHistory(hop);
-     * }
-     *
-     * public void recordCloneGroupDelete(int groupId, View stickerFrame, List<View>
-     * deletedClones, StickerMeta prevMeta) {
-     * if (deletedClones == null || deletedClones.isEmpty()) return;
-     *
-     * HistoryOp hop = new HistoryOp();
-     *
-     * hop.cloneDelete = new ArrayList<>(deletedClones);
-     * hop.cloneDeletePos = new ArrayList<>();
-     * for (View v : deletedClones) {
-     * hop.cloneDeletePos.add(stickerOverlay.indexOfChild(v));
-     * }
-     *
-     * StickerMeta nullMeta = new StickerMeta(0f, 0f, 0f, 0f, 0f);
-     * hop.cloneGroup = new CloneGroupOp(true, groupId, stickerFrame,
-     * prevMeta.relX, prevMeta.relY, prevMeta.relW, prevMeta.relH, prevMeta.rot,
-     * nullMeta.relX, nullMeta.relY, nullMeta.relW, nullMeta.relH, nullMeta.rot
-     * );
-     *
-     * pushHistory(hop);
-     * }
-     *
-     * private void restoreCloneGroupFromMeta(int groupId, StickerMeta meta, View
-     * stickerFrame) {
-     * StickerViewModel viewModel = new
-     * ViewModelProvider(this).get(StickerViewModel.class);
-     * if (stickerOverlay == null || viewModel == null || stickerFrame == null)
-     * return;
-     *
-     * // 현재 클론 그룹 제거
-     * viewModel.removeCloneGroup(groupId, stickerOverlay);
-     *
-     * // 저장된 메타데이터 기반으로 즉시 복원
-     * List<View> restored = new ArrayList<>();
-     * View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame,
-     * this,
-     * new float[]{meta.relX, meta.relY, meta.relW, meta.relH, meta.rot});
-     * if (cloneSticker != null) {
-     * cloneSticker.setTag(R.id.tag_sticker_id, groupId);
-     * cloneSticker.setTag(R.id.tag_sticker_clone, true);
-     * viewModel.addCloneGroup(groupId, cloneSticker);
-     * restored.add(cloneSticker);
-     * }
-     *
-     * Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-     * if (f instanceof StickersFragment) {
-     * ((StickersFragment) f).reapplyListenersToClones(restored);
-     * }
-     *
-     * refreshStickerButtons();
-     * }
-     *
-     * private void reapplyCloneGroup(int groupId, StickerMeta meta, View
-     * stickerFrame) {
-     * StickerViewModel viewModel = new
-     * ViewModelProvider(this).get(StickerViewModel.class);
-     *
-     * if (renderer == null || stickerOverlay == null || viewModel == null ||
-     * stickerFrame == null)
-     * return;
-     *
-     * // 이 로직은 StickersFragment의 얼굴 감지 및 클론 생성 로직을 모방합니다.
-     * photoPreview.queueEvent(() -> {
-     * Bitmap bmp = renderer.getCurrentBitmap();
-     * runOnUiThread(() -> FaceDetect.detectFaces(bmp, null, (faces, bitmap) -> { //
-     * null은 FaceBoxOverlayView 대신
-     * if (faces.isEmpty()) return;
-     *
-     * List<float[]> placement = StickerMeta.recalculate(faces, bitmap,
-     * stickerOverlay, meta, this);
-     * runOnUiThread(() -> {
-     *
-     * /// 현재 보이는 클론스티커그룹 지우기
-     * viewModel.removeCloneGroup(groupId, stickerOverlay);
-     *
-     * /// 현재 세션 이전 또는 이후의 메타데이터로 클론스티커 다시 만들기
-     * List<View> newlyCreatedClones = new ArrayList<>();
-     *
-     * for (float[] p : placement) {
-     * View cloneSticker = StickerMeta.cloneSticker(stickerOverlay, stickerFrame,
-     * this, p);
-     * if (cloneSticker != null) {
-     * cloneSticker.setTag(R.id.tag_sticker_id, groupId);
-     * cloneSticker.setTag(R.id.tag_sticker_clone, true);
-     * viewModel.addCloneGroup(groupId, cloneSticker);
-     * newlyCreatedClones.add(cloneSticker);
-     * }
-     * }
-     * Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-     * if (f instanceof StickersFragment) {
-     * ((StickersFragment) f).reapplyListenersToClones(newlyCreatedClones);
-     * }
-     *
-     * runOnUiThread(this::refreshStickerButtons);
-     * });
-     * }));
-     * });
-     * }
-     *
-     * public void refreshStickerButtons() {
-     * if (undoSticker == null || redoSticker == null || originalSticker == null)
-     * return;
-     *
-     * boolean canUndo = canUndoSticker();
-     * boolean canRedo = canRedoSticker();
-     *
-     * boolean hasAnyPlacedStrict = hasAnyBrushPlaced() || hasVisibleBrushContent();
-     *
-     * undoSticker.setEnabled(canUndo);
-     * undoSticker.setAlpha(canUndo ? 1f : 0.4f);
-     *
-     * redoSticker.setEnabled(canRedo);
-     * redoSticker.setAlpha(canRedo ? 1f : 0.4f);
-     *
-     * originalSticker.setEnabled(hasAnyPlacedStrict);
-     * originalSticker.setAlpha(hasAnyPlacedStrict ? 1f : 0.4f);
-     * }
-     *
-     * private void pushHistory(HistoryOp op) {
-     * while (history.size() > historyCursor + 1) history.remove(history.size() -
-     * 1);
-     * history.add(op);
-     * historyCursor = history.size() - 1;
-     * refreshStickerButtons();
-     * }
-     *
-     * public boolean canUndoSticker() {
-     * return historyCursor >= 0;
-     * }
-     *
-     * public boolean canRedoSticker() {
-     * return historyCursor < history.size() - 1;
-     * }
-     *
-     * public void undoSticker() {
-     * if (!canUndoSticker()) return;
-     *
-     * HistoryOp op = history.get(historyCursor);
-     *
-     * if (op.hasCloneGroup() && !op.hasCloneDeletion()) {
-     * CloneGroupOp cg = op.cloneGroup;
-     * int groupId = cg.groupId;
-     *
-     * StickerViewModel viewModel = new
-     * ViewModelProvider(this).get(StickerViewModel.class);
-     *
-     * /// 현재 보이는 클론스티커그룹 지우기
-     * //if (viewModel != null && stickerOverlay != null) {
-     * // viewModel.removeCloneGroup(groupId, stickerOverlay);
-     * //}
-     *
-     * /// 현재 세션 이전의 메타데이터로 클론스티커 다시 만들기
-     * if (viewModel != null && stickerOverlay != null) {
-     * if (!cg.isEdit) {
-     * viewModel.removeCloneGroup(groupId, stickerOverlay);
-     * } else {
-     * StickerMeta prevMeta = new StickerMeta(cg.prevRelX, cg.prevRelY, cg.prevRelW,
-     * cg.prevRelH, cg.prevRot);
-     * viewModel.setTempView(groupId, cg.stickerFrame);
-     * restoreCloneGroupFromMeta(groupId, prevMeta, cg.stickerFrame);
-     * }
-     * }
-     * }
-     * if (op.hasCloneDeletion()) {
-     * StickerViewModel viewModel = new
-     * ViewModelProvider(this).get(StickerViewModel.class);
-     * List<View> clones = op.cloneDelete;
-     * List<Integer> positions = op.cloneDeletePos;
-     * int groupId = op.cloneGroup != null ? op.cloneGroup.groupId : -1;
-     * if (viewModel != null && stickerOverlay != null && groupId != -1) {
-     * viewModel.removeCloneGroup(groupId, stickerOverlay);
-     * }
-     * List<View> restored = new ArrayList<>();
-     * for (int i = 0; i < clones.size(); i++) {
-     * View v = clones.get(i);
-     * int pos = Math.min(positions.get(i), stickerOverlay.getChildCount());
-     * if (v.getParent() != stickerOverlay) {
-     * stickerOverlay.addView(v, pos);
-     * restored.add(v);
-     * }
-     * Controller.setControllersVisible(v, false);
-     *
-     * Fragment f = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-     * if (f instanceof StickersFragment) {
-     * ((StickersFragment) f).moveEditSticker(v);
-     * }
-     * }
-     * if (viewModel != null && groupId != -1) {
-     * for (View v : restored) {
-     * viewModel.addCloneGroup(groupId, v);
-     * }
-     * }
-     * }
-     *
-     * if (op.hasSticker()) {
-     * for (int i = 0; i < op.sticker.views.size(); i++) {
-     * View v = op.sticker.views.get(i);
-     * if (v.getParent() == stickerOverlay) stickerOverlay.removeView(v);
-     * }
-     * }
-     * if (op.hasStickerEdit()) {
-     * applyStickerGeom(op.edit.view, op.edit.bx, op.edit.by, op.edit.bw,
-     * op.edit.bh, op.edit.br);
-     * if (stickerOverlay != null) {
-     * View v = op.edit.view;
-     * int pos = op.edit.bz;
-     * if (v.getParent() == stickerOverlay) {
-     * stickerOverlay.removeView(v);
-     * int safePos = Math.min(pos, stickerOverlay.getChildCount());
-     * stickerOverlay.addView(v, safePos);
-     * }
-     * }
-     * }
-     * if (op.hasDeletion()) {
-     * if (op.delete.getParent() != stickerOverlay) {
-     * int pos = Math.min(op.deletedPos, stickerOverlay.getChildCount());
-     *
-     * View stickerFrame = op.delete;
-     * if (stickerFrame != null) Controller.setControllersVisible(stickerFrame,
-     * false);
-     *
-     * stickerOverlay.addView(op.delete, pos);
-     * }
-     * }
-     * if (op.hasBrush()) {
-     * for (int i = op.brush.views.size(); i++) {
-     * View v = op.brush.views.get(i);
-     * if (v.getParent() == stickerOverlay) stickerOverlay.removeView(v);
-     * }
-     * }
-     * if (op.hasErase()) {
-     * for (EraseOp eo : op.erases) {
-     * if (!(eo.view instanceof ImageView)) continue;
-     * ImageView iv = eo.view;
-     * if (iv.getDrawable() == null || !(iv.getDrawable() instanceof
-     * BitmapDrawable))
-     * continue;
-     * Bitmap bmp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
-     * if (bmp == null || bmp.isRecycled()) continue;
-     *
-     * Canvas c = new Canvas(bmp);
-     * Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-     * p.setStyle(Paint.Style.STROKE);
-     * p.setStrokeJoin(Paint.Join.ROUND);
-     * p.setStrokeCap(Paint.Cap.ROUND);
-     * p.setStrokeWidth(eo.strokeWidthPx);
-     * p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-     * if (eo.pathOnBitmap != null) {
-     * c.drawPath(eo.pathOnBitmap, p);
-     * }
-     * iv.invalidate();
-     * }
-     * }
-     *
-     * historyCursor++;
-     * refreshStickerButtons();
-     * }
-     *
-     * public void previewOriginalStickers(boolean on) {
-     * if (stickerOverlay != null)
-     * stickerOverlay.setVisibility(on ? View.INVISIBLE : View.VISIBLE);
-     * if (brushOverlay != null) brushOverlay.setVisibility(on ? View.INVISIBLE :
-     * View.VISIBLE);
-     * }
-     */
+    /*private BrushOverlayView findBrushView() {
+        if (brushOverlay == null) return null;
+        for (int i = 0; i < brushOverlay.getChildCount(); i++) {
+            View v = brushOverlay.getChildAt(i);
+            if (v instanceof BrushOverlayView) return (BrushOverlayView) v;
+        }
+        return null;
+    }
+
+    private boolean hasAnyBrushPlaced() {
+        FrameLayout so = findViewById(R.id.stickerOverlay);
+        if (so == null) return false;
+        for (int i = 0; i < so.getChildCount(); i++) {
+            View child = so.getChildAt(i);
+            if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean bitmapHasAnyVisiblePixel(Bitmap bmp) {
+        final int w = bmp.getWidth(), h = bmp.getHeight();
+        int[] row = new int[w];
+        for (int y = 0; y < h; y++) {
+            bmp.getPixels(row, 0, w, 0, y, w, 1);
+            for (int x = 0; x < w; x++) {
+                if (((row[x] >>> 24) & 0xFF) != 0) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasVisibleBrushContent() {
+        BrushOverlayView bv = findBrushView();
+        if (bv != null) {
+            try {
+                if (bv.hasEffectiveContent()) return true;
+            } catch (Throwable ignore) {
+                if (bv.getVisibleStrokeCount() > 0) return true;
+            }
+        }
+
+        FrameLayout so = findViewById(R.id.stickerOverlay);
+        if (so != null) {
+            for (int i = 0; i < so.getChildCount(); i++) {
+                View child = so.getChildAt(i);
+                if (!(child instanceof ImageView)) continue;
+                if (!Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) continue;
+
+                Drawable d = ((ImageView) child).getDrawable();
+                if (!(d instanceof BitmapDrawable)) continue;
+
+                Bitmap bmp = ((BitmapDrawable) d).getBitmap();
+                if (bmp != null && !bmp.isRecycled() && bitmapHasAnyVisiblePixel(bmp)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void recordBrushErase(List<EraseOp> ops) {
+        if (ops == null || ops.isEmpty()) {
+            refreshStickerButtons();
+            return;
+        }
+        HistoryOp hop = new HistoryOp();
+        hop.erases = new ArrayList<>(ops);
+        pushHistory(hop);
+    }
+
+    public void recordBrush(int baselineIndex) {
+        FrameLayout overlay = findViewById(R.id.stickerOverlay);
+        if (overlay == null) {
+            refreshStickerButtons();
+            return;
+        }
+
+        int childCount = overlay.getChildCount();
+        if (baselineIndex < 0 || baselineIndex >= childCount) {
+            refreshStickerButtons();
+            return;
+        }
+
+        BrushOp bop = new BrushOp();
+        for (int i = baselineIndex; i < childCount; i++) {
+            View v = overlay.getChildAt(i);
+            bop.views.add(v);
+            bop.positions.add(i);
+        }
+        if (bop.views.isEmpty()) {
+            refreshStickerButtons();
+            return;
+        }
+
+        HistoryOp hop = new HistoryOp();
+        hop.brush = bop;
+
+        pushHistory(hop);
+    }
+
+    public void recordSticker(int baselineIndex) {
+        if (stickerOverlay == null) {
+            refreshStickerButtons();
+            return;
+        }
+
+        int childCount = stickerOverlay.getChildCount();
+        if (baselineIndex < 0 || baselineIndex > childCount) {
+            refreshStickerButtons();
+            return;
+        }
+
+        StickerOp sop = new StickerOp();
+        for (int i = baselineIndex; i < childCount; i++) {
+            View v = stickerOverlay.getChildAt(i);
+            sop.views.add(v);
+            sop.positions.add(i);
+        }
+        if (sop.views.isEmpty()) {
+            refreshStickerButtons();
+            return;
+        }
+
+        HistoryOp hop = new HistoryOp();
+        hop.sticker = sop;
+
+        pushHistory(hop);
+    }
+
+    public void recordStickerEdit(View v,
+                                  float bx, float by, int bw, int bh, float br, int bz,
+                                  float ax, float ay, int aw, int ah, float ar, int az) {
+        boolean samePos = Math.abs(bx - ax) < 0.5f && Math.abs(by - ay) < 0.5f;
+        boolean sameRot = Math.abs(br - ar) < 0.5f;
+        boolean sameSize = (bw == aw) && (bh == ah);
+        boolean sameZ = (bz == az);
+        if (samePos && sameRot && sameSize && sameZ) {
+            refreshStickerButtons();
+            return;
+        }
+
+        if (v == null || stickerOverlay == null) {
+            refreshStickerButtons();
+            return;
+        }
+
+        StickerEdit se = new StickerEdit();
+        se.view = v;
+        se.bx = bx;
+        se.by = by;
+        se.bw = bw;
+        se.bh = bh;
+        se.br = br;
+        se.bz = bz;
+        se.ax = ax;
+        se.ay = ay;
+        se.aw = aw;
+        se.ah = ah;
+        se.ar = ar;
+        se.az = az;
+
+        HistoryOp hop = new HistoryOp();
+        hop.edit = se;
+
+        pushHistory(hop);
+    }
+
+    public void recordStickerDelete(View v) {
+        if (stickerOverlay == null) {
+            refreshStickerButtons();
+            return;
+        }
+
+        int pos = stickerOverlay.indexOfChild(v);
+        if (pos < 0) {
+            refreshStickerButtons();
+            return;
+        }
+
+        HistoryOp hop = new HistoryOp();
+        hop.delete = v;
+        hop.deletedPos = pos;
+        pushHistory(hop);
+    }
+
+    private void applyStickerGeom(View v, float x, float y, int w, int h, float rot) {
+        v.setX(x);
+        v.setY(y);
+        ViewGroup.LayoutParams lp = v.getLayoutParams();
+        if (lp != null) {
+            lp.width = w;
+            lp.height = h;
+            v.setLayoutParams(lp);
+        }
+        v.setPivotX(w / 2f);
+        v.setPivotY(h / 2f);
+        v.setRotation(rot);
+        v.requestLayout();
+    }
+
+    public void refreshStickerButtons() {
+        if (undoSticker == null || redoSticker == null || originalSticker == null) return;
+
+        boolean canUndo = canUndoSticker();
+        boolean canRedo = canRedoSticker();
+
+        boolean hasAnyPlacedStrict = hasAnyBrushPlaced() || hasVisibleBrushContent();
+
+        undoSticker.setEnabled(canUndo);
+        undoSticker.setAlpha(canUndo ? 1f : 0.4f);
+
+        redoSticker.setEnabled(canRedo);
+        redoSticker.setAlpha(canRedo ? 1f : 0.4f);
+
+        originalSticker.setEnabled(hasAnyPlacedStrict);
+        originalSticker.setAlpha(hasAnyPlacedStrict ? 1f : 0.4f);
+    }
+
+    private void pushHistory(HistoryOp op) {
+        while (history.size() > historyCursor + 1) history.remove(history.size() - 1);
+        history.add(op);
+        historyCursor = history.size() - 1;
+        refreshStickerButtons();
+    }
+
+    public boolean canUndoSticker() {
+        return historyCursor >= 0;
+    }
+
+    public boolean canRedoSticker() {
+        return historyCursor < history.size() - 1;
+    }
+
+    public void undoSticker() {
+        if (!canUndoSticker()) return;
+
+        HistoryOp op = history.get(historyCursor);
+
+        if (op.hasSticker()) {
+            for (int i = op.sticker.views.size() - 1; i >= 0; i--) {
+                View v = op.sticker.views.get(i);
+                if (v.getParent() == stickerOverlay) stickerOverlay.removeView(v);
+            }
+        }
+        if (op.hasStickerEdit()) {
+            applyStickerGeom(op.edit.view, op.edit.bx, op.edit.by, op.edit.bw, op.edit.bh, op.edit.br);
+            if (stickerOverlay != null) {
+                View v = op.edit.view;
+                int pos = op.edit.bz;
+                if (v.getParent() == stickerOverlay) {
+                    stickerOverlay.removeView(v);
+                    int safePos = Math.min(pos, stickerOverlay.getChildCount());
+                    stickerOverlay.addView(v, safePos);
+                }
+            }
+        }
+        if (op.hasDeletion()) {
+            if (op.delete.getParent() != stickerOverlay) {
+                int pos = Math.min(op.deletedPos, stickerOverlay.getChildCount());
+
+                View stickerFrame = op.delete;
+                if (stickerFrame != null) Controller.setControllersVisible(stickerFrame, false);
+
+                stickerOverlay.addView(op.delete, pos);
+            }
+        }
+        if (op.hasBrush()) {
+            for (int i = op.brush.views.size() - 1; i >= 0; i--) {
+                View v = op.brush.views.get(i);
+                if (v.getParent() == stickerOverlay) stickerOverlay.removeView(v);
+            }
+        }
+        if (op.hasErase()) {
+            for (EraseOp eo : op.erases) {
+                if (!(eo.view instanceof ImageView)) continue;
+                ImageView iv = eo.view;
+                if (iv.getDrawable() == null || !(iv.getDrawable() instanceof BitmapDrawable))
+                    continue;
+                Bitmap bmp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+                if (bmp == null || bmp.isRecycled()) continue;
+
+                Canvas c = new Canvas(bmp);
+                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
+                for (int i = eo.patches.size() - 1; i >= 0; i--) {
+                    ErasePatch patch = eo.patches.get(i);
+                    if (patch.before == null || patch.before.isRecycled()) continue;
+                    c.save();
+                    c.clipRect(patch.rect);
+                    c.drawBitmap(patch.before, patch.rect.left, patch.rect.top, p);
+                    c.restore();
+                }
+                iv.invalidate();
+            }
+        }
+
+        historyCursor--;
+        refreshStickerButtons();
+    }
+
+    public void redoSticker() {
+        if (!canRedoSticker()) return;
+
+        HistoryOp op = history.get(historyCursor + 1);
+
+        StickerViewModel viewModel = new ViewModelProvider(this).get(StickerViewModel.class);
+
+        if (op.hasSticker()) {
+            for (int i = 0; i < op.sticker.views.size(); i++) {
+                View v = op.sticker.views.get(i);
+                if (v.getParent() == stickerOverlay) continue;
+                int pos = Math.min(op.sticker.positions.get(i), stickerOverlay.getChildCount());
+                stickerOverlay.addView(v, pos);
+            }
+        }
+        if (op.hasStickerEdit()) {
+            applyStickerGeom(op.edit.view, op.edit.ax, op.edit.ay, op.edit.aw, op.edit.ah, op.edit.ar);
+            if (stickerOverlay != null) {
+                View v = op.edit.view;
+                int pos = op.edit.az;
+                if (v.getParent() == stickerOverlay) {
+                    stickerOverlay.removeView(v);
+                    int safePos = Math.min(pos, stickerOverlay.getChildCount());
+                    stickerOverlay.addView(v, safePos);
+                }
+            }
+        }
+        if (op.hasDeletion()) {
+            if (op.delete.getParent() == stickerOverlay) {
+                stickerOverlay.removeView(op.delete);
+            }
+        }
+        if (op.hasBrush()) {
+            for (int i = 0; i < op.brush.views.size(); i++) {
+                View v = op.brush.views.get(i);
+                if (v.getParent() == stickerOverlay) continue;
+                int pos = Math.min(op.brush.positions.get(i), stickerOverlay.getChildCount());
+                stickerOverlay.addView(v, pos);
+            }
+        }
+        if (op.hasErase()) {
+            for (EraseOp eo : op.erases) {
+                if (!(eo.view instanceof ImageView)) continue;
+                ImageView iv = eo.view;
+                if (iv.getDrawable() == null || !(iv.getDrawable() instanceof BitmapDrawable))
+                    continue;
+                Bitmap bmp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+                if (bmp == null || bmp.isRecycled()) continue;
+
+                Canvas c = new Canvas(bmp);
+                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeJoin(Paint.Join.ROUND);
+                p.setStrokeCap(Paint.Cap.ROUND);
+                p.setStrokeWidth(eo.strokeWidthPx);
+                p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+                if (eo.pathOnBitmap != null) {
+                    c.drawPath(eo.pathOnBitmap, p);
+                }
+                iv.invalidate();
+            }
+        }
+
+        historyCursor++;
+        refreshStickerButtons();
+    }
+
+    public void previewOriginalStickers(boolean on) {
+        if (stickerOverlay != null)
+            stickerOverlay.setVisibility(on ? View.INVISIBLE : View.VISIBLE);
+        if (brushOverlay != null) brushOverlay.setVisibility(on ? View.INVISIBLE : View.VISIBLE);
+    }*/
 
     public void resetStickerState(boolean removeOverlayChildren) {
         FrameLayout overlay = findViewById(R.id.stickerOverlay);

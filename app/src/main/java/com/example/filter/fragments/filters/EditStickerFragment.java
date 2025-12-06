@@ -340,6 +340,15 @@ public class EditStickerFragment extends Fragment {
         if (stickerOverlay != null) {
             for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                 View child = stickerOverlay.getChildAt(i);
+
+                if (Boolean.TRUE.equals(child.getTag(R.id.tag_brush_layer))) {
+                    child.setOnClickListener(null);
+                    child.setClickable(false);
+                    child.setLongClickable(false);
+                    child.setEnabled(false);
+                    continue;
+                }
+
                 child.setEnabled(true);
                 child.setClickable(true);
                 child.setLongClickable(true);

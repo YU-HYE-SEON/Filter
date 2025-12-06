@@ -125,17 +125,17 @@
             android:windowSoftInputMode="stateHidden|adjustResize" />
 
         <activity
+            android:name=".activities.mypage.EditNickNameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Base.Theme.Filter" />
+        <activity
             android:name=".activities.mypage.PointHistoryActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
         <activity
             android:name=".activities.mypage.PointChargeActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Base.Theme.Filter" />
-        <activity
-            android:name=".activities.mypage.EditNickNameActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
@@ -149,6 +149,12 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Filter" />
+        <activity
+            android:name=".activities.mypage.SNSidActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Base.Theme.Filter"
+            android:windowSoftInputMode="adjustPan" />
     </application>
 
 </manifest>

@@ -7,12 +7,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -130,6 +132,16 @@ public class ApplyFilterActivity extends BaseActivity {
             return insets;
         });
 
+        toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#00499A"), PorterDuff.Mode.SRC_ATOP);
+        toGalleryBtn.setTextColor(Color.parseColor("#989898"));
+        toGalleryBtn.setEnabled(false);
+        toGalleryBtn.setClickable(false);
+
+        toRegisterReviewBtn.getBackground().setColorFilter(Color.parseColor("#759749"), PorterDuff.Mode.SRC_ATOP);
+        toRegisterReviewBtn.setTextColor(Color.parseColor("#00499A"));
+        toRegisterReviewBtn.setEnabled(false);
+        toRegisterReviewBtn.setClickable(false);
+
         loadSocial();
         setupReviewPop();
 
@@ -173,6 +185,20 @@ public class ApplyFilterActivity extends BaseActivity {
                 if (isStickerApplied && !isSavedToGallery) {
                     ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
+
+                    runOnUiThread(() -> {
+                        toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#007AFF"), PorterDuff.Mode.SRC_ATOP);
+                        toGalleryBtn.setTextColor(Color.WHITE);
+                        toGalleryBtn.setEnabled(true);
+                        toGalleryBtn.setClickable(true);
+
+                        toRegisterReviewBtn.getBackground().setColorFilter(Color.parseColor("#C2FA7A"), PorterDuff.Mode.SRC_ATOP);
+                        toRegisterReviewBtn.setTextColor(Color.parseColor("#007AFF"));
+                        toRegisterReviewBtn.setEnabled(true);
+                        toRegisterReviewBtn.setClickable(true);
+                    });
+
+                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -202,6 +228,20 @@ public class ApplyFilterActivity extends BaseActivity {
                 if (!isSavedToGallery) {
                     ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
+
+                    runOnUiThread(() -> {
+                        toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#007AFF"), PorterDuff.Mode.SRC_ATOP);
+                        toGalleryBtn.setTextColor(Color.WHITE);
+                        toGalleryBtn.setEnabled(true);
+                        toGalleryBtn.setClickable(true);
+
+                        toRegisterReviewBtn.getBackground().setColorFilter(Color.parseColor("#C2FA7A"), PorterDuff.Mode.SRC_ATOP);
+                        toRegisterReviewBtn.setTextColor(Color.parseColor("#007AFF"));
+                        toRegisterReviewBtn.setEnabled(true);
+                        toRegisterReviewBtn.setClickable(true);
+                    });
+
+                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -250,6 +290,27 @@ public class ApplyFilterActivity extends BaseActivity {
             if (ClickUtils.isFastClick(v, 400)) return;
             finish();
         });
+
+
+        ClickUtils.clickDim(toRegisterReviewBtn);
+        ClickUtils.clickDim(toGalleryBtn);
+
+        toGalleryBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+
+            Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(collection);
+            intent.setType("image/*");
+            intent.putExtra("android.intent.extra.LOCAL_ONLY", true);
+
+            try {
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "갤러리를 열 수 없습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setupReviewPop() {
@@ -283,33 +344,19 @@ public class ApplyFilterActivity extends BaseActivity {
             showReviewPop();
         });
 
-
-        //if (instagramId.isEmpty() || instagramId == null) {
-        //    iconSnsInsta.setEnabled(false);
-        //    iconSnsInsta.setVisibility(View.GONE);
-        //} else {
-            iconSnsInsta.setOnClickListener(v -> {
-                type = SocialType.INSTAGRAM;
-                snsId.setText(instagramId);
-                Log.d("sns선택", "선택됨");
-            });
-        //}
-
-        if (xId.isEmpty() || xId == null) {
-            iconSnsTwitter.setEnabled(false);
-            iconSnsTwitter.setVisibility(View.GONE);
-        } else {
-            iconSnsTwitter.setOnClickListener(v -> {
-                type = SocialType.X;
-                snsId.setText(xId);
-                Log.d("sns선택", "선택됨");
-            });
-        }
-
         iconSnsNone.setOnClickListener(v -> {
             type = SocialType.NONE;
             snsId.setText("선택 안 함");
-            Log.d("sns선택", "선택됨");
+        });
+
+        iconSnsInsta.setOnClickListener(v -> {
+            type = SocialType.INSTAGRAM;
+            snsId.setText(instagramId);
+        });
+
+        iconSnsTwitter.setOnClickListener(v -> {
+            type = SocialType.X;
+            snsId.setText(xId);
         });
 
         /// 중첩 클릭되면 안 됨 ///
@@ -323,6 +370,20 @@ public class ApplyFilterActivity extends BaseActivity {
 
             requestCreateReview(savedPath, Long.parseLong(filterId), type);
         });
+    }
+
+    private void updateSNSIcons() {
+        if (instagramId == null || instagramId.isEmpty()) {
+            iconSnsInsta.setVisibility(View.GONE);
+        } else {
+            iconSnsInsta.setVisibility(View.VISIBLE);
+        }
+
+        if (xId == null || xId.isEmpty()) {
+            iconSnsTwitter.setVisibility(View.GONE);
+        } else {
+            iconSnsTwitter.setVisibility(View.VISIBLE);
+        }
     }
 
     /**
@@ -340,7 +401,7 @@ public class ApplyFilterActivity extends BaseActivity {
                 instagramId = ids.get("instagramId");
                 xId = ids.get("xId");
 
-                // todo: 값이 있는지 여부에 따라서 버튼 activation 결정
+                updateSNSIcons();
             }
 
             @Override
