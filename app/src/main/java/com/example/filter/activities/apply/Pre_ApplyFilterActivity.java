@@ -70,8 +70,10 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
     }
 
     private String faceDetectMessage = null;
-    private boolean animationDone = false;
     private boolean readyDone = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
     private FrameLayout loadingContainer, loadingFinishContainer;
     private LottieAnimationView loadingAnim, loadingFinishAnim;
     private TextView successTxt;
@@ -100,17 +102,8 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus){
+        if (!loadingAnimFinishedOnce) {
             loadingAnim.playAnimation();
-            loadingAnim.addAnimatorListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    if (!animationDone) {
-                        animationDone = true;
-                        finishLoading();
-                    }
-                }
-            });
         }
     }
 
@@ -148,6 +141,24 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
             v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), nav.bottom);
             return insets;
         });
+
+        final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                super.onAnimationRepeat(animation);
+                loadingAnimPlayCount++;
+                Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
+
+                if (loadingAnimPlayCount >= MIN_PLAY_COUNT && readyDone) {
+                    if (!loadingAnimFinishedOnce) {
+                        loadingAnimFinishedOnce = true;
+                        loadingAnim.removeAnimatorListener(this);
+                        finishLoading();
+                    }
+                }
+            }
+        };
+        loadingAnim.addAnimatorListener(loadingListener);
 
         saveBtn.setAlpha(0.4f);
         saveBtn.setEnabled(false);
@@ -196,7 +207,7 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
                 if (!readyDone) {
                     readyDone = true;
-                    finishLoading();
+                    checkAndFinishLoading();
                 }
 
             } catch (Exception e) {
@@ -225,7 +236,7 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
             if (!readyDone) {
                 readyDone = true;
-                finishLoading();
+                checkAndFinishLoading();
             }
         }
 
@@ -776,13 +787,28 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
         }).show();
     }
 
+    private void checkAndFinishLoading() {
+        if (!readyDone) return;
+
+        if (loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+
+                loadingAnim.cancelAnimation();
+
+                finishLoading();
+            }
+        }
+    }
+
     private void finishLoading() {
-        if (!animationDone || !readyDone) return;
+        if (!readyDone || !loadingAnimFinishedOnce) return;
+
+        loadingAnim.cancelAnimation();
+        loadingContainer.setVisibility(View.GONE);
 
         loadingFinishContainer.setVisibility(View.VISIBLE);
         loadingFinishAnim.setVisibility(View.VISIBLE);
-        loadingAnim.pauseAnimation();
-        loadingContainer.setVisibility(View.GONE);
         loadingFinishAnim.setScaleX(0.5f);
         loadingFinishAnim.setScaleY(0.5f);
         loadingFinishAnim.animate().scaleX(1.2f).scaleY(1.2f).setDuration(250).start();

@@ -12,7 +12,9 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -43,8 +45,10 @@ import com.example.filter.etc.ImageUtils;
 import java.io.File;
 
 public class SavePhotoActivity extends BaseActivity {
-    private boolean animationDone = false;
     private boolean saveDone = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
     private FrameLayout loadingContainer, loadingFinishContainer;
     private LottieAnimationView loadingAnim, loadingFinishAnim;
     private ImageButton backBtn;
@@ -63,17 +67,8 @@ public class SavePhotoActivity extends BaseActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus){
+        if (!loadingAnimFinishedOnce) {
             loadingAnim.playAnimation();
-            loadingAnim.addAnimatorListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    if (!animationDone) {
-                        animationDone = true;
-                        finishLoading();
-                    }
-                }
-            });
         }
     }
 
@@ -106,6 +101,24 @@ public class SavePhotoActivity extends BaseActivity {
             v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), nav.bottom);
             return insets;
         });
+
+        final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                super.onAnimationRepeat(animation);
+                loadingAnimPlayCount++;
+                Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
+
+                if (loadingAnimPlayCount >= MIN_PLAY_COUNT && saveDone) {
+                    if (!loadingAnimFinishedOnce) {
+                        loadingAnimFinishedOnce = true;
+                        loadingAnim.removeAnimatorListener(this);
+                        finishLoading();
+                    }
+                }
+            }
+        };
+        loadingAnim.addAnimatorListener(loadingListener);
 
         // ---------------------------------------------------------------
         // ✅ [핵심 수정] 1. FilterActivity에서 보낸 데이터 받기
@@ -251,7 +264,7 @@ public class SavePhotoActivity extends BaseActivity {
         isSavedToGallery = true;
 
         saveDone = true;
-        finishLoading();
+        checkAndFinishLoading();
     }
 
     @Override
@@ -266,8 +279,22 @@ public class SavePhotoActivity extends BaseActivity {
         }
     }
 
+    private void checkAndFinishLoading() {
+        if (!saveDone) return;
+
+        if (loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+
+                loadingAnim.cancelAnimation();
+
+                finishLoading();
+            }
+        }
+    }
+
     private void finishLoading() {
-        if (!animationDone || !saveDone) return;
+        if (!saveDone || !loadingAnimFinishedOnce) return;
 
         loadingFinishContainer.setVisibility(View.VISIBLE);
         loadingFinishAnim.setVisibility(View.VISIBLE);

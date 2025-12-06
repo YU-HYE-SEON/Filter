@@ -79,10 +79,11 @@ public class ApplyFilterActivity extends BaseActivity {
         void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
     }
 
-
     private String faceDetectMessage = null;
-    private boolean animationDone = false;
     private boolean saveDone = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
     private FrameLayout loadingContainer, loadingFinishContainer;
     private LottieAnimationView loadingAnim, loadingFinishAnim;
     private ImageButton backBtn;
@@ -122,17 +123,8 @@ public class ApplyFilterActivity extends BaseActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
+        if (!loadingAnimFinishedOnce) {
             loadingAnim.playAnimation();
-            loadingAnim.addAnimatorListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    if (!animationDone) {
-                        animationDone = true;
-                        finishLoading();
-                    }
-                }
-            });
         }
     }
 
@@ -165,6 +157,24 @@ public class ApplyFilterActivity extends BaseActivity {
             v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), nav.bottom);
             return insets;
         });
+
+        final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                super.onAnimationRepeat(animation);
+                loadingAnimPlayCount++;
+                Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
+
+                if (loadingAnimPlayCount >= MIN_PLAY_COUNT && saveDone) {
+                    if (!loadingAnimFinishedOnce) {
+                        loadingAnimFinishedOnce = true;
+                        loadingAnim.removeAnimatorListener(this);
+                        finishLoading();
+                    }
+                }
+            }
+        };
+        loadingAnim.addAnimatorListener(loadingListener);
 
         toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#00499A"), PorterDuff.Mode.SRC_ATOP);
         toGalleryBtn.setTextColor(Color.parseColor("#989898"));
@@ -236,7 +246,7 @@ public class ApplyFilterActivity extends BaseActivity {
 
                     if (!saveDone) {
                         saveDone = true;
-                        finishLoading();
+                        checkAndFinishLoading();
                     }
                 }
             } catch (Exception e) {
@@ -284,7 +294,7 @@ public class ApplyFilterActivity extends BaseActivity {
 
                     if (!saveDone) {
                         saveDone = true;
-                        finishLoading();
+                        checkAndFinishLoading();
                     }
                 }
             }
@@ -879,8 +889,22 @@ public class ApplyFilterActivity extends BaseActivity {
                 .start(), 2000);
     }
 
+    private void checkAndFinishLoading() {
+        if (!saveDone) return;
+
+        if (loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+
+                loadingAnim.cancelAnimation();
+
+                finishLoading();
+            }
+        }
+    }
+
     private void finishLoading() {
-        if (!animationDone || !saveDone) return;
+        if (!saveDone || !loadingAnimFinishedOnce) return;
 
         loadingFinishContainer.setVisibility(View.VISIBLE);
         loadingFinishAnim.setVisibility(View.VISIBLE);
