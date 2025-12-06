@@ -32,22 +32,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.filter.FilterActivity;
-import com.example.filter.activities.filter.LoadActivity;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
-import com.example.filter.activities.review.ReviewActivity;
 import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.response_dto.FilterResponse;
-import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.FilterApi;
-import com.example.filter.apis.ReviewApi;
-import com.example.filter.apis.UserApi;
 import com.example.filter.apis.client.AppRetrofitClient;
-import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.dialogs.Pre_ApplyEixtDialog;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
@@ -61,16 +55,10 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -81,6 +69,12 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
         void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
     }
 
+    private String faceDetectMessage = null;
+    private boolean animationDone = false;
+    private boolean readyDone = false;
+    private FrameLayout loadingContainer, loadingFinishContainer;
+    private LottieAnimationView loadingAnim, loadingFinishAnim;
+    private TextView successTxt;
     private ImageButton backBtn;
     private AppCompatButton saveBtn;
     private FrameLayout photoContainer, stickerOverlay;
@@ -104,6 +98,23 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
     private boolean isFaceStickerActive = false;
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus){
+            loadingAnim.playAnimation();
+            loadingAnim.addAnimatorListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (!animationDone) {
+                        animationDone = true;
+                        finishLoading();
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -121,6 +132,15 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
         bottomArea = findViewById(R.id.bottomArea);
         modalOff = findViewById(R.id.modalOff);
 
+        successTxt = findViewById(R.id.successTxt);
+        loadingContainer = findViewById(R.id.loadingContainer);
+        loadingAnim = findViewById(R.id.loadingAnim);
+        loadingFinishContainer = findViewById(R.id.loadingFinishContainer);
+        loadingFinishAnim = findViewById(R.id.loadingFinishAnim);
+        loadingFinishContainer.setVisibility(View.GONE);
+        loadingFinishAnim.setVisibility(View.GONE);
+        loadingContainer.setVisibility(View.VISIBLE);
+
         //시스템 바 인셋 설정
         final View root = findViewById(android.R.id.content);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
@@ -128,6 +148,10 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
             v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), nav.bottom);
             return insets;
         });
+
+        saveBtn.setAlpha(0.4f);
+        saveBtn.setEnabled(false);
+        saveBtn.setClickable(false);
 
         glSurfaceView = new GLSurfaceView(this);
         glSurfaceView.setEGLContextClientVersion(2);
@@ -169,6 +193,12 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                 overlayBitmap.recycle();
 
                 finalBitmapWithStickers = finalBitmap;
+
+                if (!readyDone) {
+                    readyDone = true;
+                    finishLoading();
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -191,6 +221,11 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
             if (imageToDisplay != null) {
                 finalBitmapWithStickers = imageToDisplay;
+            }
+
+            if (!readyDone) {
+                readyDone = true;
+                finishLoading();
             }
         }
 
@@ -625,9 +660,9 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
                     runOnUiThread(() -> {
                         if (facesFound) {
-                            showToast("얼굴 인식 성공");
+                            faceDetectMessage = "얼굴 인식 성공";
                         } else {
-                            showToast("얼굴을 감지하지 못했습니다");
+                            faceDetectMessage = "얼굴을 감지하지 못했습니다";
                         }
 
                         Bitmap original = originalImageBitmap;
@@ -665,7 +700,8 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                     detector.close();
                 })
                 .addOnFailureListener(e -> {
-                    showToast("얼굴을 감지하지 못했습니다");
+                    faceDetectMessage = "얼굴을 감지하지 못했습니다";
+
                     if (faceBox != null) {
                         faceBox.clearBoxes();
                         faceBox.setVisibility(View.GONE);
@@ -738,5 +774,39 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                 finish();
             }
         }).show();
+    }
+
+    private void finishLoading() {
+        if (!animationDone || !readyDone) return;
+
+        loadingFinishContainer.setVisibility(View.VISIBLE);
+        loadingFinishAnim.setVisibility(View.VISIBLE);
+        loadingAnim.pauseAnimation();
+        loadingContainer.setVisibility(View.GONE);
+        loadingFinishAnim.setScaleX(0.5f);
+        loadingFinishAnim.setScaleY(0.5f);
+        loadingFinishAnim.animate().scaleX(1.2f).scaleY(1.2f).setDuration(250).start();
+        loadingFinishAnim.playAnimation();
+
+        if (faceDetectMessage != null) {
+            showToast(faceDetectMessage);
+        }
+
+        loadingFinishContainer.animate()
+                .alpha(0f)
+                .setDuration(600)
+                .withEndAction(() -> {
+                    loadingFinishContainer.setVisibility(View.GONE);
+                    loadingFinishAnim.setVisibility(View.GONE);
+                })
+                .start();
+
+        successTxt.setText("필터 적용 완료!");
+
+        saveBtn.setAlpha(1.0f);
+        saveBtn.setEnabled(true);
+        saveBtn.setClickable(true);
+
+        //Toast.makeText(this, "필터 적용 완료!", Toast.LENGTH_SHORT).show();
     }
 }

@@ -65,7 +65,6 @@ public class SavePhotoActivity extends BaseActivity {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus){
             loadingAnim.playAnimation();
-            loadingAnim.setRepeatCount(0);
             loadingAnim.addAnimatorListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {

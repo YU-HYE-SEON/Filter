@@ -33,6 +33,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -78,7 +79,14 @@ public class ApplyFilterActivity extends BaseActivity {
         void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
     }
 
+
+    private String faceDetectMessage = null;
+    private boolean animationDone = false;
+    private boolean saveDone = false;
+    private FrameLayout loadingContainer, loadingFinishContainer;
+    private LottieAnimationView loadingAnim, loadingFinishAnim;
     private ImageButton backBtn;
+    private TextView saveSuccessTxt;
     private FrameLayout photoContainer, stickerOverlay;
     private ConstraintLayout bottomArea;
     private AppCompatButton toGalleryBtn, toRegisterReviewBtn;
@@ -112,17 +120,43 @@ public class ApplyFilterActivity extends BaseActivity {
     private boolean isSavedToGallery = false;       //사진 중복 저장 안 되게
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            loadingAnim.playAnimation();
+            loadingAnim.addAnimatorListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (!animationDone) {
+                        animationDone = true;
+                        finishLoading();
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_apply_photo);
         topArea = findViewById(R.id.topArea);
         backBtn = findViewById(R.id.backBtn);
+        saveSuccessTxt = findViewById(R.id.saveSuccessTxt);
         photoContainer = findViewById(R.id.photoContainer);
         stickerOverlay = findViewById(R.id.stickerOverlay);
         bottomArea = findViewById(R.id.bottomArea);
         toGalleryBtn = findViewById(R.id.toGalleryBtn);
         toRegisterReviewBtn = findViewById(R.id.toRegisterReviewBtn);
         reviewPopOff = findViewById(R.id.reviewPopOff);
+
+        loadingContainer = findViewById(R.id.loadingContainer);
+        loadingAnim = findViewById(R.id.loadingAnim);
+        loadingFinishContainer = findViewById(R.id.loadingFinishContainer);
+        loadingFinishAnim = findViewById(R.id.loadingFinishAnim);
+        loadingFinishContainer.setVisibility(View.GONE);
+        loadingFinishAnim.setVisibility(View.GONE);
+        loadingContainer.setVisibility(View.VISIBLE);
 
         //시스템 바 인셋 설정
         final View root = findViewById(android.R.id.content);
@@ -186,7 +220,7 @@ public class ApplyFilterActivity extends BaseActivity {
                     ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
 
-                    runOnUiThread(() -> {
+                    /*runOnUiThread(() -> {
                         toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#007AFF"), PorterDuff.Mode.SRC_ATOP);
                         toGalleryBtn.setTextColor(Color.WHITE);
                         toGalleryBtn.setEnabled(true);
@@ -198,7 +232,12 @@ public class ApplyFilterActivity extends BaseActivity {
                         toRegisterReviewBtn.setClickable(true);
                     });
 
-                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();*/
+
+                    if (!saveDone) {
+                        saveDone = true;
+                        finishLoading();
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -229,7 +268,7 @@ public class ApplyFilterActivity extends BaseActivity {
                     ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
 
-                    runOnUiThread(() -> {
+                    /*runOnUiThread(() -> {
                         toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#007AFF"), PorterDuff.Mode.SRC_ATOP);
                         toGalleryBtn.setTextColor(Color.WHITE);
                         toGalleryBtn.setEnabled(true);
@@ -241,7 +280,12 @@ public class ApplyFilterActivity extends BaseActivity {
                         toRegisterReviewBtn.setClickable(true);
                     });
 
-                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();*/
+
+                    if (!saveDone) {
+                        saveDone = true;
+                        finishLoading();
+                    }
                 }
             }
         }
@@ -726,9 +770,9 @@ public class ApplyFilterActivity extends BaseActivity {
 
                     runOnUiThread(() -> {
                         if (facesFound) {
-                            showToast("얼굴 인식 성공");
+                            faceDetectMessage = "얼굴 인식 성공";
                         } else {
-                            showToast("얼굴을 감지하지 못했습니다");
+                            faceDetectMessage = "얼굴을 감지하지 못했습니다";
                         }
 
                         Bitmap original = originalImageBitmap;
@@ -771,7 +815,7 @@ public class ApplyFilterActivity extends BaseActivity {
                     detector.close();
                 })
                 .addOnFailureListener(e -> {
-                    showToast("얼굴을 감지하지 못했습니다");
+                    faceDetectMessage = "얼굴을 감지하지 못했습니다";
 
                     if (faceBox != null) {
                         faceBox.clearBoxes();
@@ -833,5 +877,47 @@ public class ApplyFilterActivity extends BaseActivity {
                     isToastVisible = false;
                 })
                 .start(), 2000);
+    }
+
+    private void finishLoading() {
+        if (!animationDone || !saveDone) return;
+
+        loadingFinishContainer.setVisibility(View.VISIBLE);
+        loadingFinishAnim.setVisibility(View.VISIBLE);
+        loadingAnim.pauseAnimation();
+        loadingContainer.setVisibility(View.GONE);
+        loadingFinishAnim.setScaleX(0.5f);
+        loadingFinishAnim.setScaleY(0.5f);
+        loadingFinishAnim.animate().scaleX(1.2f).scaleY(1.2f).setDuration(250).start();
+        loadingFinishAnim.playAnimation();
+
+        if (faceDetectMessage != null) {
+            showToast(faceDetectMessage);
+        }
+
+        loadingFinishContainer.animate()
+                .alpha(0f)
+                .setDuration(600)
+                .withEndAction(() -> {
+                    loadingFinishContainer.setVisibility(View.GONE);
+                    loadingFinishAnim.setVisibility(View.GONE);
+                })
+                .start();
+
+        saveSuccessTxt.setText("저장 완료!");
+
+        runOnUiThread(() -> {
+            toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#007AFF"), PorterDuff.Mode.SRC_ATOP);
+            toGalleryBtn.setTextColor(Color.WHITE);
+            toGalleryBtn.setEnabled(true);
+            toGalleryBtn.setClickable(true);
+
+            toRegisterReviewBtn.getBackground().setColorFilter(Color.parseColor("#C2FA7A"), PorterDuff.Mode.SRC_ATOP);
+            toRegisterReviewBtn.setTextColor(Color.parseColor("#007AFF"));
+            toRegisterReviewBtn.setEnabled(true);
+            toRegisterReviewBtn.setClickable(true);
+        });
+
+        Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();
     }
 }
