@@ -1,7 +1,11 @@
 package com.example.filter.activities;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,6 +25,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.example.filter.R;
 import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
@@ -47,6 +52,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends BaseActivity {
+    private FrameLayout loadingContainer;
+    private LottieAnimationView loadingAnim;
+
     private enum Type {RECOMMEND, RANDOM, HOT, NEWEST}
 
     private Type currentType = Type.RECOMMEND;
@@ -110,6 +118,10 @@ public class MainActivity extends BaseActivity {
         searchFrame = findViewById(R.id.searchFrame);
         archiveFrame = findViewById(R.id.archiveFrame);
         mypageFrame = findViewById(R.id.mypageFrame);
+
+        loadingContainer = findViewById(R.id.loadingContainer);
+        loadingAnim = findViewById(R.id.loadingAnim);
+        loadingContainer.setVisibility(View.GONE);
 
         // 3. 필터 상세 화면 런처
         detailActivityLauncher = registerForActivityResult(

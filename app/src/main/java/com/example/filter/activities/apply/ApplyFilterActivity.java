@@ -906,10 +906,11 @@ public class ApplyFilterActivity extends BaseActivity {
     private void finishLoading() {
         if (!saveDone || !loadingAnimFinishedOnce) return;
 
+        loadingAnim.cancelAnimation();
+        loadingContainer.setVisibility(View.GONE);
+
         loadingFinishContainer.setVisibility(View.VISIBLE);
         loadingFinishAnim.setVisibility(View.VISIBLE);
-        loadingAnim.pauseAnimation();
-        loadingContainer.setVisibility(View.GONE);
         loadingFinishAnim.setScaleX(0.5f);
         loadingFinishAnim.setScaleY(0.5f);
         loadingFinishAnim.animate().scaleX(1.2f).scaleY(1.2f).setDuration(250).start();
