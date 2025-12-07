@@ -27,6 +27,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.example.filter.R;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.FilterListAdapter;
@@ -49,6 +50,30 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SearchFragment extends Fragment {
+    private boolean isDataLoading = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
+    private FrameLayout loadingContainer;
+    private LottieAnimationView loadingAnim;
+    private final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+        @Override
+        public void onAnimationRepeat(Animator animation) {
+            super.onAnimationRepeat(animation);
+            loadingAnimPlayCount++;
+            Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
+
+            // 최소 재생 횟수를 채웠고, 데이터 로딩도 완료되었으면 애니메이션 종료
+            if (loadingAnimPlayCount >= MIN_PLAY_COUNT && !isDataLoading) {
+                if (!loadingAnimFinishedOnce) {
+                    loadingAnimFinishedOnce = true;
+                    //loadingAnim.removeAnimatorListener(this); // 리스너 제거
+                    hideLoading(); // 로딩 숨기기
+                }
+            }
+        }
+    };
+
     private RecyclerView recyclerView;
     private ConstraintLayout textView, dropdown;
     private static final String ARG_KEYWORD = "search_keyword";
@@ -83,6 +108,11 @@ public class SearchFragment extends Fragment {
         dropdown = view.findViewById(R.id.dropdown);
         recyclerView = view.findViewById(R.id.recyclerView);
         textView = view.findViewById(R.id.textView);
+
+        loadingContainer = view.findViewById(R.id.loadingContainer);
+        loadingAnim = view.findViewById(R.id.loadingAnim);
+        loadingContainer.setVisibility(View.GONE);
+        loadingAnim.addAnimatorListener(loadingListener);
 
         detailActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -162,6 +192,7 @@ public class SearchFragment extends Fragment {
         });
 
         if (keyword != null && !keyword.isEmpty()) {
+            showLoading();
             searchByNaturalLanguage(keyword);
         }
 
@@ -246,6 +277,9 @@ public class SearchFragment extends Fragment {
                     //adapter.clear();
                     //showEmptyResult();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
@@ -257,10 +291,12 @@ public class SearchFragment extends Fragment {
                 Log.e("검색", "통신 오류", t);
 
                 updateRecyclerVisibility();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
-
 
     private List<FilterListItem> convertResponseToFilterListItems(List<FilterListResponse> responses) {
         List<FilterListItem> items = new ArrayList<>();
@@ -311,6 +347,9 @@ public class SearchFragment extends Fragment {
 
         if (currentSort != newSort) {
             currentSort = newSort; // 새로운 정렬 타입 설정
+
+            showLoading();
+
             searchByNaturalLanguage(keyword); // 정렬 변경 후 검색 재실행
         }
 
@@ -440,6 +479,34 @@ public class SearchFragment extends Fragment {
         Fragment parent = getParentFragment();
         if (parent instanceof SearchMainFragment) {
             ((SearchMainFragment) parent).resetSearchButton();
+        }
+    }
+
+
+    private void showLoading() {
+        isDataLoading = true;
+        loadingAnimPlayCount = 0;
+        loadingAnimFinishedOnce = false;
+
+        loadingContainer.setVisibility(View.VISIBLE);
+        loadingAnim.setProgress(0f);
+        loadingAnim.setSpeed(2.0f);
+        loadingAnim.playAnimation();
+    }
+
+    private void hideLoading() {
+        if (loadingContainer.getVisibility() == View.VISIBLE) {
+            loadingAnim.cancelAnimation();
+            loadingContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private void checkAndHideLoading() {
+        if (!isDataLoading && loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
         }
     }
 }

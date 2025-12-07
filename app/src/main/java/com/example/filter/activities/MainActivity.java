@@ -52,8 +52,29 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends BaseActivity {
+    private boolean isDataLoading = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
     private FrameLayout loadingContainer;
     private LottieAnimationView loadingAnim;
+    private final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+        @Override
+        public void onAnimationRepeat(Animator animation) {
+            super.onAnimationRepeat(animation);
+            loadingAnimPlayCount++;
+            Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
+
+            // 최소 재생 횟수를 채웠고, 데이터 로딩도 완료되었으면 애니메이션 종료
+            if (loadingAnimPlayCount >= MIN_PLAY_COUNT && !isDataLoading) {
+                if (!loadingAnimFinishedOnce) {
+                    loadingAnimFinishedOnce = true;
+                    //loadingAnim.removeAnimatorListener(this); // 리스너 제거
+                    hideLoading(); // 로딩 숨기기
+                }
+            }
+        }
+    };
 
     private enum Type {RECOMMEND, RANDOM, HOT, NEWEST}
 
@@ -122,6 +143,7 @@ public class MainActivity extends BaseActivity {
         loadingContainer = findViewById(R.id.loadingContainer);
         loadingAnim = findViewById(R.id.loadingAnim);
         loadingContainer.setVisibility(View.GONE);
+        loadingAnim.addAnimatorListener(loadingListener);
 
         // 3. 필터 상세 화면 런처
         detailActivityLauncher = registerForActivityResult(
@@ -167,6 +189,7 @@ public class MainActivity extends BaseActivity {
         recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
 
         setFilterButtons(true, false, false, false); // recommend 활성화
+        showLoading();
         loadRecommendFilters();
 
         // 데이터 변경 감지 및 뷰 갱신
@@ -229,6 +252,8 @@ public class MainActivity extends BaseActivity {
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                showLoading();
+
                 int id = view.getId();
                 switch (id) {
                     case R.id.recommend:
@@ -396,12 +421,18 @@ public class MainActivity extends BaseActivity {
                     Log.e("MainActivity", "목록 조회 실패: " + response.code());
                     Toast.makeText(MainActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
                 Log.e("MainActivity", "통신 오류", t);
                 Toast.makeText(MainActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -437,12 +468,18 @@ public class MainActivity extends BaseActivity {
                     Log.e("MainActivity", "인기 목록 조회 실패: " + response.code());
                     Toast.makeText(MainActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
                 Log.e("MainActivity", "통신 오류", t);
                 Toast.makeText(MainActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -482,12 +519,18 @@ public class MainActivity extends BaseActivity {
                     Log.e("MainActivity", "랜덤 목록 조회 실패: " + response.code());
                     Toast.makeText(MainActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
                 Log.e("MainActivity", "통신 오류", t);
                 Toast.makeText(MainActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -525,16 +568,21 @@ public class MainActivity extends BaseActivity {
                     Log.e("MainActivity", "랜덤 목록 조회 실패: " + response.code());
                     Toast.makeText(MainActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
                 Log.e("MainActivity", "통신 오류", t);
                 Toast.makeText(MainActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
-
 
     private void updateRecyclerVisibility() {
         if (filterAdapter.getItemCount() == 0) {
@@ -652,5 +700,32 @@ public class MainActivity extends BaseActivity {
             return;
         }
         super.onBackPressed();
+    }
+
+    private void showLoading() {
+        isDataLoading = true;
+        loadingAnimPlayCount = 0;
+        loadingAnimFinishedOnce = false;
+
+        loadingContainer.setVisibility(View.VISIBLE);
+        loadingAnim.setProgress(0f);
+        loadingAnim.setSpeed(2.0f);
+        loadingAnim.playAnimation();
+    }
+
+    private void hideLoading() {
+        if (loadingContainer.getVisibility() == View.VISIBLE) {
+            loadingAnim.cancelAnimation();
+            loadingContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private void checkAndHideLoading() {
+        if (!isDataLoading && loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        }
     }
 }
