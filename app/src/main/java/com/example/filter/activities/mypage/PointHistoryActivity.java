@@ -5,6 +5,7 @@ import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,6 +37,12 @@ public class PointHistoryActivity extends BaseActivity {
     private PointHistoryAdapter adapter1;   // 충전 내역용
     private PointHistoryAdapter adapter2;   // 사용 내역용
     private RecyclerView history;
+    private int chargeNextPage = 0;
+    private int buyNextPage = 0;
+    private boolean isChargeLoading = false;
+    private boolean isBuyLoading = false;
+    private int chargeTotalPages = 1;
+    private int buyTotalPages = 1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -52,6 +59,24 @@ public class PointHistoryActivity extends BaseActivity {
 
         // 기본값: 충전 내역
         history.setAdapter(adapter1);
+        loadChargeHistory(chargeNextPage, true);
+
+        history.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (!recyclerView.canScrollVertically(1)) {
+                    if (history.getAdapter() == adapter1) {
+                        if (!isChargeLoading && chargeNextPage < chargeTotalPages) {
+                            loadChargeHistory(chargeNextPage, false);
+                        }
+                    } else if (history.getAdapter() == adapter2) {
+                        if (!isBuyLoading && buyNextPage < buyTotalPages) {
+                            loadBuyHistory(buyNextPage, false);
+                        }
+                    }
+                }
+            }
+        });
 
         backBtn.setOnClickListener(v -> finish());
 
@@ -63,7 +88,8 @@ public class PointHistoryActivity extends BaseActivity {
             buyHistoryBtn.setTextColor(android.graphics.Color.parseColor("#90989F"));
 
             history.setAdapter(adapter1);
-            loadChargeHistory();
+            chargeNextPage = 0;
+            loadChargeHistory(chargeNextPage, true);
         });
 
         // [사용 내역] 버튼
@@ -74,33 +100,30 @@ public class PointHistoryActivity extends BaseActivity {
             chargeHistoryBtn.setTextColor(android.graphics.Color.parseColor("#90989F"));
 
             history.setAdapter(adapter2);
-            loadBuyHistory();
+            buyNextPage = 0;
+            loadBuyHistory(buyNextPage, true);
         });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // 현재 탭에 맞는 데이터 새로고침
-        if (history.getAdapter() == adapter1) {
-            loadChargeHistory();
-        } else {
-            loadBuyHistory();
-        }
     }
 
     // ---------------------------------------------------------------
     // ✅ [서버 통신] 충전 내역 조회
     // ---------------------------------------------------------------
-    private void loadChargeHistory() {
-        PointApi api = AppRetrofitClient.getInstance(this).create(PointApi.class);
+    private void loadChargeHistory(int page, boolean isFirstLoad) {
+        if (isChargeLoading) return;
+        isChargeLoading = true;
 
-        api.getChargeHistory(0, 50).enqueue(new Callback<PageResponse<CashTransactionListResponse>>() {
+        PointApi api = AppRetrofitClient.getInstance(this).create(PointApi.class);
+        api.getChargeHistory(page, 20).enqueue(new Callback<PageResponse<CashTransactionListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<CashTransactionListResponse>> call, Response<PageResponse<CashTransactionListResponse>> response) {
+                isChargeLoading = false;
                 if (response.isSuccessful() && response.body() != null) {
-                    List<CashTransactionListResponse> list = response.body().content;
-                    adapter1.items.clear();
+                    PageResponse<CashTransactionListResponse> body = response.body();
+                    List<CashTransactionListResponse> list = body.content;
+                    if (isFirstLoad) {
+                        adapter1.items.clear();
+                    }
+                    chargeTotalPages = body.totalPages;
 
                     for (CashTransactionListResponse dto : list) {
                         PointHistoryItem item = new PointHistoryItem();
@@ -112,14 +135,19 @@ public class PointHistoryActivity extends BaseActivity {
 
                         adapter1.items.add(item);
                     }
+
+                    chargeNextPage++;
+
                     adapter1.notifyDataSetChanged();
                 } else {
+                    isChargeLoading = false;
                     Log.e("PointHistory", "충전 내역 실패: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<PageResponse<CashTransactionListResponse>> call, Throwable t) {
+                isChargeLoading = false;
                 Log.e("PointHistory", "통신 오류", t);
             }
         });
@@ -128,15 +156,22 @@ public class PointHistoryActivity extends BaseActivity {
     // ---------------------------------------------------------------
     // ✅ [서버 통신] 사용 내역 조회
     // ---------------------------------------------------------------
-    private void loadBuyHistory() {
-        PointApi api = AppRetrofitClient.getInstance(this).create(PointApi.class);
+    private void loadBuyHistory(int page, boolean isFirstLoad) {
+        if (isBuyLoading) return;
+        isBuyLoading = true;
 
-        api.getUsageHistory(0, 50).enqueue(new Callback<PageResponse<FilterTransactionListResponse>>() {
+        PointApi api = AppRetrofitClient.getInstance(this).create(PointApi.class);
+        api.getUsageHistory(page, 20).enqueue(new Callback<PageResponse<FilterTransactionListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterTransactionListResponse>> call, Response<PageResponse<FilterTransactionListResponse>> response) {
+                isBuyLoading = false;
                 if (response.isSuccessful() && response.body() != null) {
-                    List<FilterTransactionListResponse> list = response.body().content;
-                    adapter2.items.clear();
+                    PageResponse<FilterTransactionListResponse> body = response.body();
+                    List<FilterTransactionListResponse> list = body.content;
+                    if (isFirstLoad) {
+                        adapter2.items.clear();
+                    }
+                    buyTotalPages = body.totalPages;
 
                     for (FilterTransactionListResponse dto : list) {
                         PointHistoryItem item = new PointHistoryItem();
@@ -148,14 +183,19 @@ public class PointHistoryActivity extends BaseActivity {
 
                         adapter2.items.add(item);
                     }
+
+                    buyNextPage++;
+
                     adapter2.notifyDataSetChanged();
                 } else {
+                    isBuyLoading = false;
                     Log.e("PointHistory", "사용 내역 실패: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterTransactionListResponse>> call, Throwable t) {
+                isBuyLoading = false;
                 Log.e("PointHistory", "통신 오류", t);
             }
         });

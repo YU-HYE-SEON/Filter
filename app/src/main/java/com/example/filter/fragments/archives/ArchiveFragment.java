@@ -51,6 +51,8 @@ public class ArchiveFragment extends Fragment {
     private TextView textView;
     private FilterListAdapter filterAdapter;
     private ActivityResultLauncher<Intent> detailActivityLauncher;
+    private int nextPage = 0;
+    private boolean isLoading = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override

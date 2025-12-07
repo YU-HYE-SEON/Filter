@@ -76,6 +76,9 @@ public class MainActivity extends BaseActivity {
         }
     };
 
+    private int nextPage = 0;
+    private boolean isLoading = false;
+
     private enum Type {RECOMMEND, RANDOM, HOT, NEWEST}
 
     private Type currentType = Type.RECOMMEND;
