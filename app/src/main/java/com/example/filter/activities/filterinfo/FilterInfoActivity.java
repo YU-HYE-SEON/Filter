@@ -128,18 +128,31 @@ public class FilterInfoActivity extends BaseActivity {
             if (photoUri != null) {
 
                 Intent intent;
-                if (!isBuy && !isMine) {
-                    intent = new Intent(FilterInfoActivity.this, Pre_ApplyFilterActivity.class);
-                    intent.setData(photoUri);
-                    intent.putExtra("filterId", filterId);
-                    preApplyLauncher.launch(intent);
-                } else {
+                if (isFree) {
                     intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
                     intent.setData(photoUri);
                     intent.putExtra("filterId", filterId);
                     startActivity(intent);
+                } else {
+                    if (isMine) {
+                        intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
+                        intent.setData(photoUri);
+                        intent.putExtra("filterId", filterId);
+                        startActivity(intent);
+                    } else {
+                        if (isBuy) {
+                            intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
+                            intent.setData(photoUri);
+                            intent.putExtra("filterId", filterId);
+                            startActivity(intent);
+                        } else {
+                            intent = new Intent(FilterInfoActivity.this, Pre_ApplyFilterActivity.class);
+                            intent.setData(photoUri);
+                            intent.putExtra("filterId", filterId);
+                            preApplyLauncher.launch(intent);
+                        }
+                    }
                 }
-
             } else {
                 Toast.makeText(this, "사진 선택 실패: URI 없음", Toast.LENGTH_SHORT).show();
             }
@@ -395,10 +408,29 @@ public class FilterInfoActivity extends BaseActivity {
                 changeORbuyBtn.setText("가격 수정");
                 changeORbuyBtn.setVisibility(View.VISIBLE);
             }
-            if (selectModeBtn != null) selectModeBtn.setVisibility(View.VISIBLE);
+            if (selectModeBtn != null) {
+                selectModeBtn.setText("사용하기");
+                selectModeBtn.setVisibility(View.VISIBLE);
+            }
             if (selectModeBtn2 != null) selectModeBtn2.setVisibility(View.INVISIBLE);
             if (alertTxt != null) alertTxt.setVisibility(View.INVISIBLE);
             return;
+        } else {
+            if (isFree) {
+                if (selectModeBtn != null) {
+                    selectModeBtn.setText("사용하기");
+                }
+            } else {
+                if (isBuy) {
+                    if (selectModeBtn != null) {
+                        selectModeBtn.setText("사용하기");
+                    }
+                } else {
+                    if (selectModeBtn != null) {
+                        selectModeBtn.setText("체험하기");
+                    }
+                }
+            }
         }
 
         boolean canUseImmediately = isFree || isBuy;
