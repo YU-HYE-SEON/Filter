@@ -77,6 +77,8 @@ public class FaceStickerFragment extends Fragment {
             faceOverlay.setVisibility(View.VISIBLE);
         }
 
+        faceOverlay.setOnTouchListener((view, event) -> true);
+
         /// faceOverlay 위에 EditStickerFragment와 같은 stickerFrame 두기
         /// EditStickerFragment의 stickerFrame을 아예 faceOverlay 위로 올리기 가능?
         Bundle args = getArguments();
