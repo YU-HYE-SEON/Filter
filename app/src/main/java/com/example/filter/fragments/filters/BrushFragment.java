@@ -122,7 +122,6 @@ public class BrushFragment extends Fragment {
     private LassoOverlayView lassoOverlay;
     private LinearLayout brushToSticker;
     private ConstraintLayout bottomArea1;
-    //private ImageButton undoSticker, redoSticker, originalSticker;
     private CheckBox checkBox;
 
     /// 시스템 ///
@@ -163,9 +162,6 @@ public class BrushFragment extends Fragment {
     }
 
     private final ArrayList<EraseOp> sessionEraseOps = new ArrayList<>();
-    //private final ArrayList<FilterActivity.EraseOp> sessionEraseOps = new ArrayList<>();
-
-    /*/// undoSticker, redoSticker, originalSticker 작업 ///*/
     private final Map<ImageView, PendingErase> activeErases = new HashMap<>();
 
     /// 색상 코드 변수 ///
@@ -210,7 +206,7 @@ public class BrushFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         final int DEFAULT_BRUSH_COLOR = 0xFFFFFFFF;
-        final int DEFAULT_BRUSH_SIZE_PX = dp(10);
+        final int DEFAULT_BRUSH_SIZE_PX = dp(4);
 
         int prefPenColor = BrushPrefs.getPenColor(requireContext(), DEFAULT_BRUSH_COLOR);
         int prefPenSize = BrushPrefs.getPenSize(requireContext(), DEFAULT_BRUSH_SIZE_PX);
@@ -467,8 +463,6 @@ public class BrushFragment extends Fragment {
                                 return;
                             }
 
-                            //FilterActivity act = (FilterActivity) requireActivity();
-                            //ArrayList<FilterActivity.EraseOp> ops = new ArrayList<>();
                             ArrayList<EraseOp> ops = new ArrayList<>();
 
                             for (PendingErase pe : activeErases.values()) {
@@ -480,14 +474,12 @@ public class BrushFragment extends Fragment {
                                     continue;
                                 }
 
-                                //FilterActivity.EraseOp eo = new FilterActivity.EraseOp();
                                 EraseOp eo = new EraseOp();
                                 eo.view = pe.view;
                                 eo.pathOnBitmap = new Path(pe.path);
                                 eo.strokeWidthPx = pe.width;
 
                                 for (Patch pa : pe.patches) {
-                                    //FilterActivity.ErasePatch ep = new FilterActivity.ErasePatch();
                                     ErasePatch ep = new ErasePatch();
                                     ep.rect = new Rect(pa.rect);
                                     ep.before = pa.before;
@@ -519,12 +511,12 @@ public class BrushFragment extends Fragment {
                     break;
                 case ERASER:
                     color = Color.TRANSPARENT;
-                    sizePx = BrushPrefs.getEraserSize(requireContext(), dp(4));
+                    sizePx = BrushPrefs.getEraserSize(requireContext(), dp(10));
                     break;
                 case PEN:
                 default:
                     color = lastPenColor;
-                    sizePx = (lastPenSizePx > 0) ? lastPenSizePx : dp(10);
+                    sizePx = (lastPenSizePx > 0) ? lastPenSizePx : dp(4);
                     break;
             }
             brushDraw.setBrush(color, sizePx, startMode);
@@ -663,14 +655,11 @@ public class BrushFragment extends Fragment {
                 brushDraw.trimToCount(strokeCount);
             }
 
-            FilterActivity a = (FilterActivity) requireActivity();
             if (!sessionEraseOps.isEmpty()) {
-                //a.recordBrushErase(sessionEraseOps);
                 sessionEraseOps.clear();
             }
 
             if (stickerOverlay != null) {
-                //a.recordBrush(childCount);
                 childCount = stickerOverlay.getChildCount();
             }
 
@@ -1385,14 +1374,12 @@ public class BrushFragment extends Fragment {
 
     private void rollbackSessionErases() {
         if (sessionEraseOps.isEmpty()) return;
-        //for (FilterActivity.EraseOp eo : sessionEraseOps) {
         for (EraseOp eo : sessionEraseOps) {
             if (!(eo.view.getDrawable() instanceof BitmapDrawable)) continue;
             Bitmap bmp = ((BitmapDrawable) eo.view.getDrawable()).getBitmap();
             if (bmp == null || bmp.isRecycled()) continue;
 
             Canvas c = new Canvas(bmp);
-            //for (FilterActivity.ErasePatch ep : eo.patches) {
             for (ErasePatch ep : eo.patches) {
                 if (ep.before == null || ep.before.isRecycled()) continue;
                 c.drawBitmap(ep.before, ep.rect.left, ep.rect.top, null);

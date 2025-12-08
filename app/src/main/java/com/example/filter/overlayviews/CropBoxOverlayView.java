@@ -22,7 +22,7 @@ public class CropBoxOverlayView extends View {
     private int viewportWidth = 0, viewportHeight = 0;
     private static final int MIN_SIZE = 150;
 
-    private enum Mode {NONE, RESIZE}
+    private enum Mode {NONE, RESIZE, MOVE}
 
     private Mode currentMode = Mode.NONE;
 
@@ -369,17 +369,33 @@ public class CropBoxOverlayView extends View {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 currentHandle = getTouchedHandle(x, y);
+
+                lastX = x;
+                lastY = y;
+
                 if (currentHandle != HandleType.NONE) {
                     currentMode = Mode.RESIZE;
-                    lastX = x;
-                    lastY = y;
                     return true;
                 }
+
+                if (cropRect.contains((int) x, (int) y)) {
+                    currentMode = Mode.MOVE;
+                    return true;
+                }
+
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 float dx = x - lastX;
                 float dy = y - lastY;
+
+                if (currentMode == Mode.MOVE) {
+                    moveCropRect(dx, dy);
+                    lastX = x;
+                    lastY = y;
+                    invalidate();
+                    return true;
+                }
 
                 if (currentMode == Mode.RESIZE) {
                     if (fixedAspectRatio) {

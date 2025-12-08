@@ -122,15 +122,9 @@ public class ShapeOverlayView extends View {
             float extraMargin = dp(100);
 
             if (imageBounds != null) {
-                //left = Math.max(imageBounds.left, Math.min(left, imageBounds.right - drawW));
-                //top = Math.max(imageBounds.top, Math.min(top, imageBounds.bottom - drawH));
-
                 left = Math.max(imageBounds.left - extraMargin, Math.min(left, imageBounds.right - drawW + extraMargin));
                 top = Math.max(imageBounds.top - extraMargin, Math.min(top, imageBounds.bottom - drawH + extraMargin));
             } else {
-                //left = Math.max(0, Math.min(left, getWidth() - drawW));
-                //top = Math.max(0, Math.min(top, getHeight() - drawH));
-
                 left = Math.max(0 - extraMargin, Math.min(left, getWidth() - drawW + extraMargin));
                 top = Math.max(0 - extraMargin, Math.min(top, getHeight() - drawH + extraMargin));
             }
@@ -177,15 +171,8 @@ public class ShapeOverlayView extends View {
 
                 float extraMargin = dp(100);
 
-                //float minX = (imageBounds != null ? imageBounds.left : 0f) + halfW;
-                //float maxX = (imageBounds != null ? imageBounds.right : getWidth()) - halfW;
-
-                //float minY = (imageBounds != null ? imageBounds.top : 0f) + halfH;
-                //float maxY = (imageBounds != null ? imageBounds.bottom : getHeight()) - halfH;
-
                 float minX = (imageBounds != null ? imageBounds.left : 0f) + halfW - extraMargin;
                 float maxX = (imageBounds != null ? imageBounds.right : getWidth()) - halfW + extraMargin;
-
                 float minY = (imageBounds != null ? imageBounds.top : 0f) + halfH - extraMargin;
                 float maxY = (imageBounds != null ? imageBounds.bottom : getHeight()) - halfH + extraMargin;
 

@@ -2,7 +2,6 @@ package com.example.filter.fragments.filters;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,27 +13,19 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
-import com.example.filter.activities.filter.FilterActivity;
-import com.example.filter.api_datas.FaceStickerData;
-import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
 import com.example.filter.etc.FaceDetect;
 import com.example.filter.etc.StickerMeta;
-import com.example.filter.etc.StickerViewModel;
 import com.example.filter.overlayviews.FaceBoxOverlayView;
-
-import java.util.List;
 
 public class FaceStickerFragment extends Fragment {
     private Fragment previousFragment;
@@ -50,7 +41,6 @@ public class FaceStickerFragment extends Fragment {
     private CheckBox faceCheckBox;
     private ImageButton cancelBtn, checkBtn;
     private FrameLayout faceOverlay;
-    //ImageButton undoSticker, redoSticker, originalSticker;
     private FaceBoxOverlayView faceBox;
     private StickerMeta meta;
 
@@ -84,14 +74,6 @@ public class FaceStickerFragment extends Fragment {
             faceCheckBox.setEnabled(false);
             faceOverlay.setVisibility(View.VISIBLE);
         }
-
-        /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
-        redoSticker = requireActivity().findViewById(R.id.redoSticker);
-        originalSticker = requireActivity().findViewById(R.id.originalSticker);
-
-        if (undoSticker != null) undoSticker.setVisibility(View.INVISIBLE);
-        if (redoSticker != null) redoSticker.setVisibility(View.INVISIBLE);
-        if (originalSticker != null) originalSticker.setVisibility(View.INVISIBLE);*/
 
         /// faceOverlay 위에 EditStickerFragment와 같은 stickerFrame 두기
         /// EditStickerFragment의 stickerFrame을 아예 faceOverlay 위로 올리기 가능?
