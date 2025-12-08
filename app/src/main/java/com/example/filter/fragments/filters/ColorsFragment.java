@@ -21,6 +21,7 @@ import com.example.filter.dialogs.StickersDialog;
 import com.example.filter.etc.ClickUtils;
 
 public class ColorsFragment extends Fragment {
+    private ImageButton closeBtn;
     private String filterType;
     private LinearLayout brightnessBtn, exposureBtn, contrastBtn,
             highlightBtn, shadowBtn, temperatureBtn, hueBtn,
@@ -31,7 +32,7 @@ public class ColorsFragment extends Fragment {
     private TextView brightnessTxt, exposureTxt, contrastTxt,
             highlightTxt, shadowTxt, temperatureTxt, hueTxt,
             saturationTxt, sharpnessTxt, blurTxt, vignetteTxt, noiseTxt;
-    private LinearLayout nextBtn;
+    private LinearLayout prevBtn,nextBtn;
     private ConstraintLayout bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
     private ImageButton undoSticker, redoSticker, originalSticker;
@@ -90,6 +91,7 @@ public class ColorsFragment extends Fragment {
         noiseTxt = view.findViewById(R.id.noiseTxt);
 
         nextBtn = view.findViewById(R.id.nextBtn);
+        prevBtn = view.findViewById(R.id.prevBtn);
 
         bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
         undoColor = requireActivity().findViewById(R.id.undoColor);
@@ -196,6 +198,22 @@ public class ColorsFragment extends Fragment {
             }
         };
 
+        prevBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (ClickUtils.isFastClick(view, 400)) return;
+
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.slide_up, 0)
+                        .replace(R.id.bottomArea2, new ToolsFragment())
+                        .commit();
+
+                ConstraintLayout bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
+                bottomArea1.setVisibility(View.INVISIBLE);
+            }
+        });
+
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -262,6 +280,13 @@ public class ColorsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (closeBtn != null) {
+            closeBtn.setEnabled(true);
+            closeBtn.setAlpha(1.0f);
+        }
+
         refreshColorButtons();
         updateColorIcons();
 
@@ -276,7 +301,7 @@ public class ColorsFragment extends Fragment {
         FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {
             activity.refreshOriginalColorButton();
-            activity.requestUpdateBackGate();
+            //activity.requestUpdateBackGate();
             activity.updateSaveButtonState();
         }
     }
@@ -287,7 +312,7 @@ public class ColorsFragment extends Fragment {
         if (!hidden) {
             FilterActivity activity = (FilterActivity) getActivity();
             if (activity != null) {
-                activity.requestUpdateBackGate();
+                //activity.requestUpdateBackGate();
                 refreshColorButtons();
                 updateColorIcons();
                 activity.updateSaveButtonState();

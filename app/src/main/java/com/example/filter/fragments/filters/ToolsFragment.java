@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -19,6 +20,7 @@ import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class ToolsFragment extends Fragment {
+    private ImageButton closeBtn;
     private LinearLayout rotationBtn, cropBtn, nextBtn;
     private ImageView rotationIcon, cropIcon;
     private TextView rotationTxt, cropTxt;
@@ -105,5 +107,15 @@ public class ToolsFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (closeBtn != null) {
+            closeBtn.setEnabled(true);
+            closeBtn.setAlpha(1.0f);
+        }
     }
 }

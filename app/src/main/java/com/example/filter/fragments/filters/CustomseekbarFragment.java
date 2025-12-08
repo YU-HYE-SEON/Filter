@@ -20,6 +20,7 @@ import com.example.filter.R;
 
 public class CustomseekbarFragment extends Fragment {
     private AppCompatButton saveBtn;
+    private ImageButton closeBtn;
     private TextView filterText;
     private ImageButton cancelBtn, checkBtn;
     private CustomSeekbar customSeekbar;
@@ -57,9 +58,12 @@ public class CustomseekbarFragment extends Fragment {
         }
 
         saveBtn = requireActivity().findViewById(R.id.saveBtn);
-        if (saveBtn != null) {
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (saveBtn != null && closeBtn != null) {
             saveBtn.setEnabled(false);
-            saveBtn.setAlpha(0.4f);
+            closeBtn.setEnabled(false);
+            saveBtn.setAlpha(0.0f);
+            closeBtn.setAlpha(0.0f);
         }
 
         Bundle bundle = getArguments();
@@ -142,6 +146,12 @@ public class CustomseekbarFragment extends Fragment {
     }
 
     private void showPreviousFagement() {
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (closeBtn != null) {
+            closeBtn.setEnabled(true);
+            closeBtn.setAlpha(1f);
+        }
+
         if (previousFragment != null) {
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
@@ -159,7 +169,7 @@ public class CustomseekbarFragment extends Fragment {
 
         requireActivity().getSupportFragmentManager().executePendingTransactions();
         if (getActivity() instanceof FilterActivity) {
-            ((FilterActivity) getActivity()).requestUpdateBackGate();
+            //((FilterActivity) getActivity()).requestUpdateBackGate();
             ((FilterActivity) getActivity()).updateSaveButtonState();
         }
     }

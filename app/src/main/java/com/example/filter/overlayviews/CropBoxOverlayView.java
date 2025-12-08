@@ -361,6 +361,10 @@ public class CropBoxOverlayView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (event.getPointerCount() > 1) {
+            currentMode = Mode.NONE;
+        }
+
         if (cropRect == null) return false;
 
         float x = event.getX();

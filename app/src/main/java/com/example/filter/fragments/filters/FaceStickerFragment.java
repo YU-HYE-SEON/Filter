@@ -33,6 +33,7 @@ public class FaceStickerFragment extends Fragment {
     private long sticker_db_id;
     public static int stickerId;
     private AppCompatButton saveBtn;
+    private ImageButton closeBtn;
     private LayoutInflater inflater;
     private View stickerFrame;
     private ImageView stickerImage, deleteController, faceModel;
@@ -228,9 +229,12 @@ public class FaceStickerFragment extends Fragment {
     public void onResume() {
         super.onResume();
         saveBtn = requireActivity().findViewById(R.id.saveBtn);
-        if (saveBtn != null) {
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (saveBtn != null && closeBtn != null) {
             saveBtn.setEnabled(false);
-            saveBtn.setAlpha(0.4f);
+            closeBtn.setEnabled(false);
+            saveBtn.setAlpha(0.0f);
+            closeBtn.setAlpha(0.0f);
         }
     }
 

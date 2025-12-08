@@ -25,6 +25,7 @@ import com.example.filter.overlayviews.CropBoxOverlayView;
 
 public class CropFragment extends Fragment {
     private AppCompatButton saveBtn;
+    private ImageButton closeBtn;
     private LinearLayout freeCropBtn, OTORatioBtn, TTFRatioBtn, NTSRatioBtn;
     private ImageView freeCropIcon, OTORatioIcon, TTFRatioIcon, NTSRatioIcon;
     private TextView freeCropTxt, OTOTxt, TTFTxt, NTSTxt;
@@ -237,9 +238,12 @@ public class CropFragment extends Fragment {
     public void onResume() {
         super.onResume();
         saveBtn = requireActivity().findViewById(R.id.saveBtn);
-        if (saveBtn != null) {
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (saveBtn != null && closeBtn != null) {
             saveBtn.setEnabled(false);
-            saveBtn.setAlpha(0.4f);
+            closeBtn.setEnabled(false);
+            saveBtn.setAlpha(0.0f);
+            closeBtn.setAlpha(0.0f);
         }
     }
 

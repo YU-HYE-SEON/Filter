@@ -386,12 +386,12 @@ public class LoadActivity extends BaseActivity {
             }).start();
         });
 
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+        /*getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 showExitConfirmDialog();
             }
-        });
+        });*/
     }
 
     private void loadImageFromUri(Uri photoUri) {
@@ -714,7 +714,7 @@ public class LoadActivity extends BaseActivity {
         }
     }
 
-    private void showExitConfirmDialog() {
+    /*private void showExitConfirmDialog() {
         new FilterEixtDialog(this, new FilterEixtDialog.FilterEixtDialogListener() {
             @Override
             public void onKeep() {
@@ -729,7 +729,7 @@ public class LoadActivity extends BaseActivity {
                 finish();
             }
         }).show();
-    }
+    }*/
 
     private float spacing(MotionEvent e) {
         if (e.getPointerCount() < 2) return 0f;

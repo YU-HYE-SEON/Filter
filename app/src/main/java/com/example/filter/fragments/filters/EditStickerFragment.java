@@ -67,6 +67,7 @@ public class EditStickerFragment extends Fragment {
     private LinearLayout stickerEdit;
     private CheckBox faceCheckBox;
     private AppCompatButton saveBtn;
+    private ImageButton closeBtn;
     private ImageButton cancelBtn, checkBtn, deleteStickerIcon;
     private MyStickersAdapter adapter;
     private RecyclerView myStickers;
@@ -327,9 +328,12 @@ public class EditStickerFragment extends Fragment {
         super.onResume();
 
         saveBtn = requireActivity().findViewById(R.id.saveBtn);
-        if (saveBtn != null) {
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (saveBtn != null && closeBtn != null) {
             saveBtn.setEnabled(false);
-            saveBtn.setAlpha(0.4f);
+            closeBtn.setEnabled(false);
+            saveBtn.setAlpha(0.0f);
+            closeBtn.setAlpha(0.0f);
         }
 
         if (bottomArea1 != null) {

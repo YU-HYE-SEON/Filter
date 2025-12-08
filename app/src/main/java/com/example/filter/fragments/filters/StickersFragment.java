@@ -33,13 +33,15 @@ import com.example.filter.etc.ClickUtils;
 import com.example.filter.etc.Controller;
 
 public class StickersFragment extends Fragment {
+    private ImageButton closeBtn;
     private LinearLayout myStickerBtn, loadStickerBtn, brushBtn, AIStickerBtn;
     private ImageView myStickerIcon, brushIcon;
     private TextView myStickerTxt, brushTxt;
-    private FrameLayout stickerOverlay, fullScreenContainer;
+    private FrameLayout stickerOverlay, brushOverlay, fullScreenContainer;
     private ConstraintLayout filterActivity, bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
     private LinearLayout brushToSticker, stickerEdit;
+    private LinearLayout prevBtn;
 
     private ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -76,9 +78,12 @@ public class StickersFragment extends Fragment {
 
         AIStickerBtn = view.findViewById(R.id.AIStickerBtn);
 
+        prevBtn = view.findViewById(R.id.prevBtn);
+
         FilterActivity activity = (FilterActivity) requireActivity();
 
         stickerOverlay = activity.findViewById(R.id.stickerOverlay);
+        brushOverlay = activity.findViewById(R.id.brushOverlay);
         bottomArea1 = activity.findViewById(R.id.bottomArea1);
         undoColor = activity.findViewById(R.id.undoColor);
         redoColor = activity.findViewById(R.id.redoColor);
@@ -94,6 +99,22 @@ public class StickersFragment extends Fragment {
             brushToSticker.setVisibility(View.GONE);
             stickerEdit.setVisibility(View.GONE);
         }
+
+        prevBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (ClickUtils.isFastClick(view, 400)) return;
+
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.slide_up, 0)
+                        .replace(R.id.bottomArea2, new ColorsFragment())
+                        .commit();
+
+                if (stickerOverlay != null) stickerOverlay.removeAllViews();
+                if (brushOverlay != null) brushOverlay.removeAllViews();
+            }
+        });
 
         myStickerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -210,6 +231,13 @@ public class StickersFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (closeBtn != null) {
+            closeBtn.setEnabled(true);
+            closeBtn.setAlpha(1.0f);
+        }
+
         if (stickerOverlay == null) return;
 
         if (stickerOverlay != null) {

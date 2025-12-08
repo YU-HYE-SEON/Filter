@@ -113,6 +113,7 @@ public class BrushFragment extends Fragment {
     /// UI ///
     private ConstraintLayout topArea;
     private AppCompatButton saveBtn;
+    private ImageButton closeBtn;
     private LinearLayout penBtn, glowBtn, crayonBtn, eraserBtn;
     private ImageView pen, glow, crayon, eraser;
     private TextView penTxt, glowTxt, crayonTxt, eraserTxt;
@@ -695,9 +696,12 @@ public class BrushFragment extends Fragment {
     public void onResume() {
         super.onResume();
         saveBtn = requireActivity().findViewById(R.id.saveBtn);
-        if (saveBtn != null) {
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (saveBtn != null && closeBtn != null) {
             saveBtn.setEnabled(false);
-            saveBtn.setAlpha(0.4f);
+            closeBtn.setEnabled(false);
+            saveBtn.setAlpha(0.0f);
+            closeBtn.setAlpha(0.0f);
         }
     }
 

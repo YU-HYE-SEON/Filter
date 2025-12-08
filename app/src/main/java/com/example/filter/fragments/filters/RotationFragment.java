@@ -21,6 +21,7 @@ import com.example.filter.etc.ClickUtils;
 
 public class RotationFragment extends Fragment {
     private AppCompatButton saveBtn;
+    private ImageButton closeBtn;
     private LinearLayout leftRotationBtn, rightRotationBtn, horizontalFlipBtn, verticalFlipBtn;
     private ImageView leftRotationIcon, rightRotationIcon, horizontalFlip, verticalFlip;
     private TextView leftRotationTxt, rightRotationTxt, horizontalFlipTxt, verticalFlipTxt;
@@ -134,9 +135,12 @@ public class RotationFragment extends Fragment {
     public void onResume() {
         super.onResume();
         saveBtn = requireActivity().findViewById(R.id.saveBtn);
-        if (saveBtn != null) {
+        closeBtn = requireActivity().findViewById(R.id.closeBtn);
+        if (saveBtn != null && closeBtn != null) {
             saveBtn.setEnabled(false);
-            saveBtn.setAlpha(0.4f);
+            closeBtn.setEnabled(false);
+            saveBtn.setAlpha(0.0f);
+            closeBtn.setAlpha(0.0f);
         }
     }
 

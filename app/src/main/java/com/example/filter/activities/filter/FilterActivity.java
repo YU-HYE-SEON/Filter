@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -80,7 +79,7 @@ public class FilterActivity extends BaseActivity {
     /// UI ///
     private FrameLayout stickerOverlay, brushOverlay;
     private GLSurfaceView photoPreview;
-    private ImageButton backBtn;
+    private ImageButton closeBtn;
     private AppCompatButton saveBtn;
     private ImageButton undoColor, redoColor, originalColor;
 
@@ -159,7 +158,7 @@ public class FilterActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_filter);
-        backBtn = findViewById(R.id.backBtn);
+        closeBtn = findViewById(R.id.closeBtn);
         saveBtn = findViewById(R.id.saveBtn);
         photoPreview = findViewById(R.id.photoPreview);
         stickerOverlay = findViewById(R.id.stickerOverlay);
@@ -236,20 +235,20 @@ public class FilterActivity extends BaseActivity {
 
         setupColorButtons();
         setupSaveButton();
-        setupBackNavigation();
+        //setupBackNavigation();
         setupImagePicker();
 
         cropOverlay = null;
 
-        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-        updateBackAndSaveUiEnabled(cur);
+        //Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+        //updateBackAndSaveUiEnabled(cur);
 
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+        /*getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 showExitConfirmDialog();
             }
-        });
+        });*/
 
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
             FrameLayout full = findViewById(R.id.fullScreenContainer);
@@ -263,6 +262,12 @@ public class FilterActivity extends BaseActivity {
                 main.setBackgroundColor(Color.BLACK);
                 window.setNavigationBarColor(Color.BLACK);
             }
+        });
+
+
+        closeBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            showExitConfirmDialog();
         });
     }
 
@@ -284,9 +289,6 @@ public class FilterActivity extends BaseActivity {
             if (!exists) {
                 faceStickerList.add(data);
             }
-            /*if (faceStickerList == null)
-                faceStickerList = new ArrayList<>();
-            faceStickerList.add(data);*/
 
             if (data.stickerPath != null && !data.stickerPath.isEmpty()) {
                 ImageView iv = new ImageView(this);
@@ -612,7 +614,7 @@ public class FilterActivity extends BaseActivity {
         finish();
     }
 
-    private void setupBackNavigation() {
+    /*private void setupBackNavigation() {
         backGateCallback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -634,15 +636,16 @@ public class FilterActivity extends BaseActivity {
                     }
                 }, true);
 
-        backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400))
-                return;
-            Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
+        closeBtn.setOnClickListener(v -> {
+            if (ClickUtils.isFastClick(v, 400)) return;
+            *//*Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
             if (isBackEnabledFor(cur)) {
                 handleBackNavChain();
-            }
+            }*//*
+
+            showExitConfirmDialog();
         });
-    }
+    }*/
 
     private void setupImagePicker() {
         imagePickerLauncher = registerForActivityResult(
@@ -1414,12 +1417,12 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
-    public void resetStickerState(boolean removeOverlayChildren) {
+    /*public void resetStickerState(boolean removeOverlayChildren) {
         FrameLayout overlay = findViewById(R.id.stickerOverlay);
         if (removeOverlayChildren && overlay != null) {
             overlay.removeAllViews();
         }
-    }
+    }*/
 
     /// UI, 시스템 ///
     public void updateSaveButtonState() {
@@ -1473,30 +1476,30 @@ public class FilterActivity extends BaseActivity {
         boolean isEdited = geometryEdited || colorAdjusted || hasDrawable;
 
         saveBtn.setEnabled(isEdited);
-        saveBtn.setAlpha(isEdited ? 1f : 0.4f);
+        saveBtn.setAlpha(isEdited ? 1f : 0.0f);
     }
 
-    private boolean isBackEnabledFor(Fragment f) {
+    /*private boolean isBackEnabledFor(Fragment f) {
         return (f instanceof ToolsFragment)
                 || (f instanceof ColorsFragment)
                 || (f instanceof StickersFragment);
-    }
+    }*/
 
-    private void updateBackAndSaveUiEnabled(Fragment f) {
+    /*private void updateBackAndSaveUiEnabled(Fragment f) {
         boolean enabled = isBackEnabledFor(f);
-        if (backBtn != null) {
-            backBtn.setEnabled(enabled);
-            backBtn.setClickable(enabled);
-            backBtn.setAlpha(enabled ? 1f : 0.3f);
+        if (closeBtn != null) {
+            closeBtn.setEnabled(enabled);
+            closeBtn.setClickable(enabled);
+            closeBtn.setAlpha(enabled ? 1f : 0.3f);
         }
-    }
+    }*/
 
-    public void requestUpdateBackGate() {
+    /*public void requestUpdateBackGate() {
         Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
         updateBackAndSaveUiEnabled(cur);
-    }
+    }*/
 
-    private void handleBack() {
+    /*private void handleBack() {
         FragmentManager fm = getSupportFragmentManager();
         if (fm.getBackStackEntryCount() > 0) {
             fm.popBackStack();
@@ -1512,18 +1515,16 @@ public class FilterActivity extends BaseActivity {
         } else {
             finish();
         }
-    }
+    }*/
 
-    private void handleBackNavChain() {
-        FragmentManager fm = getSupportFragmentManager();
-
-        Fragment full = fm.findFragmentById(R.id.fullScreenContainer);
+    /*private void handleBackNavChain() {
+        *//*Fragment full = getSupportFragmentManager().findFragmentById(R.id.fullScreenContainer);
         if (full != null) {
             showExitConfirmDialog();
             return;
-        }
+        }*//*
 
-        Fragment cur = fm.findFragmentById(R.id.bottomArea2);
+        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
 
         if (cur instanceof StickersFragment) {
             FrameLayout stickerOverlay = findViewById(R.id.stickerOverlay);
@@ -1535,7 +1536,7 @@ public class FilterActivity extends BaseActivity {
 
             resetStickerState(false);
 
-            fm.beginTransaction()
+            getSupportFragmentManager().beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
                     .replace(R.id.bottomArea2, new ColorsFragment())
                     .commit();
@@ -1546,7 +1547,7 @@ public class FilterActivity extends BaseActivity {
             return;
         }
 
-        if (cur instanceof ColorsFragment) {
+        *//*if (cur instanceof ColorsFragment) {
             fm.beginTransaction()
                     .setCustomAnimations(R.anim.slide_up, 0)
                     .replace(R.id.bottomArea2, new ToolsFragment())
@@ -1556,21 +1557,21 @@ public class FilterActivity extends BaseActivity {
             bottomArea1.setVisibility(View.INVISIBLE);
 
             return;
-        }
+        }*//*
 
-        if (cur instanceof ToolsFragment) {
+        *//*if (cur instanceof ToolsFragment) {
             openImagePicker();
             return;
-        }
+        }*//*
 
-        handleBack();
-    }
+        //handleBack();
+    }*/
 
-    private void openImagePicker() {
+    /*private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.setType("image/*");
         imagePickerLauncher.launch(intent);
-    }
+    }*/
 
     public void showExitConfirmDialog() {
         new FilterEixtDialog(this, new FilterEixtDialog.FilterEixtDialogListener() {
