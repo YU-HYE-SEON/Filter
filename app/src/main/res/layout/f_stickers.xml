@@ -173,7 +173,7 @@
                 android:id="@+id/prevBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
+                android:layout_marginLeft="13dp"
                 android:gravity="center"
                 android:orientation="horizontal"
                 android:padding="7dp"
