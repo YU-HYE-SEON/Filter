@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -186,10 +187,22 @@ public class ColorsFragment extends Fragment {
                             .setCustomAnimations(R.anim.slide_up, 0)
                             .hide(ColorsFragment.this)
                             .add(R.id.bottomArea2, csf)
+
+                            .addToBackStack(null)
+
                             .commit();
                 }
             }
         };
+
+
+        activity.getOnBackPressedDispatcher().addCallback(activity, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                prevBtn.performClick();
+            }
+        });
+
 
         prevBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -219,6 +232,9 @@ public class ColorsFragment extends Fragment {
                                 .beginTransaction()
                                 .setCustomAnimations(R.anim.slide_up, 0)
                                 .replace(R.id.bottomArea2, new StickersFragment())
+
+                                .addToBackStack(null)
+
                                 .commit();
 
                         ConstraintLayout bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);

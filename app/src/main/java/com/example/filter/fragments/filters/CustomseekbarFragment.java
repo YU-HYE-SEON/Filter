@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
@@ -106,6 +107,15 @@ public class CustomseekbarFragment extends Fragment {
                 }
             }
         });
+
+
+        activity.getOnBackPressedDispatcher().addCallback(activity, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                cancelBtn.performClick();
+            }
+        });
+
 
         View.OnClickListener listener = new View.OnClickListener() {
             @Override

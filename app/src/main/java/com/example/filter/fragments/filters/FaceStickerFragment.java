@@ -14,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
@@ -83,6 +84,15 @@ public class FaceStickerFragment extends Fragment {
         sticker_db_id = args.getLong("sticker_db_id", -1L);
         showStickerCentered(stickerUrl);
         faceMode();
+
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showPreviousFagement(cancelBtn);
+            }
+        });
+
 
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
@@ -166,6 +176,8 @@ public class FaceStickerFragment extends Fragment {
     }
 
     private void showPreviousFagement(View v) {
+        if (!isAdded()|| getActivity() == null) return;
+
         if (previousFragment != null) {
             if (faceBox != null && faceOverlay != null) {
                 faceBox.clearBoxes();
@@ -197,7 +209,8 @@ public class FaceStickerFragment extends Fragment {
                     .setCustomAnimations(R.anim.slide_up, 0)
                     .remove(FaceStickerFragment.this)
                     .show(previousFragment)
-                    .commit();
+                    //.commit();
+                    .commitAllowingStateLoss();
         }
         Controller.removeStickerFrame(stickerFrame);
     }

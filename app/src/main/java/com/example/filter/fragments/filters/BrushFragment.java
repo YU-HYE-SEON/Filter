@@ -45,6 +45,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
@@ -584,6 +585,15 @@ public class BrushFragment extends Fragment {
             BrushPrefs.saveLastMode(requireContext(), lastMode);
             showEraserPanel();
         });
+
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                cancelBtn.performClick();
+            }
+        });
+
 
         cancelBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;

@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
@@ -101,6 +102,15 @@ public class CropFragment extends Fragment {
         });
 
         restoreLastSelection(activity);
+
+
+        activity.getOnBackPressedDispatcher().addCallback(activity, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                cancelBtn.performClick();
+            }
+        });
+
 
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override

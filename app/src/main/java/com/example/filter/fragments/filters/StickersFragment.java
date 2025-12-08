@@ -18,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -100,6 +101,15 @@ public class StickersFragment extends Fragment {
             stickerEdit.setVisibility(View.GONE);
         }
 
+
+        activity.getOnBackPressedDispatcher().addCallback(activity, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                prevBtn.performClick();
+            }
+        });
+
+
         prevBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -125,6 +135,9 @@ public class StickersFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new EditStickerFragment())
+
+                        .addToBackStack(null)
+
                         .commit();
             }
         });
@@ -149,6 +162,9 @@ public class StickersFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new BrushFragment())
+
+                        .addToBackStack(null)
+
                         .commit();
             }
         });

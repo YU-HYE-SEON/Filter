@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
@@ -87,6 +88,15 @@ public class RotationFragment extends Fragment {
             flippedV = !flippedV;
             updateIcon(activity);
         });
+
+
+        activity.getOnBackPressedDispatcher().addCallback(activity, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                cancelBtn.performClick();
+            }
+        });
+
 
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override

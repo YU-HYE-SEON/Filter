@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
@@ -506,6 +507,9 @@ public class EditStickerFragment extends Fragment {
                         for (int i = 0; i < stickerOverlay.getChildCount(); i++) {
                             View child = stickerOverlay.getChildAt(i);
                             Controller.setControllersVisible(child, child == v);
+
+                            stickerEdit.setAlpha(1.0f);
+                            faceCheckBox.setEnabled(true);
                         }
                         v.bringToFront();
 
@@ -559,6 +563,15 @@ public class EditStickerFragment extends Fragment {
             if (!deleteStickerIcon.isEnabled()) return;
             confirmDeleteSticker();
         });
+
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                cancelBtn.performClick();
+            }
+        });
+
 
         cancelBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;

@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -62,6 +63,15 @@ public class ToolsFragment extends Fragment {
             cropTxt.setTextColor(Color.WHITE);
         }
 
+
+        activity.getOnBackPressedDispatcher().addCallback(activity, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                closeBtn.performClick();
+            }
+        });
+
+
         rotationBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -71,6 +81,9 @@ public class ToolsFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new RotationFragment())
+
+                        .addToBackStack(null)
+
                         .commit();
             }
         });
@@ -88,6 +101,9 @@ public class ToolsFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new CropFragment())
+
+                        .addToBackStack(null)
+
                         .commit();
             }
         });
@@ -102,6 +118,9 @@ public class ToolsFragment extends Fragment {
                         .beginTransaction()
                         .setCustomAnimations(R.anim.slide_up, 0)
                         .replace(R.id.bottomArea2, new ColorsFragment())
+
+                        .addToBackStack(null)
+
                         .commit();
             }
         });
