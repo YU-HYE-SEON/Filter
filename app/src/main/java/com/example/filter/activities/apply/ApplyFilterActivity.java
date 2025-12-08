@@ -405,12 +405,12 @@ public class ApplyFilterActivity extends BaseActivity {
 
         iconSnsInsta.setOnClickListener(v -> {
             type = SocialType.INSTAGRAM;
-            snsId.setText(instagramId);
+            snsId.setText("@" + instagramId);
         });
 
         iconSnsTwitter.setOnClickListener(v -> {
             type = SocialType.X;
-            snsId.setText(xId);
+            snsId.setText("@" + xId);
         });
 
         /// 중첩 클릭되면 안 됨 ///

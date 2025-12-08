@@ -53,6 +53,8 @@ public class SNSidActivity extends BaseActivity {
         });
 
         instaEditText.addTextChangedListener(new TextWatcher() {
+            boolean editing = false;
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -63,11 +65,32 @@ public class SNSidActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                instaId = s.toString();
+                if (editing) return;
+                editing = true;
+
+                if (!s.toString().startsWith("@")) {
+                    instaEditText.setText("@" + s.toString().replace("@",""));
+                }
+                if (s.toString().equals("")) {
+                    instaEditText.setText("@");
+                }
+                if (instaEditText.getSelectionStart() < 1) {
+                    instaEditText.setSelection(1);
+                } else {
+                    instaEditText.setSelection(instaEditText.getText().length());
+                }
+
+                instaId = instaEditText.getText().toString().replace("@","");
+
+                editing = false;
+
+                //instaId = s.toString();
             }
         });
 
         twitterEditText.addTextChangedListener(new TextWatcher() {
+            boolean editing = false;
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -78,7 +101,28 @@ public class SNSidActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                xId = s.toString();
+                if (editing) return;
+                editing = true;
+
+                if (!s.toString().startsWith("@")) {
+                    twitterEditText.setText("@" + s.toString().replace("@",""));
+                }
+
+                if (s.toString().equals("")) {
+                    twitterEditText.setText("@");
+                }
+
+                if (twitterEditText.getSelectionStart() < 1) {
+                    twitterEditText.setSelection(1);
+                } else {
+                    twitterEditText.setSelection(twitterEditText.getText().length());
+                }
+
+                xId = twitterEditText.getText().toString().replace("@","");
+
+                editing = false;
+
+                //xId = s.toString();
             }
         });
 

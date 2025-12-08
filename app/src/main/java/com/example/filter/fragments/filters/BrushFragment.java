@@ -511,15 +511,15 @@ public class BrushFragment extends Fragment {
             switch (startMode) {
                 case GLOW:
                     color = lastGlowColor;
-                    sizePx = (lastGlowSizePx > 0) ? lastGlowSizePx : dp(10);
+                    sizePx = (lastGlowSizePx > 0) ? lastGlowSizePx : dp(4);
                     break;
                 case CRAYON:
                     color = lastCrayonColor;
-                    sizePx = (lastCrayonSizePx > 0) ? lastCrayonSizePx : dp(10);
+                    sizePx = (lastCrayonSizePx > 0) ? lastCrayonSizePx : dp(4);
                     break;
                 case ERASER:
                     color = Color.TRANSPARENT;
-                    sizePx = BrushPrefs.getEraserSize(requireContext(), dp(10));
+                    sizePx = BrushPrefs.getEraserSize(requireContext(), dp(4));
                     break;
                 case PEN:
                 default:
@@ -1344,8 +1344,8 @@ public class BrushFragment extends Fragment {
 
     private int getDiameterFromSeekbar(View panel) {
         SeekBar sizeSeekbar = panel.findViewById(R.id.sizeSeekbar);
-        if (sizeSeekbar == null) return dp(10);
-        int min = dp(10), max = dp(40);
+        if (sizeSeekbar == null) return dp(4);
+        int min = dp(4), max = dp(40);
         int progress = sizeSeekbar.getProgress();
         return min + Math.round((max - min) * (progress / 100f));
     }
@@ -1440,7 +1440,7 @@ public class BrushFragment extends Fragment {
         SeekBar sizeSeek = panel.findViewById(R.id.sizeSeekbar);
 
         int lastColor = getLastColor(mode);
-        int lastSize = Math.max(getLastSize(mode), dp(10));
+        int lastSize = Math.max(getLastSize(mode), dp(4));
         fillEditorsFromColor(panel, lastColor);
 
         final float[] baseHS = new float[]{0f, 1f, 1f};
@@ -1454,7 +1454,7 @@ public class BrushFragment extends Fragment {
         }
 
         if (sizeSeek != null) {
-            int min = dp(10), max = dp(40);
+            int min = dp(4), max = dp(40);
             int initProgress = clamp(Math.round((lastSize - min) * 100f / (max - min)), 0, 100);
             sizeSeek.setProgress(initProgress);
         }
@@ -1672,7 +1672,7 @@ public class BrushFragment extends Fragment {
             sizeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
-                    int min = dp(10), max = dp(40);
+                    int min = dp(4), max = dp(40);
                     int dia = min + Math.round((max - min) * (p / 100f));
                     int curArgb = gatherCurrentARGB(rCode, gCode, bCode, aVal);
                     updateSizePreviewByMode(panel, curArgb, dia, mode);

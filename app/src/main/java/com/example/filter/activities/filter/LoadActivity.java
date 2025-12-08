@@ -141,7 +141,7 @@ public class LoadActivity extends BaseActivity {
 
             RectF imgRect = getImageDisplayRect(loadImage);
             if (imgRect != null) {
-                shapeOverlay.setImageBounds(imgRect);
+                //shapeOverlay.setImageBounds(imgRect);
                 lassoOverlay.setImageBounds(imgRect);
             }
         });
@@ -791,7 +791,7 @@ public class LoadActivity extends BaseActivity {
     private void updateOverlaysImageBounds() {
         RectF r = getImageDisplayRect(loadImage);
         if (r != null) {
-            shapeOverlay.setImageBounds(r);
+            //shapeOverlay.setImageBounds(r);
             lassoOverlay.setImageBounds(r);
         }
     }

@@ -89,7 +89,7 @@ public class ReviewInfoAdapter extends RecyclerView.Adapter<ReviewInfoAdapter.VH
         if (item.socialValue == null || item.socialValue.isEmpty() || item.socialType.equals("NONE")) {
             holder.snsId.setText("선택 안 함");
         } else {
-            holder.snsId.setText(item.socialValue);
+            holder.snsId.setText("@" + item.socialValue);
         }
     }
 
