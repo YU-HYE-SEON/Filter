@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -13,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
@@ -34,6 +36,13 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ReviewActivity extends BaseActivity {
+    private boolean isDataLoading = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
+    private FrameLayout loadingContainer;
+    private LottieAnimationView loadingAnim;
+
     private ImageButton backBtn;
     private String nick, imgUrl, title;
     ImageView img;
@@ -57,6 +66,9 @@ public class ReviewActivity extends BaseActivity {
         filterNickName = findViewById(R.id.nickname);
         recyclerView = findViewById(R.id.recyclerView);
         textView = findViewById(R.id.textView);
+        loadingContainer = findViewById(R.id.loadingContainer);
+        loadingAnim = findViewById(R.id.loadingAnim);
+        loadingContainer.setVisibility(View.GONE);
 
         StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
@@ -74,6 +86,7 @@ public class ReviewActivity extends BaseActivity {
 
         // 리뷰 목록 불러오기
         filterIdLong = filterId != null ? Long.parseLong(filterId) : null;
+        showLoading();
         loadReviews(filterIdLong);
 
         updateRecyclerVisibility();
@@ -157,12 +170,18 @@ public class ReviewActivity extends BaseActivity {
                 }
                 // 업데이트 반영 후, 가시성 갱신
                 updateRecyclerVisibility();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<ReviewResponse>> call, Throwable t) {
                 isLoading = false;
                 Log.e("ReviewList", "통신 오류", t);
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -205,5 +224,42 @@ public class ReviewActivity extends BaseActivity {
     public void onBackPressed() {
         super.onBackPressed();
         moveToFilterInfo();
+    }
+
+
+    private void showLoading() {
+        isDataLoading = true;
+        loadingAnimPlayCount = 0;
+        loadingAnimFinishedOnce = false;
+
+        loadingContainer.setVisibility(View.VISIBLE);
+        loadingAnim.setProgress(0f);
+        loadingAnim.setSpeed(2.5f);
+
+        loadingAnim.addAnimatorUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            if (progress >= 0.33f && !isDataLoading && !loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        });
+
+        loadingAnim.playAnimation();
+    }
+
+    private void hideLoading() {
+        if (loadingContainer.getVisibility() == View.VISIBLE) {
+            loadingAnim.cancelAnimation();
+            loadingContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private void checkAndHideLoading() {
+        if (!isDataLoading && loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        }
     }
 }

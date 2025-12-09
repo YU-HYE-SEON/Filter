@@ -453,6 +453,10 @@ public class SearchFragment extends Fragment {
             dimBackground.setVisibility(View.GONE);
             ischooseOrderVisible = false;
         }
+
+        if (keyword != null && !keyword.isEmpty() && !isDataLoading) {
+            searchByNaturalLanguage(keyword);
+        }
     }
 
     @Override
