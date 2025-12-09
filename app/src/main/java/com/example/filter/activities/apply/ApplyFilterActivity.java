@@ -75,6 +75,7 @@ import retrofit2.Response;
 
 @androidx.camera.core.ExperimentalGetImage
 public class ApplyFilterActivity extends BaseActivity {
+    private FrameLayout endFrame;
     public interface FaceDetectionCallback {
         void onFacesDetected(List<Face> faces, Bitmap originalBitmap);
     }
@@ -152,6 +153,7 @@ public class ApplyFilterActivity extends BaseActivity {
         toGalleryBtn = findViewById(R.id.toGalleryBtn);
         toRegisterReviewBtn = findViewById(R.id.toRegisterReviewBtn);
         reviewPopOff = findViewById(R.id.reviewPopOff);
+        endFrame = findViewById(R.id.endFrame);
 
         loadingContainer = findViewById(R.id.loadingContainer);
         loadingAnim = findViewById(R.id.loadingAnim);
@@ -376,10 +378,12 @@ public class ApplyFilterActivity extends BaseActivity {
             iconSnsInsta.setBackgroundResource(R.drawable.btn_review_sns_insta);
         });
 
+        ClickUtils.clickDim(reviewBtn);
         /// 중첩 클릭되면 안 됨 ///
         reviewBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            ClickUtils.disableTemporarily(v, 800);
+            reviewBtn.setEnabled(false);
+            reviewBtn.setClickable(false);
+            endFrame.setVisibility(View.VISIBLE);
 
             if (finalBitmapWithStickers == null) return;
 
@@ -456,6 +460,10 @@ public class ApplyFilterActivity extends BaseActivity {
                     ReviewResponse reviewResponse = response.body();
                     moveToReview(reviewResponse); // Activity 전환
                 } else {
+                    endFrame.setVisibility(View.GONE);
+                    reviewBtn.setEnabled(true);
+                    reviewBtn.setClickable(true);
+
                     try {
                         String errorBody = response.errorBody() != null ? response.errorBody().string() : "Error";
                         Log.e("Review", "등록 실패: " + response.code() + ", " + errorBody);
@@ -468,6 +476,10 @@ public class ApplyFilterActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<ReviewResponse> call, Throwable t) {
+                endFrame.setVisibility(View.GONE);
+                reviewBtn.setEnabled(true);
+                reviewBtn.setClickable(true);
+
                 Log.e("리뷰등록", "통신 오류", t);
                 Toast.makeText(ApplyFilterActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }

@@ -302,4 +302,14 @@
 
     </ScrollView>
 
+    <FrameLayout
+        android:id="@+id/endFrame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3000000"
+        android:clickable="true"
+        android:elevation="8dp"
+        android:focusable="true"
+        android:visibility="gone" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

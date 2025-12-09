@@ -32,8 +32,8 @@
             android:id="@+id/backBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="16dp"
             android:src="@drawable/btn_back_black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -57,54 +57,6 @@
             android:layout_height="match_parent"
             android:clipChildren="true"
             android:clipToPadding="true" />
-
-    </FrameLayout>
-
-    <FrameLayout
-        android:id="@+id/loadingFinishContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="#4B4B4B"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="@+id/photoContainer"
-        app:layout_constraintEnd_toEndOf="@+id/photoContainer"
-        app:layout_constraintStart_toStartOf="@+id/photoContainer"
-        app:layout_constraintTop_toTopOf="@+id/photoContainer" />
-
-    <com.airbnb.lottie.LottieAnimationView
-        android:id="@+id/loadingFinishAnim"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_gravity="center"
-        android:scaleType="centerCrop"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="@+id/photoContainer"
-        app:layout_constraintEnd_toEndOf="@+id/photoContainer"
-        app:layout_constraintStart_toStartOf="@+id/photoContainer"
-        app:layout_constraintTop_toTopOf="@+id/photoContainer"
-        app:lottie_autoPlay="false"
-        app:lottie_loop="false"
-        app:lottie_rawRes="@raw/load_finish" />
-
-    <FrameLayout
-        android:id="@+id/loadingContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="#4B4B4B"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="@+id/photoContainer"
-        app:layout_constraintEnd_toEndOf="@+id/photoContainer"
-        app:layout_constraintStart_toStartOf="@+id/photoContainer"
-        app:layout_constraintTop_toTopOf="@+id/photoContainer">
-
-        <com.airbnb.lottie.LottieAnimationView
-            android:id="@+id/loadingAnim"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_gravity="center"
-            app:lottie_autoPlay="true"
-            app:lottie_loop="true"
-            app:lottie_rawRes="@raw/loading" />
 
     </FrameLayout>
 
@@ -153,6 +105,46 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <FrameLayout
+        android:id="@+id/loadingFinishContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#4B4B4B"
+        android:visibility="visible" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/loadingFinishAnim"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:scaleType="centerCrop"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/photoContainer"
+        app:layout_constraintEnd_toEndOf="@+id/photoContainer"
+        app:layout_constraintStart_toStartOf="@+id/photoContainer"
+        app:layout_constraintTop_toTopOf="@+id/photoContainer"
+        app:lottie_autoPlay="false"
+        app:lottie_loop="false"
+        app:lottie_rawRes="@raw/load_finish" />
+
+    <FrameLayout
+        android:id="@+id/loadingContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#4B4B4B"
+        android:visibility="visible">
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/loadingAnim"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/loading" />
+
+    </FrameLayout>
+
+    <FrameLayout
         android:id="@+id/reviewPopOff"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -160,5 +152,14 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/endFrame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -125,7 +125,7 @@ public class ArchiveFragment extends Fragment {
             if (currentType == Type.REVIEW) {
                 intent = new Intent(requireActivity(), ReviewInfoActivity.class);
                 intent.putExtra("reviewId", String.valueOf(item.reviewId));
-                //startActivity(intent);
+                intent.putExtra("filterId", String.valueOf(item.id));
             } else {
                 intent = new Intent(requireActivity(), FilterInfoActivity.class);
 

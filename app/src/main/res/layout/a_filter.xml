@@ -363,18 +363,20 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!--&lt;!&ndash; 얼굴 인식 오버레이 &ndash;&gt;
-    <FrameLayout
-        android:id="@+id/faceContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />-->
-
     <!-- AI 스티커 생성 뷰 -->
     <FrameLayout
         android:id="@+id/fullScreenContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/endFrame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3000000"
+        android:clickable="true"
+        android:focusable="true"
         android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

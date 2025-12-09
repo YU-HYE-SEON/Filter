@@ -122,7 +122,8 @@ public class EditNickNameActivity extends BaseActivity {
 
         ClickUtils.clickDim(btn);
         btn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return; // 더블 클릭 방지
+            btn.setEnabled(false);
+            btn.setClickable(false);
             String inputNickname = nickname.getText().toString().trim(); // 입력된 닉네임 가져오기
             sendNicknameToServer(inputNickname); // 서버로 닉네임 전송
         });
@@ -231,6 +232,8 @@ public class EditNickNameActivity extends BaseActivity {
                     // ④ 마이페이지 화면으로 이동
                     finish();
                 } else {
+                    btn.setEnabled(true);
+                    btn.setClickable(true);
                     // ❌ 서버 응답은 왔지만 실패 코드 (400, 409 등)
                     Log.e("닉네임변경", "❌ 닉네임 변경 실패: " + response.code());
                 }
@@ -238,6 +241,8 @@ public class EditNickNameActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
+                btn.setEnabled(true);
+                btn.setClickable(true);
                 // ❌ 네트워크 자체 실패 (서버 다운, 연결 실패 등)
                 Log.e("닉네임변경", "❌ 서버 연결 오류", t);
             }

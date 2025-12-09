@@ -26,7 +26,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,6 +42,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.palette.graphics.Palette;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -53,7 +53,6 @@ import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.apply.CameraActivity;
 import com.example.filter.activities.apply.Pre_ApplyFilterActivity;
 import com.example.filter.activities.review.ReviewActivity;
-import com.example.filter.activities.review.ReviewInfoActivity;
 import com.example.filter.api_datas.FaceStickerData; // ✅ 하나만 유지
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.api_datas.response_dto.FilterResponse;
@@ -62,7 +61,6 @@ import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.dialogs.FilterDeleteDialog;
-import com.example.filter.dialogs.ReviewDeleteDialog;
 import com.example.filter.etc.ClickUtils;
 import com.google.gson.Gson;
 
@@ -76,6 +74,12 @@ import retrofit2.Response;
 
 @ExperimentalGetImage
 public class FilterInfoActivity extends BaseActivity {
+    private boolean isDeleteLoading = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
+    private FrameLayout loadingContainer;
+    private LottieAnimationView loadingAnim;
     private ReviewResponse reviewResponse;
     // UI 요소
     private ImageButton backBtn, originalBtn;
@@ -136,23 +140,27 @@ public class FilterInfoActivity extends BaseActivity {
                     intent.setData(photoUri);
                     intent.putExtra("filterId", filterId);
                     startActivity(intent);
+                    overridePendingTransition(0, 0);
                 } else {
                     if (isMine) {
                         intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
                         intent.setData(photoUri);
                         intent.putExtra("filterId", filterId);
                         startActivity(intent);
+                        overridePendingTransition(0, 0);
                     } else {
                         if (isBuy) {
                             intent = new Intent(FilterInfoActivity.this, ApplyFilterActivity.class);
                             intent.setData(photoUri);
                             intent.putExtra("filterId", filterId);
                             startActivity(intent);
+                            overridePendingTransition(0, 0);
                         } else {
                             intent = new Intent(FilterInfoActivity.this, Pre_ApplyFilterActivity.class);
                             intent.setData(photoUri);
                             intent.putExtra("filterId", filterId);
                             preApplyLauncher.launch(intent);
+                            overridePendingTransition(0, 0);
                         }
                     }
                 }
@@ -256,6 +264,9 @@ public class FilterInfoActivity extends BaseActivity {
         selectModeBtn = findViewById(R.id.selectModeBtn);
         selectModeBtn2 = findViewById(R.id.selectModeBtn2);
         modalOff = findViewById(R.id.modalOff);
+        loadingContainer = findViewById(R.id.loadingContainer);
+        loadingAnim = findViewById(R.id.loadingAnim);
+        loadingContainer.setVisibility(View.GONE);
     }
 
     // ✅ [서버 API] 필터 상세 정보 조회
@@ -569,6 +580,7 @@ public class FilterInfoActivity extends BaseActivity {
 
             @Override
             public void onDelete() {
+                showLoading();
                 requestDeleteFilter(filterId);
             }
         }).show();
@@ -592,11 +604,17 @@ public class FilterInfoActivity extends BaseActivity {
                 } else {
                     Toast.makeText(FilterInfoActivity.this, "삭제 실패", Toast.LENGTH_SHORT).show();
                 }
+
+                isDeleteLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(FilterInfoActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+
+                isDeleteLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -868,13 +886,15 @@ public class FilterInfoActivity extends BaseActivity {
             intent.putExtra("isBuy", isBuy);
             intent.putExtra("isMine", isMine);
             startActivity(intent);
+            overridePendingTransition(0, 0);
             hideModal();
         });
 
         // 구매 버튼
         if (buyBtn != null) {
             buyBtn.setOnClickListener(v -> {
-                if (ClickUtils.isFastClick(v, 400)) return;
+                buyBtn.setEnabled(false);
+                buyBtn.setClickable(false);
 
                 // 1. 로컬 포인트 체크 (사전 검증)
                 SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
@@ -940,6 +960,9 @@ public class FilterInfoActivity extends BaseActivity {
 
                     Log.d("FilterInfo", "구매 성공");
                 } else {
+                    buyBtn.setEnabled(true);
+                    buyBtn.setClickable(true);
+
                     // 실패 시 (이미 구매했거나, 포인트 부족 등 서버 에러)
                     Log.e("FilterInfo", "구매 실패: " + response.code());
                     Toast.makeText(FilterInfoActivity.this, "구매에 실패했습니다.", Toast.LENGTH_SHORT).show();
@@ -948,6 +971,9 @@ public class FilterInfoActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
+                buyBtn.setEnabled(true);
+                buyBtn.setClickable(true);
+
                 Log.e("FilterInfo", "통신 오류", t);
                 Toast.makeText(FilterInfoActivity.this, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
             }
@@ -1103,9 +1129,13 @@ public class FilterInfoActivity extends BaseActivity {
     }
 
     private void moveToMain() {
+        loadingContainer.setVisibility(View.VISIBLE);
+        findViewById(android.R.id.content).setVisibility(View.INVISIBLE);
+
         Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
+        overridePendingTransition(0, 0);
         finish();
     }
 
@@ -1185,19 +1215,42 @@ public class FilterInfoActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        boolean isFromArchiveFlow = getIntent().getBooleanExtra("is_from_archive_flow", false);
+        moveToMain();
+    }
 
-        //moveToMain():
+    private void showLoading() {
+        isDeleteLoading = true;
+        loadingAnimPlayCount = 0;
+        loadingAnimFinishedOnce = false;
 
-        /// 추가 ///
-        if (isFromArchiveFlow) {
-            Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
-            intent.putExtra("go_to_archive", true);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            finish();
-        } else {
-            super.onBackPressed();
+        loadingContainer.setVisibility(View.VISIBLE);
+        loadingAnim.setProgress(0f);
+        loadingAnim.setSpeed(2.5f);
+
+        loadingAnim.addAnimatorUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            if (progress >= 0.33f && !isDeleteLoading && !loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        });
+
+        loadingAnim.playAnimation();
+    }
+
+    private void hideLoading() {
+        if (loadingContainer.getVisibility() == View.VISIBLE) {
+            loadingAnim.cancelAnimation();
+            loadingContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private void checkAndHideLoading() {
+        if (!isDeleteLoading && loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
         }
     }
 }

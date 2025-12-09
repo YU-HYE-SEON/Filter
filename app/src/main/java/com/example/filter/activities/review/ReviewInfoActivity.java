@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -14,9 +15,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
@@ -27,6 +30,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ReviewInfoActivity extends BaseActivity {
+    private boolean isDeleteLoading = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
+    private FrameLayout loadingContainer;
+    private LottieAnimationView loadingAnim;
     private ImageButton backBtn;
     private ImageView img, snsIcon;
     private TextView nickname, snsId, deleteBtn;
@@ -47,12 +56,18 @@ public class ReviewInfoActivity extends BaseActivity {
         snsId = findViewById(R.id.snsId);
         deleteBtn = findViewById(R.id.deleteBtn);
 
+        loadingContainer = findViewById(R.id.loadingContainer);
+        loadingAnim = findViewById(R.id.loadingAnim);
+        loadingContainer.setVisibility(View.GONE);
+
         final View root = findViewById(android.R.id.content);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
             root.setPadding(0, 0, 0, nav.bottom);
             return insets;
         });
+
+        filterId = getIntent().getStringExtra("filterId");
 
         reviewId = getIntent().getStringExtra("reviewId");
         reviewIdLong = reviewId != null ? Long.parseLong(reviewId) : null;
@@ -63,10 +78,7 @@ public class ReviewInfoActivity extends BaseActivity {
         });
 
         backBtn.setOnClickListener(v -> {
-            //finish();
-
-            /// 추가 ///
-            moveToReviewActivity(false);
+            moveToReview();
         });
     }
 
@@ -129,20 +141,24 @@ public class ReviewInfoActivity extends BaseActivity {
                     Log.e("리뷰삭제", "리뷰 삭제 성공");
                     Toast.makeText(ReviewInfoActivity.this, "리뷰가 삭제되었습니다.", Toast.LENGTH_SHORT).show();
 
-                    //finish();
-
-                    /// 추가 ///
-                    moveToReviewActivity(true);
+                    moveToReview();
                 } else {
                     Log.e("리뷰삭제", "리뷰 삭제 실패 : " + response.code());
                     Toast.makeText(ReviewInfoActivity.this, "삭제 실패", Toast.LENGTH_SHORT).show();
                 }
+
+                isDeleteLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Log.e("리뷰삭제", "통신 오류", t);
                 Toast.makeText(ReviewInfoActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+
+
+                isDeleteLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -155,23 +171,51 @@ public class ReviewInfoActivity extends BaseActivity {
 
             @Override
             public void onDelete() {
+                showLoading();
                 deleteReview(reviewId);
             }
         }).show();
     }
 
-    /// 추가 ///
-    private void moveToReviewActivity(boolean isDeleted) {
-        filterId = getIntent().getStringExtra("filterId");
+    private void showLoading() {
+        isDeleteLoading = true;
+        loadingAnimPlayCount = 0;
+        loadingAnimFinishedOnce = false;
 
-        Intent intent = new Intent(ReviewInfoActivity.this, ReviewActivity.class);
-        intent.putExtra("is_from_archive_flow", true);
-        intent.putExtra("filterId", filterId);
+        loadingContainer.setVisibility(View.VISIBLE);
+        loadingAnim.setProgress(0f);
+        loadingAnim.setSpeed(2.5f);
 
-        if (isDeleted) {
-            intent.putExtra("review_deleted", true);
+        loadingAnim.addAnimatorUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            if (progress >= 0.33f && !isDeleteLoading && !loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        });
+
+        loadingAnim.playAnimation();
+    }
+
+    private void hideLoading() {
+        if (loadingContainer.getVisibility() == View.VISIBLE) {
+            loadingAnim.cancelAnimation();
+            loadingContainer.setVisibility(View.GONE);
         }
+    }
 
+    private void checkAndHideLoading() {
+        if (!isDeleteLoading && loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        }
+    }
+
+    private void moveToReview(){
+        Intent intent = new Intent(ReviewInfoActivity.this, ReviewActivity.class);
+        intent.putExtra("filterId", filterId);
         startActivity(intent);
         finish();
     }
@@ -179,6 +223,6 @@ public class ReviewInfoActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        moveToReviewActivity(false);
+        moveToReview();
     }
 }

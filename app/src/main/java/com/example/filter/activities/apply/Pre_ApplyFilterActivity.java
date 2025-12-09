@@ -324,7 +324,8 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
         if (buyBtn != null) {
             buyBtn.setOnClickListener(v -> {
-                if (ClickUtils.isFastClick(v, 400)) return;
+                buyBtn.setEnabled(false);
+                buyBtn.setClickable(false);
 
                 // 1. 로컬 포인트 체크 (사전 검증)
                 SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
@@ -403,6 +404,9 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
                     Log.d("필터체험", "구매 성공");
                 } else {
+                    buyBtn.setEnabled(true);
+                    buyBtn.setClickable(true);
+
                     // 실패 시 (이미 구매했거나, 포인트 부족 등 서버 에러)
                     Log.e("필터체험", "구매 실패: " + response.code());
                     Toast.makeText(Pre_ApplyFilterActivity.this, "구매에 실패했습니다.", Toast.LENGTH_SHORT).show();
@@ -411,6 +415,9 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
+                buyBtn.setEnabled(true);
+                buyBtn.setClickable(true);
+
                 Log.e("필터체험", "통신 오류", t);
                 Toast.makeText(Pre_ApplyFilterActivity.this, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
             }

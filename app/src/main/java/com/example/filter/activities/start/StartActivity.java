@@ -129,6 +129,9 @@ public class StartActivity extends BaseActivity {
                                     GoogleSignIn.getSignedInAccountFromIntent(result.getData());
                             handleSignInResult(task);
                         } else {
+                            googleLogin.setEnabled(true);
+                            btn.setClickable(true);
+
                             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
                             if (task.isComplete()) {
                                 Exception e = task.getException();
@@ -138,6 +141,9 @@ public class StartActivity extends BaseActivity {
                             }
                         }
                     } catch (Exception e) {
+                        googleLogin.setEnabled(true);
+                        btn.setClickable(true);
+
                         Log.e("GoogleLogin", "ActivityResult 처리 중 예외 발생", e);
                     }
                 });
@@ -247,9 +253,8 @@ public class StartActivity extends BaseActivity {
         }, 1000);
 
         googleLogin.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            ClickUtils.disableTemporarily(v, 800);
             googleLogin.setEnabled(false);
+            googleLogin.setClickable(false);
             signIn();
         });
 
@@ -368,6 +373,7 @@ public class StartActivity extends BaseActivity {
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 googleLogin.setEnabled(true);
+                btn.setClickable(true);
                 Log.e("GoogleLogin", "Retrofit 통신 실패", t);
                 loginFail();
             }

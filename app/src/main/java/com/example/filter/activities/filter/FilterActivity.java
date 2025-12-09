@@ -77,6 +77,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FilterActivity extends BaseActivity {
+    private FrameLayout endFrame;
     private boolean isAnimOnce = false;
     private LottieAnimationView loadingFinishAnim;
 
@@ -175,6 +176,8 @@ public class FilterActivity extends BaseActivity {
         originalColor = findViewById(R.id.originalColor);
         undoBrush = findViewById(R.id.undoBrush);
         redoBrush = findViewById(R.id.redoBrush);
+
+        endFrame = findViewById(R.id.endFrame);
 
         loadingFinishAnim = findViewById(R.id.loadingFinishAnim);
         loadingFinishAnim.setVisibility(View.GONE);
@@ -357,9 +360,9 @@ public class FilterActivity extends BaseActivity {
     /// 저장 버튼 설정 (수정됨: S3 업로드 후 이동) ///
     private void setupSaveButton() {
         saveBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400))
-                return;
-            ClickUtils.disableTemporarily(v, 3000); // 업로드 시간 고려
+            saveBtn.setEnabled(false);
+            saveBtn.setClickable(false);
+            endFrame.setVisibility(View.VISIBLE);
 
             renderer.setOnBitmapCaptureListener(new FGLRenderer.OnBitmapCaptureListener() {
                 @Override
@@ -492,6 +495,10 @@ public class FilterActivity extends BaseActivity {
                     uploadStickerImageAndMove(s3OriginalUrl, s3PreviewUrl, bitmap, stickerNoFaceFile);
 
                 } else {
+                    endFrame.setVisibility(View.GONE);
+                    saveBtn.setEnabled(true);
+                    saveBtn.setClickable(true);
+
                     Log.e("FilterUpload", "필터 이미지 업로드 실패: " + response.code());
                     Toast.makeText(FilterActivity.this, "필터 업로드 실패", Toast.LENGTH_SHORT).show();
                 }
@@ -499,6 +506,10 @@ public class FilterActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<Map<String, String>> call, Throwable t) {
+                endFrame.setVisibility(View.GONE);
+                saveBtn.setEnabled(true);
+                saveBtn.setClickable(true);
+
                 Log.e("FilterUpload", "통신 오류", t);
                 Toast.makeText(FilterActivity.this, "업로드 중 오류 발생", Toast.LENGTH_SHORT).show();
             }
@@ -610,6 +621,7 @@ public class FilterActivity extends BaseActivity {
         intent.putExtra("display_image_path", s3PreviewUrl);
 
         startActivity(intent);
+        overridePendingTransition(0, 0);
         finish();
     }
 
@@ -651,7 +663,9 @@ public class FilterActivity extends BaseActivity {
 
     /// 사진 이미지 가져오기 ///
     private void loadImageFromUri(Uri photoUri) {
-        if (renderer == null || photoPreview == null) return;
+        if (renderer == null || photoPreview == null) {
+            return;
+        }
 
         try {
             InputStream inputStream = getContentResolver().openInputStream(photoUri);

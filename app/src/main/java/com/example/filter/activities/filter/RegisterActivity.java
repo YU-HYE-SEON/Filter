@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -53,6 +54,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class RegisterActivity extends BaseActivity {
+    private FrameLayout endFrame;
 
     // 데이터 객체
     private FilterCreationData filterData;
@@ -116,6 +118,7 @@ public class RegisterActivity extends BaseActivity {
         pay = findViewById(R.id.pay);
         registerBtn = findViewById(R.id.registerBtn);
         backBtn = findViewById(R.id.backBtn);
+        endFrame = findViewById(R.id.endFrame);
 
         // 2. 데이터 수신
         filterData = getIntent().getParcelableExtra("filter_data");
@@ -142,9 +145,9 @@ public class RegisterActivity extends BaseActivity {
 
         // 5. 등록 버튼 리스너
         registerBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400))
-                return;
-            ClickUtils.disableTemporarily(v, 800);
+            registerBtn.setEnabled(false);
+            registerBtn.setClickable(false);
+            endFrame.setVisibility(View.VISIBLE);
 
             // 유효성 검사
             if (!validateInputs())
@@ -550,6 +553,10 @@ public class RegisterActivity extends BaseActivity {
                     moveToFilterInfo(response.body());
 
                 } else {
+                    endFrame.setVisibility(View.GONE);
+                    registerBtn.setEnabled(true);
+                    registerBtn.setClickable(true);
+
                     try {
                         String errorBody = response.errorBody() != null ? response.errorBody().string() : "Error";
                         Log.e("Register", "등록 실패: " + response.code() + ", " + errorBody);
@@ -562,6 +569,10 @@ public class RegisterActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<FilterResponse> call, Throwable t) {
+                endFrame.setVisibility(View.GONE);
+                registerBtn.setEnabled(true);
+                registerBtn.setClickable(true);
+
                 Log.e("Register", "네트워크 오류", t);
                 Toast.makeText(RegisterActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
@@ -587,13 +598,6 @@ public class RegisterActivity extends BaseActivity {
 
         startActivity(intent);
         finish(); // 등록 화면 종료
-    }
-
-    private void moveToMain() { /// ??? 언제 main으로 가는거지
-        Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
-        mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(mainIntent);
-        finish();
     }
 
     // ---------------------------------------------------------------
