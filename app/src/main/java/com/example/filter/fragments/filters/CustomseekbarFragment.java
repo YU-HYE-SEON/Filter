@@ -20,6 +20,7 @@ import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.R;
 
 public class CustomseekbarFragment extends Fragment {
+    private OnBackPressedCallback onBackPressedCallback;
     private AppCompatButton saveBtn;
     private ImageButton closeBtn;
     private TextView filterText;
@@ -109,12 +110,14 @@ public class CustomseekbarFragment extends Fragment {
         });
 
 
-        activity.getOnBackPressedDispatcher().addCallback(activity, new OnBackPressedCallback(true) {
+        onBackPressedCallback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 cancelBtn.performClick();
             }
-        });
+        };
+
+        activity.getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), onBackPressedCallback);
 
 
         View.OnClickListener listener = new View.OnClickListener() {
@@ -160,6 +163,10 @@ public class CustomseekbarFragment extends Fragment {
         if (closeBtn != null) {
             closeBtn.setEnabled(true);
             closeBtn.setAlpha(1f);
+        }
+
+        if (onBackPressedCallback != null) {
+            onBackPressedCallback.setEnabled(false);
         }
 
         if (previousFragment != null) {
