@@ -54,23 +54,6 @@ public class MainActivity extends BaseActivity {
     private final int MIN_PLAY_COUNT = 1;
     private FrameLayout loadingContainer;
     private LottieAnimationView loadingAnim;
-    /*private final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
-        @Override
-        public void onAnimationRepeat(Animator animation) {
-            super.onAnimationRepeat(animation);
-            loadingAnimPlayCount++;
-            Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
-
-            // 최소 재생 횟수를 채웠고, 데이터 로딩도 완료되었으면 애니메이션 종료
-            if (loadingAnimPlayCount >= MIN_PLAY_COUNT && !isDataLoading) {
-                if (!loadingAnimFinishedOnce) {
-                    loadingAnimFinishedOnce = true;
-                    //loadingAnim.removeAnimatorListener(this); // 리스너 제거
-                    hideLoading(); // 로딩 숨기기
-                }
-            }
-        }
-    };*/
 
     private enum Type {RECOMMEND, RANDOM, HOT, NEWEST}
 
@@ -141,7 +124,6 @@ public class MainActivity extends BaseActivity {
         loadingContainer = findViewById(R.id.loadingContainer);
         loadingAnim = findViewById(R.id.loadingAnim);
         loadingContainer.setVisibility(View.GONE);
-        //loadingAnim.addAnimatorListener(loadingListener);
 
         // 3. 필터 상세 화면 런처
         detailActivityLauncher = registerForActivityResult(

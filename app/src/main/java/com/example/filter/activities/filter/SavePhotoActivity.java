@@ -109,24 +109,6 @@ public class SavePhotoActivity extends BaseActivity {
             return insets;
         });
 
-        /*final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-                super.onAnimationRepeat(animation);
-                loadingAnimPlayCount++;
-                Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
-
-                if (loadingAnimPlayCount >= MIN_PLAY_COUNT && saveDone) {
-                    if (!loadingAnimFinishedOnce) {
-                        loadingAnimFinishedOnce = true;
-                        loadingAnim.removeAnimatorListener(this);
-                        finishLoading();
-                    }
-                }
-            }
-        };
-        loadingAnim.addAnimatorListener(loadingListener);*/
-
         // ---------------------------------------------------------------
         // ✅ [핵심 수정] 1. FilterActivity에서 보낸 데이터 받기
         // ---------------------------------------------------------------

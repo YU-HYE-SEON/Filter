@@ -56,23 +56,6 @@ public class SearchFragment extends Fragment {
     private final int MIN_PLAY_COUNT = 1;
     private FrameLayout loadingContainer;
     private LottieAnimationView loadingAnim;
-    /*private final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
-        @Override
-        public void onAnimationRepeat(Animator animation) {
-            super.onAnimationRepeat(animation);
-            loadingAnimPlayCount++;
-            Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
-
-            // 최소 재생 횟수를 채웠고, 데이터 로딩도 완료되었으면 애니메이션 종료
-            if (loadingAnimPlayCount >= MIN_PLAY_COUNT && !isDataLoading) {
-                if (!loadingAnimFinishedOnce) {
-                    loadingAnimFinishedOnce = true;
-                    //loadingAnim.removeAnimatorListener(this); // 리스너 제거
-                    hideLoading(); // 로딩 숨기기
-                }
-            }
-        }
-    };*/
 
     private RecyclerView recyclerView;
     private ConstraintLayout textView, dropdown;
@@ -114,7 +97,6 @@ public class SearchFragment extends Fragment {
         loadingContainer = view.findViewById(R.id.loadingContainer);
         loadingAnim = view.findViewById(R.id.loadingAnim);
         loadingContainer.setVisibility(View.GONE);
-        //loadingAnim.addAnimatorListener(loadingListener);
 
         detailActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -354,8 +336,6 @@ public class SearchFragment extends Fragment {
 
             searchByNaturalLanguage(keyword); // 정렬 변경 후 검색 재실행
         }
-
-        //searchByNaturalLanguage(keyword);
     }
 
     private View chooseOrderOn, dimBackground;

@@ -94,7 +94,6 @@ public class FilterActivity extends BaseActivity {
 
     /// 시스템 ///
     private ActivityResultLauncher<Intent> imagePickerLauncher;
-    private OnBackPressedCallback backGateCallback;
 
     /// 크롭 ///
     public enum CropMode {
@@ -177,7 +176,6 @@ public class FilterActivity extends BaseActivity {
         undoBrush = findViewById(R.id.undoBrush);
         redoBrush = findViewById(R.id.redoBrush);
 
-
         loadingFinishAnim = findViewById(R.id.loadingFinishAnim);
         loadingFinishAnim.setVisibility(View.GONE);
 
@@ -248,20 +246,9 @@ public class FilterActivity extends BaseActivity {
 
         setupColorButtons();
         setupSaveButton();
-        //setupBackNavigation();
         setupImagePicker();
 
         cropOverlay = null;
-
-        //Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-        //updateBackAndSaveUiEnabled(cur);
-
-        /*getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                showExitConfirmDialog();
-            }
-        });*/
 
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
             FrameLayout full = findViewById(R.id.fullScreenContainer);
@@ -276,7 +263,6 @@ public class FilterActivity extends BaseActivity {
                 window.setNavigationBarColor(Color.BLACK);
             }
         });
-
 
         closeBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
@@ -627,39 +613,6 @@ public class FilterActivity extends BaseActivity {
         finish();
     }
 
-    /*private void setupBackNavigation() {
-        backGateCallback = new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-                if (isBackEnabledFor(cur)) {
-                    handleBackNavChain();
-                }
-            }
-        };
-        getOnBackPressedDispatcher().addCallback(this, backGateCallback);
-
-        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
-                new androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks() {
-                    @Override
-                    public void onFragmentResumed(FragmentManager fm, Fragment f) {
-                        if (f.getId() == R.id.bottomArea2) {
-                            updateBackAndSaveUiEnabled(f);
-                        }
-                    }
-                }, true);
-
-        closeBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            *//*Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-            if (isBackEnabledFor(cur)) {
-                handleBackNavChain();
-            }*//*
-
-            showExitConfirmDialog();
-        });
-    }*/
-
     private void setupImagePicker() {
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -698,9 +651,7 @@ public class FilterActivity extends BaseActivity {
 
     /// 사진 이미지 가져오기 ///
     private void loadImageFromUri(Uri photoUri) {
-        if (renderer == null || photoPreview == null) {
-            return;
-        }
+        if (renderer == null || photoPreview == null) return;
 
         try {
             InputStream inputStream = getContentResolver().openInputStream(photoUri);
@@ -1084,10 +1035,6 @@ public class FilterActivity extends BaseActivity {
         applyTransform();
     }
 
-    /*public void setRotationEdited(boolean edited) {
-        this.rotationEdited = edited;
-    }*/
-
     public int getAccumRotationDeg() {
         return accumRotationDeg;
     }
@@ -1428,13 +1375,6 @@ public class FilterActivity extends BaseActivity {
         }
     }
 
-    /*public void resetStickerState(boolean removeOverlayChildren) {
-        FrameLayout overlay = findViewById(R.id.stickerOverlay);
-        if (removeOverlayChildren && overlay != null) {
-            overlay.removeAllViews();
-        }
-    }*/
-
     /// UI, 시스템 ///
     public void updateSaveButtonState() {
         if (stickerOverlay == null || saveBtn == null)
@@ -1498,100 +1438,6 @@ public class FilterActivity extends BaseActivity {
         saveBtn.setEnabled(isEdited);
         saveBtn.setAlpha(isEdited ? 1f : 0.0f);
     }
-
-    /*private boolean isBackEnabledFor(Fragment f) {
-        return (f instanceof ToolsFragment)
-                || (f instanceof ColorsFragment)
-                || (f instanceof StickersFragment);
-    }*/
-
-    /*private void updateBackAndSaveUiEnabled(Fragment f) {
-        boolean enabled = isBackEnabledFor(f);
-        if (closeBtn != null) {
-            closeBtn.setEnabled(enabled);
-            closeBtn.setClickable(enabled);
-            closeBtn.setAlpha(enabled ? 1f : 0.3f);
-        }
-    }*/
-
-    /*public void requestUpdateBackGate() {
-        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-        updateBackAndSaveUiEnabled(cur);
-    }*/
-
-    /*private void handleBack() {
-        FragmentManager fm = getSupportFragmentManager();
-        if (fm.getBackStackEntryCount() > 0) {
-            fm.popBackStack();
-            return;
-        }
-
-        Fragment current = fm.findFragmentById(R.id.bottomArea2);
-        if (current instanceof ToolsFragment) {
-            Intent intent = new Intent(FilterActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            finish();
-        } else {
-            finish();
-        }
-    }*/
-
-    /*private void handleBackNavChain() {
-     *//*Fragment full = getSupportFragmentManager().findFragmentById(R.id.fullScreenContainer);
-        if (full != null) {
-            showExitConfirmDialog();
-            return;
-        }*//*
-
-        Fragment cur = getSupportFragmentManager().findFragmentById(R.id.bottomArea2);
-
-        if (cur instanceof StickersFragment) {
-            FrameLayout stickerOverlay = findViewById(R.id.stickerOverlay);
-            FrameLayout brushOverlay = findViewById(R.id.brushOverlay);
-            if (stickerOverlay != null)
-                stickerOverlay.removeAllViews();
-            if (brushOverlay != null)
-                brushOverlay.removeAllViews();
-
-            resetStickerState(false);
-
-            getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new ColorsFragment())
-                    .commit();
-
-            ConstraintLayout bottomArea1 = findViewById(R.id.bottomArea1);
-            bottomArea1.setVisibility(View.VISIBLE);
-
-            return;
-        }
-
-        *//*if (cur instanceof ColorsFragment) {
-            fm.beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new ToolsFragment())
-                    .commit();
-
-            ConstraintLayout bottomArea1 = findViewById(R.id.bottomArea1);
-            bottomArea1.setVisibility(View.INVISIBLE);
-
-            return;
-        }*//*
-
-     *//*if (cur instanceof ToolsFragment) {
-            openImagePicker();
-            return;
-        }*//*
-
-        //handleBack();
-    }*/
-
-    /*private void openImagePicker() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.setType("image/*");
-        imagePickerLauncher.launch(intent);
-    }*/
 
     public void showExitConfirmDialog() {
         new FilterEixtDialog(this, new FilterEixtDialog.FilterEixtDialogListener() {

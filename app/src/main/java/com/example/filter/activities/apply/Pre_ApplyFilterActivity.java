@@ -151,24 +151,6 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
             return insets;
         });
 
-        /*final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-                super.onAnimationRepeat(animation);
-                loadingAnimPlayCount++;
-                Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
-
-                if (loadingAnimPlayCount >= MIN_PLAY_COUNT && readyDone) {
-                    if (!loadingAnimFinishedOnce) {
-                        loadingAnimFinishedOnce = true;
-                        loadingAnim.removeAnimatorListener(this);
-                        finishLoading();
-                    }
-                }
-            }
-        };
-        loadingAnim.addAnimatorListener(loadingListener);*/
-
         saveBtn.setAlpha(0.4f);
         saveBtn.setEnabled(false);
         saveBtn.setClickable(false);
@@ -193,11 +175,6 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                 int vY = renderer.getViewportY();
                 int vW = renderer.getViewportWidth();
                 int vH = renderer.getViewportHeight();
-
-                //FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(vW, vH);
-                //params.leftMargin = vX;
-                //params.topMargin = vY;
-                //stickerOverlay.setLayoutParams(params);
 
                 Bitmap overlayBitmap = Bitmap.createBitmap(
                         photoContainer.getWidth(),
@@ -258,17 +235,6 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                     if (imageToDisplay == null) {
                         imageToDisplay = bmp;
                     }
-
-                    /*renderer.setBitmap(bmp);
-                    glSurfaceView.requestRender();
-
-                    faceBox = new FaceBoxOverlayView(this);
-                    photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                    detectFaces(this.originalImageBitmap, (faces, originalBitmap) -> {
-                        if (faces.isEmpty()) {
-                            return;
-                        }
-                    });*/
                 }
 
             } catch (Exception e) {
@@ -293,7 +259,6 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            //finish();
             showExitConfirmDialog();
         });
 
@@ -841,7 +806,5 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
         saveBtn.setAlpha(1.0f);
         saveBtn.setEnabled(true);
         saveBtn.setClickable(true);
-
-        //Toast.makeText(this, "필터 적용 완료!", Toast.LENGTH_SHORT).show();
     }
 }

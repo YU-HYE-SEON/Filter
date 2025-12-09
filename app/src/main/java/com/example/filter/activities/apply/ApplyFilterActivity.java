@@ -169,24 +169,6 @@ public class ApplyFilterActivity extends BaseActivity {
             return insets;
         });
 
-        /*final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-                super.onAnimationRepeat(animation);
-                loadingAnimPlayCount++;
-                Log.d("로딩애니횟수", "Repeat Count: " + loadingAnimPlayCount);
-
-                if (loadingAnimPlayCount >= MIN_PLAY_COUNT && saveDone) {
-                    if (!loadingAnimFinishedOnce) {
-                        loadingAnimFinishedOnce = true;
-                        loadingAnim.removeAnimatorListener(this);
-                        finishLoading();
-                    }
-                }
-            }
-        };
-        loadingAnim.addAnimatorListener(loadingListener);*/
-
         toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#00499A"), PorterDuff.Mode.SRC_ATOP);
         toGalleryBtn.setTextColor(Color.parseColor("#989898"));
         toGalleryBtn.setEnabled(false);
@@ -236,24 +218,9 @@ public class ApplyFilterActivity extends BaseActivity {
                 finalBitmapWithStickers = finalBitmap;
 
                 //사진 저장 메서드 호출
-                //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                 if (isStickerApplied && !isSavedToGallery) {
                     ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
-
-                    /*runOnUiThread(() -> {
-                        toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#007AFF"), PorterDuff.Mode.SRC_ATOP);
-                        toGalleryBtn.setTextColor(Color.WHITE);
-                        toGalleryBtn.setEnabled(true);
-                        toGalleryBtn.setClickable(true);
-
-                        toRegisterReviewBtn.getBackground().setColorFilter(Color.parseColor("#C2FA7A"), PorterDuff.Mode.SRC_ATOP);
-                        toRegisterReviewBtn.setTextColor(Color.parseColor("#007AFF"));
-                        toRegisterReviewBtn.setEnabled(true);
-                        toRegisterReviewBtn.setClickable(true);
-                    });
-
-                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();*/
 
                     if (!saveDone) {
                         saveDone = true;
@@ -284,24 +251,9 @@ public class ApplyFilterActivity extends BaseActivity {
             if (imageToDisplay != null) {
                 finalBitmapWithStickers = imageToDisplay;
 
-                //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                 if (!isSavedToGallery) {
                     ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
-
-                    /*runOnUiThread(() -> {
-                        toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#007AFF"), PorterDuff.Mode.SRC_ATOP);
-                        toGalleryBtn.setTextColor(Color.WHITE);
-                        toGalleryBtn.setEnabled(true);
-                        toGalleryBtn.setClickable(true);
-
-                        toRegisterReviewBtn.getBackground().setColorFilter(Color.parseColor("#C2FA7A"), PorterDuff.Mode.SRC_ATOP);
-                        toRegisterReviewBtn.setTextColor(Color.parseColor("#007AFF"));
-                        toRegisterReviewBtn.setEnabled(true);
-                        toRegisterReviewBtn.setClickable(true);
-                    });
-
-                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show();*/
 
                     if (!saveDone) {
                         saveDone = true;
@@ -320,15 +272,6 @@ public class ApplyFilterActivity extends BaseActivity {
                     if (imageToDisplay == null) {
                         imageToDisplay = bmp;
                     }
-
-                    /*renderer.setBitmap(bmp);
-                    glSurfaceView.requestRender();
-
-                    faceBox = new FaceBoxOverlayView(this);
-                    photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                    detectFaces(this.originalImageBitmap, (faces, originalBitmap) -> {
-                        if (faces.isEmpty()) return;
-                    });*/
                 }
 
             } catch (Exception e) {
