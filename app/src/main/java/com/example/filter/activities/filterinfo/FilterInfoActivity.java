@@ -61,6 +61,8 @@ import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.FilterApi;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
+import com.example.filter.dialogs.FilterDeleteDialog;
+import com.example.filter.dialogs.ReviewDeleteDialog;
 import com.example.filter.etc.ClickUtils;
 import com.google.gson.Gson;
 
@@ -510,10 +512,27 @@ public class FilterInfoActivity extends BaseActivity {
         // 삭제 / 신고
         deleteORreportBtn.setOnClickListener(v -> {
             if (isMine) {
-                requestDeleteFilter(Long.parseLong(filterId));
+                confirmDeleteFilter(Long.parseLong(filterId));
             } else {
-                Toast.makeText(this, "신고 기능 준비중", Toast.LENGTH_SHORT).show();
+                /// 신고하기 이메일 ///
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("message/rfc822");
+                intent.setPackage("com.google.android.gm");
+
+                /// 메일 Feelem으로 바꾸기 ///
+                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"usunsun38@gmail.com"});
+                intent.putExtra(Intent.EXTRA_SUBJECT, "Feel'em에 신고하기");
+
+                try {
+                    startActivity(Intent.createChooser(intent, "이메일 보내기"));
+                } catch (Exception e) {
+                    Toast.makeText(this, "구글메일 앱이 없습니다.", Toast.LENGTH_SHORT).show();
+                }
             }
+        });
+
+        shareBtn.setOnClickListener(v -> {
+            Toast.makeText(this, "공유 기능 준비중", Toast.LENGTH_SHORT).show();
         });
 
         backBtn.setOnClickListener(v -> {
@@ -542,13 +561,17 @@ public class FilterInfoActivity extends BaseActivity {
         if (rb2Img5 != null) rb2Img5.setOnClickListener(reviewImageClickListener);
     }
 
-    private void moveToReview(ReviewResponse response) {
-        setResult(RESULT_OK);
+    private void confirmDeleteFilter(long filterId) {
+        new FilterDeleteDialog(this, new FilterDeleteDialog.FilterDeleteDialogListener() {
+            @Override
+            public void onCancel() {
+            }
 
-        Intent intent = new Intent(FilterInfoActivity.this, ReviewActivity.class);
-        intent.putExtra("filterId", filterId);
-        intent.putExtra("review_response", response);
-        startActivity(intent);
+            @Override
+            public void onDelete() {
+                requestDeleteFilter(filterId);
+            }
+        }).show();
     }
 
     private void requestDeleteFilter(long id) {
@@ -635,18 +658,6 @@ public class FilterInfoActivity extends BaseActivity {
             bookmark.setImageResource(R.drawable.icon_bookmark_no_blue);
             setBookmarkSize(30f, 30f, 0f);
         }
-    }
-
-    private void showBookmarkImg() {
-        if (bookmarkImg == null) return;
-
-        bookmarkImg.setVisibility(View.VISIBLE);
-
-        new Handler().postDelayed(() -> {
-            Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
-            bookmarkImg.startAnimation(fadeOut);
-            bookmarkImg.setVisibility(View.GONE);
-        }, 500);
     }
 
     // ✅ [추가] 서버에 가격 수정 요청
@@ -1031,25 +1042,6 @@ public class FilterInfoActivity extends BaseActivity {
         });
     }
 
-    private void sendTagToSearch(String keyword) {
-        Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
-        intent.putExtra("search_keyword", keyword);
-
-        // 기존 MainActivity 재사용 (새 Activity를 계속 안 만들도록)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-        startActivity(intent);
-        finish(); // 필터인포 닫기
-    }
-
-    private void tagClick() {
-        tag1.setOnClickListener(v -> sendTagToSearch(tag1.getText().toString()));
-        tag2.setOnClickListener(v -> sendTagToSearch(tag2.getText().toString()));
-        tag3.setOnClickListener(v -> sendTagToSearch(tag3.getText().toString()));
-        tag4.setOnClickListener(v -> sendTagToSearch(tag4.getText().toString()));
-        tag5.setOnClickListener(v -> sendTagToSearch(tag5.getText().toString()));
-    }
-
     private void loadReviews(long filterLId) {
         ReviewApi api = AppRetrofitClient.getInstance(this).create(ReviewApi.class);
         api.getReviewPreview(filterLId).enqueue(new Callback<List<ReviewResponse>>() {
@@ -1077,10 +1069,6 @@ public class FilterInfoActivity extends BaseActivity {
                             if (size >= 1) {
                                 rb1Img1.setVisibility(View.VISIBLE);
                                 Glide.with(FilterInfoActivity.this).load(reviews.get(0).imageUrl).into(rb1Img1);
-
-                                /// 추가 (리뷰인포로 바로) ///
-                                //ReviewResponse review = reviews.get(0);
-                                //rb1Img1.setOnClickListener(v -> moveToReviewInfo(String.valueOf(review.id)));
                             }
                         }
                         if (rb1Img2 != null) {
@@ -1088,10 +1076,6 @@ public class FilterInfoActivity extends BaseActivity {
                             if (size >= 2) {
                                 rb1Img2.setVisibility(View.VISIBLE);
                                 Glide.with(FilterInfoActivity.this).load(reviews.get(1).imageUrl).into(rb1Img2);
-
-                                /// 추가 (리뷰인포로 바로) ///
-                                //ReviewResponse review = reviews.get(1);
-                                //rb1Img2.setOnClickListener(v -> moveToReviewInfo(String.valueOf(review.id)));
                             }
                         }
                     } else if (size > 4) {
@@ -1100,10 +1084,6 @@ public class FilterInfoActivity extends BaseActivity {
                             if (ivs[i] != null) {
                                 Glide.with(FilterInfoActivity.this).load(reviews.get(i).imageUrl).into(ivs[i]);
                             }
-
-                            /// 추가 (리뷰인포로 바로) ///
-                            //ReviewResponse review = reviews.get(i);
-                            //ivs[i].setOnClickListener(v -> moveToReviewInfo(String.valueOf(review.id)));
                         }
                     }
                 } else {
@@ -1120,6 +1100,53 @@ public class FilterInfoActivity extends BaseActivity {
                 if (noReviewTxt != null) noReviewTxt.setVisibility(View.VISIBLE);
             }
         });
+    }
+
+    private void moveToMain() {
+        Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
+    }
+
+    private void moveToReview(ReviewResponse response) {
+        setResult(RESULT_OK);
+
+        Intent intent = new Intent(FilterInfoActivity.this, ReviewActivity.class);
+        intent.putExtra("filterId", filterId);
+        intent.putExtra("review_response", response);
+        startActivity(intent);
+    }
+
+    private void sendTagToSearch(String keyword) {
+        Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
+        intent.putExtra("search_keyword", keyword);
+
+        // 기존 MainActivity 재사용 (새 Activity를 계속 안 만들도록)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        startActivity(intent);
+        finish(); // 필터인포 닫기
+    }
+
+    private void tagClick() {
+        tag1.setOnClickListener(v -> sendTagToSearch(tag1.getText().toString()));
+        tag2.setOnClickListener(v -> sendTagToSearch(tag2.getText().toString()));
+        tag3.setOnClickListener(v -> sendTagToSearch(tag3.getText().toString()));
+        tag4.setOnClickListener(v -> sendTagToSearch(tag4.getText().toString()));
+        tag5.setOnClickListener(v -> sendTagToSearch(tag5.getText().toString()));
+    }
+
+    private void showBookmarkImg() {
+        if (bookmarkImg == null) return;
+
+        bookmarkImg.setVisibility(View.VISIBLE);
+
+        new Handler().postDelayed(() -> {
+            Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
+            bookmarkImg.startAnimation(fadeOut);
+            bookmarkImg.setVisibility(View.GONE);
+        }, 500);
     }
 
     private void setBookmarkSize(float dp1, float dp2, float dp3) {
@@ -1140,26 +1167,6 @@ public class FilterInfoActivity extends BaseActivity {
 
     private float dp(float dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
-    }
-
-    private void moveToMain() {
-        Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
-        finish();
-    }
-
-    /// 추가 (리뷰인포로 바로) ///
-    private void moveToReviewInfo(String reviewId) {
-        if (filterId == null) {
-            Toast.makeText(this, "필터 정보가 없습니다.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Intent intent = new Intent(FilterInfoActivity.this, ReviewInfoActivity.class);
-        intent.putExtra("reviewId", reviewId);
-        intent.putExtra("filterId", filterId);
-        startActivity(intent);
     }
 
     @Override

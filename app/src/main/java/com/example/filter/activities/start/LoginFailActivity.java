@@ -1,8 +1,10 @@
 package com.example.filter.activities.start;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.splashscreen.SplashScreen;
@@ -29,6 +31,22 @@ public class LoginFailActivity extends BaseActivity {
         btn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
             finish();
+        });
+
+        email.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("message/rfc822");
+            intent.setPackage("com.google.android.gm");
+
+            /// 메일 Feelem으로 바꾸기 ///
+            intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"usunsun38@gmail.com"});
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Feel'em에 문의하기");
+
+            try {
+                startActivity(Intent.createChooser(intent, "이메일 보내기"));
+            } catch (Exception e) {
+                Toast.makeText(this, "구글메일 앱이 없습니다.", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

@@ -41,13 +41,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="10dp"
+                android:ellipsize="none"
                 android:fontFamily="@font/pretendard_bold"
+                android:maxLines="1"
+                android:singleLine="true"
                 android:text="닉네임"
                 android:textColor="@color/black"
                 android:textSize="22sp"
-                android:maxLines="1"
-                android:ellipsize="none"
-                android:singleLine="true"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/nickEditBtn"
                 app:layout_constraintStart_toEndOf="@id/icon"
@@ -232,6 +232,7 @@
             android:id="@+id/snsId"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
             android:paddingHorizontal="20dp">
 
             <TextView
@@ -259,6 +260,7 @@
             android:id="@+id/ask"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
             android:paddingHorizontal="20dp">
 
             <TextView
@@ -286,6 +288,7 @@
             android:id="@+id/appInfo"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
             android:paddingHorizontal="20dp">
 
             <TextView
@@ -313,6 +316,7 @@
             android:id="@+id/withdraw"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
             android:paddingHorizontal="20dp">
 
             <TextView

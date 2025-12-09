@@ -1,7 +1,5 @@
 package com.example.filter.activities.apply;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -103,6 +101,17 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (!loadingAnimFinishedOnce) {
+            loadingAnim.setSpeed(2.5f);
+
+            loadingAnim.addAnimatorUpdateListener(animation -> {
+                float progress = (float) animation.getAnimatedValue();
+
+                if (progress >= 0.33f && readyDone && !loadingAnimFinishedOnce) {
+                    loadingAnimFinishedOnce = true;
+                    finishLoading();
+                }
+            });
+
             loadingAnim.playAnimation();
         }
     }
@@ -142,7 +151,7 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
             return insets;
         });
 
-        final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+        /*final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
             @Override
             public void onAnimationRepeat(Animator animation) {
                 super.onAnimationRepeat(animation);
@@ -158,7 +167,7 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                 }
             }
         };
-        loadingAnim.addAnimatorListener(loadingListener);
+        loadingAnim.addAnimatorListener(loadingListener);*/
 
         saveBtn.setAlpha(0.4f);
         saveBtn.setEnabled(false);

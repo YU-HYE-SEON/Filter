@@ -1,11 +1,7 @@
 package com.example.filter.activities;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -58,7 +54,7 @@ public class MainActivity extends BaseActivity {
     private final int MIN_PLAY_COUNT = 1;
     private FrameLayout loadingContainer;
     private LottieAnimationView loadingAnim;
-    private final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+    /*private final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
         @Override
         public void onAnimationRepeat(Animator animation) {
             super.onAnimationRepeat(animation);
@@ -74,10 +70,7 @@ public class MainActivity extends BaseActivity {
                 }
             }
         }
-    };
-
-    private int nextPage = 0;
-    private boolean isLoading = false;
+    };*/
 
     private enum Type {RECOMMEND, RANDOM, HOT, NEWEST}
 
@@ -94,7 +87,9 @@ public class MainActivity extends BaseActivity {
 
     // ✅ [수정] Adapter 이름 변경 (FilterAdapter -> FilterListAdapter)
     private FilterListAdapter filterAdapter;
-    private static final int MAX_ITEMS = 50;
+
+    //private int nextPage = 0;
+    //private boolean isLoading = false;
 
     private ActivityResultLauncher<Intent> detailActivityLauncher;
     public ArrayList<String> searchHistory = new ArrayList<>();
@@ -146,7 +141,7 @@ public class MainActivity extends BaseActivity {
         loadingContainer = findViewById(R.id.loadingContainer);
         loadingAnim = findViewById(R.id.loadingAnim);
         loadingContainer.setVisibility(View.GONE);
-        loadingAnim.addAnimatorListener(loadingListener);
+        //loadingAnim.addAnimatorListener(loadingListener);
 
         // 3. 필터 상세 화면 런처
         detailActivityLauncher = registerForActivityResult(
@@ -342,6 +337,25 @@ public class MainActivity extends BaseActivity {
         // newest.performClick();
     }
 
+
+    private void loadMore() {
+        switch (currentType) {
+            case RECOMMEND:
+                loadRecommendFilters();
+                break;
+            case RANDOM:
+                loadRandomFilters();
+                break;
+            case HOT:
+                loadHotFilters();
+                break;
+            case NEWEST:
+                loadRecentFilters();
+                break;
+        }
+    }
+
+
     // 버튼 UI 상태 변경 헬퍼
     private void setFilterButtons(boolean re, boolean r, boolean h, boolean n) {
         recommend.setBackgroundResource(re ? R.drawable.btn_recommend_contents_yes : R.drawable.btn_recommend_contents_no);
@@ -399,7 +413,7 @@ public class MainActivity extends BaseActivity {
     private void loadRecentFilters() {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        api.getRecentFilters(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getRecentFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -446,7 +460,7 @@ public class MainActivity extends BaseActivity {
     private void loadHotFilters() {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
-        api.getHotFilters(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getHotFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -494,7 +508,7 @@ public class MainActivity extends BaseActivity {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
         // API 인터페이스에 정의된 getRandomFilters 호출
-        api.getRandomFilters(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getRandomFilters(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -543,7 +557,7 @@ public class MainActivity extends BaseActivity {
         FilterApi api = AppRetrofitClient.getInstance(this).create(FilterApi.class);
 
         // API 인터페이스에 정의된 getRandomFilters 호출
-        api.getHomeRecommendations(0, 200).enqueue(new Callback<PageResponse<FilterListResponse>>() {
+        api.getHomeRecommendations(0, 20).enqueue(new Callback<PageResponse<FilterListResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<FilterListResponse>> call, Response<PageResponse<FilterListResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -712,7 +726,16 @@ public class MainActivity extends BaseActivity {
 
         loadingContainer.setVisibility(View.VISIBLE);
         loadingAnim.setProgress(0f);
-        loadingAnim.setSpeed(2.0f);
+        loadingAnim.setSpeed(2.5f);
+
+        loadingAnim.addAnimatorUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            if (progress >= 0.33f && !isDataLoading && !loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        });
+
         loadingAnim.playAnimation();
     }
 

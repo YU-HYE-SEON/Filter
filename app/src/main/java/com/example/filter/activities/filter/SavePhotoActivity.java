@@ -1,8 +1,6 @@
 package com.example.filter.activities.filter;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -12,9 +10,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -68,6 +64,17 @@ public class SavePhotoActivity extends BaseActivity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (!loadingAnimFinishedOnce) {
+            loadingAnim.setSpeed(2.5f);
+
+            loadingAnim.addAnimatorUpdateListener(animation -> {
+                float progress = (float) animation.getAnimatedValue();
+
+                if (progress >= 0.33f && saveDone && !loadingAnimFinishedOnce) {
+                    loadingAnimFinishedOnce = true;
+                    finishLoading();
+                }
+            });
+
             loadingAnim.playAnimation();
         }
     }
@@ -102,7 +109,7 @@ public class SavePhotoActivity extends BaseActivity {
             return insets;
         });
 
-        final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+        /*final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
             @Override
             public void onAnimationRepeat(Animator animation) {
                 super.onAnimationRepeat(animation);
@@ -118,7 +125,7 @@ public class SavePhotoActivity extends BaseActivity {
                 }
             }
         };
-        loadingAnim.addAnimatorListener(loadingListener);
+        loadingAnim.addAnimatorListener(loadingListener);*/
 
         // ---------------------------------------------------------------
         // ✅ [핵심 수정] 1. FilterActivity에서 보낸 데이터 받기

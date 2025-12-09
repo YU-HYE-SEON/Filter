@@ -66,6 +66,15 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         notifyDataSetChanged();
     }
 
+
+    public void addItems(List<FilterListItem> items) {
+        int start = this.items.size();
+        this.items.addAll(items);
+        notifyItemRangeInserted(start, items.size());
+    }
+
+
+
     public void updateItem(int position, FilterListItem newItem) {
         if (position >= 0 && position < items.size()) {
             items.set(position, newItem);
@@ -229,7 +238,7 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
 
     @Override
     public int getItemCount() {
-        return Math.min(items.size(), maxItems);
+        return items.size();
     }
 
     public class VH extends RecyclerView.ViewHolder {

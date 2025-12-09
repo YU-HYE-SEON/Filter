@@ -124,6 +124,17 @@ public class ApplyFilterActivity extends BaseActivity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (!loadingAnimFinishedOnce) {
+            loadingAnim.setSpeed(2.5f);
+
+            loadingAnim.addAnimatorUpdateListener(animation -> {
+                float progress = (float) animation.getAnimatedValue();
+
+                if (progress >= 0.33f && saveDone && !loadingAnimFinishedOnce) {
+                    loadingAnimFinishedOnce = true;
+                    finishLoading();
+                }
+            });
+
             loadingAnim.playAnimation();
         }
     }
@@ -158,7 +169,7 @@ public class ApplyFilterActivity extends BaseActivity {
             return insets;
         });
 
-        final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+        /*final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
             @Override
             public void onAnimationRepeat(Animator animation) {
                 super.onAnimationRepeat(animation);
@@ -174,7 +185,7 @@ public class ApplyFilterActivity extends BaseActivity {
                 }
             }
         };
-        loadingAnim.addAnimatorListener(loadingListener);
+        loadingAnim.addAnimatorListener(loadingListener);*/
 
         toGalleryBtn.getBackground().setColorFilter(Color.parseColor("#00499A"), PorterDuff.Mode.SRC_ATOP);
         toGalleryBtn.setTextColor(Color.parseColor("#989898"));

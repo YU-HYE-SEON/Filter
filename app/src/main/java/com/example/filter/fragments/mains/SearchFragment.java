@@ -56,7 +56,7 @@ public class SearchFragment extends Fragment {
     private final int MIN_PLAY_COUNT = 1;
     private FrameLayout loadingContainer;
     private LottieAnimationView loadingAnim;
-    private final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
+    /*private final AnimatorListenerAdapter loadingListener = new AnimatorListenerAdapter() {
         @Override
         public void onAnimationRepeat(Animator animation) {
             super.onAnimationRepeat(animation);
@@ -72,7 +72,7 @@ public class SearchFragment extends Fragment {
                 }
             }
         }
-    };
+    };*/
 
     private RecyclerView recyclerView;
     private ConstraintLayout textView, dropdown;
@@ -114,7 +114,7 @@ public class SearchFragment extends Fragment {
         loadingContainer = view.findViewById(R.id.loadingContainer);
         loadingAnim = view.findViewById(R.id.loadingAnim);
         loadingContainer.setVisibility(View.GONE);
-        loadingAnim.addAnimatorListener(loadingListener);
+        //loadingAnim.addAnimatorListener(loadingListener);
 
         detailActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -492,7 +492,16 @@ public class SearchFragment extends Fragment {
 
         loadingContainer.setVisibility(View.VISIBLE);
         loadingAnim.setProgress(0f);
-        loadingAnim.setSpeed(2.0f);
+        loadingAnim.setSpeed(2.5f);
+
+        loadingAnim.addAnimatorUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            if (progress >= 0.33f && !isDataLoading && !loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        });
+
         loadingAnim.playAnimation();
     }
 

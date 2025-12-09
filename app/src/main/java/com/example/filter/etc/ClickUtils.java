@@ -2,6 +2,7 @@ package com.example.filter.etc;
 
 import android.annotation.SuppressLint;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -32,13 +33,19 @@ public class ClickUtils {
     @SuppressLint("ClickableViewAccessibility")
     public static void clickDim(View button) {
         button.setOnTouchListener((v, event) -> {
+            Drawable drawable = v.getForeground();
+            if (drawable == null) {
+                drawable = v.getBackground();
+            }
+            if (drawable == null) return false;
+
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    v.getBackground().setColorFilter(0x50000000, PorterDuff.Mode.SRC_ATOP);
+                    drawable.setColorFilter(0x50000000, PorterDuff.Mode.SRC_ATOP);
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    v.getBackground().clearColorFilter();
+                    drawable.clearColorFilter();
                     break;
             }
             return false;

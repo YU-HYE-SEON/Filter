@@ -19,8 +19,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.example.filter.R;
-import com.example.filter.activities.apply.Pre_ApplyFilterActivity;
-import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.activities.mypage.EditNickNameActivity;
 import com.example.filter.activities.mypage.PointChargeActivity;
 import com.example.filter.activities.mypage.PointHistoryActivity;
@@ -31,7 +29,6 @@ import com.example.filter.api_datas.response_dto.UserMypageResponse;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.repositories.MyPageApi;
 import com.example.filter.dialogs.LogoutDialog;
-import com.example.filter.dialogs.Pre_ApplyEixtDialog;
 import com.example.filter.etc.ClickUtils;
 
 import retrofit2.Call;
@@ -74,6 +71,10 @@ public class MyPageFragment extends Fragment {
         ClickUtils.clickDim(logoutBtn);
         ClickUtils.clickDim(pointChargeBtn);
         ClickUtils.clickDim(salesManageBtn);
+        ClickUtils.clickDim(snsId);
+        ClickUtils.clickDim(ask);
+        ClickUtils.clickDim(appInfo);
+        ClickUtils.clickDim(withdraw);
 
         nickEditBtn.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), EditNickNameActivity.class);
@@ -107,6 +108,26 @@ public class MyPageFragment extends Fragment {
             Intent intent = new Intent(requireContext(), SNSidActivity.class);
             startActivity(intent);
             requireActivity().overridePendingTransition(0, 0);
+        });
+
+        ask.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("message/rfc822");
+            intent.setPackage("com.google.android.gm");
+
+            /// 메일 Feelem으로 바꾸기 ///
+            intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"usunsun38@gmail.com"});
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Feel'em에 문의하기");
+
+            try {
+                startActivity(Intent.createChooser(intent, "이메일 보내기"));
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "구글메일 앱이 없습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        withdraw.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "전시중이므로 계정 삭제가 불가합니다.", Toast.LENGTH_SHORT).show();
         });
 
         return view;
