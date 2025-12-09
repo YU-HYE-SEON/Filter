@@ -275,6 +275,10 @@ public class MainActivity extends BaseActivity {
             home.setImageResource(R.drawable.icon_home_yes);
             archive.setImageResource(R.drawable.icon_archive_no);
             myPage.setImageResource(R.drawable.icon_mypage_no);
+
+            showLoading();
+            setFilterButtons(true, false, false, false);
+            loadRecommendFilters();
         });
 
         // 하단 네비게이션 (필터 제작)
@@ -318,25 +322,6 @@ public class MainActivity extends BaseActivity {
         // (선택) 앱 시작 시 최신순 자동 로드하려면 아래 주석 해제
         // newest.performClick();
     }
-
-
-    private void loadMore() {
-        switch (currentType) {
-            case RECOMMEND:
-                loadRecommendFilters();
-                break;
-            case RANDOM:
-                loadRandomFilters();
-                break;
-            case HOT:
-                loadHotFilters();
-                break;
-            case NEWEST:
-                loadRecentFilters();
-                break;
-        }
-    }
-
 
     // 버튼 UI 상태 변경 헬퍼
     private void setFilterButtons(boolean re, boolean r, boolean h, boolean n) {
@@ -696,6 +681,20 @@ public class MainActivity extends BaseActivity {
             home.setImageResource(R.drawable.icon_home_yes);
             archive.setImageResource(R.drawable.icon_archive_no);
             myPage.setImageResource(R.drawable.icon_mypage_no);
+
+            showLoading();
+            switch (currentType) {
+                case RECOMMEND:
+                    loadRecommendFilters();
+                    break;
+                case HOT:
+                    loadHotFilters();
+                    break;
+                case NEWEST:
+                    loadRecentFilters();
+                    break;
+            }
+
             return;
         }
         super.onBackPressed();

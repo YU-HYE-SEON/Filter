@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,6 +22,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.example.filter.R;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.activities.review.ReviewInfoActivity;
@@ -44,6 +46,13 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ArchiveFragment extends Fragment {
+    private boolean isDataLoading = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
+    private FrameLayout loadingContainer;
+    private LottieAnimationView loadingAnim;
+
     private enum Type {BOOKMARK, BUY, CREATE, REVIEW}
 
     private Type currentType = Type.BOOKMARK;
@@ -66,6 +75,10 @@ public class ArchiveFragment extends Fragment {
         review = view.findViewById(R.id.review);
         recyclerView = view.findViewById(R.id.recyclerView);
         textView = view.findViewById(R.id.textView);
+
+        loadingContainer = view.findViewById(R.id.loadingContainer);
+        loadingAnim = view.findViewById(R.id.loadingAnim);
+        loadingContainer.setVisibility(View.GONE);
 
         detailActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -98,6 +111,7 @@ public class ArchiveFragment extends Fragment {
         recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
 
         setArchiveButtons(true, false, false, false);
+        showLoading();
         loadBookmark();
 
         filterAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
@@ -147,6 +161,8 @@ public class ArchiveFragment extends Fragment {
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                showLoading();
+
                 int id = view.getId();
                 switch (id) {
                     case R.id.bookmark:
@@ -249,12 +265,18 @@ public class ArchiveFragment extends Fragment {
                     Log.e("아카이브", "목록 조회 실패: " + response.code());
                     Toast.makeText(requireActivity(), "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
                 Log.e("아카이브", "통신 오류", t);
                 Toast.makeText(requireActivity(), "서버 연결 실패", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
         });
@@ -287,12 +309,18 @@ public class ArchiveFragment extends Fragment {
                     Log.e("아카이브", "목록 조회 실패: " + response.code());
                     Toast.makeText(requireActivity(), "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
                 Log.e("아카이브", "통신 오류", t);
                 Toast.makeText(requireActivity(), "서버 연결 실패", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -324,12 +352,18 @@ public class ArchiveFragment extends Fragment {
                     Log.e("아카이브", "목록 조회 실패: " + response.code());
                     Toast.makeText(requireActivity(), "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
                 Log.e("아카이브", "통신 오류", t);
                 Toast.makeText(requireActivity(), "서버 연결 실패", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -374,12 +408,18 @@ public class ArchiveFragment extends Fragment {
                     Log.e("아카이브", "목록 조회 실패: " + response.code());
                     Toast.makeText(requireActivity(), "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(Call<PageResponse<MyReviewResponse>> call, Throwable t) {
                 Log.e("아카이브", "통신 오류", t);
                 Toast.makeText(requireActivity(), "서버 연결 실패", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
@@ -419,6 +459,42 @@ public class ArchiveFragment extends Fragment {
             case REVIEW:
                 loadReview();
                 break;
+        }
+    }
+
+    private void showLoading() {
+        isDataLoading = true;
+        loadingAnimPlayCount = 0;
+        loadingAnimFinishedOnce = false;
+
+        loadingContainer.setVisibility(View.VISIBLE);
+        loadingAnim.setProgress(0f);
+        loadingAnim.setSpeed(2.5f);
+
+        loadingAnim.addAnimatorUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            if (progress >= 0.33f && !isDataLoading && !loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        });
+
+        loadingAnim.playAnimation();
+    }
+
+    private void hideLoading() {
+        if (loadingContainer.getVisibility() == View.VISIBLE) {
+            loadingAnim.cancelAnimation();
+            loadingContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private void checkAndHideLoading() {
+        if (!isDataLoading && loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
         }
     }
 }
