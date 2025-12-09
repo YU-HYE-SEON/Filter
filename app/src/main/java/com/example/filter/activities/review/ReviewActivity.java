@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
+import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.adapters.ReviewAdapter;
 import com.example.filter.api_datas.response_dto.FilterResponse;
 import com.example.filter.api_datas.response_dto.PageResponse;
@@ -33,6 +34,11 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ReviewActivity extends BaseActivity {
+    /// 추가 ///
+    private boolean isFromArchiveFlow = false;
+    private boolean reviewDeleted = false;
+
+
     private ImageButton backBtn;
     private String nick, imgUrl, title;
     ImageView img;
@@ -59,7 +65,10 @@ public class ReviewActivity extends BaseActivity {
 
         backBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-            finish();
+            //finish();
+
+            /// 추가 ///
+            onBackPressed();
         });
 
         StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
@@ -69,6 +78,12 @@ public class ReviewActivity extends BaseActivity {
         adapter = new ReviewAdapter();
         recyclerView.setAdapter(adapter);
         recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(10), dp(10)));
+
+
+        /// 추가 ///
+        isFromArchiveFlow = getIntent().getBooleanExtra("is_from_archive_flow", false);
+        reviewDeleted = getIntent().getBooleanExtra("review_deleted", false);
+
 
         // 상단에 띄우는 필터 기본 정보를 받아오기
         filterId = getIntent().getStringExtra("filterId");
@@ -87,6 +102,7 @@ public class ReviewActivity extends BaseActivity {
             // 리뷰 상세 정보 페이지로 이동
             Intent intent = new Intent(this, ReviewInfoActivity.class);
             intent.putExtra("filterId", filterId);
+            intent.putExtra("reviewId", String.valueOf(item.id));
             startActivity(intent);
         });
     }
@@ -190,5 +206,33 @@ public class ReviewActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         refreshReviews();
+    }
+
+    /// 추가 ///
+    @Override
+    public void onBackPressed() {
+        if (isFromArchiveFlow) {
+            // 경로 2: ReviewActivity -> FilterInfoActivity 호출
+            moveToFilterInfoActivityFromReview();
+        } else {
+            // 경로 1: FilterInfoActivity로 돌아가기 (기존 동작)
+            super.onBackPressed();
+        }
+    }
+
+    private void moveToFilterInfoActivityFromReview() {
+        Intent intent = new Intent(ReviewActivity.this, FilterInfoActivity.class);
+
+        // FilterInfoActivity에 Archive 흐름임을 알리고 필터 ID 전달
+        intent.putExtra("is_from_archive_flow", true);
+        intent.putExtra("filterId", filterId);
+
+        // 리뷰가 삭제되었다면 FilterInfoActivity의 리뷰 개수 갱신을 위해 플래그 전달
+        if (reviewDeleted) {
+            intent.putExtra("review_deleted_in_archive_flow", true);
+        }
+
+        startActivity(intent);
+        finish();
     }
 }

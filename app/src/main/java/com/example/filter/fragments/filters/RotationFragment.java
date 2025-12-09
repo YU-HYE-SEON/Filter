@@ -30,6 +30,8 @@ public class RotationFragment extends Fragment {
     private int currentRotationDeg = 0;
     private boolean flippedH = false;
     private boolean flippedV = false;
+    private boolean isLastLeft;
+    private boolean isLastRight;
 
     @Nullable
     @Override
@@ -58,6 +60,9 @@ public class RotationFragment extends Fragment {
         FilterActivity activity = (FilterActivity) requireActivity();
 
         currentRotationDeg = activity.getAccumRotationDeg();
+        isLastLeft = activity.isLastRotationLeft();
+        isLastRight = activity.isLastRotationRight();
+
         flippedH = activity.isAccumFlipH();
         flippedV = activity.isAccumFlipV();
 
@@ -108,6 +113,7 @@ public class RotationFragment extends Fragment {
                 if (activity != null) {
                     activity.restoreOriginalPhoto();
 
+                    activity.setLastRotationDirection(isLastLeft, isLastRight);
                     flippedH = false;
                     flippedV = false;
                     updateIcon(activity);
@@ -194,7 +200,7 @@ public class RotationFragment extends Fragment {
             verticalFlipTxt.setTextColor(Color.parseColor("#90989F"));
         }
 
-        boolean anyYes = (flippedH || flippedV);
-        activity.setRotationEdited(anyYes);
+        /*boolean anyYes = (flippedH || flippedV);
+        activity.setRotationEdited(anyYes);*/
     }
 }

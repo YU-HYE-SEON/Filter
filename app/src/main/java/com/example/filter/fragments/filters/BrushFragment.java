@@ -76,6 +76,9 @@ import java.util.Locale;
 import java.util.Map;
 
 public class BrushFragment extends Fragment {
+    private ImageButton undoBrush, redoBrush;
+
+
     /// 관련 클래스 ///
     private static class SimpleTextWatcher implements TextWatcher {
         private final Runnable after;
@@ -266,6 +269,8 @@ public class BrushFragment extends Fragment {
         /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
         redoSticker = requireActivity().findViewById(R.id.redoSticker);
         originalSticker = requireActivity().findViewById(R.id.originalSticker);*/
+        undoBrush = requireActivity().findViewById(R.id.undoBrush);
+        redoBrush = requireActivity().findViewById(R.id.redoBrush);
         brushToSticker = requireActivity().findViewById(R.id.brushToSticker);
         lassoOverlay = requireActivity().findViewById(R.id.lassoOverlay);
         checkBox = requireActivity().findViewById(R.id.checkBox);
@@ -278,8 +283,22 @@ public class BrushFragment extends Fragment {
             redoSticker.setVisibility(View.INVISIBLE);
             originalSticker.setVisibility(View.INVISIBLE);*/
             bottomArea1.setVisibility(View.VISIBLE);
+            //undoBrush.setVisibility(View.VISIBLE);
+            //redoBrush.setVisibility(View.VISIBLE);
             brushToSticker.setVisibility(View.VISIBLE);
         }
+
+        undoBrush.setOnClickListener(v -> {
+            if (brushDraw != null && brushDraw.undo()) {
+                updateUndoRedoUI();
+            }
+        });
+
+        redoBrush.setOnClickListener(v -> {
+            if (brushDraw != null && brushDraw.redo()) {
+                updateUndoRedoUI();
+            }
+        });
 
         if (checkBox != null) {
             checkBox.setOnCheckedChangeListener((btn, isChecked) -> {
@@ -493,6 +512,9 @@ public class BrushFragment extends Fragment {
                             sessionEraseOps.addAll(ops);
                             activeErases.clear();
                         }
+
+
+                        updateUndoRedoUI();
                     }
                 });
             }
@@ -687,6 +709,8 @@ public class BrushFragment extends Fragment {
                     .replace(R.id.bottomArea2, new StickersFragment())
                     .commit();
         });
+
+        updateUndoRedoUI();
 
         return view;
     }
@@ -2190,5 +2214,17 @@ public class BrushFragment extends Fragment {
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) checkBox.getLayoutParams();
         params.topMargin = (int) dp(dp2);
         checkBox.setLayoutParams(params);
+    }
+
+
+    private void updateUndoRedoUI() {
+        boolean canUndo = brushDraw.canUndo();
+        boolean canRedo = brushDraw.canRedo();
+
+        undoBrush.setEnabled(canUndo);
+        undoBrush.setAlpha(canUndo ? 1.0f : 0.4f);
+
+        redoBrush.setEnabled(canRedo);
+        redoBrush.setAlpha(canRedo ? 1.0f : 0.4f);
     }
 }

@@ -401,16 +401,25 @@ public class ApplyFilterActivity extends BaseActivity {
         iconSnsNone.setOnClickListener(v -> {
             type = SocialType.NONE;
             snsId.setText("선택 안 함");
+            iconSnsNone.setBackgroundResource(R.drawable.btn_review_sns_none_yes);
+            iconSnsInsta.setBackgroundResource(R.drawable.btn_review_sns_insta);
+            iconSnsTwitter.setBackgroundResource(R.drawable.btn_review_sns_twitter);
         });
 
         iconSnsInsta.setOnClickListener(v -> {
             type = SocialType.INSTAGRAM;
             snsId.setText("@" + instagramId);
+            iconSnsInsta.setBackgroundResource(R.drawable.btn_review_sns_insta_yes);
+            iconSnsNone.setBackgroundResource(R.drawable.btn_review_sns_none);
+            iconSnsTwitter.setBackgroundResource(R.drawable.btn_review_sns_twitter);
         });
 
         iconSnsTwitter.setOnClickListener(v -> {
             type = SocialType.X;
             snsId.setText("@" + xId);
+            iconSnsTwitter.setBackgroundResource(R.drawable.btn_review_sns_twitter_yes);
+            iconSnsNone.setBackgroundResource(R.drawable.btn_review_sns_none);
+            iconSnsInsta.setBackgroundResource(R.drawable.btn_review_sns_insta);
         });
 
         /// 중첩 클릭되면 안 됨 ///

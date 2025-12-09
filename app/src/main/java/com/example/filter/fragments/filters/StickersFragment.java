@@ -41,6 +41,7 @@ public class StickersFragment extends Fragment {
     private FrameLayout stickerOverlay, brushOverlay, fullScreenContainer;
     private ConstraintLayout filterActivity, bottomArea1;
     private ImageButton undoColor, redoColor, originalColor;
+    private ImageButton undoBrush, redoBrush;
     private LinearLayout brushToSticker, stickerEdit;
     private LinearLayout prevBtn;
 
@@ -89,6 +90,8 @@ public class StickersFragment extends Fragment {
         undoColor = activity.findViewById(R.id.undoColor);
         redoColor = activity.findViewById(R.id.redoColor);
         originalColor = activity.findViewById(R.id.originalColor);
+        undoBrush = activity.findViewById(R.id.undoBrush);
+        redoBrush = activity.findViewById(R.id.redoBrush);
         brushToSticker = activity.findViewById(R.id.brushToSticker);
         stickerEdit = activity.findViewById(R.id.stickerEdit);
 
@@ -97,6 +100,8 @@ public class StickersFragment extends Fragment {
             redoColor.setVisibility(View.INVISIBLE);
             originalColor.setVisibility(View.INVISIBLE);
             bottomArea1.setVisibility(View.VISIBLE);
+            undoBrush.setVisibility(View.GONE);
+            redoBrush.setVisibility(View.GONE);
             brushToSticker.setVisibility(View.GONE);
             stickerEdit.setVisibility(View.GONE);
         }

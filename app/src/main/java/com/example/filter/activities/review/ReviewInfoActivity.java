@@ -1,28 +1,26 @@
 package com.example.filter.activities.review;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.adapters.ReviewInfoAdapter;
-import com.example.filter.api_datas.response_dto.PageResponse;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.dialogs.ReviewDeleteDialog;
-
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -30,13 +28,11 @@ import retrofit2.Response;
 
 public class ReviewInfoActivity extends BaseActivity {
     private ImageButton backBtn;
-    private RecyclerView recyclerView;
-    private ReviewInfoAdapter adapter;
+    private ImageView img, snsIcon;
+    private TextView nickname, snsId, deleteBtn;
+    private String reviewId;
+    private Long reviewIdLong;
     private String filterId;
-    private Long filterIdLong;
-    private int currentPage = 0;
-    private boolean isLastPage = false;
-    private boolean isLoading = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -45,7 +41,11 @@ public class ReviewInfoActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_review_info);
         backBtn = findViewById(R.id.backBtn);
-        recyclerView = findViewById(R.id.recyclerView);
+        img = findViewById(R.id.img);
+        snsIcon = findViewById(R.id.snsIcon);
+        nickname = findViewById(R.id.nickname);
+        snsId = findViewById(R.id.snsId);
+        deleteBtn = findViewById(R.id.deleteBtn);
 
         final View root = findViewById(android.R.id.content);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
@@ -54,59 +54,72 @@ public class ReviewInfoActivity extends BaseActivity {
             return insets;
         });
 
-        LinearLayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        recyclerView.setLayoutManager(lm);
-        adapter = new ReviewInfoAdapter();
-        recyclerView.setAdapter(adapter);
+        reviewId = getIntent().getStringExtra("reviewId");
+        reviewIdLong = reviewId != null ? Long.parseLong(reviewId) : null;
+        loadReviews(reviewIdLong);
 
-        filterId = getIntent().getStringExtra("filterId");
-        filterIdLong = filterId != null ? Long.parseLong(filterId) : null;
-
-        loadReviews(filterIdLong);
-
-        adapter.setOnItemDeleteListener((reviewId, position) -> {
-            confirmDeleteReview(reviewId, position);
+        deleteBtn.setOnClickListener(v -> {
+            confirmDeleteReview(reviewIdLong);
         });
 
         backBtn.setOnClickListener(v -> {
-            finish();
+            //finish();
+
+            /// 추가 ///
+            moveToReviewActivity(false);
         });
     }
 
-    private void loadReviews(long filterId) {
-        if (isLoading || isLastPage) return;
-        isLoading = true;
-
+    private void loadReviews(long reviewId) {
         ReviewApi api = AppRetrofitClient.getInstance(this).create(ReviewApi.class);
-        api.getReviewsByFilter(filterId, currentPage, 20).enqueue(new Callback<PageResponse<ReviewResponse>>() {
+        api.getReviewById(reviewId).enqueue(new Callback<ReviewResponse>() {
             @Override
-            public void onResponse(Call<PageResponse<ReviewResponse>> call, Response<PageResponse<ReviewResponse>> response) {
-                isLoading = false;
+            public void onResponse(Call<ReviewResponse> call, Response<ReviewResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    PageResponse<ReviewResponse> pageData = response.body();
-                    List<ReviewResponse> reviews = pageData.content;
+                    ReviewResponse data = response.body();
 
-                    if (reviews != null && !reviews.isEmpty()) {
-                        adapter.addItems(reviews);
-                        currentPage++;
+                    Glide.with(ReviewInfoActivity.this)
+                            .load(data.imageUrl)
+                            .fitCenter()
+                            .into(img);
+
+                    String socialType = data.socialType;
+                    switch (socialType) {
+                        case "INSTAGRAM":
+                            snsIcon.setImageResource(R.drawable.btn_review_sns_insta_yes);
+                            break;
+                        case "X":
+                            snsIcon.setImageResource(R.drawable.btn_review_sns_twitter_yes);
+                            break;
+                        case "NONE":
+                        default:
+                            snsIcon.setImageResource(R.drawable.btn_review_sns_none_yes);
+                            break;
                     }
 
-                    isLastPage = pageData.last;
+                    nickname.setText(data.reviewerNickname);
+
+                    if (data.socialValue == null || data.socialValue.isEmpty() || data.socialType.equals("NONE")) {
+                        snsId.setText("선택 안 함");
+                    } else {
+                        snsId.setText("@" + data.socialValue);
+                    }
+
+                    deleteBtn.setVisibility(data.isMine ? View.VISIBLE : View.GONE);
 
                 } else {
-                    Log.e("ReviewList", "목록 조회 실패: " + response.code());
+                    Log.e("ReviewInfo", "목록 조회 실패: " + response.code());
                 }
             }
 
             @Override
-            public void onFailure(Call<PageResponse<ReviewResponse>> call, Throwable t) {
-                isLoading = false;
-                Log.e("ReviewList", "통신 오류", t);
+            public void onFailure(Call<ReviewResponse> call, Throwable t) {
+                Log.e("ReviewInfo", "통신 오류", t);
             }
         });
     }
 
-    private void deleteReview(long reviewId, int position) {
+    private void deleteReview(long reviewId) {
         ReviewApi api = AppRetrofitClient.getInstance(this).create(ReviewApi.class);
 
         api.deleteReview(reviewId).enqueue(new Callback<Void>() {
@@ -114,8 +127,12 @@ public class ReviewInfoActivity extends BaseActivity {
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Log.e("리뷰삭제", "리뷰 삭제 성공");
-                    adapter.removeItem(position);
                     Toast.makeText(ReviewInfoActivity.this, "리뷰가 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+
+                    //finish();
+
+                    /// 추가 ///
+                    moveToReviewActivity(true);
                 } else {
                     Log.e("리뷰삭제", "리뷰 삭제 실패 : " + response.code());
                     Toast.makeText(ReviewInfoActivity.this, "삭제 실패", Toast.LENGTH_SHORT).show();
@@ -130,7 +147,7 @@ public class ReviewInfoActivity extends BaseActivity {
         });
     }
 
-    private void confirmDeleteReview(long reviewId, int position) {
+    private void confirmDeleteReview(long reviewId ) {
         new ReviewDeleteDialog(this, new ReviewDeleteDialog.ReviewDeleteDialogListener() {
             @Override
             public void onCancel() {
@@ -138,8 +155,30 @@ public class ReviewInfoActivity extends BaseActivity {
 
             @Override
             public void onDelete() {
-                deleteReview(reviewId, position);
+                deleteReview(reviewId);
             }
         }).show();
+    }
+
+    /// 추가 ///
+    private void moveToReviewActivity(boolean isDeleted) {
+        filterId = getIntent().getStringExtra("filterId");
+
+        Intent intent = new Intent(ReviewInfoActivity.this, ReviewActivity.class);
+        intent.putExtra("is_from_archive_flow", true);
+        intent.putExtra("filterId", filterId);
+
+        if (isDeleted) {
+            intent.putExtra("review_deleted", true);
+        }
+
+        startActivity(intent);
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        moveToReviewActivity(false);
     }
 }

@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.filter.R;
 import com.example.filter.activities.filterinfo.FilterInfoActivity;
+import com.example.filter.activities.review.ReviewInfoActivity;
 import com.example.filter.adapters.FilterListAdapter;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
 import com.example.filter.api_datas.response_dto.MyReviewResponse;
@@ -119,14 +120,22 @@ public class ArchiveFragment extends Fragment {
         updateRecyclerVisibility();
 
         filterAdapter.setOnItemClickListener((v, item) -> {
-            Intent intent = new Intent(requireActivity(), FilterInfoActivity.class);
+            Intent intent;
+
+            if (currentType == Type.REVIEW) {
+                intent = new Intent(requireActivity(), ReviewInfoActivity.class);
+                intent.putExtra("reviewId", String.valueOf(item.reviewId));
+                //startActivity(intent);
+            } else {
+                intent = new Intent(requireActivity(), FilterInfoActivity.class);
+
+                intent.putExtra("nickname", item.nickname);
+                intent.putExtra("imgUrl", item.thumbmailUrl);
+                intent.putExtra("filterTitle", item.filterTitle);
+                intent.putExtra("price", String.valueOf(item.price));
+            }
 
             intent.putExtra("filterId", String.valueOf(item.id));
-            intent.putExtra("nickname", item.nickname);
-            intent.putExtra("imgUrl", item.thumbmailUrl);
-            intent.putExtra("filterTitle", item.filterTitle);
-            intent.putExtra("price", String.valueOf(item.price));
-
             detailActivityLauncher.launch(intent);
         });
 
@@ -341,6 +350,7 @@ public class ArchiveFragment extends Fragment {
                         PriceDisplayEnum displayType = PriceDisplayEnum.fromString(dto.priceDisplayType);
 
                         FilterListItem item = new FilterListItem(
+                                dto.id,
                                 dto.filterId,
                                 dto.filterName,
                                 dto.imageUrl,

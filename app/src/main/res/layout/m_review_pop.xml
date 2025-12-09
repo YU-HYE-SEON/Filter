@@ -34,7 +34,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_marginTop="24dp"
-            android:background="@drawable/btn_review_sns_none"
+            android:background="@drawable/btn_review_sns_none_yes"
             app:layout_constraintEnd_toStartOf="@+id/iconSnsInsta"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/txt" />

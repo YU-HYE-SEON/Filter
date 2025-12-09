@@ -37,6 +37,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
@@ -76,12 +77,16 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FilterActivity extends BaseActivity {
+    private boolean isAnimOnce = false;
+    private LottieAnimationView loadingFinishAnim;
+
     /// UI ///
     private FrameLayout stickerOverlay, brushOverlay;
     private GLSurfaceView photoPreview;
     private ImageButton closeBtn;
     private AppCompatButton saveBtn;
     private ImageButton undoColor, redoColor, originalColor;
+    private ImageButton undoBrush, redoBrush;
 
     /// renderer, photoImage ///
     private FGLRenderer renderer;
@@ -117,11 +122,11 @@ public class FilterActivity extends BaseActivity {
     private boolean suppressNextSingleFingerMove = false;
 
     /// 회전, 반전 ///
-    private float rotationDegree = 0;
-    private boolean flipHorizontal = false, flipVertical = false;
-    private int accumRotationDeg = 0;
+    private float rotationDegree = 0;       //임시 회전각
+    private boolean flipHorizontal = false, flipVertical = false;       //임시 반전
+    private int accumRotationDeg = 0;       //최종 적용 회전각
+    private boolean accumFlipH = false, accumFlipV = false;             //최종 적용 반전
     private boolean lastRotationLeft = false, lastRotationRight = false;
-    private boolean accumFlipH = false, accumFlipV = false;
     private boolean rotationEdited = false;
 
     /// 컬러 ///
@@ -147,6 +152,8 @@ public class FilterActivity extends BaseActivity {
     private final HashMap<String, Integer> savedFilterValues = new HashMap<>();
     private boolean isPreviewingOriginalColors = false;
 
+    /// 브러쉬, 스티커 ///
+
     private List<FaceStickerData> faceStickerList = new ArrayList<>();
 
     /// 필터 등록 제한 ///
@@ -167,6 +174,12 @@ public class FilterActivity extends BaseActivity {
         undoColor = findViewById(R.id.undoColor);
         redoColor = findViewById(R.id.redoColor);
         originalColor = findViewById(R.id.originalColor);
+        undoBrush = findViewById(R.id.undoBrush);
+        redoBrush = findViewById(R.id.redoBrush);
+
+
+        loadingFinishAnim = findViewById(R.id.loadingFinishAnim);
+        loadingFinishAnim.setVisibility(View.GONE);
 
         Window window = getWindow();
         window.setNavigationBarColor(Color.BLACK);
@@ -1071,9 +1084,9 @@ public class FilterActivity extends BaseActivity {
         applyTransform();
     }
 
-    public void setRotationEdited(boolean edited) {
+    /*public void setRotationEdited(boolean edited) {
         this.rotationEdited = edited;
-    }
+    }*/
 
     public int getAccumRotationDeg() {
         return accumRotationDeg;
@@ -1188,10 +1201,8 @@ public class FilterActivity extends BaseActivity {
 
     private boolean isGeometrySameAsOriginal() {
         int r = normDeg(accumRotationDeg);
-        if (r == 0 && !accumFlipH && !accumFlipV)
-            return true;
-        if (r == 180 && accumFlipH && accumFlipV)
-            return true;
+        if (r == 0 && !accumFlipH && !accumFlipV) return true;
+        if (r == 180 && accumFlipH && accumFlipV) return true;
         return false;
     }
 
@@ -1475,6 +1486,15 @@ public class FilterActivity extends BaseActivity {
         allowRegister = (colorAdjusted || hasDrawable);
         boolean isEdited = geometryEdited || colorAdjusted || hasDrawable;
 
+        if (isEdited && !isAnimOnce) {
+            loadingFinishAnim.setVisibility(View.VISIBLE);
+            loadingFinishAnim.animate().scaleX(2f).scaleY(2f).setDuration(250).start();
+            loadingFinishAnim.playAnimation();
+            isAnimOnce = true;
+        }
+
+        if (!isEdited) isAnimOnce = false;
+
         saveBtn.setEnabled(isEdited);
         saveBtn.setAlpha(isEdited ? 1f : 0.0f);
     }
@@ -1518,7 +1538,7 @@ public class FilterActivity extends BaseActivity {
     }*/
 
     /*private void handleBackNavChain() {
-        *//*Fragment full = getSupportFragmentManager().findFragmentById(R.id.fullScreenContainer);
+     *//*Fragment full = getSupportFragmentManager().findFragmentById(R.id.fullScreenContainer);
         if (full != null) {
             showExitConfirmDialog();
             return;
@@ -1559,7 +1579,7 @@ public class FilterActivity extends BaseActivity {
             return;
         }*//*
 
-        *//*if (cur instanceof ToolsFragment) {
+     *//*if (cur instanceof ToolsFragment) {
             openImagePicker();
             return;
         }*//*

@@ -75,10 +75,10 @@ public class ReviewInfoAdapter extends RecyclerView.Adapter<ReviewInfoAdapter.VH
         String socialType = item.socialType;
         switch (socialType) {
             case "INSTAGRAM":
-                holder.snsIcon.setImageResource(R.drawable.btn_review_sns_insta);
+                holder.snsIcon.setImageResource(R.drawable.btn_review_sns_insta_yes);
                 break;
             case "X":
-                holder.snsIcon.setImageResource(R.drawable.btn_review_sns_twitter);
+                holder.snsIcon.setImageResource(R.drawable.btn_review_sns_twitter_yes);
                 break;
             case "NONE":
             default:

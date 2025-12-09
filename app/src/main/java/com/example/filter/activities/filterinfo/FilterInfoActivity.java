@@ -1135,6 +1135,19 @@ public class FilterInfoActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        moveToMain();
+        boolean isFromArchiveFlow = getIntent().getBooleanExtra("is_from_archive_flow", false);
+
+        //moveToMain():
+
+        /// 추가 ///
+        if (isFromArchiveFlow) {
+            Intent intent = new Intent(FilterInfoActivity.this, MainActivity.class);
+            intent.putExtra("go_to_archive", true);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        } else {
+            super.onBackPressed();
+        }
     }
 }

@@ -16,17 +16,22 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.appcompat.content.res.AppCompatResources;
 
 import com.example.filter.R;
+import com.example.filter.fragments.filters.BrushFragment;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BrushOverlayView extends View {
+    private final List<Stroke> undoStack = new ArrayList<>();
+    private final List<Stroke> redoStack = new ArrayList<>();
+
     public interface OnStrokeProgressListener {
         void onStrokeProgress(Path deltaPath, float strokeWidthPx, BrushMode mode);
 
@@ -41,7 +46,7 @@ public class BrushOverlayView extends View {
 
     public enum BrushMode {PEN, GLOW, CRAYON, ERASER}
 
-    private class Stroke {
+    public class Stroke {
         final Path path = new Path();
         final Paint corePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         Paint glowPaint = null;
@@ -287,6 +292,8 @@ public class BrushOverlayView extends View {
                     current.path.lineTo(x, y);
                     strokes.add(current);
 
+                    addStroke(current);
+
                     if (progressListener != null) {
                         Path copy = new Path(current.path);
                         progressListener.onStrokeEnd(copy, brushWidthPx, brushMode);
@@ -338,5 +345,56 @@ public class BrushOverlayView extends View {
         current = null;
         visibleCount = 0;
         invalidate();
+    }
+
+
+    private boolean anyEffect = false;
+
+    public void setAnyEffect(boolean anyEffect) {
+        this.anyEffect = anyEffect;
+    }
+
+    public void addStroke(Stroke s) {
+        Log.d("지우개전후차이", "지우개전후차이 = " + anyEffect);
+        if (brushMode == BrushMode.ERASER && !anyEffect) return;
+
+        undoStack.add(s);
+        redoStack.clear();
+    }
+
+    public boolean undo() {
+        if (!canUndo()) return false;
+
+        Stroke stroke = undoStack.remove(undoStack.size() - 1);
+
+        strokes.remove(stroke);
+
+        redoStack.add(stroke);
+
+        visibleCount = strokes.size();
+        invalidate();
+        return true;
+    }
+
+    public boolean redo() {
+        if (!canRedo()) return false;
+
+        Stroke stroke = redoStack.remove(redoStack.size() - 1);
+
+        strokes.add(stroke);
+
+        undoStack.add(stroke);
+
+        visibleCount = strokes.size();
+        invalidate();
+        return true;
+    }
+
+    public boolean canUndo() {
+        return !undoStack.isEmpty();
+    }
+
+    public boolean canRedo() {
+        return !redoStack.isEmpty();
     }
 }

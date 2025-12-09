@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.logging.Filter;
 
 public class FilterListItem implements Serializable {
+    public Long reviewId;
+
     public final Long id; // db의 pk
     public final String filterTitle;
     public final String thumbmailUrl;
@@ -30,6 +32,21 @@ public class FilterListItem implements Serializable {
         this.type = PriceDisplayEnum.NONE;
         this.bookmark = false;
     }
+
+    public FilterListItem(Long reviewId, Long id, String filterTitle,
+                          String thumbmailUrl, String nickname, int price,
+                          Long useCount, PriceDisplayEnum type, boolean bookmark) {
+        this.reviewId = reviewId; // reviewId
+        this.id = id;             // filterId
+        this.filterTitle = filterTitle;
+        this.thumbmailUrl = thumbmailUrl;
+        this.nickname = nickname;
+        this.price = price;
+        this.useCount = useCount;
+        this.type = type;
+        this.bookmark = bookmark;
+    }
+
 
     // 생성자 정의
     public FilterListItem(Long id, String filterTitle, String thumbmailUrl,
