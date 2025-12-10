@@ -27,6 +27,7 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
+import com.example.filter.BuildConfig;
 import com.example.filter.R;
 import com.example.filter.etc.ClickUtils;
 
@@ -76,7 +77,7 @@ public class AIStickerCreateFragment extends Fragment {
             String prompt = editText.getText() != null ? editText.getText().toString().trim() : "";
             if (prompt.isEmpty()) return;
 
-            String baseUrl = "http://13.124.105.243/";
+            String baseUrl = BuildConfig.BASE_URL;
 
             getParentFragmentManager()
                     .beginTransaction()

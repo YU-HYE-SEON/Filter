@@ -3,6 +3,8 @@ package com.example.filter.apis.client;
 import android.content.Context;
 import android.util.Log; // ✅ 로그 사용을 위해 추가
 
+import com.example.filter.BuildConfig;
+
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Interceptor;
@@ -13,7 +15,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class AppRetrofitClient {
-    private static final String BASE_URL = "http://13.124.105.243/";
+    private static final String BASE_URL = BuildConfig.BASE_URL;
     private static final String TAG = "API_LOG"; // ✅ 로그 필터용 태그
     private static Retrofit retrofit;
 
@@ -44,8 +46,6 @@ public class AppRetrofitClient {
                 Request.Builder builder = original.newBuilder();
 
                 if (token != null && !token.isEmpty()) {
-                    // ✅ 토큰 추가 성공 로그
-                    Log.d(TAG, "🟢 토큰 발견! 헤더에 추가함 (" + token.substring(0, Math.min(token.length(), 10)) + "...)");
                     builder.addHeader("Authorization", "Bearer " + token);
                 } else {
                     // ❌ 토큰 누락 경고 로그

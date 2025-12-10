@@ -85,12 +85,6 @@ public class AIStickerLoadingFragment extends Fragment {
         SharedPreferences prefs = requireContext().getSharedPreferences("Auth", Context.MODE_PRIVATE);
         String accessToken = prefs.getString("accessToken", null);
 
-        if (accessToken == null) {
-            Log.e("AISticker", "❌ accessToken이 SharedPreferences에 없습니다");
-        } else {
-            Log.d("AISticker", "✅ Authorization 헤더에 토큰 추가: " + accessToken);
-        }
-
         AIStickerApi api = AIStickreRetrofitClient.create(baseUrl).create(AIStickerApi.class);
         inflight = api.generateSticker("Bearer " + accessToken, new PromptRequest(prompt));
 

@@ -32,6 +32,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
 
+import com.example.filter.BuildConfig;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
 import com.example.filter.activities.MainActivity;
@@ -61,6 +62,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
+
 public class StartActivity extends BaseActivity {
     private GoogleSignInOptions gso;
     private GoogleSignInClient mGoogleSignInClient;
@@ -75,7 +77,7 @@ public class StartActivity extends BaseActivity {
         // ✅ [1] GoogleSignInOptions 초기화
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
-                .requestIdToken(getString(R.string.server_client_id))
+                .requestIdToken(BuildConfig.SERVER_CLIENT_ID)
                 .build();
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
@@ -142,7 +144,7 @@ public class StartActivity extends BaseActivity {
 
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
-                .requestIdToken(getString(R.string.server_client_id))
+                .requestIdToken(BuildConfig.SERVER_CLIENT_ID)
                 .build();
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
@@ -277,21 +279,15 @@ public class StartActivity extends BaseActivity {
             String idToken = account.getIdToken();
 
             if (account == null || idToken == null) {
-                Log.e("GoogleLogin", "GoogleSignInAccount 혹은 idToken이 null");
                 return;
             }
 
             if (account != null) {
-                Log.d("GoogleLogin", "ID Token: " + idToken);
-
                 getSharedPreferences("Auth", MODE_PRIVATE)
                         .edit()
                         .putString("idToken", idToken)
                         .apply();
             }
-
-            Log.d("GoogleLogin", "GoogleSignIn 성공");
-            Log.d("GoogleLogin", "idToken: " + idToken);
 
             sendTokenToBackend(idToken);
 
