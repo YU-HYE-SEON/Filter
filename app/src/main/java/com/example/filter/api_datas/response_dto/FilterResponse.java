@@ -29,6 +29,7 @@ public class FilterResponse implements Serializable {
 
     public Long saveCount;
     public Long useCount;
+    public Long reviewCount;
 
     // ✅ [내부 클래스] 스티커 응답 정보
     public static class FaceStickerResponse implements Serializable {

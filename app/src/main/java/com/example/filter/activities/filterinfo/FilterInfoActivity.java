@@ -373,6 +373,9 @@ public class FilterInfoActivity extends BaseActivity {
         if (useCount != null && filterData != null && filterData.useCount != null) {
             useCount.setText(filterData.useCount + " 사용");
         }
+        if (reviewCount != null && filterData != null && filterData.reviewCount != null) {
+            reviewCount.setText("리뷰 (" + filterData.reviewCount + ")");
+        }
 
         if (imgUrl != null) {
             Glide.with(this).asBitmap().load(imgUrl).fitCenter().into(new CustomTarget<Bitmap>() {
@@ -1062,7 +1065,6 @@ public class FilterInfoActivity extends BaseActivity {
 
                     List<ReviewResponse> reviews = response.body();
                     int size = reviews.size();
-                    if (reviewCount != null) reviewCount.setText("리뷰 (" + size + ")");
 
                     if (noReviewTxt != null)
                         noReviewTxt.setVisibility(size == 0 ? View.VISIBLE : View.GONE);
