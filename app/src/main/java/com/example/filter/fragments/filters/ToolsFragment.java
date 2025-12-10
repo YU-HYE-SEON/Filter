@@ -26,7 +26,6 @@ public class ToolsFragment extends Fragment {
     private ImageView rotationIcon, cropIcon;
     private TextView rotationTxt, cropTxt;
     private ConstraintLayout bottomArea1;
-    //private ImageButton undoColor, redoColor, originalColor;
 
     @Nullable
     @Override

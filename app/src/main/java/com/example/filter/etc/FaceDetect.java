@@ -45,9 +45,6 @@ public class FaceDetect {
                     for (int i = 0; i < faces.size(); i++) {
                         Face face = faces.get(i);
                         rects.add(face.getBoundingBox());
-                        //Log.d("얼굴인식", "========================= photoPreview 속 Face [" + (i + 1) + "] =========================");
-                        //getFaceLandmarks(face);
-                        //getFaceContours(face);
                     }
 
                     if (faceBox != null) {
@@ -77,45 +74,4 @@ public class FaceDetect {
                     detector.close();
                 });
     }
-
-    /*private static void logFaceLandmark(Face face, String label, int type) {
-        FaceLandmark lm = face.getLandmark(type);
-        if (lm == null) {
-            Log.d("얼굴인식", label + " : 인식 실패");
-            return;
-        }
-        PointF p = lm.getPosition();
-        Log.d("얼굴인식", label + " : (" + p.x + ", " + p.y + ")");
-    }
-
-    private static void getFaceLandmarks(Face face) {
-        logFaceLandmark(face, "LEFT_EYE : ", FaceLandmark.LEFT_EYE);
-        logFaceLandmark(face, "RIGHT_EYE : ", FaceLandmark.RIGHT_EYE);
-        logFaceLandmark(face, "NOSE_BASE : ", FaceLandmark.NOSE_BASE);
-        logFaceLandmark(face, "MOUTH_BOTTOM : ", FaceLandmark.MOUTH_BOTTOM);
-        logFaceLandmark(face, "LEFT_CHEEK : ", FaceLandmark.LEFT_CHEEK);
-        logFaceLandmark(face, "RIGHT_CHEEK : ", FaceLandmark.RIGHT_CHEEK);
-    }
-
-    private static void logFaceContour(Face face, String label, int type) {
-        FaceContour contour = face.getContour(type);
-        if (contour == null || contour.getPoints() == null || contour.getPoints().isEmpty()) {
-            Log.d("얼굴인식", label + " : 인식 실패");
-            return;
-        }
-        List<PointF> points = contour.getPoints();
-        StringBuilder sb = new StringBuilder();
-        sb.append(label).append("[");
-        for (int i = 0; i < points.size(); i++) {
-            PointF p = points.get(i);
-            sb.append(String.format("(%.1f, %.1f)", p.x, p.y));
-            if (i < points.size() - 1) sb.append(", ");
-        }
-        sb.append("]");
-        Log.d("얼굴인식", sb.toString());
-    }
-
-    private static void getFaceContours(Face face) {
-        logFaceContour(face, "FaceContour : ", FaceContour.FACE);
-    }*/
 }

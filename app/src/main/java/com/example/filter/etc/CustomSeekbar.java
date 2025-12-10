@@ -29,7 +29,6 @@ public class CustomSeekbar extends View {
     private static final int END_COLOR = Color.parseColor("#C2FA7A"); //초록
 
     public interface OnProgressChangeListener {
-
         void onProgressChanged(CustomSeekbar customSeekbar, int progress);
     }
 

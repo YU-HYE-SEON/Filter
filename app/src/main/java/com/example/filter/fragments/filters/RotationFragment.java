@@ -199,8 +199,5 @@ public class RotationFragment extends Fragment {
             verticalFlip.setImageResource(R.drawable.icon_flip_vertical_no);
             verticalFlipTxt.setTextColor(Color.parseColor("#90989F"));
         }
-
-        /*boolean anyYes = (flippedH || flippedV);
-        activity.setRotationEdited(anyYes);*/
     }
 }

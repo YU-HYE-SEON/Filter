@@ -249,11 +249,6 @@ public class ShapeOverlayView extends View {
         }
     }
 
-    /*public void setImageBounds(RectF rect) {
-        this.imageBounds = new RectF(rect);
-        postInvalidateOnAnimation();
-    }*/
-
     public RectF getMaskRectOnView() {
         return new RectF(maskRect);
     }

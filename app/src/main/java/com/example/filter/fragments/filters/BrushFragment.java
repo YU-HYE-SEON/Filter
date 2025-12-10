@@ -52,14 +52,11 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
 import com.example.filter.activities.filter.FilterActivity;
 import com.example.filter.dialogs.BrushCancelDialog;
 import com.example.filter.dialogs.BrushToStickerDialog;
-import com.example.filter.dialogs.FaceStickerDeleteDialog;
-import com.example.filter.etc.StickerViewModel;
 import com.example.filter.items.StickerType;
 import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.BrushPrefs;
@@ -584,14 +581,12 @@ public class BrushFragment extends Fragment {
             showEraserPanel();
         });
 
-
         requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 cancelBtn.performClick();
             }
         });
-
 
         cancelBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;

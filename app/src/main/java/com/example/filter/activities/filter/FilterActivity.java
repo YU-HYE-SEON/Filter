@@ -16,7 +16,6 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -28,20 +27,17 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.MainActivity;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.apis.UploadApi;
 import com.example.filter.dialogs.FilterEixtDialog;
@@ -55,8 +51,6 @@ import com.example.filter.overlayviews.CropBoxOverlayView;
 import com.example.filter.etc.FGLRenderer;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
 import com.example.filter.etc.StickerStore;
-import com.example.filter.fragments.filters.ColorsFragment;
-import com.example.filter.fragments.filters.StickersFragment;
 import com.example.filter.fragments.filters.ToolsFragment;
 
 import java.io.File;
@@ -656,7 +650,6 @@ public class FilterActivity extends BaseActivity {
 
         return source.copy(source.getConfig(), true);
     }
-
 
     /// 사진 이미지 가져오기 ///
     private void loadImageFromUri(Uri photoUri) {

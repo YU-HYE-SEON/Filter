@@ -45,7 +45,6 @@ public class SalesManageActivity extends BaseActivity {
     private FrameLayout modalOff;
     private SalesListAdapter adapter;
     private View chooseDateOn, chooseSalesOrderOn, dimBackground;
-    private ConstraintLayout chooseDate, chooseSalesOrder;
     private TextView dateTxt, oneWeek, oneMonth, oneYear;
     private ImageView oneWeekCheck, oneMonthCheck, oneYearCheck;
     private TextView txt, register, sales, salesPoint, title;
@@ -194,7 +193,6 @@ public class SalesManageActivity extends BaseActivity {
 
         // 날짜 정렬 선택 모달 셋팅
         chooseDateOn = getLayoutInflater().inflate(R.layout.m_choose_date, null);
-        chooseDate = chooseDateOn.findViewById(R.id.chooseDate);
         oneWeek = chooseDateOn.findViewById(R.id.oneWeek);
         oneMonth = chooseDateOn.findViewById(R.id.oneMonth);
         oneYear = chooseDateOn.findViewById(R.id.oneYear);
@@ -204,7 +202,6 @@ public class SalesManageActivity extends BaseActivity {
 
         // 판매 중인 필터 정렬 선택 모달 셋팅
         chooseSalesOrderOn = getLayoutInflater().inflate(R.layout.m_choose_sales_order, null);
-        chooseSalesOrder = chooseSalesOrderOn.findViewById(R.id.chooseSalesOrder);
         register = chooseSalesOrderOn.findViewById(R.id.register);
         sales = chooseSalesOrderOn.findViewById(R.id.sales);
         salesPoint = chooseSalesOrderOn.findViewById(R.id.salesPoint);
@@ -380,6 +377,7 @@ public class SalesManageActivity extends BaseActivity {
 
         adapter.clear();
         nextPage = 0;
+        isLastPage = false;
         loadSalesList(currentSort, nextPage);
     }
 

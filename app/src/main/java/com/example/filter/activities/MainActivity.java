@@ -71,9 +71,6 @@ public class MainActivity extends BaseActivity {
     // ✅ [수정] Adapter 이름 변경 (FilterAdapter -> FilterListAdapter)
     private FilterListAdapter filterAdapter;
 
-    //private int nextPage = 0;
-    //private boolean isLoading = false;
-
     private ActivityResultLauncher<Intent> detailActivityLauncher;
     public ArrayList<String> searchHistory = new ArrayList<>();
 
@@ -164,7 +161,6 @@ public class MainActivity extends BaseActivity {
 
         // ✅ [수정] FilterListAdapter 사용
         filterAdapter = new FilterListAdapter();
-        // filterAdapter.setMaxItems(MAX_ITEMS); // Adapter 내부에 메서드가 있다면 사용
         recyclerView.setAdapter(filterAdapter);
         recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(12), dp(18)));
 
@@ -318,9 +314,6 @@ public class MainActivity extends BaseActivity {
             home.setImageResource(R.drawable.icon_home_no);
             archive.setImageResource(R.drawable.icon_archive_no);
         });
-
-        // (선택) 앱 시작 시 최신순 자동 로드하려면 아래 주석 해제
-        // newest.performClick();
     }
 
     // 버튼 UI 상태 변경 헬퍼

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -15,7 +14,6 @@ import com.example.filter.activities.BaseActivity;
 import com.example.filter.etc.ClickUtils;
 
 public class LoginFailActivity extends BaseActivity {
-    private TextView txt;
     private ConstraintLayout email;
     private ImageButton btn;
 
@@ -24,7 +22,6 @@ public class LoginFailActivity extends BaseActivity {
         SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_login_fail);
-        txt = findViewById(R.id.txt);
         email = findViewById(R.id.email);
         btn = findViewById(R.id.btn);
 

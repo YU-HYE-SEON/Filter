@@ -32,10 +32,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.MainActivity;
 import com.example.filter.activities.filterinfo.*;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
@@ -54,6 +54,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class RegisterActivity extends BaseActivity {
+    private boolean isDataLoading = false;
+    private boolean loadingAnimFinishedOnce = false;
+    private int loadingAnimPlayCount = 0;
+    private final int MIN_PLAY_COUNT = 1;
+    private FrameLayout loadingContainer;
+    private LottieAnimationView loadingAnim;
     private FrameLayout endFrame;
 
     // 데이터 객체
@@ -119,6 +125,9 @@ public class RegisterActivity extends BaseActivity {
         registerBtn = findViewById(R.id.registerBtn);
         backBtn = findViewById(R.id.backBtn);
         endFrame = findViewById(R.id.endFrame);
+        loadingContainer = findViewById(R.id.loadingContainer);
+        loadingAnim = findViewById(R.id.loadingAnim);
+        loadingContainer.setVisibility(View.GONE);
 
         // 2. 데이터 수신
         filterData = getIntent().getParcelableExtra("filter_data");
@@ -148,6 +157,7 @@ public class RegisterActivity extends BaseActivity {
             registerBtn.setEnabled(false);
             registerBtn.setClickable(false);
             endFrame.setVisibility(View.VISIBLE);
+            showLoading();
 
             // 유효성 검사
             if (!validateInputs())
@@ -565,6 +575,9 @@ public class RegisterActivity extends BaseActivity {
                         e.printStackTrace();
                     }
                 }
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
 
             @Override
@@ -575,12 +588,18 @@ public class RegisterActivity extends BaseActivity {
 
                 Log.e("Register", "네트워크 오류", t);
                 Toast.makeText(RegisterActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+
+                isDataLoading = false;
+                checkAndHideLoading();
             }
         });
     }
 
     // ✅ [추가] 필터 상세 화면으로 이동하는 메서드
     private void moveToFilterInfo(FilterResponse response) {
+        loadingContainer.setVisibility(View.VISIBLE);
+        findViewById(android.R.id.content).setVisibility(View.INVISIBLE);
+
         Intent intent = new Intent(RegisterActivity.this, FilterInfoActivity.class);
         // 뒤로가기 했을 때 다시 등록화면으로 오지 않게 플래그 설정 (선택사항)
         // intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -597,6 +616,7 @@ public class RegisterActivity extends BaseActivity {
         intent.putExtra("isFaceStickerExist", isFaceStickerExist);
 
         startActivity(intent);
+        overridePendingTransition(0, 0);
         finish(); // 등록 화면 종료
     }
 
@@ -858,6 +878,42 @@ public class RegisterActivity extends BaseActivity {
         } else {
             registerBtn.setBackgroundResource(R.drawable.btn_register_no);
             registerBtn.setTextColor(Color.parseColor("#90989F"));
+        }
+    }
+
+    private void showLoading() {
+        isDataLoading = true;
+        loadingAnimPlayCount = 0;
+        loadingAnimFinishedOnce = false;
+
+        loadingContainer.setVisibility(View.VISIBLE);
+        loadingAnim.setProgress(0f);
+        loadingAnim.setSpeed(2.5f);
+
+        loadingAnim.addAnimatorUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            if (progress >= 0.33f && !isDataLoading && !loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
+        });
+
+        loadingAnim.playAnimation();
+    }
+
+    private void hideLoading() {
+        if (loadingContainer.getVisibility() == View.VISIBLE) {
+            loadingAnim.cancelAnimation();
+            loadingContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private void checkAndHideLoading() {
+        if (!isDataLoading && loadingAnimPlayCount >= MIN_PLAY_COUNT) {
+            if (!loadingAnimFinishedOnce) {
+                loadingAnimFinishedOnce = true;
+                hideLoading();
+            }
         }
     }
 }

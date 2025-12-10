@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageButton;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -99,11 +98,6 @@ public class PointChargeActivity extends BaseActivity {
         buyPointBtn.setOnClickListener(v -> {
             showChargeConfirmDialog();
         });
-
-        //포인트 0으로 초기화
-        //getSharedPreferences("point_history", MODE_PRIVATE).edit().clear().apply();
-        //getSharedPreferences("point_buy_history", MODE_PRIVATE).edit().clear().apply();
-        //getSharedPreferences("points", MODE_PRIVATE).edit().clear().apply();
     }
 
     private void selectPoint(int index) {
@@ -122,13 +116,6 @@ public class PointChargeActivity extends BaseActivity {
 
         buyPointBtn.setEnabled(true);
         buyPointBtn.setBackgroundResource(R.drawable.btn_buy_point_yes);
-    }
-
-    private void addPoint(int point) {
-        SharedPreferences sp = getSharedPreferences("points", MODE_PRIVATE);
-        int current = sp.getInt("current_point", 0);
-        sp.edit().putInt("before_point", current).apply();
-        sp.edit().putInt("current_point", current + point).apply();
     }
 
     private void updateCurrentPoint() {

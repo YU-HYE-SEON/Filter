@@ -83,8 +83,6 @@ public class SNSidActivity extends BaseActivity {
                 instaId = instaEditText.getText().toString().replace("@","");
 
                 editing = false;
-
-                //instaId = s.toString();
             }
         });
 
@@ -121,8 +119,6 @@ public class SNSidActivity extends BaseActivity {
                 xId = twitterEditText.getText().toString().replace("@","");
 
                 editing = false;
-
-                //xId = s.toString();
             }
         });
 

@@ -103,7 +103,6 @@ public class CropFragment extends Fragment {
 
         restoreLastSelection(activity);
 
-
         activity.getOnBackPressedDispatcher().addCallback(activity, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -184,18 +183,6 @@ public class CropFragment extends Fragment {
                 activity.lockInCurrentCropMode();
 
                 activity.getRenderer().setOnBitmapCaptureListener(fullBitmap -> {
-                    /*int x = cropRect.left;
-                    int y = cropRect.top;
-                    int width = cropRect.width();
-                    int height = cropRect.height();
-
-                    //유효 범위 체크
-                    if (x < 0 || y < 0
-                            || width <= 0 || height <= 0
-                            || x + width > fullBitmap.getWidth()
-                            || y + height > fullBitmap.getHeight()) {
-                        return;
-                    }*/
                     int x = cropRect.left - vpX;
                     int y = cropRect.top - vpY;
                     int width = cropRect.width();

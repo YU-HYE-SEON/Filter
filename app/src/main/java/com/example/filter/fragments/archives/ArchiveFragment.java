@@ -94,10 +94,6 @@ public class ArchiveFragment extends Fragment {
                             filterAdapter.updateBookmarkState(changedFilterId, isBookmarkedNewState);
                         }
                     }
-
-                    if (currentType == Type.CREATE) {
-                        loadCreate();
-                    }
                 });
 
         StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
@@ -453,6 +449,9 @@ public class ArchiveFragment extends Fragment {
                 break;
             case BUY:
                 loadBuy();
+                break;
+            case CREATE:
+                loadCreate();
                 break;
             case REVIEW:
                 loadReview();

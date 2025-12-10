@@ -19,7 +19,6 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.filterinfo.FilterInfoActivity;
 import com.example.filter.api_datas.response_dto.ReviewResponse;
 import com.example.filter.apis.ReviewApi;
 import com.example.filter.apis.client.AppRetrofitClient;
@@ -217,6 +216,7 @@ public class ReviewInfoActivity extends BaseActivity {
         Intent intent = new Intent(ReviewInfoActivity.this, ReviewActivity.class);
         intent.putExtra("filterId", filterId);
         startActivity(intent);
+        overridePendingTransition(0, 0);
         finish();
     }
 

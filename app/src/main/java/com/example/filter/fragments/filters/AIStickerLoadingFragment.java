@@ -14,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -40,10 +39,8 @@ public class AIStickerLoadingFragment extends Fragment {
     private String baseUrl;
     private String prompt;
     private Call<AIStickerResponse> inflight;
-    private static final String IMAGE_PATH = "image_path";
     private View logo;
     private ImageView F, e1, e2, l, star, e3, m;
-    private LinearLayout charRow;
     private final List<ValueAnimator> anims = new ArrayList<>();
     private static final long STEP_MS = 350;
     private static final float AMPLITUDE_DP = 100;

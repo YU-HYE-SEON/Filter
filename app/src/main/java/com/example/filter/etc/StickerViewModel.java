@@ -2,7 +2,6 @@ package com.example.filter.etc;
 
 import android.util.SparseArray;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -22,34 +21,10 @@ public class StickerViewModel extends ViewModel {
         public float x, y, rotation;
         public int width, height;
     }
-
-    private final Map<View, StickerState> originalStates = new HashMap<>();
-
-    public void saveOriginalState(View v, StickerState s) {
-        originalStates.put(v, s);
-    }
-
-    public StickerState getOriginalState(View v) {
-        return originalStates.get(v);
-    }
-
-    public void clearOriginalStates() {
-        originalStates.clear();
-    }
-
-
-    //private final SparseArray<View> tempViews = new SparseArray<>();
     private final SparseArray<ArrayList<View>> cloneGroups = new SparseArray<>();
     private final MutableLiveData<FaceStickerData> faceStickerLiveData = new MutableLiveData<>();
     private final MutableLiveData<Integer> faceStickerDataToDelete = new MutableLiveData<>();
-
-    /*public void setTempView(int groupId, View stickerFrame) {
-        tempViews.put(groupId, stickerFrame);
-    }
-
-    public View getTempView(int groupId) {
-        return tempViews.get(groupId);
-    }*/
+    private final Map<View, StickerState> originalStates = new HashMap<>();
 
     public void addCloneGroup(int groupId, View cloneSticker) {
         ArrayList<View> list = cloneGroups.get(groupId);
@@ -61,34 +36,12 @@ public class StickerViewModel extends ViewModel {
             cloneSticker.setTag(R.id.tag_sticker_clone, groupId);
             list.add(cloneSticker);
         }
-
-        //StringBuilder sb = new StringBuilder();
-        //for (View v : list) {
-        //    sb.append(v.hashCode()).append(" ");
-        //}
-        //int seesionId = EditStickerFragment.sessionId;
-        //Log.d("스티커", String.format("[세션ID = %d] | [클론스티커ID = %d] | 개수 = %d, 구성 = %s", seesionId, groupId, list.size(), sb.toString()));
     }
 
     public List<View> getCloneGroup(int groupId) {
         ArrayList<View> list = cloneGroups.get(groupId);
         if (list == null) return Collections.emptyList();
         return new ArrayList<>(list);
-    }
-
-    public void removeCloneGroup(int groupId, ViewGroup parent) {
-        ArrayList<View> list = cloneGroups.get(groupId);
-        if (list == null) return;
-
-        if (parent != null) {
-            for (View v : list) {
-                if (v != null && v.getParent() == parent) {
-                    parent.removeView(v);
-                }
-            }
-        }
-        list.clear();
-        cloneGroups.remove(groupId);
     }
 
     public void setFaceStickerData(FaceStickerData data) {
@@ -105,5 +58,13 @@ public class StickerViewModel extends ViewModel {
 
     public LiveData<Integer> getFaceStickerDataToDelete() {
         return faceStickerDataToDelete;
+    }
+
+    public void saveOriginalState(View v, StickerState s) {
+        originalStates.put(v, s);
+    }
+
+    public StickerState getOriginalState(View v) {
+        return originalStates.get(v);
     }
 }

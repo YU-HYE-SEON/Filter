@@ -42,7 +42,6 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
     }
 
     private final List<FilterListItem> items = new ArrayList<>();
-    private int maxItems = Integer.MAX_VALUE;
     private boolean reviewMode = false;
 
     public void setReviewMode(boolean reviewMode) {
@@ -65,15 +64,6 @@ public class FilterListAdapter extends RecyclerView.Adapter<FilterListAdapter.VH
         this.items.addAll(newItems);
         notifyDataSetChanged();
     }
-
-
-    public void addItems(List<FilterListItem> items) {
-        int start = this.items.size();
-        this.items.addAll(items);
-        notifyItemRangeInserted(start, items.size());
-    }
-
-
 
     public void updateItem(int position, FilterListItem newItem) {
         if (position >= 0 && position < items.size()) {

@@ -74,10 +74,6 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
         }
     }
 
-    public int getSelectedPos() {
-        return selectedPos;
-    }
-
     public StickerItem getItem(int pos) {
         if (pos >= 0 && pos < items.size()) return items.get(pos);
         return null;
@@ -111,7 +107,6 @@ public class MyStickersAdapter extends RecyclerView.Adapter<MyStickersAdapter.Vi
 
         Glide.with(h.itemView.getContext())
                 .load(imageSource)
-                // .placeholder(R.drawable.bg_trans_pattern) // 로딩 중 표시할 이미지 (선택)
                 .error(R.drawable.btn_close) // 에러 시 표시할 이미지 (선택)
                 .into(h.stickerImage);
 

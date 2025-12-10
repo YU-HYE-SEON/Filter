@@ -238,8 +238,6 @@ public class SearchFragment extends Fragment {
 
                     if (!results.isEmpty()) {
                         updateRecyclerVisibility();
-                        //textView.setVisibility(View.GONE);
-                        //recyclerView.setVisibility(View.VISIBLE);
 
                         List<FilterListItem> itemsToShow = convertResponseToFilterListItems(results);
                         adapter.setItems(itemsToShow);
@@ -248,16 +246,12 @@ public class SearchFragment extends Fragment {
                         searchResults.addAll(results);
                     } else {
                         updateRecyclerVisibility();
-                        //adapter.clear();
-                        //showEmptyResult();
                     }
                 } else {
                     Log.e("검색", "검색 조회 실패: " + response.code());
                     Toast.makeText(requireContext(), "정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
 
                     updateRecyclerVisibility();
-                    //adapter.clear();
-                    //showEmptyResult();
                 }
 
                 isDataLoading = false;
@@ -266,10 +260,6 @@ public class SearchFragment extends Fragment {
 
             @Override
             public void onFailure(Call<PageResponse<FilterListResponse>> call, Throwable t) {
-                //showEmptyResult();
-
-                //adapter.clear();
-                //showEmptyResult();
                 Log.e("검색", "통신 오류", t);
 
                 updateRecyclerVisibility();
@@ -337,7 +327,6 @@ public class SearchFragment extends Fragment {
     }
 
     private View chooseOrderOn, dimBackground;
-    private ConstraintLayout chooseOrder;
     private TextView recommend, sales, price, save, review;
     private ImageView recommendCheck, salesCheck, priceCheck, saveCheck, reviewCheck;
     private boolean ischooseOrderVisible = false;
@@ -345,7 +334,6 @@ public class SearchFragment extends Fragment {
     private void setupChooseOrder() {
         FrameLayout rootView = requireActivity().findViewById(R.id.chooseOrderOff);
         chooseOrderOn = getLayoutInflater().inflate(R.layout.m_choose_order, null);
-        chooseOrder = chooseOrderOn.findViewById(R.id.chooseOrder);
         recommend = chooseOrderOn.findViewById(R.id.recommend);
         sales = chooseOrderOn.findViewById(R.id.sales);
         price = chooseOrderOn.findViewById(R.id.price);

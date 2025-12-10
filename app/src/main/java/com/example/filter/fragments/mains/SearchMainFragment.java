@@ -89,7 +89,6 @@ public class SearchMainFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         MainActivity activity = (MainActivity) requireActivity();
-        //MainActivity activity = (MainActivity) requireActivity();
         adapter = new SearchKeywordAdapter(activity.searchHistory);
         recyclerView.setAdapter(adapter);
 
@@ -137,7 +136,6 @@ public class SearchMainFragment extends Fragment {
         adapter.setOnKeywordClickListener(keyword -> {
             adapter.addItem(keyword);
             MainActivity act = (MainActivity) requireActivity();
-            //MainActivity act = (MainActivity) requireActivity();
             act.searchHistory.remove(keyword);
             act.searchHistory.add(0, keyword);
             act.saveSearchHistory();
@@ -153,7 +151,6 @@ public class SearchMainFragment extends Fragment {
             if (keyword != null && !keyword.isEmpty()) {
                 adapter.addItem(keyword);
                 MainActivity act = (MainActivity) requireActivity();
-                //MainActivity act = (MainActivity) requireActivity();
                 act.searchHistory.remove(keyword);
                 act.searchHistory.add(0, keyword);
                 act.saveSearchHistory();
@@ -244,7 +241,6 @@ public class SearchMainFragment extends Fragment {
         if (searchFrame != null) {
             searchFrame.setVisibility(View.GONE);
         }
-        //hideKeypadAndClearFocus();
     }
 
     private boolean isPoint(MotionEvent ev) {

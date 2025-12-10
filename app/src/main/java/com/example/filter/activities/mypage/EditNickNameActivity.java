@@ -1,6 +1,5 @@
 package com.example.filter.activities.mypage;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -20,7 +19,6 @@ import androidx.core.splashscreen.SplashScreen;
 
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.activities.start.OnBoardingActivity;
 import com.example.filter.apis.UserApi;
 import com.example.filter.apis.client.AppRetrofitClient;
 import com.example.filter.etc.ClickUtils;

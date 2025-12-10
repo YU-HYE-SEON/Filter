@@ -33,11 +33,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.VH> {
         notifyDataSetChanged();
     }
 
-    public void clearItems() {
-        items.clear();
-        notifyDataSetChanged();
-    }
-
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

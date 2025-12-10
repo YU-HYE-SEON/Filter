@@ -90,7 +90,6 @@ public class ApplyFilterActivity extends BaseActivity {
     private ImageButton backBtn;
     private TextView saveSuccessTxt;
     private FrameLayout photoContainer, stickerOverlay;
-    private ConstraintLayout bottomArea;
     private AppCompatButton toGalleryBtn, toRegisterReviewBtn;
     private GLSurfaceView glSurfaceView;
     private FGLRenderer renderer;
@@ -98,7 +97,6 @@ public class ApplyFilterActivity extends BaseActivity {
     private Bitmap finalBitmapWithStickers = null;
     private FrameLayout reviewPopOff;
     private View reviewPopOn, dimBackground;
-    private ConstraintLayout reviewPop;
     private ImageView iconSnsNone, iconSnsInsta, iconSnsTwitter;
     private TextView snsId;
     private AppCompatButton reviewBtn;
@@ -149,7 +147,6 @@ public class ApplyFilterActivity extends BaseActivity {
         saveSuccessTxt = findViewById(R.id.saveSuccessTxt);
         photoContainer = findViewById(R.id.photoContainer);
         stickerOverlay = findViewById(R.id.stickerOverlay);
-        bottomArea = findViewById(R.id.bottomArea);
         toGalleryBtn = findViewById(R.id.toGalleryBtn);
         toRegisterReviewBtn = findViewById(R.id.toRegisterReviewBtn);
         reviewPopOff = findViewById(R.id.reviewPopOff);
@@ -200,8 +197,6 @@ public class ApplyFilterActivity extends BaseActivity {
                 Bitmap finalBitmap = baseBitmap.copy(Bitmap.Config.ARGB_8888, true);
                 Canvas canvas = new Canvas(finalBitmap);
 
-                int vX = renderer.getViewportX();
-                int vY = renderer.getViewportY();
                 int vW = renderer.getViewportWidth();
                 int vH = renderer.getViewportHeight();
 
@@ -212,14 +207,11 @@ public class ApplyFilterActivity extends BaseActivity {
                 Canvas overlayCanvas = new Canvas(overlayBitmap);
                 stickerOverlay.draw(overlayCanvas);
 
-                //Rect src = new Rect(vX, vY, vX + vW, vY + vH);
-                //Rect dst = new Rect(0, 0, finalBitmap.getWidth(), finalBitmap.getHeight());
                 canvas.drawBitmap(overlayBitmap, 0, 0, null);
                 overlayBitmap.recycle();
 
                 finalBitmapWithStickers = finalBitmap;
 
-                //사진 저장 메서드 호출
                 if (isStickerApplied && !isSavedToGallery) {
                     ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
@@ -290,9 +282,7 @@ public class ApplyFilterActivity extends BaseActivity {
 
             Bitmap faceDetectTarget = (this.originalImageBitmap != null) ? this.originalImageBitmap : imageToDisplay;
             detectFaces(faceDetectTarget, (faces, originalBitmap) -> {
-                if (faces.isEmpty()) {
-                    return;
-                }
+                if (faces.isEmpty()) return;
             });
         }
 
@@ -326,7 +316,6 @@ public class ApplyFilterActivity extends BaseActivity {
     private void setupReviewPop() {
         FrameLayout rootView = findViewById(R.id.reviewPopOff);
         reviewPopOn = getLayoutInflater().inflate(R.layout.m_review_pop, null);
-        reviewPop = reviewPopOn.findViewById(R.id.reviewPop);
         iconSnsNone = reviewPopOn.findViewById(R.id.iconSnsNone);
         iconSnsInsta = reviewPopOn.findViewById(R.id.iconSnsInsta);
         iconSnsTwitter = reviewPopOn.findViewById(R.id.iconSnsTwitter);
@@ -379,7 +368,6 @@ public class ApplyFilterActivity extends BaseActivity {
         });
 
         ClickUtils.clickDim(reviewBtn);
-        /// 중첩 클릭되면 안 됨 ///
         reviewBtn.setOnClickListener(v -> {
             reviewBtn.setEnabled(false);
             reviewBtn.setClickable(false);
@@ -651,8 +639,6 @@ public class ApplyFilterActivity extends BaseActivity {
                     applyAdjustments(mapColorAdjustments(data.colorAdjustments));
 
                     if (data.stickerImageNoFaceUrl != null) {
-                        //applyBrushStickerImage(stickerOverlay, data.stickerImageNoFaceUrl);
-
                         glSurfaceView.postDelayed(() -> {
                             final int vW = renderer.getViewportWidth();
                             final int vH = renderer.getViewportHeight();

@@ -1,7 +1,6 @@
 package com.example.filter.activities.filter;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -28,12 +27,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.example.filter.R;
 import com.example.filter.activities.BaseActivity;
-import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.ClickUtils;
 import com.example.filter.items.StickerType;
 import com.example.filter.overlayviews.LassoOverlayView;
@@ -141,7 +138,6 @@ public class LoadActivity extends BaseActivity {
 
             RectF imgRect = getImageDisplayRect(loadImage);
             if (imgRect != null) {
-                //shapeOverlay.setImageBounds(imgRect);
                 lassoOverlay.setImageBounds(imgRect);
             }
         });
@@ -385,13 +381,6 @@ public class LoadActivity extends BaseActivity {
                 });
             }).start();
         });
-
-        /*getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                showExitConfirmDialog();
-            }
-        });*/
     }
 
     private void loadImageFromUri(Uri photoUri) {
@@ -714,23 +703,6 @@ public class LoadActivity extends BaseActivity {
         }
     }
 
-    /*private void showExitConfirmDialog() {
-        new FilterEixtDialog(this, new FilterEixtDialog.FilterEixtDialogListener() {
-            @Override
-            public void onKeep() {
-            }
-
-            @Override
-            public void onExit() {
-                Intent i = new Intent(LoadActivity.this, FilterActivity.class);
-                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                i.putExtra("EXIT_BY_CHILD", true);
-                startActivity(i);
-                finish();
-            }
-        }).show();
-    }*/
-
     private float spacing(MotionEvent e) {
         if (e.getPointerCount() < 2) return 0f;
         float dx = e.getX(0) - e.getX(1);
@@ -791,7 +763,6 @@ public class LoadActivity extends BaseActivity {
     private void updateOverlaysImageBounds() {
         RectF r = getImageDisplayRect(loadImage);
         if (r != null) {
-            //shapeOverlay.setImageBounds(r);
             lassoOverlay.setImageBounds(r);
         }
     }

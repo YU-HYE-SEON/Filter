@@ -85,7 +85,6 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
     private Bitmap finalBitmapWithStickers = null;
     private FrameLayout modalOff;
     private View buyFilterOn, buyFilterSuccessOn, dimBackground;
-    private ConstraintLayout buyFilter, buyFilterSuccess;
     private ImageButton buyBtn, useBtn, closeBtn;
     private boolean isModalVisible = false, isBuy = false;
     private TextView filterTitle, point, currentPoint1, currentPoint2, useBtnTxt, closeBtnTxt;
@@ -292,14 +291,12 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
     private void setupModal() {
         FrameLayout rootView = findViewById(R.id.modalOff);
         buyFilterOn = getLayoutInflater().inflate(R.layout.m_buy_filter, null);
-        buyFilter = buyFilterOn.findViewById(R.id.buyFilter);
         filterTitle = buyFilterOn.findViewById(R.id.filterTitle);
         point = buyFilterOn.findViewById(R.id.point);
         currentPoint1 = buyFilterOn.findViewById(R.id.currentPoint1);
         buyBtn = buyFilterOn.findViewById(R.id.buyBtn);
 
         buyFilterSuccessOn = getLayoutInflater().inflate(R.layout.m_buy_filter_success, null);
-        buyFilterSuccess = buyFilterSuccessOn.findViewById(R.id.buyFilterSuccess);
         currentPoint2 = buyFilterSuccessOn.findViewById(R.id.currentPoint2);
         useBtn = buyFilterSuccessOn.findViewById(R.id.useBtn);
         useBtnTxt = buyFilterSuccessOn.findViewById(R.id.useBtnTxt);
@@ -552,8 +549,6 @@ public class Pre_ApplyFilterActivity extends BaseActivity {
                         applyAdjustments(mapColorAdjustments(data.colorAdjustments));
 
                         if (data.stickerImageNoFaceUrl != null) {
-                            //applyBrushStickerImage(stickerOverlay, data.stickerImageNoFaceUrl);
-
                             glSurfaceView.postDelayed(() -> {
                                 final int vW = renderer.getViewportWidth();
                                 final int vH = renderer.getViewportHeight();

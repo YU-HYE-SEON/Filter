@@ -306,7 +306,6 @@ public class ColorsFragment extends Fragment {
         FilterActivity activity = (FilterActivity) getActivity();
         if (activity != null) {
             activity.refreshOriginalColorButton();
-            //activity.requestUpdateBackGate();
             activity.updateSaveButtonState();
         }
     }
@@ -317,7 +316,6 @@ public class ColorsFragment extends Fragment {
         if (!hidden) {
             FilterActivity activity = (FilterActivity) getActivity();
             if (activity != null) {
-                //activity.requestUpdateBackGate();
                 refreshColorButtons();
                 updateColorIcons();
                 activity.updateSaveButtonState();

@@ -217,41 +217,29 @@ public class EditStickerFragment extends Fragment {
     public void applyPendingMeta() {
         if (pendingMeta != null) {
             FilterActivity activity = (FilterActivity) requireActivity();
-            //Bundle args = getArguments();
-            //boolean fromFace = args != null && args.getBoolean("IS_FACE", false);
             faceBox = new FaceBoxOverlayView(requireContext());
             photoContainer.addView(faceBox, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             activity.getPhotoPreview().queueEvent(() -> {
                 Bitmap bmp = activity.getRenderer().getCurrentBitmap();
                 activity.runOnUiThread(() -> FaceDetect.detectFaces(bmp, faceBox, (faces, bitmap) -> {
                     if (faces.isEmpty()) {
-                        //if (fromFace) {
                         showToast("얼굴을 감지하지 못했습니다");
-                        //}
                         return;
                     }
 
-                    if (!faces.isEmpty() /*&& args != null*/) {
+                    if (!faces.isEmpty()) {
                         StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
                         int groupId = FaceStickerFragment.stickerId;
-                        //View stickerFrame = viewModel.getTempView(groupId);
-                        //String stickerPath = args.getString("stickerUrl");
 
                         /// ⭐ Bundle로 넘겨주던 serverId 방식을 바꿨습니다 ⭐ ///
                         // ✅ [추가] 인자에서 서버 DB ID 가져오기 (없으면 -1)
                         // (이전 프래그먼트에서 "sticker_db_id"라는 키로 넘겨줘야 함)
-                        //long serverId = args.getLong("sticker_db_id", -1L);
                         long serverId = (pendingServerId != null ? pendingServerId : -1L);
 
                         Log.e("SERVER_ID_TEST", "applyPendingMeta(): serverId=" + serverId);
 
-                        //Log.d("얼굴스티커", String.format("에딧스티커프래그먼트 | relX = %.1f, relY = %.1f, relW = %.1f, relH = %.1f, rot = %.1f", pendingMeta.relX, pendingMeta.relY, pendingMeta.relW, pendingMeta.relH, pendingMeta.rot));
-
                         List<float[]> placement = StickerMeta.recalculate(faces, bitmap, stickerOverlay, pendingMeta, requireContext());
                         requireActivity().runOnUiThread(() -> {
-                            //viewModel.removeCloneGroup(groupId, stickerOverlay);
-                            //viewModel.setFaceStickerDataToDelete(groupId);
-
                             for (float[] p : placement) {
                                 View faceSticker = StickerMeta.cloneSticker(stickerOverlay, stickerUrl, requireContext(), p);
                                 if (faceSticker != null) {
@@ -284,28 +272,6 @@ public class EditStickerFragment extends Fragment {
                             }
 
                             showToast("얼굴 인식 성공");
-
-                            /// ⭐ 스티커이미지를 경로로 넘겨주는 방식으로 바꿔서 비트맵부분 필요없어졌어요 ⭐ ///
-                        /*ImageView stickerImage = stickerFrame.findViewById(R.id.stickerImage);
-                            Bitmap stickerBitmap = null;
-                            if (stickerImage != null && stickerImage.getDrawable() != null) {
-                                stickerImage.setDrawingCacheEnabled(true);
-                                stickerBitmap = Bitmap.createBitmap(stickerImage.getDrawingCache());
-                                stickerImage.setDrawingCacheEnabled(false);
-                            }
-                            String stickerPath = null;
-                            if (stickerBitmap != null) {
-                                try {
-                                    File file = new File(requireContext().getCacheDir(),
-                                            "face_sticker_" + System.currentTimeMillis() + ".png");
-                                    FileOutputStream out = new FileOutputStream(file);
-                                    stickerBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                                    out.close();
-                                    stickerPath = file.getAbsolutePath();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }*/
 
                             // ✅ [수정] FaceStickerData에 serverId 포함하여 생성
                             // (FaceStickerData 생성자를 수정하지 않았다면 serverId 부분만 지우세요)
@@ -743,9 +709,6 @@ public class EditStickerFragment extends Fragment {
             @Override
             public void onYes() {
                 StickerViewModel viewModel = new ViewModelProvider(requireActivity()).get(StickerViewModel.class);
-                //viewModel.invisibleCloneGroup(gid, stickerOverlay);
-                //viewModel.removeCloneGroup(gid, stickerOverlay);
-                //viewModel.setFaceStickerDataToDelete(gid);
                 List<View> list = viewModel.getCloneGroup(gid);
                 for (View v : list) {
                     v.setVisibility(View.INVISIBLE);

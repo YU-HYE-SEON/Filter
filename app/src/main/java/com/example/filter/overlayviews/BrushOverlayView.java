@@ -16,14 +16,12 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.appcompat.content.res.AppCompatResources;
 
 import com.example.filter.R;
-import com.example.filter.fragments.filters.BrushFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -204,9 +202,7 @@ public class BrushOverlayView extends View {
             int b = c & 0xFF;
 
             int luminance = (int) (0.299f * r + 0.587f * g + 0.114f * b);
-            //int alphaStrength = 255;
             int alpha = (255 - luminance);
-            //alpha = (alpha * alphaStrength) / 255;
             if (alpha < 0) alpha = 0;
             if (alpha > 255) alpha = 255;
 

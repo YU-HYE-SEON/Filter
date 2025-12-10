@@ -2,25 +2,21 @@ package com.example.filter.fragments.filters;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.filter.R;
-import com.example.filter.dialogs.FilterEixtDialog;
 import com.example.filter.etc.ClickUtils;
 
 import java.io.File;
@@ -79,8 +75,6 @@ public class AIStickerSuccessFragment extends Fragment {
                 Glide.with(this)
                         .load(imagePath)
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        /*.placeholder(R.drawable.loading_placeholder) // 로딩 중 이미지 (optional)*/
-                        /*.error(R.drawable.error_placeholder)         // 실패 시 이미지 (optional)*/
                         .into(aiStickerImage);
             } else {
                 // ✅ 로컬 파일 경로 로드 (기존 방식 유지)
@@ -130,23 +124,5 @@ public class AIStickerSuccessFragment extends Fragment {
 
     public @Nullable String getCurrentImagePath() {
         return imagePath;
-    }
-
-    private void closeSelfSafely() {
-        View root = getView();
-        if (root != null) {
-            FrameLayout full = requireActivity().findViewById(R.id.fullScreenContainer);
-            ConstraintLayout filter = requireActivity().findViewById(R.id.filterActivity);
-            ConstraintLayout main = requireActivity().findViewById(R.id.main);
-
-            if (full != null) full.setVisibility(View.GONE);
-            if (filter != null) filter.setVisibility(View.VISIBLE);
-            if (main != null) main.setBackgroundColor(Color.BLACK);
-        }
-
-        requireActivity().getSupportFragmentManager()
-                .beginTransaction()
-                .remove(this)
-                .commitAllowingStateLoss();
     }
 }

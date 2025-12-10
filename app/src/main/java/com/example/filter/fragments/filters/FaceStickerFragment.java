@@ -200,8 +200,6 @@ public class FaceStickerFragment extends Fragment {
                 ((EditStickerFragment) previousFragment).setFaceMeta(meta, stickerUrl, serverId);
                 ((EditStickerFragment) previousFragment).applyPendingMeta();
 
-                //Log.d("얼굴스티커", String.format("페이스스티커프래그먼트 | relX = %.1f, relY = %.1f, relW = %.1f, relH = %.1f, rot = %.1f", meta.relX, meta.relY, meta.relW, meta.relH, meta.rot));
-
                 stickerId++;
             }
 
@@ -211,7 +209,6 @@ public class FaceStickerFragment extends Fragment {
                     .setCustomAnimations(R.anim.slide_up, 0)
                     .remove(FaceStickerFragment.this)
                     .show(previousFragment)
-                    //.commit();
                     .commitAllowingStateLoss();
         }
         Controller.removeStickerFrame(stickerFrame);

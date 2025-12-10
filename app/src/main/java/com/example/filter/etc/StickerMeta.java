@@ -17,7 +17,6 @@ import com.example.filter.activities.apply.ApplyFilterActivity;
 import com.example.filter.activities.apply.CameraActivity;
 import com.example.filter.activities.apply.Pre_ApplyFilterActivity;
 import com.example.filter.activities.filter.FilterActivity;
-import com.example.filter.fragments.filters.FaceStickerFragment;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceLandmark;
 
@@ -47,7 +46,6 @@ public class StickerMeta {
             float offsetX = (vpW - bmpW * scale) / 2f;
             float offsetY = (vpH - bmpH * scale) / 2f;
 
-
             Rect faceBox = face.getBoundingBox();
             FaceLandmark nose = face.getLandmark(FaceLandmark.NOSE_BASE);
             FaceLandmark leftEye = face.getLandmark(FaceLandmark.LEFT_EYE);
@@ -59,19 +57,15 @@ public class StickerMeta {
             float faceW = faceBox.width();
             float faceH = faceBox.height();
 
-            String center = "바운딩 박스";
             if (nose != null) {
                 faceCenterX = nose.getPosition().x;
                 faceCenterY = nose.getPosition().y;
-                center = "코";
             } else if (leftEye != null && rightEye != null) {
                 faceCenterX = (leftEye.getPosition().x + rightEye.getPosition().x) / 2;
                 faceCenterY = (leftEye.getPosition().y + rightEye.getPosition().y) / 2;
-                center = "눈";
             } else if (mouth != null) {
                 faceCenterX = mouth.getPosition().x;
                 faceCenterY = mouth.getPosition().y;
-                center = "입";
             }
 
             float faceCenterX_view = (faceCenterX * scale) + offsetX;
@@ -97,8 +91,6 @@ public class StickerMeta {
             relH = stickerH / faceH_view;
             rot = stickerR % 360f;
             if (rot < 0) rot += 360f;
-
-            //Log.d("얼굴스티커", String.format("[얼굴모델] 중심= %s, relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f", center, relX, relY, relW, relH, rot));
         }
         return new StickerMeta(relX, relY, relW, relH, rot);
     }
@@ -166,8 +158,8 @@ public class StickerMeta {
                 offsetX = vpX + (vpW - bmpW * scale) / 2f;
                 offsetY = vpY + (vpH - bmpH * scale) / 2f;
             } else {
-                offsetX = /*vpX +*/ (vpW - bmpW * scale) / 2f;
-                offsetY = /*vpY +*/ (vpH - bmpH * scale) / 2f;
+                offsetX = (vpW - bmpW * scale) / 2f;
+                offsetY = (vpH - bmpH * scale) / 2f;
             }
 
             for (Face face : faces) {
@@ -182,19 +174,15 @@ public class StickerMeta {
                 float faceW = faceBox.width();
                 float faceH = faceBox.height();
 
-                String center = "바운딩 박스";
                 if (nose != null) {
                     faceCenterX = nose.getPosition().x;
                     faceCenterY = nose.getPosition().y;
-                    center = "코";
                 } else if (leftEye != null && rightEye != null) {
                     faceCenterX = (leftEye.getPosition().x + rightEye.getPosition().x) / 2;
                     faceCenterY = (leftEye.getPosition().y + rightEye.getPosition().y) / 2;
-                    center = "눈";
                 } else if (mouth != null) {
                     faceCenterX = mouth.getPosition().x;
                     faceCenterY = mouth.getPosition().y;
-                    center = "입";
                 }
 
                 float eulerZ = face.getHeadEulerAngleZ();
@@ -239,8 +227,6 @@ public class StickerMeta {
                 float stickerX_view = stickerCenterX_view - stickerW_view / 2f;
                 float stickerY_view = stickerCenterY_view - stickerH_view / 2f;
                 float stickerR = metaData.rot - eulerZ;
-
-                //Log.d("얼굴스티커", String.format("[사진얼굴] 중심= %s, relX=%.4f, relY=%.4f, relW=%.4f, relH=%.4f, rot=%.4f", center, stickerX_view, stickerY_view, (float) stickerW_view, (float) stickerH_view, rot));
 
                 resultList.add(new float[]{stickerX_view, stickerY_view, stickerW_view, stickerH_view, stickerR});
             }

@@ -3,7 +3,6 @@ package com.example.filter.activities.mypage;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -135,8 +133,6 @@ public class PointHistoryActivity extends BaseActivity {
                         return;
                     }
 
-                    //chargeTotalPages = body.totalPages;
-
                     for (CashTransactionListResponse dto : list) {
                         PointHistoryItem item = new PointHistoryItem();
                         item.point1 = dto.point;         // 충전된 포인트
@@ -193,7 +189,6 @@ public class PointHistoryActivity extends BaseActivity {
                     if (isFirstLoad) {
                         adapter2.items.clear();
                     }
-                    //buyTotalPages = body.totalPages;
 
                     for (FilterTransactionListResponse dto : list) {
                         PointHistoryItem item = new PointHistoryItem();

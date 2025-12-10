@@ -20,7 +20,6 @@ public class FaceBoxOverlayView extends View {
     private final List<Rect> boxes = new ArrayList<>();
     private int imageW = 0, imageH = 0;
 
-
     private int viewportW = 0, viewportH = 0;
     private int viewportX = 0, viewportY = 0;
 
@@ -57,7 +56,6 @@ public class FaceBoxOverlayView extends View {
 
         invalidate();
     }
-
 
     // 나머지 고정된 이미지일 떄 (필터 제작할 때, 구매 후 적용할 때)
     public void setFaceBoxes(List<Rect> faceBoxes, int srcW, int srcH) {

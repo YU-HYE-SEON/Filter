@@ -78,7 +78,7 @@
         app:layout_constraintTop_toBottomOf="@+id/topArea">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/a"
+            android:id="@+id/contentBox"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingHorizontal="20dp">
@@ -137,18 +137,6 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
-
-                <!--<ImageView
-                    android:id="@+id/existFaceSticker"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_marginEnd="5dp"
-                    android:background="@drawable/icon_face_sticker_exist"
-                    android:visibility="visible"
-                    app:layout_constraintDimensionRatio="101:25"
-                    app:layout_constraintEnd_toStartOf="@id/tagBox"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />-->
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/tagBox"

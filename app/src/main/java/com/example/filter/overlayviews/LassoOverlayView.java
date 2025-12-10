@@ -28,10 +28,6 @@ public class LassoOverlayView extends View {
         this.drawingEnabled = enabled;
     }
 
-    public boolean isDrawingEnabled() {
-        return drawingEnabled;
-    }
-
     private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint dimPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint clearPaint = new Paint(Paint.ANTI_ALIAS_FLAG);

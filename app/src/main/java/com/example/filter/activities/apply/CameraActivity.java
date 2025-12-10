@@ -28,7 +28,6 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -59,7 +58,6 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -195,11 +193,7 @@ public class CameraActivity extends BaseActivity {
     }
 
     private void moveToNextActivity(Bitmap bitmap) {
-        //if (bitmap == null) return;
-
         String path = ImageUtils.saveBitmapToCache(CameraActivity.this, bitmap);
-
-        //if (path == null) return;
 
         boolean isBuy = getIntent().getBooleanExtra("isBuy", false);
         boolean isMine = getIntent().getBooleanExtra("isMine", false);
@@ -380,8 +374,6 @@ public class CameraActivity extends BaseActivity {
                             if (params.width != vW || params.height != vH || params.leftMargin != vX || params.topMargin != vY) {
                                 params.width = vW;
                                 params.height = vH;
-                                //params.leftMargin = vX;
-                                //params.topMargin = vY;
                                 stickerOverlay.setLayoutParams(params);
                             }
 
@@ -575,10 +567,8 @@ public class CameraActivity extends BaseActivity {
     private void setTransitionMode() {
         if (cameraSelector.equals(CameraSelector.DEFAULT_BACK_CAMERA)) {
             cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
-            //transitionBtn.setText("전면");
         } else {
             cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-            //transitionBtn.setText("후면");
         }
 
         startCamera();
@@ -590,8 +580,6 @@ public class CameraActivity extends BaseActivity {
         r1Btn.setOnClickListener(v -> {
             params.dimensionRatio = "1:1";
             params.verticalBias = 0.2f;
-
-            //ratioBtn.setText(r1Btn.getText());
 
             toggleRatioButtons(false);
             isRatioBtnClick = false;
@@ -610,8 +598,6 @@ public class CameraActivity extends BaseActivity {
             params.dimensionRatio = "3:4";
             params.verticalBias = 0.25f;
 
-            //ratioBtn.setText(r2Btn.getText());
-
             toggleRatioButtons(false);
             isRatioBtnClick = false;
 
@@ -628,8 +614,6 @@ public class CameraActivity extends BaseActivity {
         r3Btn.setOnClickListener(v -> {
             params.dimensionRatio = "9:16";
             params.verticalBias = 0.25f;
-
-            //ratioBtn.setText(r3Btn.getText());
 
             toggleRatioButtons(false);
             isRatioBtnClick = false;

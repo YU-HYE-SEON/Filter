@@ -116,14 +116,6 @@ public class StartActivity extends BaseActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     try {
-                        /*Log.d("GoogleLogin", "resultCode = " + result.getResultCode());
-
-                        if (result.getData() == null) {
-                            Log.e("GoogleLogin", "result.getData() == null");
-                        } else {
-                            Log.d("GoogleLogin", "result.getData(): " + result.getData().toString());
-                        }*/
-
                         if (result.getResultCode() == Activity.RESULT_OK) {
                             Task<GoogleSignInAccount> task =
                                     GoogleSignIn.getSignedInAccountFromIntent(result.getData());
@@ -283,8 +275,6 @@ public class StartActivity extends BaseActivity {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
 
             String idToken = account.getIdToken();
-            //String email = account.getEmail();
-            //String displayName = account.getDisplayName();
 
             if (account == null || idToken == null) {
                 Log.e("GoogleLogin", "GoogleSignInAccount 혹은 idToken이 null");
@@ -399,17 +389,10 @@ public class StartActivity extends BaseActivity {
 
                         if (exists) {
                             Log.d("UserCheck", "✔️ 기존 회원 → MainActivity 이동");
-
-
-
-
                             loginSuccess();
                         } else {
                             Log.d("UserCheck", "🆕 신규 회원 → SignUpActivity 이동");
                             showSignUpDialog();
-                            //Intent intent = new Intent(StartActivity.this, SignUpActivity.class);
-                            //startActivity(intent);
-                            //finish();
                         }
                     } catch (Exception e) {
                         Log.e("UserCheck", "JSON 파싱 실패", e);

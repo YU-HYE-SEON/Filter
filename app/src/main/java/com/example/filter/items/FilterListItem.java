@@ -1,12 +1,8 @@
 package com.example.filter.items;
 
-import com.example.filter.api_datas.request_dto.FilterDtoCreateRequest;
-import com.example.filter.api_datas.FaceStickerData;
 import com.example.filter.api_datas.response_dto.FilterListResponse;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.logging.Filter;
 
 public class FilterListItem implements Serializable {
     public Long reviewId;
@@ -21,17 +17,6 @@ public class FilterListItem implements Serializable {
     public final PriceDisplayEnum type;
     public final int price;
     public final boolean bookmark; // 현재 로그인한 유저가 북마크 했는지 여부
-
-    public FilterListItem() {
-        this.id = -1L;
-        this.filterTitle = "";
-        this.thumbmailUrl = "";
-        this.nickname = "";
-        this.price = -1;
-        this.useCount = -1L;
-        this.type = PriceDisplayEnum.NONE;
-        this.bookmark = false;
-    }
 
     public FilterListItem(Long reviewId, Long id, String filterTitle,
                           String thumbmailUrl, String nickname, int price,

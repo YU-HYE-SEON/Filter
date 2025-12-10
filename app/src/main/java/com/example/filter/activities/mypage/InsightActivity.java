@@ -3,7 +3,6 @@ package com.example.filter.activities.mypage;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.graphics.Color;
-import android.graphics.RectF;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -36,7 +35,6 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
-import com.github.mikephil.charting.model.GradientColor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +51,6 @@ public class InsightActivity extends BaseActivity {
     private ConstraintLayout dateDropdown;
     private FrameLayout modalOff;
     private View chooseDateOn, dimBackground;
-    private ConstraintLayout chooseDate;
     private TextView dateTxt, oneWeek, oneMonth, oneYear;
     private ImageView oneWeekCheck, oneMonthCheck, oneYearCheck;
     private boolean ischooseOrderVisible = false;
@@ -123,8 +120,6 @@ public class InsightActivity extends BaseActivity {
 
         setupChooseOrder();
         setDateRangeTexts();
-
-        //DrawChart();
     }
 
     private void loadDetail(Long filterId, SalesPeriod period) {
@@ -204,8 +199,6 @@ public class InsightActivity extends BaseActivity {
         leftAxis.enableGridDashedLine(10f, 10f, 0f);
         leftAxis.setGridColor(Color.parseColor("#4D90989F"));
         leftAxis.setGridLineWidth(1);
-        //leftAxis.setDrawZeroLine(true);
-        //leftAxis.setZeroLineColor(Color.parseColor("#4D90989F"));
 
         barChart.getAxisLeft().setAxisMaxValue(30);
         barChart.getAxisLeft().setDrawAxisLine(false);
@@ -272,7 +265,6 @@ public class InsightActivity extends BaseActivity {
 
         // 날짜 정렬 선택 모달 셋팅
         chooseDateOn = getLayoutInflater().inflate(R.layout.m_choose_date, null);
-        chooseDate = chooseDateOn.findViewById(R.id.chooseDate);
         oneWeek = chooseDateOn.findViewById(R.id.oneWeek);
         oneMonth = chooseDateOn.findViewById(R.id.oneMonth);
         oneYear = chooseDateOn.findViewById(R.id.oneYear);

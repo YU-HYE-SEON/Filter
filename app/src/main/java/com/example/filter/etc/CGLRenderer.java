@@ -16,12 +16,12 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class CGLRenderer implements GLSurfaceView.Renderer {
+    private boolean isCapturing = false;
     public interface BitmapCaptureListener {
         void onBitmapCaptured(Bitmap bitmap);
     }
@@ -194,15 +194,12 @@ public class CGLRenderer implements GLSurfaceView.Renderer {
                     cropY = viewportY;
                 }
                 Bitmap capturedBitmap = readPixels(cropX, cropY, cropW, cropH);
-                //Bitmap capturedBitmap = readPixels(viewportX, viewportY, viewportWidth, viewportHeight);
                 captureListener.onBitmapCaptured(capturedBitmap);
 
                 isCapturing = false;
             }
         }
     }
-
-    private boolean isCapturing = false;
 
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height) {

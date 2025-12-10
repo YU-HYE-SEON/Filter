@@ -90,13 +90,12 @@ public class FilterInfoActivity extends BaseActivity {
     private ImageView img, bookmark, bookmarkImg;
     private LinearLayout reviewBox1, reviewBox2;
     private ImageView rb1Img1, rb1Img2, rb2Img1, rb2Img2, rb2Img3, rb2Img4, rb2Img5;
-    private ConstraintLayout tagBox, btnBox, a;
+    private ConstraintLayout contentBox;
     private AppCompatButton changeORbuyBtn, selectModeBtn, selectModeBtn2;
 
     // 모달(팝업) 관련 UI
     private FrameLayout modalOff;
     private View changePointModeOn, chooseUseModeOn, buyFilterOn, buyFilterSuccessOn, dimBackground;
-    private ConstraintLayout changePointMode, chooseUseMode, buyFilter, buyFilterSuccess;
     private ImageButton galleryModeBtn, cameraModeBtn, buyBtn, useBtn, closeBtn;
     private TextView message, price1, txt3, alertTxt, point, currentPoint1, currentPoint2;
     private EditText price2;
@@ -191,11 +190,11 @@ public class FilterInfoActivity extends BaseActivity {
             return insets;
         });
 
-        if (a != null) {
-            int pl = a.getPaddingLeft();
-            int pt = a.getPaddingTop();
-            int pr = a.getPaddingRight();
-            a.setPadding(pl, pt, pr, (int) dp(80));
+        if (contentBox != null) {
+            int pl = contentBox.getPaddingLeft();
+            int pt = contentBox.getPaddingTop();
+            int pr = contentBox.getPaddingRight();
+            contentBox.setPadding(pl, pt, pr, (int) dp(80));
         }
 
         // 3. 데이터 수신 및 처리
@@ -231,14 +230,13 @@ public class FilterInfoActivity extends BaseActivity {
         backBtn = findViewById(R.id.backBtn);
         shareBtn = findViewById(R.id.shareBtn);
         existFaceSticker = findViewById(R.id.existFaceSticker);
-        a = findViewById(R.id.a);
+        contentBox = findViewById(R.id.contentBox);
         originalBtn = findViewById(R.id.originalBtn);
         nickname = findViewById(R.id.nickname);
         deleteORreportBtn = findViewById(R.id.deleteORreportBtn);
         filterTitle = findViewById(R.id.filterTitle);
         moreBtn = findViewById(R.id.moreBtn);
         noReviewTxt = findViewById(R.id.noReviewTxt);
-        tagBox = findViewById(R.id.tagBox);
         tag1 = findViewById(R.id.tag1);
         tag2 = findViewById(R.id.tag2);
         tag3 = findViewById(R.id.tag3);
@@ -259,7 +257,6 @@ public class FilterInfoActivity extends BaseActivity {
         rb2Img3 = findViewById(R.id.rb2Img3);
         rb2Img4 = findViewById(R.id.rb2Img4);
         rb2Img5 = findViewById(R.id.rb2Img5);
-        btnBox = findViewById(R.id.btnBox);
         changeORbuyBtn = findViewById(R.id.changeORbuyBtn);
         selectModeBtn = findViewById(R.id.selectModeBtn);
         selectModeBtn2 = findViewById(R.id.selectModeBtn2);
@@ -470,7 +467,6 @@ public class FilterInfoActivity extends BaseActivity {
         if (changeORbuyBtn != null) {
             changeORbuyBtn.setOnClickListener(v -> {
                 if (isMine) {
-                    //showPointChangePopUp();
                     price1.setText(price + "P");
                     price2.setText(price);
                     showModal(changePointModeOn);
@@ -493,11 +489,7 @@ public class FilterInfoActivity extends BaseActivity {
             selectModeBtn.setOnClickListener(v -> {
                 if (ClickUtils.isFastClick(v, 400)) return;
                 if (isModalVisible) return;
-                //if (isMine || isFree || isBuy) {
                 showModal(chooseUseModeOn);
-                //} else {
-                //    showModal(buyFilterOn);
-                //}
             });
         }
 
@@ -735,7 +727,6 @@ public class FilterInfoActivity extends BaseActivity {
         FrameLayout rootView = findViewById(R.id.modalOff);
 
         changePointModeOn = getLayoutInflater().inflate(R.layout.m_point_change, null);
-        changePointMode = changePointModeOn.findViewById(R.id.changePointMode);
         message = changePointModeOn.findViewById(R.id.message);
         price1 = changePointModeOn.findViewById(R.id.price1);
         price2 = changePointModeOn.findViewById(R.id.price2);
@@ -743,19 +734,16 @@ public class FilterInfoActivity extends BaseActivity {
         pointChangebtn = changePointModeOn.findViewById(R.id.pointChangebtn);
 
         chooseUseModeOn = getLayoutInflater().inflate(R.layout.m_choose_use_mode, null);
-        chooseUseMode = chooseUseModeOn.findViewById(R.id.chooseUseMode);
         galleryModeBtn = chooseUseModeOn.findViewById(R.id.galleryModeBtn);
         cameraModeBtn = chooseUseModeOn.findViewById(R.id.cameraModeBtn);
         alertTxt = chooseUseModeOn.findViewById(R.id.alertTxt);
 
         buyFilterOn = getLayoutInflater().inflate(R.layout.m_buy_filter, null);
-        buyFilter = buyFilterOn.findViewById(R.id.buyFilter);
         point = buyFilterOn.findViewById(R.id.point);
         currentPoint1 = buyFilterOn.findViewById(R.id.currentPoint1);
         buyBtn = buyFilterOn.findViewById(R.id.buyBtn);
 
         buyFilterSuccessOn = getLayoutInflater().inflate(R.layout.m_buy_filter_success, null);
-        buyFilterSuccess = buyFilterSuccessOn.findViewById(R.id.buyFilterSuccess);
         currentPoint2 = buyFilterSuccessOn.findViewById(R.id.currentPoint2);
         useBtn = buyFilterSuccessOn.findViewById(R.id.useBtn);
         closeBtn = buyFilterSuccessOn.findViewById(R.id.closeBtn);

@@ -117,7 +117,6 @@ public class SignUpActivity extends BaseActivity {
         btn.setOnClickListener(v -> {
             btn.setEnabled(false);
             btn.setClickable(false);
-            //if (ClickUtils.isFastClick(v, 400)) return; // 더블 클릭 방지
             String inputNickname = nickname.getText().toString().trim(); // 입력된 닉네임 가져오기
             sendNicknameToServer(inputNickname); // 서버로 닉네임 전송
         });
@@ -162,16 +161,6 @@ public class SignUpActivity extends BaseActivity {
         return false;
     }
 
-    /*private boolean isPointInsideView(MotionEvent ev, View v) {
-        if (v == null) return false;
-        Rect r = new Rect();
-        boolean visible = v.getGlobalVisibleRect(r);
-        if (!visible) return false;
-        final int x = (int) ev.getRawX();
-        final int y = (int) ev.getRawY();
-        return r.contains(x, y);
-    }*/
-
     private boolean isPoint(MotionEvent ev) {
         if (nickname == null) return false;
         Rect r = new Rect();
@@ -180,8 +169,6 @@ public class SignUpActivity extends BaseActivity {
         final int x = (int) ev.getRawX();
         final int y = (int) ev.getRawY();
         return r.contains(x, y);
-
-        //return isPointInsideView(ev, nickname);
     }
 
     private void hideKeypadAndClearFocus() {

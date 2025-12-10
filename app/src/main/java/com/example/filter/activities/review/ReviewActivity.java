@@ -130,6 +130,7 @@ public class ReviewActivity extends BaseActivity {
             intent.putExtra("filterId", filterId);
             intent.putExtra("reviewId", String.valueOf(item.id));
             startActivity(intent);
+            overridePendingTransition(0, 0);
         });
     }
 
@@ -167,7 +168,6 @@ public class ReviewActivity extends BaseActivity {
         if (title != null) filterTitle.setText(title);
         if (nick != null) filterNickName.setText(nick);
         if (imgUrl != null) Glide.with(ReviewActivity.this).load(imgUrl).fitCenter().into(img);
-
     }
 
     /**
@@ -233,17 +233,9 @@ public class ReviewActivity extends BaseActivity {
         return Math.round(getResources().getDisplayMetrics().density * v);
     }
 
-    private void refreshReviews() {
-        nextPage = 0;
-        isLastPage = false;
-        adapter.clearItems();
-        loadReviews(filterIdLong, nextPage);
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
-        //refreshReviews();
     }
 
     private void moveToFilterInfo(){

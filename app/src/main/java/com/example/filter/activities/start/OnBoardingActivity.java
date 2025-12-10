@@ -47,14 +47,8 @@ public class OnBoardingActivity extends BaseActivity {
         recyclerView.setAdapter(adapter);
         recyclerView.addItemDecoration(new GridSpaceItemDecoration(2, dp(10), dp(10)));
 
-        /*List<Integer> imageIds = new ArrayList<>();
-        imageIds.add(R.drawable.);*/    // 이런 식으로 직접 추가
-
         //10개만 추가
         List<OnBoardingItem> itemList = new ArrayList<>();
-        /*for (int i = 0; i < 10; i++) {
-            itemList.add(new OnBoardingItem());
-        }*/
         itemList.add(new OnBoardingItem(R.drawable.onboarding1));
         itemList.add(new OnBoardingItem(R.drawable.onboarding2));
         itemList.add(new OnBoardingItem(R.drawable.onboarding3));
@@ -65,10 +59,6 @@ public class OnBoardingActivity extends BaseActivity {
         itemList.add(new OnBoardingItem(R.drawable.onboarding3));
         itemList.add(new OnBoardingItem(R.drawable.onboarding4));
         itemList.add(new OnBoardingItem(R.drawable.onboarding5));
-
-        /*for (int resId : imageIds) {
-            itemList.add(new OnBoardingItem(resId));
-        }*/
 
         adapter.setItems(itemList);
 

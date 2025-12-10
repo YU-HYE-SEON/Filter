@@ -186,7 +186,6 @@ public class CustomseekbarFragment extends Fragment {
 
         requireActivity().getSupportFragmentManager().executePendingTransactions();
         if (getActivity() instanceof FilterActivity) {
-            //((FilterActivity) getActivity()).requestUpdateBackGate();
             ((FilterActivity) getActivity()).updateSaveButtonState();
         }
     }
