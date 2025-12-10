@@ -52,10 +52,14 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.filter.R;
 import com.example.filter.activities.filter.FilterActivity;
+import com.example.filter.dialogs.BrushCancelDialog;
 import com.example.filter.dialogs.BrushToStickerDialog;
+import com.example.filter.dialogs.FaceStickerDeleteDialog;
+import com.example.filter.etc.StickerViewModel;
 import com.example.filter.items.StickerType;
 import com.example.filter.overlayviews.BrushOverlayView;
 import com.example.filter.etc.BrushPrefs;
@@ -76,9 +80,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public class BrushFragment extends Fragment {
-    private ImageButton undoBrush, redoBrush;
-
-
     /// 관련 클래스 ///
     private static class SimpleTextWatcher implements TextWatcher {
         private final Runnable after;
@@ -266,11 +267,6 @@ public class BrushFragment extends Fragment {
         brushOverlay = requireActivity().findViewById(R.id.brushOverlay);
 
         bottomArea1 = requireActivity().findViewById(R.id.bottomArea1);
-        /*undoSticker = requireActivity().findViewById(R.id.undoSticker);
-        redoSticker = requireActivity().findViewById(R.id.redoSticker);
-        originalSticker = requireActivity().findViewById(R.id.originalSticker);*/
-        undoBrush = requireActivity().findViewById(R.id.undoBrush);
-        redoBrush = requireActivity().findViewById(R.id.redoBrush);
         brushToSticker = requireActivity().findViewById(R.id.brushToSticker);
         lassoOverlay = requireActivity().findViewById(R.id.lassoOverlay);
         checkBox = requireActivity().findViewById(R.id.checkBox);
@@ -279,26 +275,9 @@ public class BrushFragment extends Fragment {
         stickerOverlay = requireActivity().findViewById(R.id.stickerOverlay);
 
         if (bottomArea1 != null) {
-            /*undoSticker.setVisibility(View.INVISIBLE);
-            redoSticker.setVisibility(View.INVISIBLE);
-            originalSticker.setVisibility(View.INVISIBLE);*/
             bottomArea1.setVisibility(View.VISIBLE);
-            //undoBrush.setVisibility(View.VISIBLE);
-            //redoBrush.setVisibility(View.VISIBLE);
             brushToSticker.setVisibility(View.VISIBLE);
         }
-
-        undoBrush.setOnClickListener(v -> {
-            if (brushDraw != null && brushDraw.undo()) {
-                updateUndoRedoUI();
-            }
-        });
-
-        redoBrush.setOnClickListener(v -> {
-            if (brushDraw != null && brushDraw.redo()) {
-                updateUndoRedoUI();
-            }
-        });
 
         if (checkBox != null) {
             checkBox.setOnCheckedChangeListener((btn, isChecked) -> {
@@ -512,9 +491,6 @@ public class BrushFragment extends Fragment {
                             sessionEraseOps.addAll(ops);
                             activeErases.clear();
                         }
-
-
-                        updateUndoRedoUI();
                     }
                 });
             }
@@ -619,29 +595,7 @@ public class BrushFragment extends Fragment {
 
         cancelBtn.setOnClickListener(v -> {
             if (ClickUtils.isFastClick(v, 400)) return;
-
-            if (currentToolPanel != null) hideToolPanel(false);
-
-            rollbackActiveErases();
-
-            rollbackSessionErases();
-
-            if (brushDraw != null) {
-                brushDraw.trimToCount(strokeCount);
-                brushDraw.setDrawingEnabled(false);
-            }
-            isPenPanelOpen = false;
-
-            if (checkBox != null && checkBox.isChecked()) {
-                checkBox.setChecked(false);
-                setCheckboxSize(25f, 3f);
-            }
-
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(R.anim.slide_up, 0)
-                    .replace(R.id.bottomArea2, new StickersFragment())
-                    .commit();
+            confirmCancelBrush();
         });
 
         checkBtn.setOnClickListener(v -> {
@@ -709,8 +663,6 @@ public class BrushFragment extends Fragment {
                     .replace(R.id.bottomArea2, new StickersFragment())
                     .commit();
         });
-
-        updateUndoRedoUI();
 
         return view;
     }
@@ -1929,6 +1881,41 @@ public class BrushFragment extends Fragment {
         return out;
     }
 
+    /// 브러쉬 취소할 때 확인 팝업 ///
+    private void confirmCancelBrush() {
+        new BrushCancelDialog(requireContext(), new BrushCancelDialog.BrushCancelDialogListener() {
+            @Override
+            public void onNo() {
+            }
+
+            @Override
+            public void onYes() {
+                if (currentToolPanel != null) hideToolPanel(false);
+
+                rollbackActiveErases();
+
+                rollbackSessionErases();
+
+                if (brushDraw != null) {
+                    brushDraw.trimToCount(strokeCount);
+                    brushDraw.setDrawingEnabled(false);
+                }
+                isPenPanelOpen = false;
+
+                if (checkBox != null && checkBox.isChecked()) {
+                    checkBox.setChecked(false);
+                    setCheckboxSize(25f, 3f);
+                }
+
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.slide_up, 0)
+                        .replace(R.id.bottomArea2, new StickersFragment())
+                        .commit();
+            }
+        }).show();
+    }
+
     /// 브러쉬 → 스티커 변환 & 올가미 ///
     private void showBrushToStickerDialog() {
         new BrushToStickerDialog(requireContext(), new BrushToStickerDialog.BrushToStickerDialogListener() {
@@ -2214,17 +2201,5 @@ public class BrushFragment extends Fragment {
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) checkBox.getLayoutParams();
         params.topMargin = (int) dp(dp2);
         checkBox.setLayoutParams(params);
-    }
-
-
-    private void updateUndoRedoUI() {
-        boolean canUndo = brushDraw.canUndo();
-        boolean canRedo = brushDraw.canRedo();
-
-        undoBrush.setEnabled(canUndo);
-        undoBrush.setAlpha(canUndo ? 1.0f : 0.4f);
-
-        redoBrush.setEnabled(canRedo);
-        redoBrush.setAlpha(canRedo ? 1.0f : 0.4f);
     }
 }

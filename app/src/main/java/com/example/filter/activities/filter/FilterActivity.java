@@ -87,7 +87,6 @@ public class FilterActivity extends BaseActivity {
     private ImageButton closeBtn;
     private AppCompatButton saveBtn;
     private ImageButton undoColor, redoColor, originalColor;
-    private ImageButton undoBrush, redoBrush;
 
     /// renderer, photoImage ///
     private FGLRenderer renderer;
@@ -174,8 +173,6 @@ public class FilterActivity extends BaseActivity {
         undoColor = findViewById(R.id.undoColor);
         redoColor = findViewById(R.id.redoColor);
         originalColor = findViewById(R.id.originalColor);
-        undoBrush = findViewById(R.id.undoBrush);
-        redoBrush = findViewById(R.id.redoBrush);
 
         endFrame = findViewById(R.id.endFrame);
 
