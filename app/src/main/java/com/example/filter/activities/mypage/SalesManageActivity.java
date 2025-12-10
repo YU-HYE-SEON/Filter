@@ -56,6 +56,7 @@ public class SalesManageActivity extends BaseActivity {
     private SalesPeriod currentPeriod = SalesPeriod.WEEK;
     private int nextPage = 0;
     private boolean isLoading = false;
+    private boolean isLastPage = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -87,6 +88,7 @@ public class SalesManageActivity extends BaseActivity {
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy <= 0) return;
                 if (!recyclerView.canScrollVertically(1)) {
                     loadSalesList(currentSort, nextPage);
                 }
@@ -117,7 +119,7 @@ public class SalesManageActivity extends BaseActivity {
     }
 
     private void loadSalesList(SalesSortType sort, int page) {
-        if (isLoading) return;
+        if (isLoading || isLastPage) return;
         isLoading = true;
 
         SalesApi api = AppRetrofitClient.getInstance(this).create(SalesApi.class);
@@ -130,9 +132,16 @@ public class SalesManageActivity extends BaseActivity {
                     PageResponse<SalesListResponse> result = response.body();
                     List<SalesListResponse> list = result.getContent();
 
-                    if (list != null && !list.isEmpty()) {
-                        adapter.addItemList(list);
-                        nextPage++;
+                    if (list == null || list.isEmpty()) {
+                        isLastPage = true;
+                        return;
+                    }
+
+                    adapter.addItemList(list);
+                    nextPage++;
+
+                    if (list.size() < 20) {
+                        isLastPage = true;
                     }
 
                     updateRecyclerVisibility();
@@ -226,7 +235,6 @@ public class SalesManageActivity extends BaseActivity {
 
         // 모달 밖 (딤 영역) 누르면 모달 닫기
         dimBackground.setOnClickListener(v -> hideAllChooseOrder());
-
 
         // 날짜 선택 드롭다운 선택 시 모달 열기
         dateDropdown.setOnClickListener(v -> {

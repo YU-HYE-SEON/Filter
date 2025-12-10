@@ -40,7 +40,9 @@ public class PointHistoryActivity extends BaseActivity {
     private int chargeNextPage = 0;
     private int buyNextPage = 0;
     private boolean isChargeLoading = false;
+    private boolean isChargeLastPage = false;
     private boolean isBuyLoading = false;
+    private boolean isBuyLastPage = false;
     private int chargeTotalPages = 1;
     private int buyTotalPages = 1;
 
@@ -64,6 +66,7 @@ public class PointHistoryActivity extends BaseActivity {
         history.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy <= 0) return;
                 if (!recyclerView.canScrollVertically(1)) {
                     if (history.getAdapter() == adapter1) {
                         if (!isChargeLoading && chargeNextPage < chargeTotalPages) {
@@ -89,6 +92,7 @@ public class PointHistoryActivity extends BaseActivity {
 
             history.setAdapter(adapter1);
             chargeNextPage = 0;
+            isChargeLastPage = false;
             loadChargeHistory(chargeNextPage, true);
         });
 
@@ -101,6 +105,7 @@ public class PointHistoryActivity extends BaseActivity {
 
             history.setAdapter(adapter2);
             buyNextPage = 0;
+            isBuyLastPage = false;
             loadBuyHistory(buyNextPage, true);
         });
     }
@@ -108,8 +113,8 @@ public class PointHistoryActivity extends BaseActivity {
     // ---------------------------------------------------------------
     // ✅ [서버 통신] 충전 내역 조회
     // ---------------------------------------------------------------
-    private void loadChargeHistory(int page, boolean isFirstLoad) {
-        if (isChargeLoading) return;
+    private void loadChargeHistory(int page,boolean isFirstLoadisFirstLoad) {
+        if (isChargeLoading || isChargeLastPage) return;
         isChargeLoading = true;
 
         PointApi api = AppRetrofitClient.getInstance(this).create(PointApi.class);
@@ -120,10 +125,17 @@ public class PointHistoryActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     PageResponse<CashTransactionListResponse> body = response.body();
                     List<CashTransactionListResponse> list = body.content;
-                    if (isFirstLoad) {
+
+                    if (isFirstLoadisFirstLoad) {
                         adapter1.items.clear();
                     }
-                    chargeTotalPages = body.totalPages;
+
+                    if (list == null || list.isEmpty()) {
+                        isChargeLastPage = true;
+                        return;
+                    }
+
+                    //chargeTotalPages = body.totalPages;
 
                     for (CashTransactionListResponse dto : list) {
                         PointHistoryItem item = new PointHistoryItem();
@@ -135,10 +147,14 @@ public class PointHistoryActivity extends BaseActivity {
 
                         adapter1.items.add(item);
                     }
+                    adapter1.notifyDataSetChanged();
 
                     chargeNextPage++;
 
-                    adapter1.notifyDataSetChanged();
+                    if (list.size() < 20) {
+                        isChargeLastPage = true;
+                    }
+
                 } else {
                     isChargeLoading = false;
                     Log.e("PointHistory", "충전 내역 실패: " + response.code());
@@ -157,7 +173,7 @@ public class PointHistoryActivity extends BaseActivity {
     // ✅ [서버 통신] 사용 내역 조회
     // ---------------------------------------------------------------
     private void loadBuyHistory(int page, boolean isFirstLoad) {
-        if (isBuyLoading) return;
+        if (isBuyLoading || isBuyLastPage) return;
         isBuyLoading = true;
 
         PointApi api = AppRetrofitClient.getInstance(this).create(PointApi.class);
@@ -168,10 +184,16 @@ public class PointHistoryActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     PageResponse<FilterTransactionListResponse> body = response.body();
                     List<FilterTransactionListResponse> list = body.content;
+
+                    if (list == null || list.isEmpty()) {
+                        isBuyLastPage = true;
+                        return;
+                    }
+
                     if (isFirstLoad) {
                         adapter2.items.clear();
                     }
-                    buyTotalPages = body.totalPages;
+                    //buyTotalPages = body.totalPages;
 
                     for (FilterTransactionListResponse dto : list) {
                         PointHistoryItem item = new PointHistoryItem();
@@ -183,10 +205,14 @@ public class PointHistoryActivity extends BaseActivity {
 
                         adapter2.items.add(item);
                     }
+                    adapter2.notifyDataSetChanged();
 
                     buyNextPage++;
 
-                    adapter2.notifyDataSetChanged();
+                    if (list.size() < 20) {
+                        isBuyLastPage = true;
+                    }
+
                 } else {
                     isBuyLoading = false;
                     Log.e("PointHistory", "사용 내역 실패: " + response.code());

@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
@@ -52,9 +53,9 @@ public class ReviewActivity extends BaseActivity {
     private ReviewAdapter adapter;
     private String filterId;
     private Long filterIdLong;
-    private int currentPage = 0;
-    private boolean isLastPage = false;
+    private int nextPage = 0;
     private boolean isLoading = false;
+    private boolean isLastPage = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,6 +70,10 @@ public class ReviewActivity extends BaseActivity {
         loadingContainer = findViewById(R.id.loadingContainer);
         loadingAnim = findViewById(R.id.loadingAnim);
         loadingContainer.setVisibility(View.GONE);
+
+        backBtn.setOnClickListener(v -> {
+            moveToFilterInfo();
+        });
 
         StaggeredGridLayoutManager sglm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         sglm.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
@@ -87,9 +92,36 @@ public class ReviewActivity extends BaseActivity {
         // 리뷰 목록 불러오기
         filterIdLong = filterId != null ? Long.parseLong(filterId) : null;
         showLoading();
-        loadReviews(filterIdLong);
+        loadReviews(filterIdLong, 0);
+
+        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                updateRecyclerVisibility();
+            }
+
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                updateRecyclerVisibility();
+            }
+
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                updateRecyclerVisibility();
+            }
+        });
 
         updateRecyclerVisibility();
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy <= 0) return;
+                if (!recyclerView.canScrollVertically(1)) {
+                    loadReviews(filterIdLong, nextPage);
+                }
+            }
+        });
 
         adapter.setOnItemClickListener((v, item, position) -> {
             if (ClickUtils.isFastClick(v, 400)) return;
@@ -98,11 +130,6 @@ public class ReviewActivity extends BaseActivity {
             intent.putExtra("filterId", filterId);
             intent.putExtra("reviewId", String.valueOf(item.id));
             startActivity(intent);
-        });
-
-        backBtn.setOnClickListener(v -> {
-            if (ClickUtils.isFastClick(v, 400)) return;
-            moveToFilterInfo();
         });
     }
 
@@ -146,12 +173,12 @@ public class ReviewActivity extends BaseActivity {
     /**
      * 리뷰 목록 불러오기
      */
-    private void loadReviews(long filterId) {
+    private void loadReviews(long filterId, int page) {
         if (isLoading || isLastPage) return;
         isLoading = true;
 
         ReviewApi api = AppRetrofitClient.getInstance(this).create(ReviewApi.class);
-        api.getReviewsByFilter(filterId, currentPage, 20).enqueue(new Callback<PageResponse<ReviewResponse>>() {
+        api.getReviewsByFilter(filterId, page, 20).enqueue(new Callback<PageResponse<ReviewResponse>>() {
             @Override
             public void onResponse(Call<PageResponse<ReviewResponse>> call, Response<PageResponse<ReviewResponse>> response) {
                 isLoading = false;
@@ -159,12 +186,18 @@ public class ReviewActivity extends BaseActivity {
                     PageResponse<ReviewResponse> pageData = response.body();
                     List<ReviewResponse> reviews = pageData.content;
 
-                    if (reviews != null && !reviews.isEmpty()) {
-                        adapter.addItems(reviews);
-                        currentPage++;
+                    if (reviews == null || reviews.isEmpty()) {
+                        isLastPage = true;
+                        return;
                     }
 
-                    isLastPage = pageData.last;
+                    adapter.addItems(reviews);
+                    nextPage++;
+
+                    if (reviews.size() < 20) {
+                        isLastPage = true;
+                    }
+
                 } else {
                     Log.e("ReviewList", "리뷰액티비티 | 목록 조회 실패: " + response.code());
                 }
@@ -201,16 +234,16 @@ public class ReviewActivity extends BaseActivity {
     }
 
     private void refreshReviews() {
-        currentPage = 0;
+        nextPage = 0;
         isLastPage = false;
         adapter.clearItems();
-        loadReviews(filterIdLong);
+        loadReviews(filterIdLong, nextPage);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        refreshReviews();
+        //refreshReviews();
     }
 
     private void moveToFilterInfo(){
@@ -225,7 +258,6 @@ public class ReviewActivity extends BaseActivity {
         super.onBackPressed();
         moveToFilterInfo();
     }
-
 
     private void showLoading() {
         isDataLoading = true;

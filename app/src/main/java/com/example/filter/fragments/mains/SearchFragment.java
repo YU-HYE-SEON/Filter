@@ -65,8 +65,6 @@ public class SearchFragment extends Fragment {
     private List<FilterListResponse> searchResults = new ArrayList<>();
     private FilterListAdapter adapter;
     private ActivityResultLauncher<Intent> detailActivityLauncher;
-    private int nextPage = 0;
-    private boolean isLoading = false;
 
     public static SearchFragment newInstance(String keyword) {
         SearchFragment fragment = new SearchFragment();
