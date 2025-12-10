@@ -100,7 +100,7 @@
         android:id="@+id/loadingFinishContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#4B4B4B"
+        android:background="@color/white"
         android:visibility="visible" />
 
     <com.airbnb.lottie.LottieAnimationView
@@ -122,7 +122,7 @@
         android:id="@+id/loadingContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#4B4B4B"
+        android:background="@color/white"
         android:visibility="visible">
 
         <com.airbnb.lottie.LottieAnimationView

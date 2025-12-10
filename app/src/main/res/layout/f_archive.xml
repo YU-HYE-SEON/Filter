@@ -121,7 +121,7 @@
         android:id="@+id/loadingContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#4B4B4B"
+        android:background="@color/white"
         android:paddingBottom="80dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -1,6 +1,7 @@
 package com.example.filter.activities.start;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -34,16 +35,11 @@ public class LoginFailActivity extends BaseActivity {
         });
 
         email.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType("message/rfc822");
-            intent.setPackage("com.google.android.gm");
-
-            /// 메일 Feelem으로 바꾸기 ///
-            intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"usunsun38@gmail.com"});
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Feel'em에 문의하기");
+            String uri = "mailto:feelem2025@gmail.com?subject=Feel'em에 문의하기";
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.parse(uri));
 
             try {
-                startActivity(Intent.createChooser(intent, "이메일 보내기"));
+                startActivity(Intent.createChooser(emailIntent, "Feel'em에 문의하기"));
             } catch (Exception e) {
                 Toast.makeText(this, "구글메일 앱이 없습니다.", Toast.LENGTH_SHORT).show();
             }

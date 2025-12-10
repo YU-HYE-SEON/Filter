@@ -525,17 +525,11 @@ public class FilterInfoActivity extends BaseActivity {
             if (isMine) {
                 confirmDeleteFilter(Long.parseLong(filterId));
             } else {
-                /// 신고하기 이메일 ///
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setType("message/rfc822");
-                intent.setPackage("com.google.android.gm");
-
-                /// 메일 Feelem으로 바꾸기 ///
-                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"usunsun38@gmail.com"});
-                intent.putExtra(Intent.EXTRA_SUBJECT, "Feel'em에 신고하기");
+                String uri = "mailto:feelem2025@gmail.com?subject=Feel'em에 신고하기";
+                Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.parse(uri));
 
                 try {
-                    startActivity(Intent.createChooser(intent, "이메일 보내기"));
+                    startActivity(Intent.createChooser(emailIntent, "Feel'em에 신고하기"));
                 } catch (Exception e) {
                     Toast.makeText(this, "구글메일 앱이 없습니다.", Toast.LENGTH_SHORT).show();
                 }
