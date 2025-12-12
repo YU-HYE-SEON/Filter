@@ -248,7 +248,7 @@ public class SavePhotoActivity extends BaseActivity {
         }
 
         /// 사진 저장 메서드 호출
-        ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
+        //ImageUtils.saveBitmapToGallery(SavePhotoActivity.this, imageToSave);
 
         isSavedToGallery = true;
 

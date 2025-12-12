@@ -213,7 +213,7 @@ public class ApplyFilterActivity extends BaseActivity {
                 finalBitmapWithStickers = finalBitmap;
 
                 if (isStickerApplied && !isSavedToGallery) {
-                    ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
+                    //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
 
                     if (!saveDone) {
@@ -246,7 +246,7 @@ public class ApplyFilterActivity extends BaseActivity {
                 finalBitmapWithStickers = imageToDisplay;
 
                 if (!isSavedToGallery) {
-                    ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
+                    //ImageUtils.saveBitmapToGallery(ApplyFilterActivity.this, finalBitmapWithStickers);
                     isSavedToGallery = true;
 
                     if (!saveDone) {

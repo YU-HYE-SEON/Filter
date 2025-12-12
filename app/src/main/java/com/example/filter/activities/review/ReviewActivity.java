@@ -188,6 +188,9 @@ public class ReviewActivity extends BaseActivity {
 
                     if (reviews == null || reviews.isEmpty()) {
                         isLastPage = true;
+
+                        hideLoading();
+
                         return;
                     }
 
